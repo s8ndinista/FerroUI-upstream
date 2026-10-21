@@ -17135,6 +17135,18 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn update_input_options("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn is_input_options_property("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "pub(crate) struct CoreTextInputOptions"
         }
       ],
       "tests": [
@@ -17393,6 +17405,54 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_change_without_replacing_the_client_or_connection"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_follow_inheritance_and_clearing_local_values"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_continue_after_reset_and_stop_when_the_owner_is_replaced"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_does_not_restore_old_options_or_client"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_keeps_the_latest_policies_of_the_same_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "stale_option_notification_does_not_publish_for_a_replaced_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "disposing_the_input_manager_releases_the_owner_option_subscription"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_and_prediction_changes_reach_the_focused_backend_without_resetting_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_first_context_uses_the_last_options_received_before_creation"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_options_reentrant_replacement_wins_after_the_old_native_setter"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_failed_option_application_preserves_the_latest_value_for_retry"
         }
       ],
       "includes": [
@@ -17630,7 +17690,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence.",
       "deviations": [
         "RT-I04",
         "RT-I06",
@@ -17639,7 +17699,9 @@
         "RT-A03",
         "RT-A04",
         "RT-A01",
-        "RT-I17"
+        "RT-I17",
+        "RT-I16",
+        "RT-I20"
       ]
     },
     {
@@ -17755,6 +17817,18 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
           "symbol": "pub fn underline_state("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn update_input_options("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn is_input_options_property("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "pub(crate) struct CoreTextInputOptions"
         }
       ],
       "tests": [
@@ -17937,6 +18011,54 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
           "symbol": "rich_edit_text_binding_updates_the_document_in_both_directions"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_change_without_replacing_the_client_or_connection"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_follow_inheritance_and_clearing_local_values"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_continue_after_reset_and_stop_when_the_owner_is_replaced"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_does_not_restore_old_options_or_client"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_keeps_the_latest_policies_of_the_same_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "stale_option_notification_does_not_publish_for_a_replaced_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "disposing_the_input_manager_releases_the_owner_option_subscription"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_and_prediction_changes_reach_the_focused_backend_without_resetting_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_first_context_uses_the_last_options_received_before_creation"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_options_reentrant_replacement_wins_after_the_old_native_setter"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_failed_option_application_preserves_the_latest_value_for_retry"
         }
       ],
       "includes": [
@@ -17951,7 +18073,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence.",
       "deviations": [
         "RT-I04",
         "RT-I06",
@@ -17960,7 +18082,9 @@
         "RT-A03",
         "RT-A04",
         "RT-A01",
-        "RT-I17"
+        "RT-I17",
+        "RT-I16",
+        "RT-I20"
       ]
     },
     {
@@ -19127,6 +19251,18 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
           "symbol": "fn begin_composition("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn update_input_options("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn is_input_options_property("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "pub(crate) struct CoreTextInputOptions"
         }
       ],
       "tests": [
@@ -19329,6 +19465,54 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
           "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_change_without_replacing_the_client_or_connection"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_follow_inheritance_and_clearing_local_values"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_continue_after_reset_and_stop_when_the_owner_is_replaced"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_does_not_restore_old_options_or_client"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_keeps_the_latest_policies_of_the_same_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "stale_option_notification_does_not_publish_for_a_replaced_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "disposing_the_input_manager_releases_the_owner_option_subscription"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_and_prediction_changes_reach_the_focused_backend_without_resetting_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_first_context_uses_the_last_options_received_before_creation"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_options_reentrant_replacement_wins_after_the_old_native_setter"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_failed_option_application_preserves_the_latest_value_for_retry"
         }
       ],
       "includes": [
@@ -20891,7 +21075,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence.",
       "deviations": [
         "RT-A03",
         "RT-I06",
@@ -20899,7 +21083,9 @@
         "RT-I08",
         "RT-A04",
         "RT-A01",
-        "RT-I13"
+        "RT-I13",
+        "RT-I16",
+        "RT-I20"
       ]
     },
     {
@@ -20983,6 +21169,18 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
           "symbol": "pub fn composition_changed("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn update_input_options("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn is_input_options_property("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "pub(crate) struct CoreTextInputOptions"
         }
       ],
       "tests": [
@@ -21109,6 +21307,54 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
           "symbol": "rich_composition_external_text_or_format_changes_inside_a_batch_invalidate_the_preview"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_change_without_replacing_the_client_or_connection"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_follow_inheritance_and_clearing_local_values"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_continue_after_reset_and_stop_when_the_owner_is_replaced"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_does_not_restore_old_options_or_client"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_keeps_the_latest_policies_of_the_same_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "stale_option_notification_does_not_publish_for_a_replaced_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "disposing_the_input_manager_releases_the_owner_option_subscription"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_and_prediction_changes_reach_the_focused_backend_without_resetting_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_first_context_uses_the_last_options_received_before_creation"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_options_reentrant_replacement_wins_after_the_old_native_setter"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_failed_option_application_preserves_the_latest_value_for_retry"
         }
       ],
       "includes": [
@@ -21188,7 +21434,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence.",
       "deviations": [
         "RT-A03",
         "RT-I06",
@@ -21196,7 +21442,9 @@
         "RT-I08",
         "RT-A04",
         "RT-A01",
-        "RT-I13"
+        "RT-I13",
+        "RT-I16",
+        "RT-I20"
       ]
     },
     {
@@ -74316,6 +74564,10 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rtf.rs",
           "symbol": "fn read_field("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs",
+          "symbol": "impl RichEditTextSelection"
         }
       ],
       "tests": [
@@ -74426,15 +74678,80 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rtf_field_tests.rs",
           "symbol": "rich_rtf_field_metadata_expansion_is_bounded_across_the_whole_document"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_excludes_platform_soft_break_and_structural_separator"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_headless_crlf_and_paragraph_controls_exclude_the_whole_break"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_uses_wrapped_lines_and_forward_boundary_affinity_after_reflow"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_follows_logical_source_order_in_rtl_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_uses_complete_linked_overflow_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_rejects_unsupported_units_without_touching_preview_or_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_readonly_navigation_preserves_preview_and_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_rejects_incomplete_or_trimmed_lines_but_story_needs_no_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_recaptures_active_end_after_layout_selection_callbacks"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_layout_model_mutation_survives_nested_group_rejection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_presentation_or_view_reentrancy_preserves_selection_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_reports_canceled_or_reentrant_accepted_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_selection_callback_model_write_rejects_stale_result_in_outer_batch"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_editor_publication_model_write_preserves_external_state"
         }
       ],
-      "reason": "This file declares the exact public RichEdit document/range text and stream contracts. The RTF engine implementation is external to the WinUI tree; portable codec targets are mapped against the declared contract, not presented as source copied from this XML. Every documented member retains its individual state in the API inventory. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending.",
+      "reason": "This file declares the exact public RichEdit document/range text and stream contracts. The RTF engine implementation is external to the WinUI tree; portable codec targets are mapped against the declared contract, not presented as source copied from this XML. Every documented member retains its individual state in the API inventory. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending. The selection HomeKey/EndKey declarations now map to the shared Line/Story navigation module with directed event handling. Their exact native collapse/count conventions remain explicitly partial under RT-I21.",
       "deviations": [
         "RT-A03",
         "RT-I04",
         "RT-I12",
         "RT-I18",
-        "RT-I19"
+        "RT-I19",
+        "RT-I21"
       ]
     },
     {

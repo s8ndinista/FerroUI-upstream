@@ -16,7 +16,7 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Text.ITextCharacterFormat` | 28 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
 | `Microsoft.UI.Text.ITextParagraphFormat` | 32 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
 | `Microsoft.UI.Text.ITextRange` | 44 | 34 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
-| `Microsoft.UI.Text.ITextSelection` | 10 | 2 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
+| `Microsoft.UI.Text.ITextSelection` | 10 | 4 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.LetterCase` | 3 | 0 / 3 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.LineSpacingRule` | 9 | 0 / 9 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.LinkType` | 10 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
@@ -1189,6 +1189,54 @@ State: **partial**. Live gravity-based Rust ranges cover the mapped operations o
 
 Audit the external TOM contract member by member. The Rust facade uses typed errors, UTF-16 text ranges and shared editor services; remaining option behavior, ABI and native units are not inferred from similarly named methods. Eight native-valued units including shaped Cluster, explicit Rust Read/Write adapters, paragraph tabs and structured Unicode case conversion have individual mappings; locale/engine conformance and unmapped members remain pending.
 
+#### `M:Microsoft.UI.Text.ITextSelection.EndKey(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
+
+State: **partial**. Logical Line/Story navigation uses the directed active endpoint, preserving the anchor when extending and otherwise collapsing at the target. The Rust result is accepted signed UTF-16 displacement after cancellable/reentrant selection handlers. Line uses complete untrimmed shaping, actual content ends and linked overflow, with paragraph fallback when headless; shared wrap boundaries use forward affinity. Other units fail before mutation. Navigation preserves read-only behavior, active composition and redo; layout/selection/publication model-write fences retain external state and reject stale acknowledgement. Exact native collapse destinations, return counts, caret Gravity and terminal-EOP behavior remain conformance boundaries; the system MSFTEDIT probe is not a WinUI engine oracle.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs) — `pub fn end_key(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `pub(super) fn caret_bounds(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_excludes_platform_soft_break_and_structural_separator`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_headless_crlf_and_paragraph_controls_exclude_the_whole_break`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_uses_wrapped_lines_and_forward_boundary_affinity_after_reflow`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_follows_logical_source_order_in_rtl_lines`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_uses_complete_linked_overflow_lines`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_rejects_unsupported_units_without_touching_preview_or_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_readonly_navigation_preserves_preview_and_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_rejects_incomplete_or_trimmed_lines_but_story_needs_no_layout`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_recaptures_active_end_after_layout_selection_callbacks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_layout_model_mutation_survives_nested_group_rejection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_presentation_or_view_reentrancy_preserves_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_reports_canceled_or_reentrant_accepted_selection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_selection_callback_model_write_rejects_stale_result_in_outer_batch`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_editor_publication_model_write_preserves_external_state`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I21](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.ITextSelection.HomeKey(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
+
+State: **partial**. Logical Line/Story navigation uses the directed active endpoint, preserving the anchor when extending and otherwise collapsing at the target. The Rust result is accepted signed UTF-16 displacement after cancellable/reentrant selection handlers. Line uses complete untrimmed shaping, actual content ends and linked overflow, with paragraph fallback when headless; shared wrap boundaries use forward affinity. Other units fail before mutation. Navigation preserves read-only behavior, active composition and redo; layout/selection/publication model-write fences retain external state and reject stale acknowledgement. Exact native collapse destinations, return counts, caret Gravity and terminal-EOP behavior remain conformance boundaries; the system MSFTEDIT probe is not a WinUI engine oracle.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs) — `pub fn home_key(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `pub(super) fn caret_bounds(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_excludes_platform_soft_break_and_structural_separator`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_headless_crlf_and_paragraph_controls_exclude_the_whole_break`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_uses_wrapped_lines_and_forward_boundary_affinity_after_reflow`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_follows_logical_source_order_in_rtl_lines`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_uses_complete_linked_overflow_lines`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_rejects_unsupported_units_without_touching_preview_or_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_readonly_navigation_preserves_preview_and_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_rejects_incomplete_or_trimmed_lines_but_story_needs_no_layout`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_recaptures_active_end_after_layout_selection_callbacks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_layout_model_mutation_survives_nested_group_rejection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_presentation_or_view_reentrancy_preserves_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_reports_canceled_or_reentrant_accepted_selection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_selection_callback_model_write_rejects_stale_result_in_outer_batch`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_editor_publication_model_write_preserves_external_state`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I21](DEVIATIONS.md).
+
 #### `M:Microsoft.UI.Text.ITextSelection.TypeText(System.String)`
 
 State: **partial**. Typing delegates to the shared editor, preserving typing format, rich history and input policy.
@@ -1199,11 +1247,28 @@ State: **partial**. Typing delegates to the shared editor, preserving typing for
 
 #### `T:Microsoft.UI.Text.ITextSelection`
 
-State: **partial**. The Rust selection facade shares the editor selection and history; native directional/layout movement, options and selection type surface remain pending.
+State: **partial**. The Rust selection facade shares editor selection/history and implements logical Line/Story Home/End with directed extension, layout validation and reentrant selection handling. Exact native collapse/count/Gravity conventions, remaining directional movement, options and selection-type surface remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `RichEditTextSelection`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs) — `impl RichEditTextSelection`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_text_services_share_selection_history_and_visual_geometry`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_excludes_platform_soft_break_and_structural_separator`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_headless_crlf_and_paragraph_controls_exclude_the_whole_break`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_uses_wrapped_lines_and_forward_boundary_affinity_after_reflow`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_follows_logical_source_order_in_rtl_lines`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_uses_complete_linked_overflow_lines`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_rejects_unsupported_units_without_touching_preview_or_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_readonly_navigation_preserves_preview_and_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_rejects_incomplete_or_trimmed_lines_but_story_needs_no_layout`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_recaptures_active_end_after_layout_selection_callbacks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_layout_model_mutation_survives_nested_group_rejection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_presentation_or_view_reentrancy_preserves_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_reports_canceled_or_reentrant_accepted_selection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_selection_callback_model_write_rejects_stale_result_in_outer_batch`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) — `rich_selection_home_end_editor_publication_model_write_preserves_external_state`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I21](DEVIATIONS.md).
 
 ### `Microsoft.UI.Text.LetterCase`
 
@@ -4002,11 +4067,27 @@ State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persisten
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.InputScope`
 
-State: **partial**. The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate.
+State: **partial**. The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn input_scope(`.
+- Target: [src/FerroUI.Base/input/text_input/input_method_manager.rs](../../../src/FerroUI.Base/input/text_input/input_method_manager.rs) — `fn update_input_options(`.
+- Target: [src/FerroUI.Base/input/text_input/input_method_manager.rs](../../../src/FerroUI.Base/input/text_input/input_method_manager.rs) — `fn is_input_options_property(`.
+- Target: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `pub(crate) struct CoreTextInputOptions`.
+- Target: [src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs](../../../src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs) — `fn apply_input_options(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_input_policy_maps_to_platform_options_and_enforces_casing`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_change_without_replacing_the_client_or_connection`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_follow_inheritance_and_clearing_local_values`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_continue_after_reset_and_stop_when_the_owner_is_replaced`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `input_option_setter_reentry_does_not_restore_old_options_or_client`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `input_option_setter_reentry_keeps_the_latest_policies_of_the_same_owner`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `stale_option_notification_does_not_publish_for_a_replaced_owner`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `disposing_the_input_manager_releases_the_owner_option_subscription`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_and_prediction_changes_reach_the_focused_backend_without_resetting_composition`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus`.
+- Test: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `core_text_first_context_uses_the_last_options_received_before_creation`.
+- Test: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `core_text_options_reentrant_replacement_wins_after_the_old_native_setter`.
+- Test: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `core_text_failed_option_application_preserves_the_latest_value_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.InputScopeProperty`
 
@@ -4034,11 +4115,22 @@ State: **partial**. The registered FerroUI property supplies metadata and invali
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.IsTextPredictionEnabled`
 
-State: **partial**. The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate.
+State: **partial**. The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn is_text_prediction_enabled(`.
+- Target: [src/FerroUI.Base/input/text_input/input_method_manager.rs](../../../src/FerroUI.Base/input/text_input/input_method_manager.rs) — `fn update_input_options(`.
+- Target: [src/FerroUI.Base/input/text_input/input_method_manager.rs](../../../src/FerroUI.Base/input/text_input/input_method_manager.rs) — `fn is_input_options_property(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_input_policy_maps_to_platform_options_and_enforces_casing`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_change_without_replacing_the_client_or_connection`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_follow_inheritance_and_clearing_local_values`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_continue_after_reset_and_stop_when_the_owner_is_replaced`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `input_option_setter_reentry_does_not_restore_old_options_or_client`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `input_option_setter_reentry_keeps_the_latest_policies_of_the_same_owner`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `stale_option_notification_does_not_publish_for_a_replaced_owner`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `disposing_the_input_manager_releases_the_owner_option_subscription`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_and_prediction_changes_reach_the_focused_backend_without_resetting_composition`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.IsTextPredictionEnabledProperty`
 

@@ -4,6 +4,69 @@ This journal records how the port is developed. [PROGRESS.md](PROGRESS.md) and
 the reviewed mapping remain the authority for implementation status; a checkpoint
 preserves work and does not establish complete parity.
 
+## Selection boundaries and focused input policies — 2026-10-21
+
+[`05050fa0`](https://github.com/wieslawsoltes/FerroUI/commit/05050fa0de090270ac2b8785874871743363c8ed)
+adds selection Home/End for Line and Story. The Rust projection uses the directed
+active endpoint, retains the anchor while extending, and reports accepted signed
+UTF-16 displacement through cancellable selection events. Shaped line targets
+retain real content ends independently of the terminator-inclusive ranges used
+for ordinary movement. Complete linked overflow, wrapped/RTL text and headless
+paragraph fallback have focused fixtures. Unsupported units fail before effects;
+navigation preserves read-only access, preview and redo. Layout callbacks are
+followed by a fresh selection capture, and model writes during selection or
+publication retain external state instead of restoring obsolete history.
+
+Native documentation differs in how it describes the selected line and collapse
+count. The two exact public entries are therefore partial under RT-I21. The
+Windows-only probe in
+[`eff6f53a`](https://github.com/wieslawsoltes/FerroUI/commit/eff6f53ade273677db8679d2c6089909fcf7a886)
+loads the system MSFTEDIT DLL from System32, verifies exact text and directed
+selection setup, and records 60 initial commands plus 60 repeated no-ops.
+Typed SDK-derived COM prefixes have compile-time offset checks and owned cleanup.
+Logs include Windows/DLL versions, supplied/native story lengths, endpoints,
+flags, HRESULT and signed deltas. Initial line destinations, count conventions
+and final-EOP position are observations, not assumed parity assertions. This
+probe remains distinct from the external WinUI engine and awaited its first
+Windows execution when this checkpoint was written.
+
+[`5fe5f5d3`](https://github.com/wieslawsoltes/FerroUI/commit/5fe5f5d34cf658595dfa6379c296beeaf0797abb)
+repairs two real option-delivery gaps. A fresh WinUI adapter previously discarded
+options sent before its lazy context existed, then created the context with a
+Text scope. CoreText now caches the desired options and applies them before
+focus entry. Existing focused bindings also observe effective changes to all
+nine semantic-owner options, including inherited and cleared local values,
+without resetting composition or replacing the client/connection. Weak owner
+subscriptions follow binding lifetime. If an older backend setter completes
+after a callback changes the same transport's owner or policy, the manager
+reapplies the current values; CoreText serializes nested native scope setters and
+retains failed desired values for retry. Existing scope mappings remain the
+backend subset. Policy delivery does not establish OS prediction/proofing behavior
+or implement the complete native InputScope family.
+
+After rebuilding ordinary Base and Controls libraries with the exact XAML feature
+union and checking source/fingerprint freshness, the public harness passed
+**147 tests, zero failures**. That includes the previous 122 cases, three original
+keyboard fixtures, all 16 new Home/End cases, four existing line-unit regressions
+and both rich policy cases. The three private startup exclusions remain explicit;
+their earlier actual Windows pass is recorded below. The separate portable
+CoreText cache command passed **three tests, zero failures**; XAML ran no cases
+under that filter. Seven new private Base lifecycle tests await the full CI gate.
+
+Independent review found no concrete reentrant policy or native-probe ownership
+defect. Local formatting/diff checks and focused runs are not a native execution
+claim. The shared local filesystem later filled while no task build was running;
+source/build work paused, and only proven obsolete task-owned artifacts were
+removed after checking active references and current dependency reachability.
+Required host/target libraries, original fixtures, commands, provenance and logs
+were retained. No unrelated cache or process was changed.
+
+The two Home/End mappings bring the reviewed public-entry dispositions to 36
+complete enum entries, 446 partial and 835 pending. The source inventory remains
+638 selected files, 1,317 exact public identifiers, 938 framework dependencies
+and 827 include boundaries. All runtime source files remain incomplete until
+their individual outstanding contracts are closed with evidence.
+
 ## Integration recovery and continued contracts — 2026-10-21
 
 Work resumed from published head `0fba6ea72d031bdfc5b1d4662ef9bf84ebcc4590`

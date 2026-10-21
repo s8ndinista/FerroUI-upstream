@@ -310,6 +310,39 @@ Search supports forward/backward and whole-word options with Unicode lowercase
 mapping and preserved UTF-16 offsets; it is not a locale collation or full case
 folding implementation. Remaining units/options stay in the exact API inventory.
 
+### Selection Home and End
+
+`RichEditTextSelection::home_key(unit, extend)` and `end_key(unit, extend)`
+accept `Line` and `Story`. The current Rust projection uses the directed active
+endpoint: extension keeps its anchor, while a nonextending operation collapses
+at the chosen boundary. The result is the accepted signed UTF-16 displacement,
+including cancellation or replacement by selection-event handlers. Other units
+fail before changing the selection, composition or history.
+
+Line navigation uses the same complete, untrimmed layout as range movement,
+including linked overflow and logical ordering in RTL text. End targets exclude
+the formatter's actual newline extent. A shared wrap boundary belongs to the
+following line; explicit native caret gravity is not yet represented. Without
+an associated measured view, the existing paragraph fallback supplies line
+boundaries. Story navigation needs no layout and ends at the model's final caret.
+
+These operations preserve active composition and redo and work in a read-only
+document. They create no editing group. Layout callbacks can change selection,
+so navigation captures its active endpoint after resolving the layout. If a
+selection or publication callback changes the document itself, the operation
+preserves that external state, invalidates stale history and reports
+`ReentrantEdit` instead of acknowledging an obsolete destination.
+
+The [Win32 HomeKey](https://learn.microsoft.com/en-us/windows/win32/api/tom/nf-tom-itextselection-homekey)
+and [EndKey](https://learn.microsoft.com/en-us/windows/win32/api/tom/nf-tom-itextselection-endkey)
+parameter tables describe the first/last selected line, while the
+[WinUI HomeKey remarks](https://learn.microsoft.com/en-us/windows/windows-app-sdk/api/winrt/microsoft.ui.text.itextselection.homekey)
+emphasize the active endpoint and a preceding collapse. Exact
+native collapse destinations and return counts therefore remain an explicit
+conformance boundary in RT-I21. The Windows test probe records system MSFTEDIT
+observations, engine version and terminal-EOP conventions; it is not the external
+WinUI engine and does not by itself establish WinUI equivalence.
+
 ### Editor template, viewport and focus
 
 A RichEditBox template supplies ContentElement, HeaderContentPresenter,
@@ -548,7 +581,22 @@ undo entry. An independently held model batch can defer public model Changed
 beyond the cause callback; that event-order difference is recorded explicitly.
 
 Input scope and prediction settings are passed to existing backend options.
-They do not implement native proofing, dictionary prediction, handwriting or
+The manager observes effective changes to all nine attached `TextInputOptions`
+properties on the semantic owner, including inherited values and cleared local
+overrides. Updating a policy preserves the current client, connection and
+composition. The binding owns a weak property subscription that survives reset
+and is disposed on owner replacement or manager teardown. If a backend setter
+reenters and changes the owner or policy, the manager reapplies the current
+same-transport values after the older call returns.
+
+CoreText caches the latest options before its lazy native context exists and
+applies that scope before the first focus notification. Nested native scope
+writes are serialized; a failed setter leaves the desired options available for
+retry. The cache retains the existing Email, Number, Password, Digits, Url,
+Search and default Text mappings. Shared prediction-option delivery is covered
+by a backend fixture; OS prediction behavior is not implemented by that test.
+
+These shared policies do not implement native proofing, dictionary prediction, handwriting or
 candidate-window services. The native `InputScope.Names` collection, its name
 wrappers and complete `InputScopeNameValue` family are separately inventoried;
 the single framework content type does not provide those public APIs. Native

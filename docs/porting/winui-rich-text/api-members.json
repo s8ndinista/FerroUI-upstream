@@ -10004,20 +10004,180 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Text.xml",
       "owner": "Microsoft.UI.Text.ITextSelection",
       "kind": "M",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs",
+          "symbol": "pub fn end_key("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_units.rs",
+          "symbol": "pub(super) fn caret_bounds("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_excludes_platform_soft_break_and_structural_separator"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_headless_crlf_and_paragraph_controls_exclude_the_whole_break"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_uses_wrapped_lines_and_forward_boundary_affinity_after_reflow"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_follows_logical_source_order_in_rtl_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_uses_complete_linked_overflow_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_rejects_unsupported_units_without_touching_preview_or_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_readonly_navigation_preserves_preview_and_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_rejects_incomplete_or_trimmed_lines_but_story_needs_no_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_recaptures_active_end_after_layout_selection_callbacks"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_layout_model_mutation_survives_nested_group_rejection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_presentation_or_view_reentrancy_preserves_selection_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_reports_canceled_or_reentrant_accepted_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_selection_callback_model_write_rejects_stale_result_in_outer_batch"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_editor_publication_model_write_preserves_external_state"
+        }
+      ],
+      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
+      "reason": "Logical Line/Story navigation uses the directed active endpoint, preserving the anchor when extending and otherwise collapsing at the target. The Rust result is accepted signed UTF-16 displacement after cancellable/reentrant selection handlers. Line uses complete untrimmed shaping, actual content ends and linked overflow, with paragraph fallback when headless; shared wrap boundaries use forward affinity. Other units fail before mutation. Navigation preserves read-only behavior, active composition and redo; layout/selection/publication model-write fences retain external state and reject stale acknowledgement. Exact native collapse destinations, return counts, caret Gravity and terminal-EOP behavior remain conformance boundaries; the system MSFTEDIT probe is not a WinUI engine oracle.",
+      "deviations": [
+        "RT-I01",
+        "RT-I08",
+        "RT-I21"
+      ]
     },
     {
       "id": "M:Microsoft.UI.Text.ITextSelection.HomeKey(Microsoft.UI.Text.TextRangeUnit,System.Boolean)",
       "source": "packaging/Intellisense/generated/Microsoft.UI.Text.xml",
       "owner": "Microsoft.UI.Text.ITextSelection",
       "kind": "M",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs",
+          "symbol": "pub fn home_key("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_units.rs",
+          "symbol": "pub(super) fn caret_bounds("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_excludes_platform_soft_break_and_structural_separator"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_headless_crlf_and_paragraph_controls_exclude_the_whole_break"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_uses_wrapped_lines_and_forward_boundary_affinity_after_reflow"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_follows_logical_source_order_in_rtl_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_uses_complete_linked_overflow_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_rejects_unsupported_units_without_touching_preview_or_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_readonly_navigation_preserves_preview_and_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_rejects_incomplete_or_trimmed_lines_but_story_needs_no_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_recaptures_active_end_after_layout_selection_callbacks"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_layout_model_mutation_survives_nested_group_rejection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_presentation_or_view_reentrancy_preserves_selection_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_reports_canceled_or_reentrant_accepted_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_selection_callback_model_write_rejects_stale_result_in_outer_batch"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_editor_publication_model_write_preserves_external_state"
+        }
+      ],
+      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
+      "reason": "Logical Line/Story navigation uses the directed active endpoint, preserving the anchor when extending and otherwise collapsing at the target. The Rust result is accepted signed UTF-16 displacement after cancellable/reentrant selection handlers. Line uses complete untrimmed shaping, actual content ends and linked overflow, with paragraph fallback when headless; shared wrap boundaries use forward affinity. Other units fail before mutation. Navigation preserves read-only behavior, active composition and redo; layout/selection/publication model-write fences retain external state and reject stale acknowledgement. Exact native collapse destinations, return counts, caret Gravity and terminal-EOP behavior remain conformance boundaries; the system MSFTEDIT probe is not a WinUI engine oracle.",
+      "deviations": [
+        "RT-I01",
+        "RT-I08",
+        "RT-I21"
+      ]
     },
     {
       "id": "M:Microsoft.UI.Text.ITextSelection.MoveDown(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)",
@@ -19170,18 +19330,84 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn input_scope("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn update_input_options("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn is_input_options_property("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "pub(crate) struct CoreTextInputOptions"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs",
+          "symbol": "fn apply_input_options("
         }
       ],
       "tests": [
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_control_input_policy_maps_to_platform_options_and_enforces_casing"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_change_without_replacing_the_client_or_connection"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_follow_inheritance_and_clearing_local_values"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_continue_after_reset_and_stop_when_the_owner_is_replaced"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_does_not_restore_old_options_or_client"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_keeps_the_latest_policies_of_the_same_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "stale_option_notification_does_not_publish_for_a_replaced_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "disposing_the_input_manager_releases_the_owner_option_subscription"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_and_prediction_changes_reach_the_focused_backend_without_resetting_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_first_context_uses_the_last_options_received_before_creation"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_options_reentrant_replacement_wins_after_the_old_native_setter"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_failed_option_application_preserves_the_latest_value_for_retry"
         }
       ],
-      "reason": "The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate.",
+      "reason": "The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence.",
       "deviations": [
         "RT-I01",
-        "RT-I06"
+        "RT-I06",
+        "RT-I16",
+        "RT-I20"
       ]
     },
     {
@@ -19302,18 +19528,64 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "pub fn is_text_prediction_enabled("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn update_input_options("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn is_input_options_property("
         }
       ],
       "tests": [
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_control_input_policy_maps_to_platform_options_and_enforces_casing"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_change_without_replacing_the_client_or_connection"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_follow_inheritance_and_clearing_local_values"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "focused_input_options_continue_after_reset_and_stop_when_the_owner_is_replaced"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_does_not_restore_old_options_or_client"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_option_setter_reentry_keeps_the_latest_policies_of_the_same_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "stale_option_notification_does_not_publish_for_a_replaced_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "disposing_the_input_manager_releases_the_owner_option_subscription"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_and_prediction_changes_reach_the_focused_backend_without_resetting_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus"
         }
       ],
-      "reason": "The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate.",
+      "reason": "The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics.",
       "deviations": [
         "RT-I01",
-        "RT-I06"
+        "RT-I06",
+        "RT-I16",
+        "RT-I20"
       ]
     },
     {
@@ -25820,19 +26092,88 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_edit_text_document.rs",
           "symbol": "RichEditTextSelection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation.rs",
+          "symbol": "impl RichEditTextSelection"
         }
       ],
       "tests": [
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_control_text_services_share_selection_history_and_visual_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_story_uses_active_utf16_end_and_preserves_extension_anchor"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_headless_lines_keep_paragraph_ends_and_empty_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_excludes_platform_soft_break_and_structural_separator"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_headless_crlf_and_paragraph_controls_exclude_the_whole_break"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_uses_wrapped_lines_and_forward_boundary_affinity_after_reflow"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_follows_logical_source_order_in_rtl_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_uses_complete_linked_overflow_lines"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_rejects_unsupported_units_without_touching_preview_or_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_readonly_navigation_preserves_preview_and_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_rejects_incomplete_or_trimmed_lines_but_story_needs_no_layout"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_recaptures_active_end_after_layout_selection_callbacks"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_layout_model_mutation_survives_nested_group_rejection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_presentation_or_view_reentrancy_preserves_selection_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_reports_canceled_or_reentrant_accepted_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_selection_callback_model_write_rejects_stale_result_in_outer_batch"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs",
+          "symbol": "rich_selection_home_end_editor_publication_model_write_preserves_external_state"
         }
       ],
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
-      "reason": "The Rust selection facade shares the editor selection and history; native directional/layout movement, options and selection type surface remain pending.",
+      "reason": "The Rust selection facade shares editor selection/history and implements logical Line/Story Home/End with directed extension, layout validation and reentrant selection handling. Exact native collapse/count/Gravity conventions, remaining directional movement, options and selection-type surface remain pending.",
       "deviations": [
         "RT-I01",
-        "RT-I08"
+        "RT-I08",
+        "RT-I21"
       ]
     },
     {
