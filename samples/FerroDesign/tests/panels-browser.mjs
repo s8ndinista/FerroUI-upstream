@@ -39,7 +39,7 @@ export async function floatingPanelRegressions(page, reference, check, helpers, 
     assert.equal(selected.chrome.ModalBackdrop.visible, true);
     assert.ok(Math.abs(selected.chrome.ModalPanel.x - moved.chrome.ModalPanel.x) <= 2,
         "Selection refresh keeps the user's palette position");
-    await clickNative(page, "EffectAdd", "ModalViewport");
+    await clickNative(page, "EffectAdd", "ModalActions");
     await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[3].effects.length === 1);
     const edited = await documentState(page);
     assert.equal(edited.nodes[2].effects.length, 0, "A refreshed palette cannot edit its former layer");

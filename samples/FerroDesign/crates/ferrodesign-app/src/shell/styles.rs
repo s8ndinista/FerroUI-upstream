@@ -1,5 +1,8 @@
 //! Native local style management. Definition edits reuse the validated core
 //! lifecycle and preserve effective values, bindings and exact undo boundaries.
+#[path = "layout_grids.rs"]
+mod layout_grids;
+
 use super::*;
 use ferrodesign_core::{LocalStyleKind, Style, StyleId, StyleValue};
 use ferroui_base::interactivity::RoutingStrategies;
@@ -19,7 +22,7 @@ impl EditorShell {
             let editor = self.editor.borrow();
             let mut usages = BTreeMap::<StyleId, usize>::new();
             for node in editor.document.nodes.values() {
-                let bindings = [node.fill_style, node.text_style, node.effect_style];
+                let bindings = [node.fill_style, node.text_style, node.effect_style, node.grid_style];
                 for (index, id) in bindings.iter().enumerate() {
                     if let Some(id) = id.filter(|id| !bindings[..index].contains(&Some(*id))) {
                         *usages.entry(id).or_default() += 1;
@@ -49,7 +52,7 @@ impl EditorShell {
         for (id, name, kind, users) in styles {
             let row = style_grid("*,80");
             let apply = self.style_button(&format!("{name}  ·  {}  ·  {users} uses", kind.label()),
-                &format!("StyleApply{id}"), kind != LocalStyleKind::Grid, move |shell| {
+                &format!("StyleApply{id}"), true, move |shell| {
                     let result = { let mut editor = shell.editor.borrow_mut();
                         let ids = editor.selection.clone(); editor.apply_local_style(&ids, id) };
                     match result {
@@ -67,11 +70,14 @@ impl EditorShell {
             row.children().add(edit);
             host.children().add(row);
         }
+        host.children().add(self.style_button("Selected frame grid settings…", "StyleGridSettings", true,
+            |shell| shell.layout_grid_dialog()));
         let actions = self.control::<StackPanel>("ModalActions");
         for (label, name, command) in [
             ("Create fill", "StyleCreateFill", "create-fill-style"),
             ("Create text", "StyleCreateText", "create-text-style"),
             ("Create effects", "StyleCreateEffect", "create-effect-style"),
+            ("Create grid", "StyleCreateGrid", "create-grid-style"),
         ] {
             actions.children().add(
                 self.style_button(label, name, true, move |shell| shell.create_style(command)),
@@ -86,6 +92,7 @@ impl EditorShell {
         let kind = match command {
             "create-text-style" => LocalStyleKind::Text,
             "create-effect-style" => LocalStyleKind::Effect,
+            "create-grid-style" => LocalStyleKind::Grid,
             _ => LocalStyleKind::Fill,
         };
         let result = {
@@ -248,7 +255,7 @@ impl EditorShell {
                 ));
             }
             StyleValue::Grid { size, color } => {
-                host.children().add(style_label("Grid definitions are portable resources; layer grid application is not available yet."));
+                host.children().add(style_label("Square grid spacing and color update linked frames. Grid visibility remains a per-frame setting; overlays are excluded from exports and presentations."));
                 host.children().add(self.style_field(
                     id,
                     "Grid size",
@@ -281,7 +288,7 @@ impl EditorShell {
         value_actions.children().add(self.style_button(
             "Replace from selected layer",
             "StyleReplaceFromSelection",
-            kind != LocalStyleKind::Grid,
+            true,
             move |shell| {
                 if !shell.flush_inspector_drafts() {
                     return;
@@ -312,7 +319,7 @@ impl EditorShell {
         value_actions.children().add(self.style_button(
             "Detach selected",
             "StyleDetachSelected",
-            kind != LocalStyleKind::Grid,
+            true,
             move |shell| {
                 if !shell.flush_inspector_drafts() {
                     return;
@@ -332,7 +339,7 @@ impl EditorShell {
                                     LocalStyleKind::Fill => node.fill_style == Some(id),
                                     LocalStyleKind::Text => node.text_style == Some(id),
                                     LocalStyleKind::Effect => node.effect_style == Some(id),
-                                    LocalStyleKind::Grid => false,
+                                    LocalStyleKind::Grid => node.grid_style == Some(id),
                                 })
                         })
                         .collect();

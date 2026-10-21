@@ -61,6 +61,15 @@ export async function flattenRegressions(page, reference, check, helpers, mode) 
         await clickNative(page, "ActionSearch", "ModalViewport");
         await page.keyboard.press("Control+a");
         await page.keyboard.insertText("Flatten to vector");
+        await page.waitForFunction(() => {
+            const chrome = JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome;
+            const visible = Object.entries(chrome)
+                .filter(([name, bounds]) => name.startsWith("Action-") && bounds.visible);
+            return chrome.ActionSearch?.text === "Flatten to vector" && visible.length === 1 &&
+                visible[0][0] === "Action-flatten" &&
+                ["ModalPanel", "ModalContent", "ModalViewport"].every(name =>
+                    chrome[name]?.measureValid && chrome[name]?.arrangeValid);
+        });
         await clickNative(page, "Action-flatten", "ModalViewport");
         await frames(page);
     };

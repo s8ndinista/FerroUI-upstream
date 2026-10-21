@@ -3,6 +3,16 @@ use super::*;
 use ferrodesign_core::NetworkPointId;
 
 impl DesignCanvas {
+    pub fn active_network_region(&self) -> Option<(NodeId, core::VectorRegionId)> {
+        let id = self.vector_node.get()?;
+        let region = self.network_region.get()?;
+        let editor = self.editor.borrow();
+        (editor.selection.as_slice() == [id]
+            && editor.document.nodes.get(&id).and_then(|node| node.vector_network.as_ref())
+                .is_some_and(|network| network.regions.contains_key(&region)))
+            .then_some((id, region))
+    }
+
     pub fn convert_network(&self) -> bool {
         let id = self.editor.borrow().selection.first().copied();
         let Some(id) = id else { return false; };
@@ -12,6 +22,7 @@ impl DesignCanvas {
             self.vector_node.set(Some(id));
             self.vector_point.set(None);
             self.network_point.set(None);
+            self.network_region.set(None);
             self.network_vertices.borrow_mut().clear();
             self.emit(CanvasEvent::Document);
         }
@@ -89,6 +100,32 @@ impl DesignCanvas {
         let Some(node) = editor.document.nodes.get(&id) else { return false; };
         let Some(network) = node.vector_network.as_ref() else { return false; };
         let Some(transform) = editor.document.world_transform(id) else { return false; };
+        if self.vector_tool.get() == VectorTool::Bucket {
+            let Some(inverse) = transform.inverse() else { return true; };
+            let local = inverse.apply(world);
+            let fills = if additive { Vec::new() } else if node.fills.is_empty() {
+                vec![core::Fill::solid(core::Color::rgb(217, 217, 217))]
+            } else {
+                node.fills.clone()
+            };
+            drop(editor);
+            let result = self.editor.borrow_mut().paint_network_face(id, local, Some(fills));
+            match result {
+                Ok(changed) => {
+                    let region = self.editor.borrow().document.nodes.get(&id)
+                        .and_then(|node| node.vector_network.as_ref())
+                        .and_then(|network| network.region_at(local));
+                    self.network_region.set(region);
+                    self.network_point.set(None);
+                    self.network_vertices.borrow_mut().clear();
+                    self.emit(if changed { CanvasEvent::Document } else { CanvasEvent::Selection });
+                }
+                Err(error) => self.emit(CanvasEvent::Notice(error.to_string())),
+            }
+            self.invalidate_visual();
+            return true;
+        }
+        self.network_region.set(None);
         let active_vertex = self.network_point.get().and_then(|p| network.point_vertex(p));
         let points = network.edit_points();
         let hit = points.iter().filter(|p| matches!(p.id, NetworkPointId::Vertex(_)) || Some(p.vertex) == active_vertex)

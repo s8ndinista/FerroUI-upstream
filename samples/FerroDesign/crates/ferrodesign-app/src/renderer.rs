@@ -16,6 +16,11 @@ mod mask_tests;
 mod masks;
 mod picking;
 mod root_index;
+mod regions;
+#[cfg(all(test, not(target_os = "emscripten")))]
+mod region_tests;
+#[cfg(all(test, not(target_os = "emscripten")))]
+mod svg_regions_tests;
 #[cfg(all(test, not(target_os = "emscripten")))]
 mod shadow_tests;
 
@@ -118,6 +123,7 @@ struct CachedNode {
     stroke_geometry: Ref<Geometry>,
     rounded_rect: Option<RoundedRect>,
     fills: Vec<Rc<dyn IBrush>>,
+    network_fills: Option<regions::CachedNetworkFills>,
     strokes: Vec<CachedStroke>,
     texts: Vec<CachedText>,
     box_outer: BoxShadows,
@@ -142,6 +148,7 @@ impl CachedNode {
             stroke_geometry: StreamGeometry::new().upcast(),
             rounded_rect: None,
             fills: Vec::new(),
+            network_fills: None,
             strokes: Vec::new(),
             texts: Vec::new(),
             box_outer: BoxShadows::default(),
@@ -820,6 +827,10 @@ fn paint_body(context: &mut DrawingContext<'_>, visual: &CachedNode) {
 }
 
 fn paint_fills(context: &mut DrawingContext<'_>, visual: &CachedNode) {
+    if let Some(network) = &visual.network_fills {
+        network.paint(context, &visual.geometry, &visual.fills);
+        return;
+    }
     if visual.texts.is_empty() {
         // The first fill is the topmost item in the inspector.
         for fill in visual.fills.iter().rev() {
@@ -991,6 +1002,7 @@ fn build_visual(
         .as_ref()
         .map(|network| path_geometry(&network.stroke_path()))
         .unwrap_or_else(|| geometry.clone());
+    let network_fills = regions::prepare(node, &geometry, images, &mut missing_images);
     let mut local_bounds = node.local_bounds();
     if outline_required || node.kind != NodeKind::Text {
         let geometry_bounds = core_rect(geometry.bounds());
@@ -1012,7 +1024,9 @@ fn build_visual(
     }
 
     let mut strokes = Vec::new();
-    let mut vector_mask = if node
+    let mut vector_mask = if let Some(network) = &network_fills {
+        network.vector_mask(node, &geometry)
+    } else if node
         .fills
         .iter()
         .any(|fill| fill.visible && fill.opacity > 0.0 && masks::paint_has_alpha(&fill.paint))
@@ -1154,6 +1168,7 @@ fn build_visual(
         stroke_geometry,
         rounded_rect: rect,
         fills,
+        network_fills,
         strokes,
         texts,
         box_outer: box_shadows(&outer),
@@ -1253,7 +1268,7 @@ fn polyline_geometry(points: &[Point], closed: bool) -> Ref<Geometry> {
     geometry.upcast()
 }
 
-fn rounded_rect(node: &Node) -> RoundedRect {
+pub(crate) fn rounded_rect(node: &Node) -> RoundedRect {
     let w = node.width.max(0.0);
     let h = node.height.max(0.0);
     let mut r = node
@@ -2122,6 +2137,15 @@ fn visual_fingerprint(node: &Node, children: u64, needs_outline: bool, assets: u
         }
         for (id, region) in &network.regions {
             id.hash(&mut hash);
+            region.fills.is_some().hash(&mut hash);
+            if let Some(fills) = &region.fills {
+                fills.len().hash(&mut hash);
+                for fill in fills {
+                    fill.visible.hash(&mut hash);
+                    hash_number(fill.opacity, &mut hash);
+                    hash_paint(&fill.paint, &mut hash);
+                }
+            }
             for contour in &region.contours {
                 contour.len().hash(&mut hash);
                 for edge in contour {

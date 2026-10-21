@@ -99,7 +99,7 @@ export async function inspectorLifecycleRegressions(page, reference, check, help
 
     const beforeName = await documentState(page), nameDepth = (await state(page)).historyLength;
     const confirmed = "Confirmed inspector · Ω 🚀";
-    await draft("NameField", confirmed);
+    await draft("NameField", confirmed, "InspectorViewport");
     await page.keyboard.press("Control+a");
     const ime = page.locator(".ferroui-input-element");
     assert.equal(await ime.count(), 1);

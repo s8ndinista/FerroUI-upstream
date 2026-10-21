@@ -14,6 +14,7 @@ mod prototyping;
 mod rich_text;
 mod text;
 mod variables;
+mod vector_export;
 use crate::{
     canvas::{CanvasEvent, DesignCanvas, Tool},
     icons, platform,
@@ -36,7 +37,7 @@ use ferroui_base::{BoxedValue, ObjectType, Ref, Thickness, WeakRef};
 use ferroui_controls::templates::FuncDataTemplate;
 use ferroui_controls::{
     Border, Button, CheckBox, ColumnDefinitions, ComboBox, Control, Grid, ItemsControl,
-    ItemsSource, StackPanel, TextBlock, TextBox, UserControl,
+    ItemsSource, StackPanel, TextBlock, TextBox, TopLevel, UserControl,
 };
 use ferroui_markup_xaml::FerroXamlLoader;
 use serde_json::json;
@@ -53,6 +54,7 @@ pub struct EditorShell {
     pub editor: Rc<RefCell<Editor>>,
     updating: Cell<bool>,
     inline_text: Cell<Option<NodeId>>,
+    paint_region: Cell<Option<(NodeId, core::VectorRegionId)>>,
     inline_layout: RefCell<Option<text::InlineLayout>>,
     inline_updating: Cell<bool>,
     inline_draft_dirty: Cell<bool>,
@@ -70,6 +72,15 @@ pub struct EditorShell {
     pending_save_timer: RefCell<Option<Rc<dyn IDisposable>>>,
     save_serializations: Cell<u64>,
     last_serialization_ms: Cell<f64>,
+    scene_frames: Cell<u64>,
+    scene_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+}
+impl Drop for EditorShell {
+    fn drop(&mut self) {
+        if let Some(subscription) = self.scene_subscription.get_mut().take() {
+            subscription.dispose();
+        }
+    }
 }
 impl EditorShell {
     pub fn new() -> Rc<Self> {
@@ -102,6 +113,7 @@ impl EditorShell {
             editor,
             updating: Cell::new(false),
             inline_text: Cell::new(None),
+            paint_region: Cell::new(None),
             inline_layout: RefCell::new(None),
             inline_updating: Cell::new(false),
             inline_draft_dirty: Cell::new(false),
@@ -119,10 +131,38 @@ impl EditorShell {
             pending_save_timer: RefCell::new(None),
             save_serializations: Cell::new(0),
             last_serialization_ms: Cell::new(0.0),
+            scene_frames: Cell::new(0),
+            scene_subscription: RefCell::new(None),
         });
+        this.wire_scene_diagnostics();
         this.wire();
         this.refresh();
         this
+    }
+    fn wire_scene_diagnostics(self: &Rc<Self>) {
+        let weak = Rc::downgrade(self);
+        self.root.loaded(move |_, _| {
+            let Some(shell) = weak.upgrade() else { return; };
+            if shell.scene_subscription.borrow().is_some() { return; }
+            let Some(top_level) = TopLevel::get_top_level(Some(&shell.root)) else { return; };
+            let weak = Rc::downgrade(&shell);
+            let subscription = top_level.renderer().scene_invalidated(Rc::new(move |_| {
+                if let Some(shell) = weak.upgrade() {
+                    // This public notification follows the compositor's full
+                    // render, when its updated hit-test scene is available.
+                    shell.scene_frames.set(shell.scene_frames.get().saturating_add(1));
+                }
+            }));
+            *shell.scene_subscription.borrow_mut() = Some(subscription);
+        });
+        let weak = Rc::downgrade(self);
+        self.root.unloaded(move |_, _| {
+            if let Some(shell) = weak.upgrade() {
+                if let Some(subscription) = shell.scene_subscription.borrow_mut().take() {
+                    subscription.dispose();
+                }
+            }
+        });
     }
     fn control<T: ObjectType>(&self, name: &str) -> Ref<T> {
         self.root.get_control::<T>(name)
@@ -443,6 +483,10 @@ impl EditorShell {
             ("NetworkPenButton", "network-pen"), ("NetworkJoinButton", "network-join"),
             ("NetworkFillButton", "network-fill"), ("NetworkWeldButton", "network-weld"),
             ("NetworkDetectFacesButton", "network-fill-faces"),
+            ("NetworkBucketButton", "network-bucket"),
+            ("NetworkRegionPaintsButton", "network-region-paints"),
+            ("NetworkRegionResetButton", "network-region-reset"),
+            ("LayoutGridSettingsButton", "layout-grid-settings"),
             ("VectorSelectButton", "vector-points"),
             ("VectorBendButton", "vector-bend"),
             ("VectorEraseButton", "vector-erase"),
@@ -619,6 +663,9 @@ impl EditorShell {
                     state["typography"] = crate::renderer::typography::text_box_state(field);
                 }
             }
+            if let Some(text) = control.downcast_ref::<TextBlock>() {
+                state["text"] = json!(text.text());
+            }
             if let Some(choice) = control.downcast_ref::<ComboBox>() {
                 // Popups have a separate visual ancestry. Report the realized
                 // item's actual keyboard focus instead of inferring it from
@@ -660,6 +707,10 @@ impl EditorShell {
             "VectorSelectButton", "VectorBendButton", "VectorEraseButton",
             "ConvertNetworkButton", "NetworkPenButton", "NetworkJoinButton", "NetworkFillButton", "NetworkWeldButton",
             "NetworkDetectFacesButton",
+            "NetworkBucketButton", "NetworkRegionPaintsButton", "NetworkRegionResetButton",
+            "LayoutGridSettingsButton",
+            "ZoomOutButton", "ZoomInButton", "ZoomValueButton", "ZoomPanel",
+            "Toast", "ToastText",
             "CornerPointButton", "SmoothPointButton", "SymmetricPointButton",
             "InlineTextBox",
             "EditPaintsButton",
@@ -745,7 +796,8 @@ impl EditorShell {
             "renderer":"FerroUI Vello","pageCount":editor.document.pages.len(),"activePage":editor.active_page,
             "canvasCaption":self.control::<TextBlock>("CanvasCaption").text(),
             "floatingPanel":self.panel_state.floating.get(),
-            "renderedFrames":self.canvas.frames.get(),"visibleNodes":stats.visible_nodes,"culledNodes":stats.culled_nodes,
+            "renderedFrames":self.canvas.frames.get(),"sceneFrames":self.scene_frames.get(),
+            "visibleNodes":stats.visible_nodes,"culledNodes":stats.culled_nodes,
             "cachedNodes":stats.cached_nodes,"missingImages":stats.missing_images,"unsupportedEffects":stats.unsupported_effects,
             "backdropCacheHits":stats.backdrop_cache_hits,"backdropRasterizations":stats.backdrop_rasterizations,
             "backdropSkipped":stats.backdrop_skipped,"backdropTooLarge":stats.backdrop_too_large,
@@ -1236,6 +1288,14 @@ impl EditorShell {
         self.visible("NetworkOptions", network && vector_edit);
         self.visible("ConvertNetworkButton", !network);
         self.button("NetworkPenButton").classes().set("active", self.canvas.vector_tool.get() == crate::canvas::VectorTool::Connect);
+        self.button("NetworkBucketButton").classes().set("active", self.canvas.vector_tool.get() == crate::canvas::VectorTool::Bucket);
+        let region = self.canvas.active_network_region();
+        self.button("NetworkRegionPaintsButton").set_is_enabled(region.is_some());
+        self.button("NetworkRegionResetButton").set_is_enabled(region.is_some_and(|(id, region)|
+            editor.document.nodes.get(&id).and_then(|n| n.vector_network.as_ref())
+                .and_then(|n| n.regions.get(&region)).is_some_and(|r| r.fills.is_some())));
+        self.visible("LayoutGridSettingsButton", node.is_some_and(|n|
+            matches!(n.kind, NodeKind::Frame | NodeKind::Component | NodeKind::Instance)));
         for (name, mode) in [("VectorSelectButton", crate::canvas::VectorTool::Point),
             ("VectorBendButton", crate::canvas::VectorTool::Bend), ("VectorEraseButton", crate::canvas::VectorTool::Erase)] {
             self.button(name).classes().set("active", self.canvas.vector_tool.get() == mode);
@@ -1781,6 +1841,24 @@ impl EditorShell {
                 self.paints_dialog();
                 return true;
             }
+            "layout-grid-settings" => { self.layout_grid_dialog(); return true; }
+            "network-region-paints" => { self.region_paints_dialog(); return true; }
+            "network-region-reset" => {
+                let Some((id, region)) = self.canvas.active_network_region() else { return false; };
+                let result = self.editor.borrow_mut().set_network_region_fills(id, region, None);
+                match result {
+                    Ok(changed) => { if !changed { return false; } }
+                    Err(error) => { self.toast(&error.to_string()); return false; }
+                }
+                self.changed();
+                return true;
+            }
+            "network-bucket" => {
+                if self.canvas.vector_node.get().is_none() && !self.canvas.edit_vector() { return false; }
+                self.canvas.convert_network();
+                self.canvas.vector_tool.set(crate::canvas::VectorTool::Bucket);
+                self.refresh_selection(); self.canvas.focus(); return true;
+            }
             "vector-network" => return self.canvas.convert_network(),
             "network-join" => return self.canvas.network_connect_selection(),
             "network-fill" => {
@@ -2051,7 +2129,7 @@ impl EditorShell {
                 self.styles_dialog();
                 return true;
             }
-            "create-fill-style" | "create-text-style" | "create-effect-style" => {
+            "create-fill-style" | "create-text-style" | "create-effect-style" | "create-grid-style" => {
                 self.create_style(command);
                 return true;
             }
@@ -2374,6 +2452,7 @@ impl EditorShell {
         if !self.updating.get() && !self.flush_inspector_drafts() { return; }
         self.release_panel_drag();
         self.visible("ModalBackdrop", false);
+        self.paint_region.set(None);
         self.canvas.focus();
         self.sync_document_draft_dirty();
     }
@@ -2841,7 +2920,13 @@ fn css(n: &Node) -> String {
     if n.corner_radius > 0.0 {
         output += &format!("border-radius: {}px;\n", number(n.corner_radius));
     }
-    if let Some(fill) = n.fills.iter().find(|fill| fill.visible) {
+    let regional = n.vector_network.as_ref().is_some_and(|network| {
+        network.regions.values().any(|region| region.fills.is_some())
+    });
+    if regional {
+        output += "/* This vector has independent region paints and cutouts. Export SVG for its artwork; a CSS box background cannot represent the region geometry. */\n";
+    }
+    if let Some(fill) = n.fills.iter().find(|fill| fill.visible).filter(|_| !regional) {
         match &fill.paint {
             Paint::Solid(color) => output += &format!("background: {};\n", color.css()),
             Paint::LinearGradient { stops, .. } => {
@@ -2954,23 +3039,33 @@ fn export_xaml(doc: &core::Document, roots: &[NodeId]) -> String {
     result += "</Canvas>\n";
     result
 }
-/// Emit native angular brush properties instead of approximating a sweep with
-/// its first stop. Other paint kinds retain the exporter's existing subset.
+/// Emit public native brush properties, retaining stop ordering and paint alpha.
 fn xaml_paint(
     tag: &str, property: &str, paint: &Paint, opacity: f64, depth: usize,
     attributes: &mut String, properties: &mut String,
 ) {
-    if let Paint::AngularGradient { center, angle, stops } = paint {
-        let pad = "  ".repeat(depth);
-        *properties += &format!("{pad}<{tag}.{property}>\n{pad}  <ConicGradientBrush Center=\"{}%,{}%\" Angle=\"{}\" Opacity=\"{}\">\n",
-            center.x * 100.0, center.y * 100.0, angle, opacity);
+    let gradient = match paint {
+        Paint::LinearGradient { start, end, stops } => Some(("LinearGradientBrush",
+            format!("StartPoint=\"{}%,{}%\" EndPoint=\"{}%,{}%\"", start.x * 100.0, start.y * 100.0, end.x * 100.0, end.y * 100.0), stops)),
+        Paint::RadialGradient { center, radius, stops } => Some(("RadialGradientBrush",
+            format!("Center=\"{}%,{}%\" GradientOrigin=\"{}%,{}%\" RadiusX=\"{}%\" RadiusY=\"{}%\"", center.x * 100.0, center.y * 100.0,
+                center.x * 100.0, center.y * 100.0, radius * 100.0, radius * 100.0), stops)),
+        Paint::AngularGradient { center, angle, stops } => Some(("ConicGradientBrush",
+            format!("Center=\"{}%,{}%\" Angle=\"{}\"", center.x * 100.0, center.y * 100.0, angle), stops)),
+        _ => None,
+    };
+    let pad = "  ".repeat(depth);
+    if let Some((brush, coordinates, stops)) = gradient {
+        *properties += &format!("{pad}<{tag}.{property}>\n{pad}  <{brush} {coordinates} Opacity=\"{opacity}\">\n");
         let mut stops = stops.clone();
         stops.sort_by(|a, b| a.offset.total_cmp(&b.offset));
         for stop in stops {
             *properties += &format!("{pad}    <GradientStop Offset=\"{}\" Color=\"{}\"/>\n",
                 stop.offset, xaml_color(stop.color));
         }
-        *properties += &format!("{pad}  </ConicGradientBrush>\n{pad}</{tag}.{property}>\n");
+        *properties += &format!("{pad}  </{brush}>\n{pad}</{tag}.{property}>\n");
+    } else if opacity != 1.0 {
+        *properties += &format!("{pad}<{tag}.{property}><SolidColorBrush Color=\"{}\" Opacity=\"{opacity}\"/></{tag}.{property}>\n", xaml_color(paint.representative_color()));
     } else {
         *attributes += &format!(" {property}=\"{}\"", xaml_color(paint.representative_color()));
     }
@@ -2978,6 +3073,10 @@ fn xaml_paint(
 
 fn xaml_node(doc: &core::Document, id: NodeId, depth: usize, result: &mut String) {
     let Some(n) = doc.nodes.get(&id) else { return };
+    if let Some(network) = n.vector_network.as_ref().filter(|_| n.kind == NodeKind::Vector) {
+        vector_export::network_xaml(n, network, depth, result);
+        return;
+    }
     let pad = "  ".repeat(depth);
     let mut attributes = format!("Canvas.Left=\"{}\" Canvas.Top=\"{}\" Width=\"{}\" Height=\"{}\" Opacity=\"{}\" IsVisible=\"{}\"",
         number(n.x), number(n.y), number(n.width), number(n.height), number(n.opacity), if n.visible { "True" } else { "False" });
@@ -3116,6 +3215,7 @@ const LAYER_ACTIONS: &[(&str, &str)] = &[
     ("Flatten to vector", "flatten"),
     ("Add auto layout", "auto-layout"),
     ("Layout and grid placement…", "layout-details"),
+    ("Layout grid guides…", "layout-grid-settings"),
     ("Remove auto layout", "remove-layout"),
     ("Create component", "component"),
     ("Create instance", "instance"),
@@ -3145,6 +3245,8 @@ const ACTIONS: &[(&str, &str)] = &[
     ("Star", "star"),
     ("Pen  P", "pen"),
     ("Pencil  Shift+P", "pencil"),
+    ("Paint vector regions  Shift+B", "network-bucket"),
+    ("Region paints…", "network-region-paints"),
     ("Text  T", "text"),
     ("Place image…", "place-image"),
     ("Hand  H", "hand"),
@@ -3168,6 +3270,7 @@ const ACTIONS: &[(&str, &str)] = &[
     ("Local variables", "variables"),
     ("Local styles", "styles"),
     ("Toggle grid", "grid"),
+    ("Layout grid guides…", "layout-grid-settings"),
     ("Toggle rulers", "rulers"),
     ("Toggle pixel and object snapping", "snapping"),
     ("Zoom to fit  1", "fit"),

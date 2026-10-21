@@ -19,6 +19,8 @@ import { geometryAuthoringRegressions } from "./geometry-authoring-browser.mjs";
 import { flattenRegressions } from "./flatten-browser.mjs";
 import { angularPaintRegressions } from "./angular-paints-browser.mjs";
 import { localStyleRegressions } from "./styles-browser.mjs";
+import { gridStyleRegressions } from "./grid-styles-browser.mjs";
+import { regionPaintRegressions } from "./region-paints-browser.mjs";
 import { compactAutosaveRegressions } from "./serialization-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
@@ -191,7 +193,7 @@ async function waitForNativeFrame(page, afterFrame, label) {
     } catch (error) {
         const view = await state(page);
         throw new Error(label + " did not produce a committed native frame: " + JSON.stringify({
-            afterFrame, renderedFrames: view.renderedFrames, selection: view.selection,
+            afterFrame, renderedFrames: view.renderedFrames, sceneFrames: view.sceneFrames, selection: view.selection,
             documentRevision: view.documentRevision, tool: view.tool, chrome: view.chrome,
         }), { cause: error });
     }
@@ -208,6 +210,12 @@ async function clickWorld(page, x, y, options) {
     // native frame, and unchanged clicks need no extra rendering.
     if (JSON.stringify(after.selection) !== JSON.stringify(before.selection)) {
         await waitForNativeFrame(page, before.renderedFrames, "Canvas selection");
+        // The canvas counter advances inside the render pass. FerroUI's
+        // scene-invalidated notification follows the completed compositor
+        // render, when the new inspector hit-test scene is available.
+        await page.waitForFunction((afterScene) =>
+            JSON.parse(globalThis.ferroDesign.ferroDesignState()).sceneFrames > afterScene,
+        before.sceneFrames, { timeout: 10000 });
     }
 }
 async function clickNative(page, name, scrollContainer) {
@@ -351,7 +359,7 @@ async function captureNativeScreenshot(page, result, name, { controls = [], afte
                             modalVisible: view.chrome.ModalBackdrop.visible,
                             controls: Object.fromEntries(controls.map((name) => [name, view.chrome[name]])),
                         },
-                        renderedFrames: view.renderedFrames, documentRevision: view.documentRevision,
+                        renderedFrames: view.renderedFrames, sceneFrames: view.sceneFrames, documentRevision: view.documentRevision,
                         fonts: { status: document.fonts.status, faces: [...document.fonts].map((font) => ({ family: font.family, status: font.status })) },
                         surface: { kind, width: canvas?.width, height: canvas?.height, contextLost: gl?.isContextLost() ?? false },
                         visibility: document.visibilityState,
@@ -943,6 +951,8 @@ try {
             await flattenRegressions(page, svgDocument, check, nativeHelpers, mode);
             await localStyleRegressions(page, svgDocument, check, nativeHelpers, mode);
             await angularPaintRegressions(page, svgDocument, check, nativeHelpers, output, mode);
+            await gridStyleRegressions(page, svgDocument, check, nativeHelpers, output, mode);
+            await regionPaintRegressions(page, svgDocument, check, nativeHelpers, output, mode);
             await compactAutosaveRegressions(page, svgDocument, check,
                 { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, flushStorage }, output, mode);
             await prototypeInputRegressions(page, svgDocument, check);

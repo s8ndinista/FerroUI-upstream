@@ -136,6 +136,7 @@
               <Button Name="LockedButton" Grid.Column="2" ToolTip.Tip="Lock or unlock layer"/>
             </Grid>
             <TextBox Name="NameField" PlaceholderText="Layer name"/>
+            <Button Name="LayoutGridSettingsButton" Content="Layout grid" HorizontalContentAlignment="Left" IsVisible="False"/>
             <StackPanel Name="VectorOptions" Spacing="8" IsVisible="False">
               <Button Name="EditVectorButton" Content="Edit vector" ToolTip.Tip="Edit vector points (Enter)" HorizontalContentAlignment="Left"/>
               <Button Name="ConvertNetworkButton" Content="Convert to vector network"/>
@@ -155,7 +156,9 @@
                   <UniformGrid Columns="2"><Button Name="NetworkPenButton" Content="Connect tool"/><Button Name="NetworkJoinButton" Content="Join selected"/></UniformGrid>
                   <UniformGrid Columns="2"><Button Name="NetworkFillButton" Content="Fill region"/><Button Name="NetworkWeldButton" Content="Weld vertices"/></UniformGrid>
                   <Button Name="NetworkDetectFacesButton" Content="Fill all closed regions"/>
-                  <TextBlock Text="Connect extends any vertex. Shift-select vertices in boundary order to fill a region, or select two to join or weld." TextWrapping="Wrap" Classes="label"/>
+                  <Button Name="NetworkBucketButton" Content="Paint bucket" ToolTip.Tip="Click a closed face to paint it. Shift-click clears its fill."/>
+                  <UniformGrid Columns="2"><Button Name="NetworkRegionPaintsButton" Content="Region paints"/><Button Name="NetworkRegionResetButton" Content="Use layer fills"/></UniformGrid>
+                  <TextBlock Text="Connect extends any vertex. Paint bucket fills a closed face; Shift-click clears it. Region paints edits its own paint stack. Use layer fills resets the override." TextWrapping="Wrap" Classes="label"/>
                 </StackPanel>
                 <TextBlock Text="Drag a point or handle. Double-click a segment to add a point. Delete removes the selected point." TextWrapping="Wrap" Classes="label"/>
               </StackPanel>

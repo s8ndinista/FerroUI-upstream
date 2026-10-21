@@ -73,6 +73,10 @@ if [ "$FERRODESIGN_PROFILE" = "browser" ]; then FERRODESIGN_FLAGS+=(--profile br
 # the framework's generated controls and metadata within ordinary CI memory limits.
 (
     cd "$FERRODESIGN_ROOT"
+    # Cargo's job limit does not bound the post-link worker pools. Keep bindgen's
+    # Rayon pool and Binaryen within the same budget unless explicitly overridden.
+    export RAYON_NUM_THREADS="${RAYON_NUM_THREADS:-${FERRODESIGN_BUILD_JOBS:-1}}"
+    export BINARYEN_CORES="${BINARYEN_CORES:-${FERRODESIGN_BUILD_JOBS:-1}}"
     cargo build --locked --target wasm32-unknown-emscripten --target-dir "$FERRODESIGN_TARGET" \
         -p ferrodesign-app --bin ferrodesign-app --jobs "${FERRODESIGN_BUILD_JOBS:-1}" \
         "${FERRODESIGN_FLAGS[@]}" --message-format=json-render-diagnostics > "$FERRODESIGN_MESSAGES"

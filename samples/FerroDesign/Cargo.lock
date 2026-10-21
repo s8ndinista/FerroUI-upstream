@@ -627,6 +627,7 @@ dependencies = [
  "ferroui-headless",
  "ferroui-markup",
  "ferroui-markup-xaml",
+ "ferroui-markup-xaml-loader",
  "ferroui-native",
  "ferroui-themes-fluent",
  "ferroui-vello",
@@ -776,6 +777,7 @@ dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
  "ferroui-markup",
+ "ferroui-markup-xaml",
  "xamlx",
 ]
 

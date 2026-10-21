@@ -38,6 +38,10 @@ codegen-units = 1
 # Keep the generated theme tables in a single compilation unit.
 codegen-units = 1
 
+[profile.browser.package.ferroui-markup-xaml]
+# Avoid empty optimized Emscripten object units in the markup runtime.
+codegen-units = 1
+
 [profile.browser.package.ferroui-vello]
 opt-level = 3
 
@@ -64,6 +68,9 @@ opt-level = 3
 
 [profile.browser.package.read-fonts]
 opt-level = 3
+# Rust 1.99's Emscripten backend can emit an empty font-parser object when
+# splitting this crate across 16 codegen units. Keep its optimized code in one.
+codegen-units = 1
 
 [profile.dev]
 debug = 0

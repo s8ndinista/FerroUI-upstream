@@ -44,3 +44,7 @@ ferroui-native = { path = "../../../../src/FerroUI.Native" }
 
 [build-dependencies]
 ferroui-build = { path = "../../../../src/FerroUI.Build.Tasks" }
+
+[target.'cfg(not(target_os = "emscripten"))'.dev-dependencies]
+# Export tests load the emitted XAML and compare its actual public API pixels.
+ferroui-markup-xaml-loader = { path = "../../../../src/Markup/FerroUI.Markup.Xaml.Loader" }

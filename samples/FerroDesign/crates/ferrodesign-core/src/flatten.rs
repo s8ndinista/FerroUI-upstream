@@ -47,8 +47,8 @@ impl Editor {
     ///
     /// Multiple roots (and group children) can share one vector only when they
     /// are opaque, uniformly painted shapes without independent compositing.
-    /// Heterogeneous artwork is rejected explicitly until the document supports
-    /// independent paints on vector regions.
+    /// Heterogeneous artwork is rejected explicitly until flattening preserves
+    /// independent region paint ownership in its replacement network.
     pub fn flatten_selection_with_geometry(
         &mut self,
         mut extract: impl FnMut(&Document, &FlattenRequest) -> Result<VectorPath, DocumentError>,
@@ -138,6 +138,10 @@ impl Editor {
         for root in &ordered {
             for id in self.document.descendants(*root) {
                 let node = &self.document.nodes[&id];
+                if node.vector_network.as_ref().is_some_and(|network|
+                    network.regions.values().any(|region| region.fills.is_some())) {
+                    return Err(invalid("This vector has independent region paints. Keep its network representation to preserve their paint stacks and transparent regions."));
+                }
                 if id != survivor {
                     removed.insert(id);
                 }
@@ -236,6 +240,8 @@ impl Editor {
         result.text_runs.clear();
         result.font_features.clear();
         result.layout = None;
+        result.layout_grid = None;
+        result.grid_style = None;
         result.clip_content = false; // Any group/boolean clip is baked into the outline.
         result.corner_radius = 0.0;
         result.corner_radii = None;

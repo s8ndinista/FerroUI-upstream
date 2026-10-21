@@ -33,6 +33,18 @@ export async function selectionRegressions(page, reference, check, helpers, outp
         await clickNative(page, "ActionSearch", "ModalViewport");
         await page.keyboard.press("Control+a");
         await page.keyboard.insertText(search);
+        // TextChanged filtering is dispatched after TextBox.Text changes. A
+        // previously arranged row can therefore still have its old bounds.
+        // Observe the actual native filtered result before deriving a click.
+        await page.waitForFunction(({ search, command }) => {
+            const chrome = JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome;
+            const visible = Object.entries(chrome)
+                .filter(([name, bounds]) => name.startsWith("Action-") && bounds.visible);
+            return chrome.ActionSearch?.text === search && visible.length === 1 &&
+                visible[0][0] === "Action-" + command &&
+                ["ModalPanel", "ModalContent", "ModalViewport"].every(name =>
+                    chrome[name]?.measureValid && chrome[name]?.arrangeValid);
+        }, { search, command });
         await clickNative(page, "Action-" + command, "ModalViewport");
         await frames(page);
     };

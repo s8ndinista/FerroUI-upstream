@@ -1,5 +1,6 @@
 //! Interactive retained-mode surface. Artwork uses only FerroUI's public DrawingContext API.
 mod network;
+mod grids;
 mod image_crop;
 mod layout_drag;
 mod selection;
@@ -84,7 +85,7 @@ impl Tool {
     }
 }
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub enum VectorTool { #[default] Point, Bend, Erase, Connect }
+pub enum VectorTool { #[default] Point, Bend, Erase, Connect, Bucket }
 
 #[derive(Clone)]
 pub enum CanvasEvent {
@@ -184,6 +185,8 @@ pub struct DesignCanvas {
     pub vector_tool: Cell<VectorTool>,
     pub network_point: Cell<Option<core::NetworkPointId>>,
     pub network_vertices: RefCell<Vec<core::VectorVertexId>>,
+    pub network_region: Cell<Option<core::VectorRegionId>>,
+    layout_grids: RefCell<grids::LayoutGridOverlay>,
     image_crop: Cell<Option<image_crop::ImageCropMode>>,
     image_crop_gesture: RefCell<Option<image_crop::ImageCropGesture>>,
     layout_drag: RefCell<Option<layout_drag::LayoutDragGesture>>,
@@ -225,6 +228,8 @@ impl DesignCanvas {
             vector_tool: Cell::new(VectorTool::Point),
             network_point: Cell::new(None),
             network_vertices: RefCell::new(Vec::new()),
+            network_region: Cell::new(None),
+            layout_grids: RefCell::new(grids::LayoutGridOverlay::default()),
             image_crop: Cell::new(None),
             image_crop_gesture: RefCell::new(None),
             layout_drag: RefCell::new(None),
@@ -443,6 +448,7 @@ impl DesignCanvas {
     pub fn leave_vector_edit(&self) {
         self.vector_node.set(None);
         self.vector_point.set(None);
+        self.network_region.set(None);
         self.network_point.set(None);
         self.network_vertices.borrow_mut().clear();
         self.invalidate_visual();
@@ -1439,6 +1445,7 @@ impl InputElementImpl for DesignCanvas {
                 Key::O => Some("ellipse"),
                 Key::L => Some("line"),
                 Key::P => Some(if shift { "pencil" } else { "pen" }),
+                Key::B if shift && this.vector_node.get().is_some() => Some("network-bucket"),
                 Key::T => Some("text"),
                 Key::H => Some("hand"),
                 Key::C => Some("comment"),
@@ -1793,6 +1800,9 @@ impl VisualImpl for DesignCanvas {
             }
         }
         ctx.pop(camera);
+        if this.presentation.get().is_none() && prototype_scene.is_none() {
+            this.layout_grids.borrow_mut().render(ctx, &editor, v);
+        }
         if let Some(current) = this.presentation.get() {
             for &(id, position) in this.overlays.borrow().iter().filter(|_| prototype_scene.is_none()) {
                 if let (Some(current_bounds), Some(overlay_bounds)) =

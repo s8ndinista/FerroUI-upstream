@@ -27,13 +27,28 @@ export async function maskAuthoringRegressions(page, reference, check, helpers, 
         });
     };
     const choose = (name, index) => chooseNative(page, name, { index, scrollContainer: "ModalViewport" });
+    const focusCanvas = async () => {
+        // Fitting the 128px document puts world (160,160) outside the
+        // application viewport. The native Move tool restores the canvas's
+        // actual keyboard focus without relying on an offscreen blank point.
+        await clickNative(page, "SelectTool");
+        assert.equal((await state(page)).chrome.CanvasHost.focusWithin, true,
+            "The native canvas must own selection and history shortcuts");
+    };
+    const clearSelection = async () => {
+        await focusCanvas();
+        const previousFrame = (await state(page)).renderedFrames;
+        await page.keyboard.press("Escape");
+        await waitForNativeFrame(page, previousFrame, "Clear export selection");
+        assert.deepEqual((await state(page)).selection, []);
+    };
     const waitNode = (id, property, value) => page.waitForFunction(({ id, property, value }) =>
         JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[id]?.[property] === value,
     { id, property, value });
     const exactHistory = async (before, after, label, close = true) => {
         const depth = (await state(page)).historyLength;
         if (close) await done();
-        else await clickWorld(page, 160, 160);
+        else await focusCanvas();
         let previousFrame = (await state(page)).renderedFrames;
         await page.keyboard.press("Control+z");
         await waitForNativeFrame(page, previousFrame, label + " undo");
@@ -46,7 +61,7 @@ export async function maskAuthoringRegressions(page, reference, check, helpers, 
         assert.equal((await state(page)).historyLength, depth);
     };
     const selectAll = async () => {
-        await clickWorld(page, 160, 160);
+        await focusCanvas();
         await page.keyboard.press("Control+a");
         await frames(page);
         const document = await documentState(page);
@@ -97,6 +112,9 @@ export async function maskAuthoringRegressions(page, reference, check, helpers, 
     near(pixel(png, 16, 64), [0, 0, 0, 0], "The source does not paint its own green color");
     near(pixel(png, 100, 64), [0, 0, 0, 0], "Content outside source coverage is transparent");
     for (const [index, kind, alpha] of [[1, "vector", 255], [2, "luminance", 92]]) {
+        // A click inside an existing multiselection intentionally retains all
+        // members for a group move; finish that export selection first.
+        await clearSelection();
         await clickWorld(page, 16, 64);
         assert.deepEqual((await state(page)).selection, [2], "An unpainted mask source stays independently selectable");
         const before = await documentState(page);
@@ -174,6 +192,7 @@ export async function maskAuthoringRegressions(page, reference, check, helpers, 
     ], "Native pass-through compositing"));
     png = await exported("isolated-group");
     near(pixel(png, 20, 64), [192, 64, 128, 255], "Normal group isolates its child blend from the authored backdrop");
+    await clearSelection();
     await clickWorld(page, 120, 64);
     assert.deepEqual((await state(page)).selection, [3]);
     const isolated = await documentState(page);

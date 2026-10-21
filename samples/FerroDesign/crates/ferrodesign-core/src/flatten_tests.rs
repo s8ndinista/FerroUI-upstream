@@ -149,6 +149,88 @@ fn flatten_existing_vector_is_noop_and_preserves_evenodd_and_redo() {
 }
 
 #[test]
+fn flatten_region_paints_rejects_groups_atomically_and_keeps_single_vectors_unchanged() {
+    for fills in [
+        vec![
+            Fill {
+                paint: Paint::LinearGradient {
+                    start: Point::new(0.0, 0.0),
+                    end: Point::new(1.0, 1.0),
+                    stops: vec![
+                        GradientStop { offset: 0.0, color: Color::WHITE },
+                        GradientStop { offset: 1.0, color: Color::BLACK },
+                    ],
+                },
+                opacity: 0.4,
+                visible: true,
+            },
+            Fill { visible: false, ..Fill::solid(Color::rgb(40, 150, 220)) },
+        ],
+        Vec::new(), // Explicit transparency also replaces the inherited fill.
+    ] {
+        let mut document = Document::new("Flatten region paints");
+        let group = document.insert_node(
+            1, Node::new(NodeKind::Group, "Group", 0.0, 0.0, 80.0, 40.0),
+        ).unwrap();
+        let path = VectorPath::polygon(&[
+            Point::new(0.0, 0.0), Point::new(40.0, 0.0),
+            Point::new(40.0, 40.0), Point::new(0.0, 40.0),
+        ], true);
+        let mut network = VectorNetwork::from_path(&path).unwrap();
+        let region = *network.regions.keys().next().unwrap();
+        network.set_region_fills(region, Some(fills.clone())).unwrap();
+        let mut vector = Node::new(NodeKind::Vector, "Painted face", 0.0, 0.0, 40.0, 40.0);
+        vector.path = path;
+        vector.vector_network = Some(network.clone());
+        let vector = document.insert_node(group, vector).unwrap();
+        document.insert_node(group,
+            Node::new(NodeKind::Rectangle, "Sibling", 40.0, 0.0, 40.0, 40.0),
+        ).unwrap();
+        let mut editor = Editor::new(document);
+        let redo_node = editor.add_node(NodeKind::Ellipse, 100.0, 0.0, 10.0, 10.0);
+        assert!(editor.undo());
+        assert!(editor.can_redo());
+
+        editor.selection = vec![group];
+        let allocator = editor.document.next_id;
+        let token = editor.render_change_token();
+        unchanged_on_error(&mut editor, |editor| {
+            let result = editor.flatten_selection_with_geometry(|_, _| {
+                panic!("region paint loss must be rejected before geometry extraction")
+            });
+            assert!(matches!(&result, Err(DocumentError::Invalid(message))
+                if message.contains("independent region paints")));
+            result
+        });
+        assert_eq!(editor.document.next_id, allocator);
+        assert_eq!(editor.render_changes_since(&token), EditorRenderChanges::Nodes {
+            nodes: Vec::new(), ancestors: Vec::new(),
+        });
+
+        editor.selection = vec![vector];
+        let before = editor.document.to_json().unwrap();
+        let revision = editor.document.revision;
+        let history = editor.history_len();
+        assert_eq!(editor.flatten_selection_with_geometry(|_, _| {
+            panic!("an editable vector does not need new geometry")
+        }).unwrap(), vector);
+        assert_eq!(editor.flatten_selection(), Some(vector));
+        assert_eq!(editor.document.to_json().unwrap(), before);
+        assert_eq!(editor.document.revision, revision);
+        assert_eq!(editor.document.next_id, allocator);
+        assert_eq!(editor.selection, vec![vector]);
+        assert_eq!(editor.history_len(), history);
+        assert_eq!(editor.document.nodes[&vector].vector_network.as_ref(), Some(&network));
+        assert_eq!(editor.render_changes_since(&token), EditorRenderChanges::Nodes {
+            nodes: Vec::new(), ancestors: Vec::new(),
+        });
+        assert!(editor.can_redo());
+        assert!(editor.redo());
+        assert!(editor.document.nodes.contains_key(&redo_node));
+    }
+}
+
+#[test]
 fn flatten_rejects_locked_selection_and_unavailable_outline_atomically() {
     let (mut editor, parent, id) = fixture();
     editor.document.nodes.get_mut(&parent).unwrap().locked = true;

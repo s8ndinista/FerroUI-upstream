@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 export async function localStyleRegressions(page, reference, check, helpers, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, chooseNative, frames, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, chooseNative, frames, waitForNativeFrame, captureNativeScreenshot } = helpers;
     const red = { r: 239, g: 68, b: 68, a: 255 };
     const blue = { r: 37, g: 99, b: 235, a: 255 };
     const green = { r: 16, g: 185, b: 129, a: 255 };
@@ -36,7 +36,18 @@ export async function localStyleRegressions(page, reference, check, helpers, mod
         await page.keyboard.press("Enter");
         await frames(page);
     };
+    const clearSelection = async () => {
+        await clickNative(page, "SelectTool");
+        const before = await state(page);
+        assert.equal(before.chrome.CanvasHost.focusWithin, true);
+        await page.keyboard.press("Escape");
+        await waitForNativeFrame(page, before.renderedFrames, "Clear local-style selection");
+        assert.deepEqual((await state(page)).selection, []);
+    };
     const selectSurfaces = async () => {
+        // Clicking a member of a multiselection preserves the group for
+        // movement. Establish the next style operation's selection explicitly.
+        await clearSelection();
         await clickWorld(page, 80, 80);
         await page.keyboard.down("Shift");
         await clickWorld(page, 220, 80);
@@ -133,7 +144,9 @@ export async function localStyleRegressions(page, reference, check, helpers, mod
     await clickNative(page, "StyleDone", "ModalActions");
     check("Invalid native shared-style drafts survive refused Done and Ctrl+K with their validation, document and redo intact; Escape restores the field and permits normal close/reopen");
 
+    await clearSelection();
     await clickWorld(page, 80, 80);
+    assert.deepEqual((await state(page)).selection, [2]);
     await open(); await clickNative(page, "StyleEdit" + id, "ModalViewport");
     const beforeDetach = await documentState(page), detachDepth = (await state(page)).historyLength;
     await clickNative(page, "StyleDetachSelected", "ModalViewport");
@@ -160,6 +173,7 @@ export async function localStyleRegressions(page, reference, check, helpers, mod
     await history(beforeDelete, deleted, deleteDepth, "Native delete style");
     check("Deleting a native local style retains every layer's effective appearance; Undo restores the definition and all links atomically");
 
+    await clearSelection();
     await clickWorld(page, 80, 80);
     await page.keyboard.down("Shift"); await clickWorld(page, 80, 215); await page.keyboard.up("Shift");
     await open(); await clickNative(page, "StyleCreateText", "ModalActions");

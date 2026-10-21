@@ -56,15 +56,34 @@ enum StackEdit {
 
 impl EditorShell {
     pub(super) fn paints_dialog(self: &Rc<Self>) {
+        if !self.flush_inspector_drafts() { return; }
+        self.paint_region.set(None);
+        self.show_paints_dialog();
+    }
+
+    pub(super) fn region_paints_dialog(self: &Rc<Self>) {
+        if !self.flush_inspector_drafts() { return; }
+        let Some(target) = self.canvas.active_network_region() else {
+            self.toast("Use the paint bucket to select a closed vector region.");
+            return;
+        };
+        self.paint_region.set(Some(target));
+        self.show_paints_dialog();
+    }
+
+    fn show_paints_dialog(self: &Rc<Self>) {
         let snapshot = {
             let editor = self.editor.borrow();
             editor.selection.first().and_then(|id| {
-                editor.document.nodes.get(id).map(|node| {
-                    (
-                        node.name.clone(),
-                        node.fills.clone(),
-                        editor.selection.len(),
-                    )
+                editor.document.nodes.get(id).and_then(|node| {
+                    if let Some((target, region)) = self.paint_region.get() {
+                        if target != *id || editor.selection.len() != 1 { return None; }
+                        let region_value = node.vector_network.as_ref()?.regions.get(&region)?;
+                        Some((format!("{} · Region {region}", node.name),
+                            region_value.fills.as_ref().unwrap_or(&node.fills).clone(), 1))
+                    } else {
+                        Some((node.name.clone(), node.fills.clone(), editor.selection.len()))
+                    }
                 })
             })
         };
@@ -80,7 +99,7 @@ impl EditorShell {
                 "Showing {name}. Edits apply to matching paint rows on {selected} selected layers."
             )
         };
-        self.modal("Fill paints", &description);
+        self.modal(if self.paint_region.get().is_some() { "Region paints" } else { "Fill paints" }, &description);
         let host = self.control::<StackPanel>("ModalContent");
         host.set_spacing(12.0);
         if fills.is_empty() {
@@ -89,8 +108,8 @@ impl EditorShell {
                 true,
             ));
         }
-        // DrawingContext paints in vector order; the last paint is nearest the viewer.
-        for (index, fill) in fills.iter().enumerate().rev() {
+        // The first authored paint is topmost, matching native scene rendering.
+        for (index, fill) in fills.iter().enumerate() {
             host.children()
                 .add(self.paint_card(index, fill, fills.len()));
         }
@@ -142,8 +161,8 @@ impl EditorShell {
         });
         header.children().add(visible);
         for (column, label, suffix, enabled, edit) in [
-            (1, "Up", "Up", index + 1 < count, StackEdit::Move(index, 1)),
-            (2, "Down", "Down", index > 0, StackEdit::Move(index, -1)),
+            (1, "Up", "Up", index > 0, StackEdit::Move(index, -1)),
+            (2, "Down", "Down", index + 1 < count, StackEdit::Move(index, 1)),
             (
                 3,
                 "Duplicate",
@@ -640,10 +659,16 @@ impl EditorShell {
         let weak_shell = Rc::downgrade(self);
         let weak_choice = choice.downgrade();
         let count = labels.len();
+        let previous = selected;
         choice.selection_changed(move |_, _| {
             if let (Some(shell), Some(choice)) = (weak_shell.upgrade(), weak_choice.upgrade()) {
                 let selected = choice.selected_index();
                 if !shell.updating.get() && selected >= 0 && (selected as usize) < count {
+                    if !shell.flush_inspector_drafts() {
+                        let _updating = UpdatingPaints(&shell.updating, shell.updating.replace(true));
+                        choice.set_selected_index(previous as i32);
+                        return;
+                    }
                     apply(&shell, selected as usize);
                 }
             }
@@ -667,7 +692,7 @@ impl EditorShell {
         let weak_shell = Rc::downgrade(self);
         button.click(move |_, _| {
             if let Some(shell) = weak_shell.upgrade() {
-                if !shell.updating.get() {
+                if !shell.updating.get() && shell.flush_inspector_drafts() {
                     apply(&shell);
                 }
             }
@@ -677,6 +702,28 @@ impl EditorShell {
 
     fn edit_paints(self: &Rc<Self>, label: &str, edit: StackEdit, rebuild: bool) {
         if self.updating.get() {
+            return;
+        }
+        if let Some((id, region)) = self.paint_region.get() {
+            let fills = {
+                let editor = self.editor.borrow();
+                if editor.document.effective_locked(id) || editor.selection.as_slice() != [id] { return; }
+                editor.document.nodes.get(&id).and_then(|node| {
+                    let region = node.vector_network.as_ref()?.regions.get(&region)?;
+                    Some(region.fills.as_ref().unwrap_or(&node.fills).clone())
+                })
+            };
+            let Some(mut fills) = fills else { return; };
+            if !apply_stack_edit(&mut fills, edit) { return; }
+            let result = self.editor.borrow_mut().set_network_region_fills(id, region, Some(fills));
+            match result {
+                Ok(true) => {
+                    self.changed();
+                    if rebuild { self.show_paints_dialog(); }
+                }
+                Ok(false) => {}
+                Err(error) => self.toast(&error.to_string()),
+            }
             return;
         }
         let ids: Vec<_> = {
@@ -696,7 +743,7 @@ impl EditorShell {
         if changed {
             self.changed();
             if rebuild {
-                self.paints_dialog();
+                self.show_paints_dialog();
             }
         }
     }
@@ -710,7 +757,13 @@ impl EditorShell {
             .selection
             .first()
             .and_then(|id| editor.document.nodes.get(id))
-            .and_then(|node| node.fills.get(index))
+            .and_then(|node| {
+                if let Some((id, region)) = self.paint_region.get() {
+                    if node.id != id { return None; }
+                    node.vector_network.as_ref()?.regions.get(&region)?
+                        .fills.as_ref().unwrap_or(&node.fills).get(index)
+                } else { node.fills.get(index) }
+            })
         {
             preview.set_background(Some(paint_preview(fill)));
         }
@@ -775,7 +828,7 @@ fn replace_paint_value<T: PartialEq>(target: &mut T, value: T) -> bool {
 fn apply_stack_edit(fills: &mut Vec<Fill>, edit: StackEdit) -> bool {
     match edit {
         StackEdit::Add => {
-            fills.push(Fill::solid(Color::rgb(217, 217, 217)));
+            fills.insert(0, Fill::solid(Color::rgb(217, 217, 217)));
             true
         }
         StackEdit::Remove(index) if index < fills.len() => {
@@ -783,7 +836,7 @@ fn apply_stack_edit(fills: &mut Vec<Fill>, edit: StackEdit) -> bool {
             true
         }
         StackEdit::Duplicate(index) if index < fills.len() => {
-            fills.insert(index + 1, fills[index].clone());
+            fills.insert(index, fills[index].clone());
             true
         }
         StackEdit::Move(index, offset) => {
