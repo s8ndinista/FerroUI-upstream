@@ -9,7 +9,7 @@ use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions, ICo
 use crate::{ControlImpl, IconElement, TextBlock};
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
-use ferroui_base::layout::{LayoutableImpl, VerticalAlignment};
+use ferroui_base::layout::{Layoutable, LayoutableImpl, VerticalAlignment};
 use ferroui_base::media::{FlowDirection, FontFamily, ScaleTransform, TextAlignment};
 use ferroui_base::{
     ferro_class, ferro_impl_classes, ferro_property, instantiate, FerroObjectImpl, FerroObjectImplExt,
@@ -88,6 +88,13 @@ ferroui_base::ferro_properties! { impl FontIcon {
 
 impl FontIcon {
     fn static_constructor() {
+        Layoutable::affects_measure::<FontIcon>(&[
+            Self::glyph_property().as_property(),
+            TemplatedControl::font_family_property().as_property(),
+            TemplatedControl::font_size_property().as_property(),
+            TemplatedControl::font_style_property().as_property(),
+            TemplatedControl::font_weight_property().as_property(),
+        ]);
         TemplatedControl::font_family_property()
             .override_default_value::<FontIcon>(FontFamily::new("Segoe Fluent Icons"));
         TemplatedControl::font_size_property().override_default_value::<FontIcon>(20.0);

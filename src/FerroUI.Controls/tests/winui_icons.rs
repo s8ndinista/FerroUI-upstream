@@ -47,8 +47,8 @@ fn symbol_contract_and_glyph_map_match_every_pinned_upstream_entry() {
 
 #[test]
 fn font_icon_shapes_and_draws_glyph_text_with_native_font_metrics() {
-    let _fonts = fonts();
     let _app = UnitTestApplication::start(TestServices::mock_threading_interface());
+    let _fonts = fonts();
     let icon = FontIcon::new();
     icon.set_glyph("AB");
     layout(&icon);
@@ -64,8 +64,8 @@ fn font_icon_shapes_and_draws_glyph_text_with_native_font_metrics() {
 
 #[test]
 fn glyph_typography_and_foreground_changes_update_existing_native_presenter() {
-    let _fonts = fonts();
     let _app = UnitTestApplication::start(TestServices::mock_threading_interface());
+    let _fonts = fonts();
     let icon = FontIcon::new();
     icon.set_glyph("A");
     layout(&icon);
@@ -84,13 +84,13 @@ fn glyph_typography_and_foreground_changes_update_existing_native_presenter() {
     assert_eq!(text.font_style(), FontStyle::Italic);
     assert_eq!(text.font_weight(), FontWeight::Bold);
     assert_eq!(text.foreground(), icon.foreground());
-    assert!((icon.desired_size().width - 40.0).abs() < 0.001);
+    assert!((icon.desired_size().width - 40.0).abs() < 0.001, "icon {:?}, text {:?}, layout {}", icon.desired_size(), text.desired_size(), text.text_layout().width());
 }
 
 #[test]
 fn rtl_mirroring_is_opt_in_and_updates_without_replacing_user_transform() {
-    let _fonts = fonts();
     let _app = UnitTestApplication::start(TestServices::mock_threading_interface());
+    let _fonts = fonts();
     let icon = FontIcon::new();
     icon.set_glyph("A");
     layout(&icon);
@@ -109,8 +109,8 @@ fn rtl_mirroring_is_opt_in_and_updates_without_replacing_user_transform() {
 
 #[test]
 fn every_symbol_reaches_the_native_glyph_drawing_pipeline() {
-    let _fonts = fonts();
     let _app = UnitTestApplication::start(TestServices::mock_threading_interface());
+    let _fonts = fonts();
     let icon = SymbolIcon::new();
     assert_eq!(icon.symbol(), Symbol::Emoji);
     for symbol in Symbol::ALL {
@@ -126,8 +126,8 @@ fn every_symbol_reaches_the_native_glyph_drawing_pipeline() {
 
 #[test]
 fn symbol_constructor_foreground_and_automation_use_native_contracts() {
-    let _fonts = fonts();
     let _app = UnitTestApplication::start(TestServices::mock_threading_interface());
+    let _fonts = fonts();
     let icon = SymbolIcon::with_symbol(Symbol::Accept);
     icon.set_foreground(Some(Brushes::blue()));
     layout(&icon);
@@ -144,8 +144,8 @@ fn symbol_constructor_foreground_and_automation_use_native_contracts() {
 
 #[test]
 fn opt_in_icons_do_not_change_existing_text_defaults() {
-    let _fonts = fonts();
     let _app = UnitTestApplication::start(TestServices::mock_threading_interface());
+    let _fonts = fonts();
     let before = TextBlock::new();
     let size = before.font_size();
     let family = before.font_family();

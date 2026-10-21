@@ -7,7 +7,7 @@ use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions, ICo
 use crate::{ControlImpl, IconElement, TextBlock};
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
-use ferroui_base::layout::{LayoutableImpl, VerticalAlignment};
+use ferroui_base::layout::{Layoutable, LayoutableImpl, VerticalAlignment};
 use ferroui_base::media::{FontFamily, FontStyle, FontWeight, TextAlignment};
 use ferroui_base::{ferro_class, ferro_impl_classes, ferro_property, instantiate, FerroObjectImpl, FerroObjectImplExt, FerroProperty, FerroPropertyChangedEventArgs, Ref, StyledElementImpl, StyledProperty, VisualImpl};
 use ferroui_base::metadata::{MarkupType, MarkupTyped};
@@ -540,6 +540,7 @@ ferroui_base::ferro_properties! { impl SymbolIcon {
 
 impl SymbolIcon {
     fn static_constructor() {
+        Layoutable::affects_measure::<SymbolIcon>(&[Self::symbol_property().as_property()]);
         let template: Rc<dyn IControlTemplate> = FuncControlTemplate::for_type::<SymbolIcon>(|_, scope| {
             let text = TextBlock::new();
             text.set_name(Some("PART_Text".to_string()));
