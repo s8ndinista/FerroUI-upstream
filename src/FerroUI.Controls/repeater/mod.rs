@@ -7,6 +7,7 @@
 
 pub(crate) mod animation_manager;
 mod build_tree_scheduler;
+mod diagnostics;
 mod element_factory;
 mod item_collection_transition;
 mod item_collection_transition_completed_event_args;
@@ -58,6 +59,9 @@ pub use virtualization_info::*;
 
 #[cfg(test)]
 mod services_tests;
+
+#[cfg(test)]
+mod diagnostics_tests;
 
 #[cfg(test)]
 mod items_repeater_tests;

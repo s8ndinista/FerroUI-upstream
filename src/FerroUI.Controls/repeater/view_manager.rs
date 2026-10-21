@@ -137,6 +137,7 @@ impl ViewManager {
         }
         assert_eq!(info.owner(), ElementOwner::Layout);
         self.track(index, &element);
+        super::diagnostics::element_lifecycle(owner, index, "realized", info.owner());
         element
     }
 
@@ -252,7 +253,9 @@ impl ViewManager {
             }
         } else {
             self.clear_element_to_element_factory(owner, element);
+            return;
         }
+        super::diagnostics::element_lifecycle(owner, index, "retained", info.owner());
     }
 
     pub fn clear_element_to_element_factory(&self, owner: &ItemsRepeater, element: &Ref<Control>) {
@@ -293,6 +296,7 @@ impl ViewManager {
         if was_focused {
             self.move_focus_from_cleared_index(owner, element, index);
         }
+        super::diagnostics::element_lifecycle(owner, index, "recycled", info.owner());
     }
 
     pub fn prune_pinned_elements(&self, owner: &ItemsRepeater) {
@@ -324,6 +328,7 @@ impl ViewManager {
                 self.clear_element(owner, &element, true);
             }
         }
+        super::diagnostics::owner_arranged(owner);
     }
 
     pub fn on_template_changing(&self) {

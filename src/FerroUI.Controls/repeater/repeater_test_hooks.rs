@@ -59,6 +59,9 @@ impl RepeaterTestHooks {
     pub fn get_log_item_index() -> i32 {
         HOOKS.with(|hooks| hooks.log_item_index.get())
     }
+    /// Selects realization, retention and recycling traces in the native
+    /// `Control` log area. A negative index disables these item diagnostics.
+    /// The installed logger still controls the accepted level and output.
     pub fn set_log_item_index(index: i32) {
         HOOKS.with(|hooks| hooks.log_item_index.set(index));
     }

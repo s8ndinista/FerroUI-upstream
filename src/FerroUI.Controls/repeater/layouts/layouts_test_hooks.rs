@@ -170,6 +170,8 @@ impl LayoutsTestHooks {
             .cast::<Layout>()
             .map_or(-1, |layout| layout.log_item_index())
     }
+    /// Selects the realized item whose completed Repeater arrangement is
+    /// reported in the native `Layout` log area. A negative index disables it.
     pub fn set_layout_log_item_index(layout: &Ref<FerroObject>, index: i32) {
         if let Some(layout) = layout.cast::<Layout>() {
             layout.set_log_item_index(index);

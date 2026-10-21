@@ -258,6 +258,11 @@ macro_rules! roundtrip {
         assert_eq!($object.get_value(<$ty>::$property()), $first);
         $object.set_value(<$ty>::$property(), $second);
         assert_eq!($object.$get(), $second);
+        if $second == $default {
+            // Start from a nondefault value so ClearValue has an observable effect.
+            $object.set_value(<$ty>::$property(), $first);
+            assert_eq!($object.$get(), $first);
+        }
         $object.clear_value(<$ty>::$property());
         assert_eq!($object.$get(), $default);
     }};
