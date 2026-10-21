@@ -59,7 +59,7 @@ jobs:
           cargo check --locked -p ferroui --no-default-features --features charts
       - name: Compiled markup and light, dark and live-data renders
         env:
-          FERROUI_CHARTS_RENDER_OUTPUT: charts-render
+          FERROUI_CHARTS_RENDER_OUTPUT: ${{ github.workspace }}/charts-render
         run: cargo test --locked -p charts-demo --features render-smoke --lib -- --nocapture
       - name: Backend-independent control compiles for the browser target
         run: cargo check --locked -p ferroui-controls-charts --target wasm32-unknown-emscripten
