@@ -2,7 +2,7 @@
 //! platform backend converts their coordinates to single precision.
 
 use super::*;
-use crate::{LineSeries, LinearAxis, Samples};
+use crate::{DateTimeIntervalType, LineSeries, LinearAxis, Samples};
 use ferroui_base::animation::TimeSpan;
 use ferroui_controls::testing::{TestServices, UnitTestApplication};
 
@@ -659,5 +659,246 @@ fn dense_area_fill_reduces_vertices_without_losing_extrema_or_winding() {
         }
         assert_eq!(filled, 1);
         backend_scene(&scene);
+    }
+}
+
+#[test]
+fn explicit_area_and_bar_fills_determine_legend_patches_instead_of_border_strokes() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let chart = Chart::new();
+    chart.set_show_legend(true);
+    let bar_fill = solid(0xff13a10e);
+    let bar_stroke = solid(0xffe74856);
+    let area_fill = solid(0xff0078d4);
+    let area_stroke = solid(0xffc19c00);
+    let bar = BarSeries::new();
+    bar.set_title("Bars");
+    bar.set_orientation(BarOrientation::Vertical);
+    bar.set_y_values(Some(Samples::from_values([1.0, 2.0, 3.0])));
+    bar.set_fill(Some(bar_fill.clone()));
+    bar.set_stroke(Some(bar_stroke.clone()));
+    let area = AreaSeries::new();
+    area.set_title("Area");
+    area.set_y_values(Some(Samples::from_values([2.0, 3.0, 4.0])));
+    area.set_fill(Some(area_fill.clone()));
+    area.set_stroke(Some(area_stroke.clone()));
+    chart.series().add(&bar).unwrap();
+    chart.series().add(&area).unwrap();
+    let scene = ChartScene::build(&chart, Size::new(600.0, 400.0));
+    let patches: Vec<_> = scene
+        .foreground
+        .iter()
+        .filter_map(|draw| {
+            if let Draw::Rectangle(_, Some(brush), _) = draw {
+                Some(brush)
+            } else {
+                None
+            }
+        })
+        .collect();
+    assert_eq!(scene.layout.legend_items, ["Bars", "Area"]);
+    assert_eq!(patches.len(), 2);
+    assert!(Rc::ptr_eq(patches[0], &bar_fill));
+    assert!(Rc::ptr_eq(patches[1], &area_fill));
+    assert!(!Rc::ptr_eq(patches[0], &bar_stroke));
+    assert!(!Rc::ptr_eq(patches[1], &area_stroke));
+    assert!(scene.series.iter().any(|draw| matches!(draw,
+        Draw::Rectangle(_, Some(fill), _) if Rc::ptr_eq(fill, &bar_fill))));
+    assert!(scene.series.iter().any(|draw| matches!(draw,
+        Draw::Path { fill: Some(fill), .. } if Rc::ptr_eq(fill, &area_fill))));
+    backend_scene(&scene);
+}
+
+#[test]
+fn bars_sharing_categories_group_without_overlap_across_distinct_value_axes() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    for orientation in [BarOrientation::Vertical, BarOrientation::Horizontal] {
+        let chart = Chart::new();
+        let x = CategoryAxis::new();
+        chart.axes().add(&x).unwrap();
+        for (maximum, values) in [(10.0, [5.0, 10.0]), (1000.0, [500.0, 1000.0])] {
+            let y = LinearAxis::new();
+            y.set_minimum(Some(0.0)).unwrap();
+            y.set_maximum(Some(maximum)).unwrap();
+            chart.axes().add(&y).unwrap();
+            let series = BarSeries::new();
+            series.set_orientation(orientation);
+            series.set_x_axis(Some(x.clone().upcast())).unwrap();
+            series.set_y_axis(Some(y.upcast())).unwrap();
+            series.set_x_values(Some(Samples::from_values(["A", "B"])));
+            series.set_y_values(Some(Samples::from_values(values)));
+            chart.series().add(&series).unwrap();
+        }
+        let scene = ChartScene::build(&chart, Size::new(600.0, 400.0));
+        assert_eq!(scene.layout.points.len(), 4);
+        for category in 0..2 {
+            let first = scene
+                .layout
+                .points
+                .iter()
+                .find(|point| point.series_index == 0 && point.sample_index == category)
+                .unwrap();
+            let second = scene
+                .layout
+                .points
+                .iter()
+                .find(|point| point.series_index == 1 && point.sample_index == category)
+                .unwrap();
+            let a = first.bar_bounds.unwrap();
+            let b = second.bar_bounds.unwrap();
+            assert!(a.width > 0.0 && a.height > 0.0 && b.width > 0.0 && b.height > 0.0);
+            if orientation == BarOrientation::Vertical {
+                assert!(
+                    a.right() < b.x || b.right() < a.x,
+                    "Bars overlap despite sharing a category axis"
+                );
+                close(first.position.y, second.position.y);
+                close(a.width, b.width);
+            } else {
+                assert!(
+                    a.bottom() < b.y || b.bottom() < a.y,
+                    "Bars overlap despite sharing a category axis"
+                );
+                close(first.position.x, second.position.x);
+                close(a.height, b.height);
+            }
+        }
+        backend_scene(&scene);
+    }
+}
+
+#[test]
+fn automatic_date_bar_bounds_reserve_complete_edge_bars_and_single_date_bars() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let first = DateTimeOffset::new(2020, 1, 1, 0, 0, 0, TimeSpan::ZERO);
+    let next = DateTimeOffset::new(2020, 1, 2, 0, 0, 0, TimeSpan::ZERO);
+    let last = DateTimeOffset::new(2020, 1, 9, 0, 0, 0, TimeSpan::ZERO);
+    for orientation in [BarOrientation::Vertical, BarOrientation::Horizontal] {
+        for dates in [vec![first, next, last], vec![first]] {
+            let chart = Chart::new();
+            let axis = DateTimeAxis::new();
+            chart.axes().add(&axis).unwrap();
+            let series = BarSeries::new();
+            series.set_orientation(orientation);
+            series.set_x_axis(Some(axis.clone().upcast())).unwrap();
+            series.set_x_values(Some(Samples::from_values(dates.clone())));
+            series.set_y_values(Some(Samples::from_values(
+                (0..dates.len()).map(|index| index as f64 + 2.0),
+            )));
+            chart.series().add(&series).unwrap();
+            let scene = ChartScene::build(&chart, Size::new(600.0, 400.0));
+            let plot = scene.layout.plot_area;
+            assert_eq!(scene.series.len(), dates.len());
+            assert_eq!(scene.layout.points.len(), dates.len());
+            let mut extent = None;
+            for point in &scene.layout.points {
+                let rect = point.bar_bounds.unwrap();
+                assert!(rect.width > 0.0 && rect.height > 0.0);
+                let thickness = if orientation == BarOrientation::Vertical {
+                    assert!(
+                        rect.x > plot.x && rect.right() < plot.right(),
+                        "Automatic date bounds clipped an edge bar"
+                    );
+                    rect.width
+                } else {
+                    assert!(
+                        rect.y > plot.y && rect.bottom() < plot.bottom(),
+                        "Automatic date bounds clipped an edge bar"
+                    );
+                    rect.height
+                };
+                if let Some(previous) = extent {
+                    close(thickness, previous);
+                }
+                extent = Some(thickness);
+            }
+            assert!(
+                axis.minimum().is_none() && axis.maximum().is_none(),
+                "Effective padding must not change public automatic bounds"
+            );
+            backend_scene(&scene);
+        }
+    }
+}
+
+#[test]
+fn horizontal_date_tick_labels_stay_complete_and_separated_at_narrow_and_wide_sizes() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let chart = Chart::new();
+    chart.set_show_legend(false);
+    let x = DateTimeAxis::new();
+    x.set_interval_type(DateTimeIntervalType::Day);
+    x.set_show_tick_marks(true);
+    x.set_grid_lines(GridLines::Major);
+    x.set_label("");
+    let y = LinearAxis::new();
+    y.set_is_visible(false);
+    chart.axes().add(&x).unwrap();
+    chart.axes().add(&y).unwrap();
+    let dates: Vec<_> = (1..=15)
+        .map(|day| DateTimeOffset::new(2020, 1, day, 0, 0, 0, TimeSpan::ZERO))
+        .collect();
+    let series = LineSeries::new();
+    series.set_x_axis(Some(x.clone().upcast())).unwrap();
+    series.set_y_axis(Some(y.upcast())).unwrap();
+    series.set_x_values(Some(Samples::from_values(dates)));
+    series.set_y_values(Some(Samples::from_values((1..=15).map(f64::from))));
+    chart.series().add(&series).unwrap();
+
+    for format in ["", "MMM d"] {
+        x.set_label_format(format);
+        for width in [400.0, 800.0] {
+            let size = Size::new(width, 300.0);
+            let scene = ChartScene::build(&chart, size);
+            // With Y hidden, no axis titles and no legend, all foreground
+            // text commands are the horizontal date tick labels.
+            let labels: Vec<_> = scene
+                .foreground
+                .iter()
+                .filter_map(|draw| {
+                    if let Draw::Text(layout, origin, transform) = draw {
+                        assert!(transform.is_none());
+                        Some((layout, origin))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
+            assert!(labels.len() >= 2, "The axis must retain useful date labels");
+            assert_eq!(labels.len(), scene.layout.axis_labels.len());
+            let mut previous_right = f64::NEG_INFINITY;
+            for (layout, origin) in &labels {
+                assert!(origin.x >= 0.0 && origin.y >= 0.0);
+                assert!(origin.x + layout.width() <= size.width + 1e-9,
+                    "A complete horizontal label, including the rightmost one, must fit in the chart");
+                assert!(origin.y + layout.height() <= size.height + 1e-9);
+                assert!(
+                    origin.x >= previous_right + 4.0 - 1e-9,
+                    "Clamping endpoint labels must not create overlapping text"
+                );
+                previous_right = origin.x + layout.width();
+            }
+            assert_eq!(
+                scene.grid.len(),
+                15,
+                "Omitting crowded text must retain every daily grid line"
+            );
+            assert_eq!(
+                scene
+                    .foreground
+                    .iter()
+                    .filter(|draw| matches!(draw, Draw::Line(..)))
+                    .count(),
+                16,
+                "The axis line and all fifteen tick marks remain visible"
+            );
+            if format.is_empty() && width == 400.0 {
+                assert!(
+                    labels.len() < 15,
+                    "Crowded full date labels need collision filtering"
+                );
+            }
+            backend_scene(&scene);
+        }
     }
 }

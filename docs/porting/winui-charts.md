@@ -206,11 +206,17 @@ decisions rather than inferred implementation parity:
   and marker dimensions are native defaults. The published resource key and
   property contracts are retained; unavailable internal XAML resources are not
   represented as translated files.
+- Horizontal tick labels use measured text widths, stay inside the control's
+  bounds and omit overlapping labels while retaining their ticks and grid
+  lines. This avoids clipping endpoint dates in narrow chart cards.
 - Lines and area polygons are clipped in normalized axis coordinates before
   projection to pixels. A second `DrawingContext` clip confines the grid,
-  paths, bars, markers and per-point labels to the plot; axis labels and the
-  legend draw in the control layer. Extreme out-of-range samples therefore do
-  not send unbounded coordinates to a backend or paint across the axes.
+  paths and bars to the plot. Markers and per-point labels draw afterward under
+  the surrounding control clip, keeping endpoint markers whole. Only points
+  inside both axis domains contribute these annotations, and label origins are
+  constrained by the plot bounds. Axis labels and the legend also draw in the
+  control layer. Extreme out-of-range samples do not send unbounded coordinates
+  to a backend.
 - Category identity includes the sample's type. Value sorting uses a total
   order: finite numeric categories sort numerically before nonnumeric
   categories, which sort by label. Index ordering preserves first occurrence.
@@ -223,10 +229,12 @@ decisions rather than inferred implementation parity:
   area/bar values; explicit bounds still control the visible range.
 - Monotone dense line paths use a min/max envelope per pixel column, preserving
   extrema and source traversal order. Nonmonotone paths and separate gap
-  segments preserve their order. This reduces the submitted line geometry; it
-  does not make all storage proportional to screen width. Decoded snapshots,
-  axis inputs and `ChartLayout.points` still take **O(total samples)** memory,
-  and requested markers/labels remain per-point work.
+  segments preserve their order. Dense area polygons reduce each monotone run
+  independently, retaining turns, baseline returns and winding. This reduces
+  submitted geometry; it does not make all storage proportional to screen
+  width. Decoded snapshots, axis inputs and `ChartLayout.points` still take
+  **O(total samples)** memory, and requested markers/labels remain per-point
+  work.
 
 The public `layout_snapshot`/`scene_build_count` diagnostics support tests of
 these decisions. The accompanying tests cover invariants and native render
@@ -281,9 +289,11 @@ case. Execution evidence and remaining verification gates are recorded below.
 Upstream [issue 12350](https://github.com/microsoft/microsoft-ui-xaml/issues/12350)
 reports series drawing beyond the plot and across axes. The native scene uses
 a plot clip for the series layer, with explicit bounds and out-of-range data
-covered by rendering regressions. Axis labels and the legend occupy the control
-layer; per-point labels are clipped with the series. This is a regression scenario, not a
-requirement to reproduce the upstream bug.
+covered by rendering regressions. Endpoint markers and per-point labels draw
+after the plot clip is removed, within the control clip; off-domain samples
+produce no annotations and label origins are constrained by the plot bounds.
+Axis labels and the legend also occupy the control layer. This is a regression
+scenario, not a requirement to reproduce the upstream bug.
 
 Animations, zoom/pan, trackball and pie charts are requests in discussion
 comments, not demonstrated released features. Stacked, spline, polar,
@@ -388,18 +398,56 @@ window. Browser and mobile hosts supply their usual application/theme services.
 | Public source audit | 88 files, 130 API tests, two interaction tests; implementation unpublished |
 | Inventory generation | Generated from pinned revision above |
 | Mapping integrity | Passed with pinned source comparison and `--require-complete`: 88 file dispositions; 114 mapped, 17 adapted, one not-applicable; zero pending |
-| Rust execution | Pending integration; no passing count claimed by this initial audit |
-| Native/backend render | Pending integration |
-| Browser build | Pending integration |
+| Rust execution | 2026-10-21 local run: `cargo test --locked --offline -p ferroui-controls-charts --lib`, 181 passed, zero failed/ignored; execution-log gate matched every one of the 131 mapped/adapted counterparts |
+| Markup integration | `cargo test --locked --offline -p ferroui-markup-xaml --lib`: 196 passed; Charts runtime XAML also exercises the live `RuntimeList` source bridge |
+| Compiled/runtime sample and native render | `cargo test --locked --offline -p charts-demo --features render-smoke --lib`: four passed; generated and inspected 1120×880 light, dark and live-mutation PNGs using real Vello CPU drawing, HarfBuzz and installed fonts |
+| Facade feature | `cargo check --locked --offline -p ferroui --no-default-features --features charts`: passed |
+| Optional desktop runner | Verification remains incomplete because setup of the external Skia native dependency failed. The compiled sample and real Vello CPU render are verified independently |
+| Browser build | `cargo check --locked --offline -p ferroui-controls-charts --target wasm32-unknown-emscripten`: passed; compilation evidence, not browser execution |
 | Pixel comparison with internal implementation | Unverified; reference execution/source unavailable here |
 
+The final core run used `CARGO_INCREMENTAL=0`, `CARGO_PROFILE_DEV_DEBUG=0`
+and `CARGO_PROFILE_TEST_DEBUG=0`. These keep build
+artifacts within the available disk space; they do not bypass tests. The first
+full run found the object-typed XAML list conversion gap described in section
+3; the subsequent passing run includes its live-mutation regression.
+The offscreen sample supplies actual renderer/font/shaping services to the test
+application, a mock window host and a manual animation clock that finishes
+theme transitions before capture. It exercises real drawing and checks that
+colored chart pixels exist and that theme/live updates change output. These
+images do not compare against an upstream rendering baseline.
+
 The dedicated [Charts workflow](../../.github/workflows/charts.yml) runs the
-contract suite, verifies its captured results against the 132-case map, builds
-and executes the compiled/runtime sample, renders the light/dark/live-mutation
-images with Vello CPU and HarfBuzz, and checks the backend-independent control
-for `wasm32-unknown-emscripten`. It uploads the contract log and PNGs for review.
+contract suite, verifies its captured results against the 132-case map, tests
+the shared XAML runtime, and checks the facade's optional `charts` feature. It
+builds and executes the compiled/runtime sample, renders the
+light/dark/live-mutation images with Vello CPU and HarfBuzz, and checks the
+backend-independent control for `wasm32-unknown-emscripten`. It uploads the
+contract log and PNGs for review.
 The workflow records these gates independently from pixel parity with the
 unpublished upstream renderer.
+
+### Native rendering examples
+
+These captures come from the compiled `ChartsDemo` view rendered by FerroUI's
+Vello CPU backend. The [capture record](data/winui-charts/rendered/README.md)
+gives the command and scenario for each image. They are reviewable examples of
+this port, rather than reference images from Microsoft's internal package.
+
+**Light theme:** shared line/area/bar data and a calendar axis, with legends,
+markers, dashed strokes and an immutable label/marker override.
+
+![ChartsDemo rendered by FerroUI in the light theme](data/winui-charts/rendered/light.png)
+
+**Dark theme:** the same controls after a native theme change and completion
+of the WinUI theme's brush transitions.
+
+![ChartsDemo rendered by FerroUI in the dark theme](data/winui-charts/rendered/dark.png)
+
+**Live mutation:** one appended sample reaches all four charts; bar series
+switch to horizontal orientation and legends are hidden.
+
+![ChartsDemo after live data, orientation and legend changes](data/winui-charts/rendered/live-mutation.png)
 
 ## 8. Work log and attribution
 
@@ -413,6 +461,11 @@ unpublished upstream renderer.
   adapters, added runtime XAML cases and the source-scanned compiled sample,
   then reviewed every source file/test disposition. Added an execution-log gate
   to keep test presence separate from measured passing results.
+- **2026-10-21:** Executed the full native contract suite and validated all
+  mapped cases against its log; checked the facade and browser target, ran
+  the shared markup suite, and generated native light/dark/live-update captures
+  from the compiled sample. The dedicated CI workflow preserves these gates
+  and uploads its images and contract log.
 
 Public tests and samples are MIT licensed. The complete Microsoft notice and
 license accompany the crate in

@@ -21,5 +21,6 @@ The optional render test writes `charts-light.png`, `charts-dark.png` and
 `charts-live-mutation.png` using `RenderTargetBitmap`; it asserts colored chart
 pixels and changes after native theme/data/orientation/legend updates. It uses
 the real Vello CPU backend, HarfBuzz and installed fonts, with an in-memory
-window host. These images verify FerroUI output, not pixel equality with the
+window host and a manual animation clock to finish theme transitions before
+capture. These images verify FerroUI output, not pixel equality with the
 unavailable Microsoft implementation.

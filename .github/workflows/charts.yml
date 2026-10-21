@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - 'src/FerroUI.Controls.Charts/**'
+      - 'src/FerroUI/Cargo.toml'
+      - 'src/FerroUI/lib.rs'
       - 'src/Markup/FerroUI.Markup.Xaml/**'
       - 'samples/ChartsDemo/**'
       - 'docs/porting/data/winui-charts/**'
@@ -51,9 +53,13 @@ jobs:
         run: cargo test --locked -p ferroui-controls-charts --lib | tee charts-contract.log
       - name: Every published source test has an explicit, verified disposition
         run: python3 scripts/winui-charts/conformance.py check --require-complete --execution-log charts-contract.log
+      - name: Shared XAML runtime and optional facade integration
+        run: |
+          cargo test --locked -p ferroui-markup-xaml --lib
+          cargo check --locked -p ferroui --no-default-features --features charts
       - name: Compiled markup and light, dark and live-data renders
         env:
-          FERROUI_CHARTS_RENDER_OUTPUT: ${{ runner.temp }}/charts-render
+          FERROUI_CHARTS_RENDER_OUTPUT: charts-render
         run: cargo test --locked -p charts-demo --features render-smoke --lib -- --nocapture
       - name: Backend-independent control compiles for the browser target
         run: cargo check --locked -p ferroui-controls-charts --target wasm32-unknown-emscripten
@@ -64,5 +70,5 @@ jobs:
           name: charts-contract-and-native-renders
           path: |
             charts-contract.log
-            ${{ runner.temp }}/charts-render
+            charts-render
           if-no-files-found: warn

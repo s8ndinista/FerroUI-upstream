@@ -771,6 +771,7 @@ impl ChartScene {
             )
         };
         self.foreground.push(Draw::Line(a, b, axis_pen));
+        let mut previous_label_right = f64::NEG_INFINITY;
         for tick in &group.ticks {
             if !(0.0..=1.0).contains(&tick.position) {
                 continue;
@@ -810,7 +811,7 @@ impl ChartScene {
             }
             if axis.show_tick_labels() {
                 let label = text(chart, &tick.text, label_brush.clone());
-                let origin = if group.horizontal {
+                let mut origin = if group.horizontal {
                     Point::new(
                         coordinate - label.width() * 0.5,
                         edge + if outward < 0.0 {
@@ -829,6 +830,19 @@ impl ChartScene {
                         coordinate - label.height() * 0.5,
                     )
                 };
+                if group.horizontal {
+                    // A centered endpoint label can extend beyond the control,
+                    // even when every plot point fits. Keep complete text in
+                    // the viewport and omit colliding labels while preserving
+                    // every requested tick and grid line.
+                    origin.x = origin
+                        .x
+                        .clamp(0.0, (self.layout.size.width - label.width()).max(0.0));
+                    if origin.x < previous_label_right + 4.0 {
+                        continue;
+                    }
+                    previous_label_right = origin.x + label.width();
+                }
                 self.layout.axis_labels.push(tick.text.clone());
                 self.foreground.push(Draw::Text(label, origin, None));
             }
