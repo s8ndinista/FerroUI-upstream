@@ -22,6 +22,9 @@ pub use case::LetterCase;
 #[path = "rich_edit_text_range_operations.rs"]
 mod range_operations;
 
+#[path = "rich_edit_text_selection_navigation.rs"]
+mod selection_navigation;
+
 #[path = "rich_edit_text_units.rs"]
 mod units;
 use units::TextUnits;

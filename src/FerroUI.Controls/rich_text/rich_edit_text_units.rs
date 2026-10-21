@@ -9,6 +9,9 @@ use std::collections::HashSet;
 
 pub(super) struct TextUnits {
     ranges: Vec<Range<usize>>,
+    // Line movement includes terminators; Home/End caret targets exclude them.
+    // Keep the formatter's actual content ends rather than guessing from glyphs.
+    line_caret_ends: Option<Vec<usize>>,
     boundaries: Vec<usize>,
     length: usize,
     terminal_caret_in_last_unit: bool,
@@ -26,6 +29,7 @@ impl TextUnits {
         } else {
             None
         };
+        let mut line_caret_ends = None;
         let ranges = match unit {
             // Native positions count UTF-16. The safe Rust range model never
             // exposes half a surrogate; one Character traverses a whole scalar.
@@ -34,8 +38,21 @@ impl TextUnits {
             TextRangeUnit::Sentence => Ok(sentence_ranges(&text)),
             TextRangeUnit::Paragraph => Ok(paragraph_ranges(&text)),
             TextRangeUnit::Line => match &view {
-                Some(view) => line_ranges(&document, &text, view.clone()),
-                None => Ok(paragraph_ranges(&text)),
+                Some(view) => line_ranges(&document, &text, view.clone()).map(|(ranges, ends)| {
+                    line_caret_ends = Some(ends);
+                    ranges
+                }),
+                None => {
+                    let ranges = paragraph_ranges(&text);
+                    let utf16: Vec<_> = text.encode_utf16().collect();
+                    line_caret_ends = Some(
+                        ranges
+                            .iter()
+                            .map(|range| paragraph_content_end(&utf16, range))
+                            .collect(),
+                    );
+                    Ok(ranges)
+                }
             },
             TextRangeUnit::Story => Ok(vec![0..length]),
             TextRangeUnit::HardParagraph => Ok(hard_paragraph_ranges(&document.snapshot())),
@@ -71,6 +88,7 @@ impl TextUnits {
         boundaries.dedup();
         Ok(Self {
             ranges,
+            line_caret_ends,
             boundaries,
             length,
             terminal_caret_in_last_unit: matches!(
@@ -83,9 +101,9 @@ impl TextUnits {
         })
     }
 
-    fn containing(&self, position: usize) -> Option<&Range<usize>> {
+    fn containing_index(&self, position: usize) -> Option<usize> {
         if position == self.length && self.terminal_caret_in_last_unit {
-            return self.ranges.last();
+            return self.ranges.len().checked_sub(1);
         }
         let index = self
             .ranges
@@ -93,6 +111,26 @@ impl TextUnits {
         self.ranges
             .get(index)
             .filter(|range| range.start <= position && (position < range.end || range.is_empty()))
+            .map(|_| index)
+    }
+
+    fn containing(&self, position: usize) -> Option<&Range<usize>> {
+        self.containing_index(position)
+            .map(|index| &self.ranges[index])
+    }
+
+    /// Logical caret bounds of the containing Line or Story. A shared wrapped
+    /// line boundary belongs to the following line, as in the view's keyboard path.
+    pub(super) fn caret_bounds(&self, position: usize) -> Range<usize> {
+        let Some(index) = self.containing_index(position) else {
+            return position..position;
+        };
+        let range = &self.ranges[index];
+        range.start
+            ..self
+                .line_caret_ends
+                .as_ref()
+                .map_or(range.end, |ends| ends[index])
     }
 
     pub(super) fn expanded(&self, range: Range<usize>) -> Range<usize> {
@@ -289,6 +327,17 @@ fn paragraph_ranges(text: &str) -> Vec<Range<usize>> {
     ranges_ending_at(ends, utf16.len())
 }
 
+fn paragraph_content_end(text: &[u16], range: &Range<usize>) -> usize {
+    let mut end = range.end;
+    if end > range.start && is_paragraph_separator(text[end - 1]) {
+        end -= 1;
+        if text[end] == 0x0a && end > range.start && text[end - 1] == 0x0d {
+            end -= 1;
+        }
+    }
+    end
+}
+
 fn hard_paragraph_ranges(snapshot: &DocumentSnapshot) -> Vec<Range<usize>> {
     fn collect(
         inlines: &[InlineSnapshot],
@@ -364,9 +413,10 @@ fn line_ranges(
     document: &RichTextDocument,
     text: &str,
     first: Ref<RichTextBlock>,
-) -> Result<Vec<Range<usize>>, EditError> {
+) -> Result<(Vec<Range<usize>>, Vec<usize>), EditError> {
     let utf16: Vec<_> = text.encode_utf16().collect();
     let mut result = Vec::new();
+    let mut caret_ends = Vec::new();
     for layout in story_layouts(document, first)? {
         for line in &layout.lines {
             let start = line.start();
@@ -374,12 +424,27 @@ fn line_ranges(
             if start > end || end > utf16.len() {
                 return Err(EditError::ReentrantEdit);
             }
-            for position in [start, end] {
+            let content_length = line
+                .line
+                .length()
+                .checked_sub(line.line.new_line_length())
+                .filter(|length| *length >= 0)
+                .ok_or(DocumentError::InvalidFormat(
+                    "The text view line has an invalid terminator length.",
+                ))?;
+            let caret_end = start
+                .checked_add(content_length as usize)
+                .ok_or(DocumentError::InvalidFormat(
+                    "The text view line content exceeds the model's offsets.",
+                ))?
+                .min(end);
+            for position in [start, end, caret_end] {
                 if !is_scalar_boundary(&utf16, position) {
                     return Err(DocumentError::InvalidUtf16Boundary { offset: position }.into());
                 }
             }
             result.push(start..end);
+            caret_ends.push(caret_end);
         }
     }
     if result.first().is_none_or(|range| range.start != 0)
@@ -407,7 +472,7 @@ fn line_ranges(
         // Assign it to the preceding display line, keeping every position covered.
         result[index].end = next_start;
     }
-    Ok(result)
+    Ok((result, caret_ends))
 }
 
 /// Capture one coherent layout chain before reading its runs. Public document
