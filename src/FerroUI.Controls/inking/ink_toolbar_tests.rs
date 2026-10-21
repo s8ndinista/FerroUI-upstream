@@ -8,6 +8,22 @@ use ferroui_base::media::immutable::ImmutableSolidColorBrush;
 use ferroui_base::media::{Color, IBrush};
 use ferroui_base::Point;
 
+fn toolbar_window_services() -> crate::testing::UnitTestApplicationScope {
+    use crate::testing::{TestServices, UnitTestApplication};
+    use ferroui_base::input::{IKeyboardDevice, KeyboardDevice};
+    UnitTestApplication::start(
+        TestServices::styled_window()
+            .with_keyboard_device(|| Some(KeyboardDevice::new() as Rc<dyn IKeyboardDevice>)),
+    )
+}
+
+fn toolbar_window(toolbar: &InkToolbar) -> Ref<crate::Window> {
+    let window = crate::Window::new();
+    window.set_content(Some(Control::boxed(toolbar.to_ref())));
+    window.show();
+    window
+}
+
 #[test]
 fn localized_names_update_from_resources_without_overwriting_local_values() {
     use crate::automation::AutomationProperties;
@@ -146,6 +162,94 @@ fn color_names_quantize_known_families_and_format_unknown_rgb() {
         color_name(&control, Color::from_rgb(17, 49, 123)),
         "red=17; green=49; blue=123"
     );
+}
+
+#[test]
+fn palette_descriptions_cover_known_nearby_rgb_and_gradient_brushes() {
+    use crate::automation::AutomationProperties;
+    use crate::{ToolTip, WrapPanel};
+    use ferroui_base::collections::FerroList;
+    use ferroui_base::media::immutable::ImmutableLinearGradientBrush;
+    let _app = toolbar_window_services();
+    let toolbar = InkToolbar::new();
+    toolbar.set_initial_controls(InkToolbarInitialControls::PensOnly);
+    let window = toolbar_window(&toolbar);
+    let pen = toolbar
+        .get_tool_button(InkToolbarTool::BallpointPen)
+        .unwrap()
+        .cast::<InkToolbarPenButton>()
+        .unwrap();
+    let mut brushes: Vec<Rc<dyn IBrush>> = [
+        (0, 0, 0),
+        (255, 255, 255),
+        (1, 2, 3),
+        (18, 52, 86),
+        (68, 200, 245),
+        (236, 0, 140),
+    ]
+    .into_iter()
+    .map(|(r, g, b)| {
+        Rc::new(ImmutableSolidColorBrush::new(Color::from_rgb(r, g, b))) as Rc<dyn IBrush>
+    })
+    .collect();
+    brushes.push(Rc::new(ImmutableLinearGradientBrush::from_stops(&[])));
+    pen.set_palette(FerroList::from_items(brushes));
+    pen.set_selected_brush_index(0);
+    ControlAutomationPeer::create_peer_for_element(&pen)
+        .get_provider::<dyn IExpandCollapseProvider>()
+        .unwrap()
+        .expand()
+        .unwrap();
+    let flyout = pen.flyout().unwrap().cast::<Flyout>().unwrap();
+    assert!(flyout.is_open());
+    let content = flyout.content().unwrap();
+    let configuration = content
+        .downcast_ref::<Ref<Control>>()
+        .unwrap()
+        .cast::<InkToolbarPenConfigurationControl>()
+        .unwrap();
+    let palette = configuration
+        .children()
+        .snapshot()
+        .iter()
+        .find_map(|child| child.cast::<WrapPanel>())
+        .unwrap();
+    let expected = [
+        "Black",
+        "White",
+        "Black",
+        "RGB 18, 52, 86",
+        "Light blue",
+        "Pink",
+        "Custom color",
+    ];
+    assert_eq!(palette.children().count(), expected.len());
+    for (index, expected) in expected.iter().enumerate() {
+        let item = palette.children().get(index);
+        assert_eq!(
+            AutomationProperties::get_name(&item).as_deref(),
+            Some(*expected)
+        );
+        assert_eq!(
+            ToolTip::get_tip(&item)
+                .unwrap()
+                .downcast_ref::<String>()
+                .unwrap(),
+            expected,
+        );
+    }
+    pen.set_selected_brush_index(1);
+    assert_eq!(
+        AutomationProperties::get_help_text(&pen).as_deref(),
+        Some("White")
+    );
+    pen.set_selected_brush_index(3);
+    assert!(AutomationProperties::get_help_text(&pen).is_none_or(|text| text.is_empty()));
+    pen.set_selected_brush_index(0);
+    pen.set_selected_brush_index(6);
+    assert!(AutomationProperties::get_help_text(&pen).is_none_or(|text| text.is_empty()));
+    flyout.hide();
+    window.close();
 }
 
 #[test]
@@ -305,7 +409,7 @@ fn palette_arrow_keys_follow_six_column_layout_and_tab_keeps_selection() {
     use crate::test_support::TestRoot;
     use crate::WrapPanel;
     use ferroui_base::input::{InputElement, Key, KeyEventArgs};
-    let _scope = test_scope();
+    let _app = toolbar_window_services();
     let pen = InkToolbarBallpointPenButton::new();
     let config = InkToolbarPenConfigurationControl::for_pen(&pen);
     let _root = TestRoot::with_child(&config);
@@ -336,12 +440,137 @@ fn palette_arrow_keys_follow_six_column_layout_and_tab_keeps_selection() {
     assert!(panel.children().get(6).is_focused());
     key(Key::Right);
     assert_eq!(pen.selected_brush_index(), 7);
+    assert_eq!(
+        KeyboardNavigation::get_tab_navigation(&panel),
+        KeyboardNavigationMode::Once
+    );
+    assert_eq!(
+        KeyboardNavigation::get_tab_once_active_element(&panel),
+        Some(panel.children().get(7).upcast::<InputElement>())
+    );
     key(Key::End);
     assert_eq!(pen.selected_brush_index(), 29);
     key(Key::Right);
     assert_eq!(pen.selected_brush_index(), 29);
     key(Key::Home);
     assert_eq!(pen.selected_brush_index(), 0);
+}
+
+#[test]
+fn normal_and_secondary_activation_follow_source_flyout_sequence() {
+    use ferroui_base::input::{
+        KeyModifiers, Pointer, PointerEventArgs, PointerPointProperties, PointerType,
+        TappedEventArgs,
+    };
+    let _app = toolbar_window_services();
+    let toolbar = InkToolbar::new();
+    let window = toolbar_window(&toolbar);
+    let stencil = toolbar
+        .get_menu_button(InkToolbarMenuKind::Stencil)
+        .unwrap()
+        .cast::<InkToolbarStencilButton>()
+        .unwrap();
+    let flyout = stencil.flyout().unwrap();
+    assert_ne!(stencil.is_checked(), Some(true));
+    stencil.perform_click();
+    assert_eq!(stencil.is_checked(), Some(true));
+    assert!(!flyout.is_open(), "First activation selects the stencil");
+    stencil.perform_click();
+    assert_eq!(stencil.is_checked(), Some(true));
+    assert!(
+        flyout.is_open(),
+        "An active stencil opens its configuration"
+    );
+    flyout.hide();
+    stencil.set_is_checked(Some(false));
+
+    let right_tap = |button: &Control| {
+        let pointer = Pointer::new(Pointer::get_next_free_id(), PointerType::Mouse, true);
+        let pointer_event = PointerEventArgs::new(
+            Some(InputElement::pointer_moved_event()),
+            button.to_ref(),
+            pointer,
+            Some(&window),
+            Point::new(5.0, 5.0),
+            1,
+            PointerPointProperties::default(),
+            KeyModifiers::NONE,
+        );
+        let event = TappedEventArgs::new(Some(InputElement::right_tapped_event()), &pointer_event);
+        button.raise_event(&event);
+        assert!(event.handled());
+    };
+    right_tap(&stencil);
+    assert_eq!(stencil.is_checked(), Some(true));
+    assert!(
+        flyout.is_open(),
+        "Secondary activation selects and opens together"
+    );
+    flyout.hide();
+    stencil.set_is_protractor_item_visible(false);
+    stencil.perform_click();
+    assert_eq!(stencil.is_checked(), Some(false));
+    assert!(!flyout.is_open());
+    stencil.perform_click();
+    assert_eq!(stencil.is_checked(), Some(true));
+    assert!(!flyout.is_open(), "A single stencil is only a toggle");
+
+    let pencil = toolbar.get_tool_button(InkToolbarTool::Pencil).unwrap();
+    assert_ne!(toolbar.active_tool(), Some(pencil.clone()));
+    right_tap(&pencil);
+    assert_eq!(toolbar.active_tool(), Some(pencil.clone()));
+    assert!(pencil.flyout().unwrap().is_open());
+    assert!(InputElement::get_is_holding_enabled(&pencil));
+    assert!(InputElement::get_is_holding_enabled(&stencil));
+    pencil.flyout().unwrap().hide();
+    window.close();
+}
+
+#[test]
+fn custom_configuration_requires_content_and_refreshes_it_on_each_open() {
+    let _app = toolbar_window_services();
+    let toolbar = InkToolbar::new();
+    toolbar.set_initial_controls(InkToolbarInitialControls::None);
+    let pen = InkToolbarCustomPenButton::new();
+    let tool = InkToolbarCustomToolButton::new();
+    toolbar.children().add(&pen);
+    toolbar.children().add(&tool);
+    let window = toolbar_window(&toolbar);
+    for button in [
+        pen.clone().upcast::<InkToolbarToolButton>(),
+        tool.clone().upcast(),
+    ] {
+        toolbar.set_active_tool(Some(button.clone()));
+        button.perform_click();
+        assert!(!button.flyout().unwrap().is_open());
+        for _ in 0..2 {
+            let content = Control::new();
+            if let Some(pen) = button.cast::<InkToolbarCustomPenButton>() {
+                pen.set_configuration_content(Some(content.clone()));
+            } else {
+                tool.set_configuration_content(Some(content.clone()));
+            }
+            button.perform_click();
+            let flyout = button.flyout().unwrap().cast::<Flyout>().unwrap();
+            assert!(flyout.is_open());
+            assert_eq!(
+                flyout.content().unwrap().downcast_ref::<Ref<Control>>(),
+                Some(&content)
+            );
+            flyout.hide();
+        }
+        if let Some(pen) = button.cast::<InkToolbarCustomPenButton>() {
+            pen.set_configuration_content(None);
+        } else {
+            tool.set_configuration_content(None);
+        }
+        button.perform_click();
+        assert!(
+            !button.flyout().unwrap().is_open(),
+            "Removing content suppresses the popup"
+        );
+    }
+    window.close();
 }
 
 #[test]

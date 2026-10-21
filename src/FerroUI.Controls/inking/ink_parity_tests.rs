@@ -670,6 +670,76 @@ fn tool_peers_report_pen_roles_selected_names_and_palette_help() {
 }
 
 #[test]
+fn provider_expand_selects_owner_and_respects_live_input_and_configuration_availability() {
+    use ferroui_base::input::PointerType;
+    use ferroui_base::Point;
+    let _app = create_window_services();
+    let toolbar = InkToolbar::new();
+    let presenter = InkPresenter::new();
+    toolbar.set_target_ink_presenter(Some(presenter.clone()));
+    let window = shown_window(&toolbar);
+    let pencil = toolbar.get_tool_button(InkToolbarTool::Pencil).unwrap();
+    let provider = peer(&pencil)
+        .get_provider::<dyn IExpandCollapseProvider>()
+        .unwrap();
+    assert_ne!(toolbar.active_tool(), Some(pencil.clone()));
+    let sample = InkPointerEventArgs::new(
+        77,
+        PointerType::Pen,
+        InkPoint::new(Point::new(1000.0, 1000.0), 0.5).unwrap(),
+    );
+    presenter
+        .process_pointer(InkPointerPhase::Pressed, &sample)
+        .unwrap();
+    assert!(presenter.is_inking());
+    provider.expand().unwrap();
+    assert_eq!(toolbar.active_tool(), Some(pencil.clone()));
+    assert!(presenter.is_inking());
+    assert!(!pencil.flyout().unwrap().is_open());
+    let stencil = toolbar
+        .get_menu_button(InkToolbarMenuKind::Stencil)
+        .unwrap();
+    peer(&stencil)
+        .get_provider::<dyn IExpandCollapseProvider>()
+        .unwrap()
+        .expand()
+        .unwrap();
+    assert_eq!(stencil.is_checked(), Some(true));
+    assert!(!stencil.flyout().unwrap().is_open());
+    presenter
+        .process_pointer(InkPointerPhase::Lost, &sample)
+        .unwrap();
+    provider.expand().unwrap();
+    Dispatcher::ui_thread().run_jobs(None);
+    assert!(pencil.flyout().unwrap().is_open());
+    provider.collapse().unwrap();
+    let custom_tool = InkToolbarCustomToolButton::new();
+    let custom_pen = InkToolbarCustomPenButton::new();
+    toolbar.children().add(&custom_tool);
+    toolbar.children().add(&custom_pen);
+    let eraser = toolbar
+        .get_tool_button(InkToolbarTool::Eraser)
+        .unwrap()
+        .cast::<InkToolbarEraserButton>()
+        .unwrap();
+    eraser.set_is_clear_all_visible(false);
+    for tool in [
+        custom_tool.upcast::<InkToolbarToolButton>(),
+        custom_pen.upcast::<InkToolbarToolButton>(),
+        eraser.upcast::<InkToolbarToolButton>(),
+    ] {
+        peer(&tool)
+            .get_provider::<dyn IExpandCollapseProvider>()
+            .unwrap()
+            .expand()
+            .unwrap();
+        assert_eq!(toolbar.active_tool(), Some(tool.clone()));
+        assert!(tool.flyout().is_none_or(|flyout| !flyout.is_open()));
+    }
+    window.close();
+}
+
+#[test]
 fn builtin_tool_names_and_tooltips_are_available_after_loading() {
     let _scope = test_scope();
     let toolbar = InkToolbar::new();

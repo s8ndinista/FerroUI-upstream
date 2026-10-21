@@ -721,3 +721,38 @@ fn ink_toolbar_border_and_padding_offset_themed_children() {
     assert_eq!(first.bounds().y, 10.0 + first.margin().top);
     window.close();
 }
+
+/// The populated stencil is in the same realized toolbar as its pens and has an actual
+/// vector glyph for both stencil kinds, preserving the source's blank-icon regression.
+#[test]
+fn ink_toolbar_populated_stencil_has_laid_out_ruler_and_protractor_geometry() {
+    use ferroui_base::Visual;
+    use ferroui_controls::shapes::Path;
+    use ferroui_controls::{InkToolbar, InkToolbarBallpointPenButton, InkToolbarStencilButton,
+        InkToolbarStencilKind};
+    let _app = start_themed_application();
+    let toolbar = InkToolbar::new();
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(&toolbar)));
+    window.show();
+    window.update_layout();
+    let visual: &Visual = &toolbar;
+    assert!(visual.get_visual_descendants().any(|child| child.cast::<InkToolbarBallpointPenButton>().is_some()));
+    let stencil = visual.get_visual_descendants()
+        .find_map(|child| child.cast::<InkToolbarStencilButton>())
+        .expect("the stencil is realized beside the pens");
+    assert!(stencil.bounds().width > 0.0 && stencil.bounds().height > 0.0);
+    let visual: &Visual = &stencil;
+    let glyph = visual.get_visual_descendants().filter_map(|child| child.cast::<Path>())
+        .find(|path| path.name().as_deref() == Some("ContentGlyph"))
+        .expect("the stencil's content glyph");
+    assert!(glyph.bounds().width > 0.0 && glyph.bounds().height > 0.0);
+    let ruler = glyph.data().expect("the ruler geometry");
+    assert!(ruler.bounds().width > 0.0 && ruler.bounds().height > 0.0);
+    stencil.set_selected_stencil(InkToolbarStencilKind::Protractor);
+    window.update_layout();
+    let protractor = glyph.data().expect("the protractor geometry");
+    assert_ne!(ruler, protractor);
+    assert!(protractor.bounds().width > 0.0 && protractor.bounds().height > 0.0);
+    window.close();
+}

@@ -25,6 +25,9 @@ use ferroui_controls::inking::{
     InkStrokeContainer, PenTipShape,
 };
 use ferroui_microcom::IUnknown;
+use ferroui_win32::interop::unmanaged_methods::{
+    co_get_apartment_type, APTTYPE_MAINSTA, APTTYPE_STA,
+};
 use ferroui_win32::win_rt::NativeWinRTMethods;
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -55,6 +58,12 @@ pub struct WindowsInkRecognitionResult {
 /// Construction verifies that the native ink class is available and initializes
 /// WinRT through the existing Windows backend. The marker keeps this service on
 /// that thread; the futures also intentionally do not implement `Send`.
+///
+/// Clipboard operations require the single-threaded COM apartment of the
+/// FerroUI Windows UI thread. Persistence also works on an MTA worker, but the
+/// Windows clipboard's data-transfer class cannot activate there. Such calls
+/// return a descriptive platform error; they do not move UI objects between
+/// threads or change an existing apartment.
 pub struct WindowsInkServices {
     limits: InkPersistenceLimits,
     allow_twist_loss: bool,
@@ -328,6 +337,7 @@ impl IInkPlatformServices for WindowsInkServices {
     }
 
     fn copy_to_clipboard(&self, strokes: &[Rc<InkStroke>]) -> Result<(), InkError> {
+        ensure_clipboard_apartment()?;
         let native = self.native_container(strokes)?;
         // The trait receives the strokes chosen for copying. The native method
         // only copies Selected strokes, so select the temporary native copies.
@@ -343,6 +353,7 @@ impl IInkPlatformServices for WindowsInkServices {
     }
 
     fn can_paste(&self) -> Result<bool, InkError> {
+        ensure_clipboard_apartment()?;
         NativeContainer::new()
             .map_err(platform)?
             .CanPasteFromClipboard()
@@ -350,6 +361,7 @@ impl IInkPlatformServices for WindowsInkServices {
     }
 
     fn paste(&self, position: Point) -> Result<Vec<Rc<InkStroke>>, InkError> {
+        ensure_clipboard_apartment()?;
         let position = to_native_point(position)?;
         let native = NativeContainer::new().map_err(platform)?;
         native.PasteFromClipboard(position).map_err(platform)?;
@@ -359,6 +371,19 @@ impl IInkPlatformServices for WindowsInkServices {
 
 fn platform(error: windows::core::Error) -> InkError {
     InkError::Platform(format!("Windows ink: {error}"))
+}
+
+fn ensure_clipboard_apartment() -> Result<(), InkError> {
+    if matches!(
+        co_get_apartment_type(),
+        Some(APTTYPE_STA) | Some(APTTYPE_MAINSTA)
+    ) {
+        Ok(())
+    } else {
+        Err(InkError::Platform(
+            "Windows ink clipboard requires a single-threaded COM apartment; call it on the FerroUI Windows UI thread".into(),
+        ))
+    }
 }
 
 fn validate_export(
@@ -616,6 +641,31 @@ mod tests {
     fn native_thread(test: impl FnOnce() + Send + 'static) {
         let _dispatcher = ferroui_base::threading::Dispatcher::ui_thread();
         std::thread::spawn(test).join().unwrap();
+    }
+
+    // Clipboard calls are synchronous and require STA activation. Reuse the
+    // platform's safe COM initialization wrappers; all native/Rc values are
+    // dropped before the paired COM uninitialization on this same worker.
+    fn native_sta_thread(test: impl FnOnce() + Send + 'static) {
+        native_thread(move || {
+            use ferroui_win32::interop::unmanaged_methods::{
+                co_initialize_apartment_threaded, co_uninitialize,
+            };
+            let result = co_initialize_apartment_threaded();
+            assert!(
+                result >= 0,
+                "STA initialization failed: 0x{:08X}",
+                result as u32
+            );
+            struct Apartment;
+            impl Drop for Apartment {
+                fn drop(&mut self) {
+                    co_uninitialize();
+                }
+            }
+            let _apartment = Apartment;
+            test();
+        });
     }
 
     // A test-only executor. Production uses the application's local executor.
@@ -936,7 +986,7 @@ mod tests {
     #[test]
     #[ignore = "replaces the system clipboard; requires an isolated interactive Windows session"]
     fn native_clipboard_round_trip() {
-        native_thread(|| {
+        native_sta_thread(|| {
             let services = WindowsInkServices::new().expect("Windows ink activation");
             let source = fixture_strokes();
             services.copy_to_clipboard(&source).unwrap();

@@ -1,5 +1,5 @@
 //! Accessibility adapters: reuse the framework providers and add inking-specific patterns.
-use super::ink_toolbar_buttons::strings;
+use super::ink_toolbar_buttons::{strings, toolbar_is_inking};
 use super::{
     InkToolbar, InkToolbarFlyoutItem, InkToolbarFlyoutItemKind, InkToolbarMenuButton,
     InkToolbarStencilButton, InkToolbarStencilKind, InkToolbarStrokeWidthSlider, InkToolbarTool,
@@ -19,7 +19,7 @@ use crate::automation::{
     AutomationProperties, ElementNotEnabledException, ExpandCollapsePatternIdentifiers,
     ExpandCollapseState, ValuePatternIdentifiers,
 };
-use crate::primitives::RangeBase;
+use crate::primitives::{RangeBase, ToggleButton};
 use crate::{Button, Panel};
 use ferroui_base::data::core::ValueType;
 use ferroui_base::{
@@ -75,6 +75,21 @@ fn invalid_selection() -> ElementNotEnabledException {
 fn expand(owner: &Button) -> Result<(), ElementNotEnabledException> {
     if !owner.is_effectively_enabled() {
         return Err(ElementNotEnabledException::new());
+    }
+    // Native peers route through OpenL3/ExecuteToolAction(false), which selects
+    // the owner before considering configuration availability. Reuse the same
+    // guards as pointer activation, including FerroUI's real inking state (the
+    // pinned WinUI lift leaves that state unwired).
+    if let Some(tool) = owner.to_ref().cast::<InkToolbarToolButton>() {
+        tool.set_current_value(ToggleButton::is_checked_property(), Some(true));
+        if !tool.can_open_configuration() {
+            return Ok(());
+        }
+    } else if let Some(menu) = owner.to_ref().cast::<InkToolbarMenuButton>() {
+        menu.set_current_value(ToggleButton::is_checked_property(), Some(true));
+        if toolbar_is_inking(&menu) {
+            return Ok(());
+        }
     }
     if let Some(flyout) = owner.flyout() {
         flyout.show_at(owner);
