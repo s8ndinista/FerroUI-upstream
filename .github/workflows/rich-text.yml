@@ -122,7 +122,7 @@ jobs:
       - name: Exact native UTF-16 string contracts
         if: ${{ !cancelled() }}
         run: cargo test --locked -p ferroui-win32 --no-default-features --lib exact_hstring --no-fail-fast
-      - name: Characterize system MSFTEDIT Home and End contracts
+      - name: Characterize system MSFTEDIT selection navigation contracts
         if: ${{ !cancelled() }}
         run: cargo test --locked -p ferroui-win32 --no-default-features --lib rich_text_tom_oracle -- --nocapture --test-threads=1
       - name: Rich text control contracts on Windows

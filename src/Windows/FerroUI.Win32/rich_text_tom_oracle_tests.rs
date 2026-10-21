@@ -1,7 +1,7 @@
 //! Characterization of the system MSFTEDIT engine, not WinUI's text engine.
 //!
-//! This probe prints the native HomeKey/EndKey destinations, active-end flags,
-//! HRESULTs and signed deltas. Its assertions validate setup and unambiguous
+//! This probe prints native HomeKey/EndKey and MoveUp/MoveDown destinations,
+//! active-end flags, HRESULTs and signed deltas. Its assertions validate setup and unambiguous
 //! invariants; the first-run destination/count observations are not Rust parity
 //! assertions. Keep the engine version with any fixture derived from its output.
 //!
@@ -12,6 +12,8 @@
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-getflags
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-homekey
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-endkey
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-moveup
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-movedown
 
 use crate::automation::marshalling::{free_bstr, ptr_to_string_bstr};
 use crate::interop::unmanaged_methods::rtl_get_version;
@@ -35,6 +37,7 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
 type TestResult<T = ()> = Result<T, String>;
 type Getter = unsafe extern "system" fn(*mut c_void, *mut i32) -> i32;
 type BoundaryMethod = unsafe extern "system" fn(*mut c_void, i32, i32, *mut i32) -> i32;
+type MoveMethod = unsafe extern "system" fn(*mut c_void, i32, i32, i32, *mut i32) -> i32;
 
 const EM_GETOLEINTERFACE: u32 = 1084;
 const IID_TEXT_DOCUMENT: Guid = Guid::from_u128(0x8cc497c0_a1df_11ce_8098_00aa0047be5d);
@@ -68,7 +71,9 @@ struct TextSelectionVTable {
     _in_range_through_get_embedded_object: [*const c_void; 29],
     get_flags: Getter,
     _set_flags: *const c_void,
-    _get_type_and_directional_movement: [*const c_void; 5],
+    _get_type_and_horizontal_movement: [*const c_void; 3],
+    move_up: MoveMethod,
+    move_down: MoveMethod,
     home_key: BoundaryMethod,
     end_key: BoundaryMethod,
 }
@@ -82,6 +87,8 @@ const _: () = {
     assert!(offset_of!(TextSelectionVTable, get_story_length) == 22 * slot);
     assert!(offset_of!(TextSelectionVTable, set_range) == 28 * slot);
     assert!(offset_of!(TextSelectionVTable, get_flags) == 58 * slot);
+    assert!(offset_of!(TextSelectionVTable, move_up) == 63 * slot);
+    assert!(offset_of!(TextSelectionVTable, move_down) == 64 * slot);
     assert!(offset_of!(TextSelectionVTable, home_key) == 65 * slot);
     assert!(offset_of!(TextSelectionVTable, end_key) == 66 * slot);
 };
@@ -380,6 +387,33 @@ impl NativeSelection {
         check_hresult(result, if end { "EndKey" } else { "HomeKey" })?;
         Ok((result, delta))
     }
+
+    fn move_vertical(
+        &self,
+        unit: Unit,
+        count: i32,
+        extend: bool,
+        down: bool,
+    ) -> TestResult<(i32, i32)> {
+        let method = if down {
+            self.table().move_down
+        } else {
+            self.table().move_up
+        };
+        let mut delta = i32::MIN;
+        // SAFETY: the SDK methods take Unit, Count, Extend and a writable LONG.
+        let result = unsafe {
+            method(
+                self.0.as_ptr().cast(),
+                unit as i32,
+                count,
+                i32::from(extend),
+                &mut delta,
+            )
+        };
+        check_hresult(result, if down { "MoveDown" } else { "MoveUp" })?;
+        Ok((result, delta))
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -403,6 +437,7 @@ impl SelectionState {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 #[repr(i32)]
 enum Unit {
+    Paragraph = 4,
     Line = 5,
     Story = 6,
 }
@@ -540,4 +575,141 @@ fn rich_text_tom_oracle_system_msftedit_home_end_characterization() {
         .join()
         .expect("the native TOM probe thread panicked")
         .expect("the native TOM probe failed");
+}
+
+fn observe_vertical(
+    selection: &NativeSelection,
+    fixture: &str,
+    story_length: i32,
+    unit: Unit,
+    count: i32,
+    extend: bool,
+    down: bool,
+) -> TestResult {
+    let before = selection.state()?;
+    let (anchor, active) = before.directed();
+    let (result, delta) = selection.move_vertical(unit, count, extend, down)?;
+    let after = selection.state()?;
+    let (accepted_anchor, accepted_active) = after.directed();
+    println!(
+        "SYSTEM_MSFTEDIT_VERTICAL fixture={fixture} unit={unit:?} count={count} extend={extend} operation={} before={before:?} after={after:?} anchor={accepted_anchor} active={accepted_active} delta={delta} active_displacement={} hresult=0x{:08X}",
+        if down { "Down" } else { "Up" }, accepted_active - active, result as u32,
+    );
+    assert!(0 <= after.start && after.start <= after.end && after.end <= story_length);
+    if extend {
+        assert_eq!(
+            accepted_anchor, anchor,
+            "extension retains the native anchor"
+        );
+    } else if count != 0 {
+        assert_eq!(after.start, after.end, "movement leaves a native caret");
+    }
+    // Count=0, collapse-edge choice, signed unit counts, paragraph transitions,
+    // boundary no-ops and desired-column retention are observations. Do not
+    // turn the initial run into assertions derived from the Rust implementation.
+    Ok(())
+}
+
+fn characterize_vertical() -> TestResult {
+    // Same ownership order as the Home/End probe; all COM work stays on this
+    // thread and no HWND is shown or focused.
+    let _apartment = OleApartment::new()?;
+    let library = SystemRichEditLibrary::load()?;
+    library.describe()?;
+    let window = HiddenRichEdit::new()?;
+    let selection = window.selection()?;
+    let mut commands = 0;
+    for (name, text, ranges) in [
+        (
+            "vertical_multiline",
+            "abcdef\rxy\rabcdef\rpqrs",
+            &[(2, 12), (12, 2), (5, 5)][..],
+        ),
+        ("vertical_utf16", "A😀B\rxy\rA😀B", &[(1, 6), (6, 1)][..]),
+        ("vertical_empty_lines", "ab\r\rxy\r", &[(3, 3), (7, 7)][..]),
+        ("vertical_empty_story", "", &[(0, 0)][..]),
+    ] {
+        window.set_text(text)?;
+        let length = text.encode_utf16().count() as i32;
+        selection.set_range(0, length)?;
+        assert_eq!(selection.text()?, text, "{name}: exact native setup");
+        let story_length =
+            selection.number(selection.table().get_story_length, "GetStoryLength")?;
+        println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}");
+        for &(anchor, active) in ranges {
+            for unit in [Unit::Line, Unit::Paragraph] {
+                for extend in [false, true] {
+                    for down in [false, true] {
+                        for count in [0, 1, 2, -1] {
+                            selection.set_range(anchor, active)?;
+                            assert_eq!(selection.state()?.directed(), (anchor, active));
+                            observe_vertical(
+                                &selection,
+                                name,
+                                story_length,
+                                unit,
+                                count,
+                                extend,
+                                down,
+                            )?;
+                            commands += 1;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    let text = "abcdef\rx\rabcdef";
+    window.set_text(text)?;
+    selection.set_range(0, text.encode_utf16().count() as i32)?;
+    assert_eq!(
+        selection.text()?,
+        text,
+        "column fixture: exact native setup"
+    );
+    let story_length = selection.number(selection.table().get_story_length, "GetStoryLength")?;
+    println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name=retained_column text={text:?} supplied_utf16_length={} native_story_length={story_length}", text.encode_utf16().count());
+    // Unlike matrix rows, these calls deliberately retain native navigation state.
+    selection.set_range(5, 5)?;
+    for down in [true, true, false, false] {
+        observe_vertical(
+            &selection,
+            "retained_column",
+            story_length,
+            Unit::Line,
+            1,
+            false,
+            down,
+        )?;
+        commands += 1;
+    }
+    println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name=vertical_boundary text={text:?} supplied_utf16_length={} native_story_length={story_length}", text.encode_utf16().count());
+    for (position, down) in [(0, false), (text.encode_utf16().count() as i32, true)] {
+        for unit in [Unit::Line, Unit::Paragraph] {
+            selection.set_range(position, position)?;
+            observe_vertical(
+                &selection,
+                "vertical_boundary",
+                story_length,
+                unit,
+                1,
+                false,
+                down,
+            )?;
+            commands += 1;
+        }
+    }
+    println!("SYSTEM_MSFTEDIT_VERTICAL_PROBE_COMPLETE commands={commands}");
+    Ok(())
+}
+
+#[test]
+fn rich_text_tom_oracle_system_msftedit_vertical_characterization() {
+    std::thread::Builder::new()
+        .name("system-msftedit-vertical".into())
+        .spawn(characterize_vertical)
+        .expect("start the native vertical TOM probe thread")
+        .join()
+        .expect("the native vertical TOM probe thread panicked")
+        .expect("the native vertical TOM probe failed");
 }
