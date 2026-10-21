@@ -233,13 +233,25 @@ impl InkStrokeContainer {
         self.remove_strokes(&erased);
         Ok(erased)
     }
+    /// Removes these exact stroke instances. Serialized IDs may occur in
+    /// different documents, so an unrelated instance with the same ID does
+    /// not remove the stroke held by this collection.
     pub fn remove_strokes(&self, strokes: &[Rc<InkStroke>]) {
         if strokes.is_empty() {
             return;
         }
-        let ids: HashSet<_> = strokes.iter().map(|s| s.id()).collect();
         let removed = {
             let mut state = self.state.borrow_mut();
+            let ids: HashSet<_> = strokes
+                .iter()
+                .filter(|stroke| {
+                    state
+                        .by_id
+                        .get(&stroke.id())
+                        .is_some_and(|held| Rc::ptr_eq(held, stroke))
+                })
+                .map(|stroke| stroke.id())
+                .collect();
             let mut removed = Vec::with_capacity(ids.len());
             state.strokes.retain(|s| !ids.contains(&s.id()));
             for id in ids {
@@ -290,7 +302,10 @@ impl InkStrokeContainer {
     /// Attaches an OS interoperability adapter. Drawing remains portable;
     /// native persistence and clipboard operations use this service only.
     pub fn set_platform_services(&self, value: Option<Rc<dyn IInkPlatformServices>>) {
-        *self.platform_services.borrow_mut() = value;
+        // An adapter's destructor can release subscriptions or reenter the
+        // collection. Publish the replacement and release the borrow first.
+        let previous = self.platform_services.replace(value);
+        drop(previous);
     }
     pub fn platform_services(&self) -> Option<Rc<dyn IInkPlatformServices>> {
         self.platform_services.borrow().clone()
@@ -303,19 +318,21 @@ impl InkStrokeContainer {
         format: InkPersistenceFormat,
     ) -> InkServiceFuture<Vec<u8>> {
         let strokes = self.get_strokes();
-        let service = self.platform_services();
-        Box::pin(async move {
-            validate_imported_strokes(&strokes)?;
-            match format {
-                InkPersistenceFormat::Portable => {
-                    persistence::encode(&strokes, InkPersistenceLimits::DEFAULT)
-                }
-                _ => {
-                    let service = service.ok_or(InkError::UnsupportedFormat)?;
-                    service.save(strokes, format).await
-                }
+        if let Err(error) = validate_imported_strokes(&strokes) {
+            return Box::pin(async move { Err(error) });
+        }
+        // Freeze values at invocation, before an executor can yield to edits.
+        // Native adapters likewise snapshot before returning their future.
+        match format {
+            InkPersistenceFormat::Portable => {
+                let result = persistence::encode(&strokes, InkPersistenceLimits::DEFAULT);
+                Box::pin(async move { result })
             }
-        })
+            _ => match self.platform_services() {
+                Some(service) => service.save(strokes, format),
+                None => Box::pin(async { Err(InkError::UnsupportedFormat) }),
+            },
+        }
     }
     /// Replaces this collection only after the complete document validates.
     pub fn load(&self, data: &[u8]) -> Result<(), InkError> {
@@ -388,14 +405,7 @@ impl InkStrokeContainer {
             copy.set_selected(true);
             copies.push(copy);
         }
-        let result = bounds(copies.iter().map(|s| s.bounding_rect()));
-        self.validate_paste_capacity(&copies)?;
-        let _batch = ChangeBatch::new(self);
-        for s in self.get_strokes() {
-            s.set_selected(false);
-        }
-        self.add_strokes(copies)?;
-        Ok(result)
+        self.commit_paste(copies)
     }
     pub fn can_paste(data: &[u8]) -> bool {
         persistence::decode(data, InkPersistenceLimits::DEFAULT)
@@ -440,35 +450,20 @@ impl InkStrokeContainer {
                 Ok(copy)
             })
             .collect::<Result<Vec<_>, InkError>>()?;
-        let result = bounds(copies.iter().map(|s| s.bounding_rect()));
-        self.validate_paste_capacity(&copies)?;
-        let _batch = ChangeBatch::new(self);
-        for s in self.get_strokes() {
-            s.set_selected(false);
-        }
-        self.add_strokes(copies)?;
-        Ok(result)
+        self.commit_paste(copies)
     }
-    fn validate_paste_capacity(&self, strokes: &[Rc<InkStroke>]) -> Result<(), InkError> {
-        let limits = InkPersistenceLimits::DEFAULT;
-        let count = strokes
-            .iter()
-            .try_fold(0usize, |total, s| total.checked_add(s.ink_points().len()))
-            .ok_or(InkError::LimitExceeded)?;
-        let state = self.state.borrow();
-        if state
-            .strokes
-            .len()
-            .checked_add(strokes.len())
-            .is_none_or(|n| n > limits.max_strokes)
-            || state
-                .total_points
-                .checked_add(count)
-                .is_none_or(|n| n > limits.max_total_points)
-        {
-            return Err(InkError::LimitExceeded);
+    fn commit_paste(&self, copies: Vec<Rc<InkStroke>>) -> Result<Rect, InkError> {
+        let result = bounds(copies.iter().map(|s| s.bounding_rect()));
+        let previous = self.get_strokes();
+        let _batch = ChangeBatch::new(self);
+        // This is the only fallible mutation. Complete admission before a
+        // selected stroke can notify application code. A reentrant clear or
+        // edit then observes, and can intentionally change, the pasted ink.
+        self.add_strokes(copies)?;
+        for stroke in previous {
+            stroke.set_selected(false);
         }
-        Ok(())
+        Ok(result)
     }
 }
 
@@ -678,6 +673,22 @@ mod tests {
             Err(InkError::UnsupportedFormat)
         );
         assert!(!c.can_paste_from_clipboard().unwrap());
+    }
+    #[test]
+    fn async_save_captures_attributes_before_the_future_is_polled() {
+        let container = InkStrokeContainer::new();
+        let original = stroke(0.0);
+        let attributes = original.drawing_attributes();
+        container.add_stroke(original.clone()).unwrap();
+        let save = container.save_async();
+        let mut edited = attributes;
+        edited.size.width = 20.0;
+        original.set_drawing_attributes(edited).unwrap();
+        container.clear();
+        let restored = InkStrokeContainer::new();
+        restored.load(&ready(save).unwrap()).unwrap();
+        assert_eq!(restored.len(), 1);
+        assert_eq!(restored.get_strokes()[0].drawing_attributes(), attributes);
     }
     #[test]
     fn native_io_delegates_explicit_format_and_preserves_failed_load() {

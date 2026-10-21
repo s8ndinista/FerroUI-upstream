@@ -198,6 +198,23 @@ macro_rules! control_tests {
 }
 
 control_tests! {
+    ink_toolbar => "InkToolbar";
+    ink_toolbar_tool_button => "InkToolbarToolButton";
+    ink_toolbar_pen_button => "InkToolbarPenButton";
+    ink_toolbar_ballpoint_pen_button => "InkToolbarBallpointPenButton";
+    ink_toolbar_pencil_button => "InkToolbarPencilButton";
+    ink_toolbar_highlighter_button => "InkToolbarHighlighterButton";
+    ink_toolbar_custom_pen_button => "InkToolbarCustomPenButton";
+    ink_toolbar_eraser_button => "InkToolbarEraserButton";
+    ink_toolbar_custom_tool_button => "InkToolbarCustomToolButton";
+    ink_toolbar_toggle_button => "InkToolbarToggleButton";
+    ink_toolbar_custom_toggle_button => "InkToolbarCustomToggleButton";
+    ink_toolbar_ruler_button => "InkToolbarRulerButton";
+    ink_toolbar_menu_button => "InkToolbarMenuButton";
+    ink_toolbar_stencil_button => "InkToolbarStencilButton";
+    ink_toolbar_flyout_item => "InkToolbarFlyoutItem";
+    ink_toolbar_stroke_width_slider => "InkToolbarStrokeWidthSlider";
+    ink_toolbar_pen_configuration_control => "InkToolbarPenConfigurationControl";
     auto_complete_box => "AutoCompleteBox";
     button => "Button";
     calendar => "Calendar";

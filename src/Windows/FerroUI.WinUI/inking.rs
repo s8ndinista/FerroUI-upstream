@@ -605,14 +605,108 @@ fn from_native_stroke(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::future::Future;
+    use std::sync::Arc;
+    use std::task::{Context, Poll, Wake, Waker};
+    use std::time::{Duration, Instant};
+
+    // The backend chooses MTA for a thread other than the dispatcher thread.
+    // Native async completion can then wake this test without an STA message
+    // pump. Objects and Rc values are constructed and used on that one worker.
+    fn native_thread(test: impl FnOnce() + Send + 'static) {
+        let _dispatcher = ferroui_base::threading::Dispatcher::ui_thread();
+        std::thread::spawn(test).join().unwrap();
+    }
+
+    // A test-only executor. Production uses the application's local executor.
+    // A timeout turns a broken async completion into a useful CI failure.
+    fn complete<T>(future: impl Future<Output = T>) -> T {
+        struct Notify(std::thread::Thread);
+        impl Wake for Notify {
+            fn wake(self: Arc<Self>) {
+                self.0.unpark();
+            }
+            fn wake_by_ref(self: &Arc<Self>) {
+                self.0.unpark();
+            }
+        }
+        let waker = Waker::from(Arc::new(Notify(std::thread::current())));
+        let mut context = Context::from_waker(&waker);
+        let mut future = std::pin::pin!(future);
+        let deadline = Instant::now() + Duration::from_secs(30);
+        loop {
+            if let Poll::Ready(result) = future.as_mut().poll(&mut context) {
+                return result;
+            }
+            let remaining = deadline.saturating_duration_since(Instant::now());
+            assert!(
+                !remaining.is_zero(),
+                "Windows ink async operation timed out"
+            );
+            std::thread::park_timeout(remaining);
+        }
+    }
+
+    fn fixture_strokes() -> Vec<Rc<InkStroke>> {
+        let mut points = Vec::new();
+        for (index, (x, y, pressure)) in [(10.0, 20.0, 0.25), (30.0, 40.0, 0.5), (60.0, 30.0, 0.75)]
+            .into_iter()
+            .enumerate()
+        {
+            let mut point = InkPoint::new(Point::new(x, y), pressure).unwrap();
+            point.tilt_x = 10.0;
+            point.tilt_y = -5.0;
+            point.timestamp = 1_000_000 + index as u64 * 10_000;
+            points.push(point);
+        }
+        let mut pen = InkDrawingAttributes::default();
+        pen.color = Color::from_rgb(12, 34, 56);
+        pen.size = Size::new(4.0, 8.0);
+        pen.pen_tip = PenTipShape::Rectangle;
+        pen.pen_tip_transform = Matrix::new(1.0, 0.25, 0.0, 1.0, 0.0, 0.0);
+        pen.fit_to_curve = false;
+        let first = InkStroke::new(points.clone(), pen).unwrap();
+        first
+            .set_point_transform(Matrix::new(1.25, 0.0, 0.0, 0.75, 30.0, 40.0))
+            .unwrap();
+        first.set_selected(true);
+
+        let mut highlighter = InkDrawingAttributes::default();
+        highlighter.color = Color::from_rgb(255, 230, 0);
+        highlighter.draw_as_highlighter = true;
+        highlighter.ignore_pressure = true;
+        highlighter.ignore_tilt = true;
+        highlighter.pen_tip = PenTipShape::Rectangle;
+        highlighter.size = Size::new(5.0, 15.0);
+        let second = InkStroke::new(points.clone(), highlighter).unwrap();
+
+        let mut pencil = InkDrawingAttributes::create_for_pencil();
+        pencil.color = Color::from_rgb(120, 30, 90);
+        pencil.size = Size::new(6.0, 6.0);
+        pencil.pencil_opacity = 0.4;
+        let third = InkStroke::new(points, pencil).unwrap();
+        third
+            .set_point_transform(Matrix::create_translation(100.0, 0.0))
+            .unwrap();
+        vec![first, second, third]
+    }
+
+    fn near(actual: f64, expected: f64, tolerance: f64) {
+        assert!(
+            (actual - expected).abs() <= tolerance,
+            "expected {expected} +/- {tolerance}, got {actual}"
+        );
+    }
 
     #[test]
     fn affine_matrix_layout_matches_windows() {
         let matrix = Matrix::new(2.0, 3.0, 4.0, 5.0, 6.0, 7.0);
+        let native = to_native_matrix(matrix).unwrap();
         assert_eq!(
-            from_native_matrix(to_native_matrix(matrix).unwrap()),
-            matrix
+            [native.M11, native.M12, native.M21, native.M22, native.M31, native.M32],
+            [2.0, 3.0, 4.0, 5.0, 6.0, 7.0]
         );
+        assert_eq!(from_native_matrix(native), matrix);
         let mut perspective = matrix;
         perspective.m13 = 1.0;
         assert_eq!(
@@ -653,5 +747,173 @@ mod tests {
             to_native_point(Point::new(1.5, -2.0)).unwrap(),
             NativePoint { X: 1.5, Y: -2.0 }
         );
+    }
+
+    #[test]
+    fn native_conversion_preserves_supported_attributes_samples_and_transform() {
+        native_thread(|| {
+            let services = WindowsInkServices::new().expect("Windows ink activation");
+            let source = fixture_strokes();
+            let native = services.native_container(&source).unwrap();
+            // Assert through the actual Windows getters as well as our inverse
+            // adapter, so a symmetric conversion bug cannot pass a round trip.
+            let first = native.GetStrokes().unwrap().GetAt(0).unwrap();
+            assert!(first.Selected().unwrap());
+            let transform = first.PointTransform().unwrap();
+            assert_eq!(
+                [transform.M11, transform.M22, transform.M31, transform.M32],
+                [1.25, 0.75, 30.0, 40.0]
+            );
+            let color = first.DrawingAttributes().unwrap().Color().unwrap();
+            assert_eq!([color.A, color.R, color.G, color.B], [255, 12, 34, 56]);
+            let point = first.GetInkPoints().unwrap().GetAt(0).unwrap();
+            near(point.Position().unwrap().X as f64, 10.0, 0.05);
+            near(point.Position().unwrap().Y as f64, 20.0, 0.05);
+            let imported = from_native_container(&native, InkPersistenceLimits::DEFAULT).unwrap();
+            assert_eq!(imported.len(), source.len());
+            for (expected, actual) in source.iter().zip(&imported) {
+                assert_ne!(actual.id(), expected.id());
+                assert_eq!(actual.selected(), expected.selected());
+                assert_eq!(actual.point_transform(), expected.point_transform());
+                assert_eq!(actual.drawing_attributes(), expected.drawing_attributes());
+                assert_eq!(actual.ink_points().len(), expected.ink_points().len());
+                for (actual, expected) in actual.ink_points().iter().zip(expected.ink_points()) {
+                    near(actual.position.x, expected.position.x, 0.05);
+                    near(actual.position.y, expected.position.y, 0.05);
+                    near(actual.pressure as f64, expected.pressure as f64, 0.005);
+                    near(actual.tilt_x as f64, expected.tilt_x as f64, 0.1);
+                    near(actual.tilt_y as f64, expected.tilt_y as f64, 0.1);
+                    assert_eq!(actual.twist, 0.0);
+                }
+            }
+        });
+    }
+
+    #[test]
+    fn native_isf_and_gif_round_trip_preserve_strokes_attributes_and_geometry() {
+        native_thread(|| {
+            let services = WindowsInkServices::new().expect("Windows ink activation");
+            let source = fixture_strokes();
+            for format in [
+                InkPersistenceFormat::Isf,
+                InkPersistenceFormat::GifWithEmbeddedIsf,
+            ] {
+                let bytes = complete(services.save(source.clone(), format)).unwrap();
+                assert!(!bytes.is_empty());
+                assert!(!bytes.starts_with(b"FERROINK"));
+                let is_gif = bytes.starts_with(b"GIF87a") || bytes.starts_with(b"GIF89a");
+                assert_eq!(is_gif, format == InkPersistenceFormat::GifWithEmbeddedIsf);
+                let imported = complete(services.load(bytes)).unwrap();
+                assert_eq!(imported.len(), source.len());
+                for (expected, actual) in source.iter().zip(&imported) {
+                    let a = actual.drawing_attributes();
+                    let e = expected.drawing_attributes();
+                    assert_eq!(a.color, e.color);
+                    assert_eq!(a.kind, e.kind);
+                    assert_eq!(a.pen_tip, e.pen_tip);
+                    assert_eq!(a.draw_as_highlighter, e.draw_as_highlighter);
+                    assert_eq!(a.ignore_pressure, e.ignore_pressure);
+                    assert_eq!(a.fit_to_curve, e.fit_to_curve);
+                    near(a.size.width, e.size.width, 0.1);
+                    near(a.size.height, e.size.height, 0.1);
+                    near(a.pencil_opacity, e.pencil_opacity, 0.01);
+                    assert_eq!(actual.ink_points().len(), expected.ink_points().len());
+                    // ISF can bake a point transform into coordinates. Compare
+                    // visible points rather than requiring the same factorization.
+                    for (a, e) in actual.ink_points().iter().zip(expected.ink_points()) {
+                        let a_position = actual.point_transform().transform(a.position);
+                        let e_position = expected.point_transform().transform(e.position);
+                        near(a_position.x, e_position.x, 0.2);
+                        near(a_position.y, e_position.y, 0.2);
+                        near(a.pressure as f64, e.pressure as f64, 0.005);
+                    }
+                    let a = actual.bounding_rect();
+                    let e = expected.bounding_rect();
+                    near(a.x, e.x, 0.5);
+                    near(a.y, e.y, 0.5);
+                    near(a.width, e.width, 0.5);
+                    near(a.height, e.height, 0.5);
+                }
+            }
+        });
+    }
+
+    #[test]
+    fn malformed_native_load_preserves_existing_container() {
+        native_thread(|| {
+            let services = Rc::new(WindowsInkServices::new().expect("Windows ink activation"));
+            let container = InkStrokeContainer::new();
+            let source = fixture_strokes();
+            container.add_strokes(source.clone()).unwrap();
+            container.set_platform_services(Some(services));
+            for invalid in [
+                Vec::new(),
+                b"This is not an ISF or GIF ink document".to_vec(),
+            ] {
+                let error = complete(container.load_async(invalid));
+                assert!(error.is_err());
+                let retained = container.get_strokes();
+                assert_eq!(retained.len(), source.len());
+                assert!(retained.iter().zip(&source).all(|(a, b)| Rc::ptr_eq(a, b)));
+            }
+        });
+    }
+
+    #[test]
+    fn real_native_save_rejects_twist_until_application_opts_in() {
+        native_thread(|| {
+            let services = WindowsInkServices::new().expect("Windows ink activation");
+            let mut point = InkPoint::new(Point::new(4.0, 5.0), 0.5).unwrap();
+            point.twist = 25.0;
+            let stroke = InkStroke::new(vec![point], InkDrawingAttributes::default()).unwrap();
+            assert!(matches!(
+                complete(services.save(vec![stroke.clone()], InkPersistenceFormat::Isf)),
+                Err(InkError::InvalidInput(_))
+            ));
+            let services = services.allow_twist_loss(true);
+            let bytes = complete(services.save(vec![stroke], InkPersistenceFormat::Isf)).unwrap();
+            let imported = complete(services.load(bytes)).unwrap();
+            assert_eq!(imported.len(), 1);
+            assert!(imported[0].ink_points().iter().all(|p| p.twist == 0.0));
+        });
+    }
+
+    #[test]
+    fn installed_recognizer_enumeration_is_optional() {
+        native_thread(|| {
+            let services = WindowsInkServices::new().expect("Windows ink activation");
+            match services.recognizers() {
+                Ok(names) => {
+                    println!("Windows installed ink recognizers: {names:?}");
+                    assert!(names.iter().all(|name| !name.is_empty()));
+                }
+                Err(InkError::Platform(error)) => {
+                    println!("Optional handwriting recognizer service unavailable: {error}");
+                }
+                Err(error) => panic!("Unexpected recognizer enumeration error: {error}"),
+            }
+        });
+    }
+
+    /// Explicit opt-in: this replaces the current user's system clipboard.
+    /// Run only in an isolated interactive Windows test session with:
+    /// `cargo test -p ferroui-winui native_clipboard_round_trip -- --ignored`.
+    #[test]
+    #[ignore = "replaces the system clipboard; requires an isolated interactive Windows session"]
+    fn native_clipboard_round_trip() {
+        native_thread(|| {
+            let services = WindowsInkServices::new().expect("Windows ink activation");
+            let source = fixture_strokes();
+            services.copy_to_clipboard(&source).unwrap();
+            assert!(services.can_paste().unwrap());
+            let pasted = services.paste(Point::new(300.0, 200.0)).unwrap();
+            assert_eq!(pasted.len(), source.len());
+            assert!(pasted.iter().all(|stroke| stroke.selected()));
+            let container = InkStrokeContainer::new();
+            container.add_strokes(pasted).unwrap();
+            let bounds = container.bounding_rect();
+            near(bounds.x, 300.0, 1.0);
+            near(bounds.y, 200.0, 1.0);
+        });
     }
 }

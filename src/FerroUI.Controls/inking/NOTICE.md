@@ -47,5 +47,12 @@ the Microsoft Rust for Windows projections: `windows` 0.62.2,
 licensed under MIT OR Apache-2.0 and retain their license files in the published
 crates. Their repository is <https://github.com/microsoft/windows-rs>. They are
 target-specific Cargo dependencies, not copied sources in this directory.
+The declaration-only snapshot
+`docs/porting/data/winui-inking/upstream/windows-0.62.2-inking-services.txt`
+is derived from `microsoft/windows-rs` revision
+`32c3144490c016fe496a0aed769bce60987a2e9d`, Copyright (c) Microsoft Corporation,
+under the MIT option of that project's MIT OR Apache-2.0 license. The Microsoft
+MIT permission and warranty text is retained above; no projection method bodies
+or operating-system implementation are included in that snapshot.
 The Windows ink engine, native recognizers and language data are OS services;
 this port does not distribute their implementation or data.

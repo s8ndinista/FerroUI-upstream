@@ -1,23 +1,32 @@
 //! Toolbar controls adapted from the WinUI InkToolbar control family.
-use super::color_names::{color_name, default_palette};
+use super::color_names::{
+    color_name, color_resource_key, contrast_ratio, default_palette, high_contrast_colors,
+};
+#[path = "ink_toolbar_strings.rs"]
+pub(crate) mod strings;
 use super::{
-    InkDrawingAttributes, InkError, InkToolbarMenuKind, InkToolbarStencilKind, InkToolbarToggle,
+    InkDrawingAttributes, InkError, InkHighContrastAdjustment, InkToolbar, InkToolbarFlyoutItem,
+    InkToolbarFlyoutItemKind, InkToolbarMenuKind, InkToolbarStencilKind, InkToolbarToggle,
     InkToolbarTool, PenTipShape,
 };
 use crate::automation::AutomationProperties;
 use crate::primitives::{TemplatedControlImpl, ToggleButton, ToggleButtonImpl};
 use crate::{
-    ButtonImpl, ButtonImplExt, CheckBox, ContentControlImpl, Control, ControlImpl, RadioButton,
+    ButtonImpl, ButtonImplExt, CheckBox, ContentControlImpl, Control, ControlImpl, Flyout,
+    RadioButton, StackPanel,
 };
 use ferroui_base::collections::FerroList;
+use ferroui_base::controls::ResourceKey;
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::LayoutableImpl;
+use ferroui_base::media::immutable::ImmutableSolidColorBrush;
 use ferroui_base::media::{Color, IBrush};
+use ferroui_base::styling::ControlTheme;
 use ferroui_base::{
     ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate,
     DirectProperty, FerroObject, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, Ref, Size, StyledElementImpl, StyledProperty,
+    FerroPropertyChangedEventArgs, Ref, Size, StyledElement, StyledElementImpl, StyledProperty,
     StyledPropertyOptions, TypeInfo, VisualImpl,
 };
 use std::cell::{Cell, RefCell};
@@ -57,8 +66,8 @@ impl ControlImpl for InkToolbarToolButton {
 }
 
 impl StyledElementImpl for InkToolbarToolButton {
-    fn style_key_override(_this: &Self) -> &'static TypeInfo {
-        RadioButton::TYPE
+    fn style_key_override(this: &Self) -> &'static TypeInfo {
+        toolbar_style_key(this, RadioButton::TYPE)
     }
 }
 ferro_properties! { impl InkToolbarToolButton {
@@ -95,6 +104,10 @@ pub struct InkToolbarPenButton {
     base: InkToolbarToolButton,
     palette_subscription: RefCell<Option<(Palette, u64)>>,
     selected_brush: RefCell<Option<Rc<dyn IBrush>>>,
+    contrast_palette: RefCell<Option<Vec<Rc<dyn IBrush>>>>,
+    contrast_signature: Cell<Option<(InkHighContrastAdjustment, Color, Color)>>,
+    normal_index: Cell<i32>,
+    contrast_index: Cell<i32>,
 }
 ferro_class! { InkToolbarPenButton: InkToolbarToolButton, virtuals InkToolbarPenButtonImpl: ToggleButtonImpl {
     fn create_ink_drawing_attributes(this) -> Result<InkDrawingAttributes, InkError>;
@@ -107,6 +120,18 @@ impl FerroObjectImpl for InkToolbarPenButton {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
         this.set_palette(default_palette(false));
+        let weak = this.to_ref().downgrade();
+        this.resources_changed(move |_| {
+            if let Some(pen) = weak.upgrade() {
+                pen.refresh_palette();
+            }
+        });
+        let weak = this.to_ref().downgrade();
+        this.actual_theme_variant_changed(move || {
+            if let Some(pen) = weak.upgrade() {
+                pen.refresh_palette();
+            }
+        });
     }
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
         Self::parent_on_property_changed(this, change);
@@ -118,11 +143,11 @@ impl FerroObjectImpl for InkToolbarPenButton {
             let weak = this.to_ref().downgrade();
             let token = palette.add_collection_changed(Rc::new(move |_| {
                 if let Some(pen) = weak.upgrade() {
-                    pen.update_selected_brush();
+                    pen.rebuild_contrast_palette(true);
                 }
             }));
             *this.palette_subscription.borrow_mut() = Some((palette, token));
-            this.update_selected_brush();
+            this.rebuild_contrast_palette(true);
         } else if change.property() == Self::selected_brush_index_property().as_property() {
             this.update_selected_brush();
         } else if change.property() == Self::min_stroke_width_property().as_property()
@@ -164,6 +189,10 @@ impl InkToolbarPenButton {
             base: InkToolbarToolButton::construct(),
             palette_subscription: RefCell::new(None),
             selected_brush: RefCell::new(None),
+            contrast_palette: RefCell::new(None),
+            contrast_signature: Cell::new(None),
+            normal_index: Cell::new(0),
+            contrast_index: Cell::new(0),
         }
     }
     pub fn new() -> Ref<Self> {
@@ -215,9 +244,74 @@ impl InkToolbarPenButton {
                 "Ink pens require a selected solid-color brush",
             ))
     }
+    pub(crate) fn effective_palette(&self) -> Vec<Rc<dyn IBrush>> {
+        self.contrast_palette
+            .borrow()
+            .clone()
+            .unwrap_or_else(|| self.palette().snapshot().as_ref().clone())
+    }
+    pub(crate) fn refresh_palette(&self) {
+        self.rebuild_contrast_palette(false);
+    }
+    fn rebuild_contrast_palette(&self, force: bool) {
+        let mut parent = self.parent();
+        let mut mode = InkHighContrastAdjustment::UseSystemColorsWhenNecessary;
+        while let Some(element) = parent {
+            if let Some(toolbar) = element.cast::<InkToolbar>() {
+                mode = toolbar
+                    .effective_ink_presenter()
+                    .map(|p| p.high_contrast_adjustment())
+                    .unwrap_or(mode);
+                break;
+            }
+            parent = element.parent();
+        }
+        let signature = high_contrast_colors(self, self.tool_kind() == InkToolbarTool::Highlighter)
+            .map(|(background, system)| (mode, background, system));
+        let previous = self.contrast_signature.replace(signature);
+        if force || previous != signature {
+            let palette = signature.map(|(mode, background, system)| {
+                let mut result = self
+                    .palette()
+                    .snapshot()
+                    .iter()
+                    .filter(|brush| {
+                        brush
+                            .as_solid_color_brush()
+                            .is_some_and(|brush| match mode {
+                                InkHighContrastAdjustment::UseOriginalColors => true,
+                                InkHighContrastAdjustment::UseSystemColors => false,
+                                InkHighContrastAdjustment::UseSystemColorsWhenNecessary => {
+                                    contrast_ratio(brush.color(), background) >= 7.0
+                                }
+                            })
+                    })
+                    .cloned()
+                    .collect::<Vec<_>>();
+                if !result.iter().any(|brush| {
+                    brush
+                        .as_solid_color_brush()
+                        .is_some_and(|brush| brush.color() == system)
+                }) {
+                    result.push(Rc::new(ImmutableSolidColorBrush::new(system)) as Rc<dyn IBrush>);
+                }
+                result
+            });
+            *self.contrast_palette.borrow_mut() = palette;
+            if previous.is_some() != signature.is_some() {
+                let index = if signature.is_some() {
+                    self.contrast_index.get()
+                } else {
+                    self.normal_index.get()
+                };
+                self.set_current_value(Self::selected_brush_index_property(), index);
+            }
+        }
+        self.update_selected_brush();
+    }
     fn update_selected_brush(&self) {
         let index = self.selected_brush_index();
-        let items = self.palette().snapshot();
+        let items = self.effective_palette();
         // The source retains the previous brush for an invalid palette index.
         let Some(selected) = (index >= 0)
             .then(|| items.get(index as usize).cloned())
@@ -225,13 +319,22 @@ impl InkToolbarPenButton {
         else {
             return;
         };
+        if self.contrast_signature.get().is_some() {
+            self.contrast_index.set(index);
+        } else {
+            self.normal_index.set(index);
+        }
         let selected = Some(selected);
         self.set_and_raise(
             Self::selected_brush_property(),
             &self.selected_brush,
             selected.clone(),
         );
-        let help = selected.and_then(|b| b.as_solid_color_brush().map(|s| color_name(s.color())));
+        let help = selected.and_then(|b| {
+            b.as_solid_color_brush().and_then(|brush| {
+                color_resource_key(brush.color()).map(|_| color_name(self, brush.color()))
+            })
+        });
         AutomationProperties::set_help_text(self, help.as_deref());
     }
 }
@@ -249,8 +352,7 @@ impl FerroObjectImpl for InkToolbarBallpointPenButton {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
         this.set_tool_kind(InkToolbarTool::BallpointPen);
-        this.set_content(Some(Rc::new("Ballpoint pen".to_owned())));
-        AutomationProperties::set_name(this, Some("Ballpoint pen"));
+        strings::bind_content(this, "InkToolbarBallpointPenButtonName");
     }
 }
 impl InkToolbarPenButtonImpl for InkToolbarBallpointPenButton {
@@ -286,8 +388,7 @@ impl FerroObjectImpl for InkToolbarPencilButton {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
         this.set_tool_kind(InkToolbarTool::Pencil);
-        this.set_content(Some(Rc::new("Pencil".to_owned())));
-        AutomationProperties::set_name(this, Some("Pencil"));
+        strings::bind_content(this, "InkToolbarPencilButtonName");
     }
 }
 impl InkToolbarPenButtonImpl for InkToolbarPencilButton {
@@ -323,10 +424,8 @@ impl FerroObjectImpl for InkToolbarHighlighterButton {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
         this.set_tool_kind(InkToolbarTool::Highlighter);
-        this.set_content(Some(Rc::new("Highlighter".to_owned())));
-        AutomationProperties::set_name(this, Some("Highlighter"));
+        strings::bind_content(this, "InkToolbarHighlighterButtonName");
         this.set_palette(default_palette(true));
-        this.set_selected_stroke_width(16.0);
     }
 }
 impl InkToolbarPenButtonImpl for InkToolbarHighlighterButton {
@@ -342,6 +441,10 @@ impl InkToolbarPenButtonImpl for InkToolbarHighlighterButton {
     }
 }
 impl InkToolbarHighlighterButton {
+    fn static_constructor() {
+        InkToolbarPenButton::selected_stroke_width_property()
+            .override_default_value::<InkToolbarHighlighterButton>(16.0);
+    }
     pub fn construct() -> Self {
         Self {
             base: InkToolbarPenButton::construct(),
@@ -478,8 +581,7 @@ impl FerroObjectImpl for InkToolbarEraserButton {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
         this.set_tool_kind(InkToolbarTool::Eraser);
-        this.set_content(Some(Rc::new("Eraser".to_owned())));
-        AutomationProperties::set_name(this, Some("Eraser"));
+        strings::bind_content(this, "InkToolbarEraserButtonName");
     }
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
         Self::parent_on_property_changed(this, change);
@@ -553,8 +655,8 @@ ferro_class!(InkToolbarToggleButton:CheckBox);
 ferro_class_info!(InkToolbarToggleButton{new:InkToolbarToggleButton::new,markup:{properties:[ToggleKind:InkToolbarToggle{get:InkToolbarToggleButton::toggle_kind}],}});
 ferro_impl_classes!(InkToolbarToggleButton:FerroObjectImpl,VisualImpl,LayoutableImpl,InteractiveImpl,InputElementImpl,ControlImpl,TemplatedControlImpl,ContentControlImpl,ButtonImpl,ToggleButtonImpl);
 impl StyledElementImpl for InkToolbarToggleButton {
-    fn style_key_override(_this: &Self) -> &'static TypeInfo {
-        CheckBox::TYPE
+    fn style_key_override(this: &Self) -> &'static TypeInfo {
+        toolbar_style_key(this, CheckBox::TYPE)
     }
 }
 impl InkToolbarToggleButton {
@@ -611,8 +713,7 @@ impl FerroObjectImpl for InkToolbarRulerButton {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
         this.toggle_kind.set(InkToolbarToggle::Ruler);
-        this.set_content(Some(Rc::new("Ruler".to_owned())));
-        AutomationProperties::set_name(this, Some("Ruler"));
+        strings::bind_content(this, "InkToolbarStencilRulerName");
     }
 }
 impl InkToolbarRulerButton {
@@ -639,8 +740,8 @@ impl ControlImpl for InkToolbarMenuButton {
 }
 
 impl StyledElementImpl for InkToolbarMenuButton {
-    fn style_key_override(_this: &Self) -> &'static TypeInfo {
-        ToggleButton::TYPE
+    fn style_key_override(this: &Self) -> &'static TypeInfo {
+        toolbar_style_key(this, ToggleButton::TYPE)
     }
 }
 ferro_properties! {impl InkToolbarMenuButton{pub fn is_extension_glyph_shown_property()->StyledProperty<bool>{FerroProperty::register::<InkToolbarMenuButton,_>("IsExtensionGlyphShown",true)}}}
@@ -670,17 +771,40 @@ pub struct InkToolbarStencilButton {
     presenter: RefCell<Option<Rc<super::InkPresenter>>>,
     ruler: RefCell<Option<Rc<super::InkPresenterRuler>>>,
     protractor: RefCell<Option<Rc<super::InkPresenterProtractor>>>,
+    menu_items: RefCell<Vec<(InkToolbarStencilKind, Ref<InkToolbarFlyoutItem>)>>,
+    syncing_menu: Cell<bool>,
 }
 ferro_class!(InkToolbarStencilButton:InkToolbarMenuButton);
 ferro_class_info!(InkToolbarStencilButton {
     new: InkToolbarStencilButton::new
 });
-ferro_impl_classes!(InkToolbarStencilButton:StyledElementImpl,VisualImpl,LayoutableImpl,InteractiveImpl,InputElementImpl,ControlImpl,TemplatedControlImpl,ContentControlImpl,ButtonImpl,ToggleButtonImpl);
+ferro_impl_classes!(InkToolbarStencilButton:StyledElementImpl,VisualImpl,LayoutableImpl,InteractiveImpl,InputElementImpl,ControlImpl,TemplatedControlImpl,ContentControlImpl,ToggleButtonImpl);
+impl ButtonImpl for InkToolbarStencilButton {
+    fn open_flyout(this: &Self) {
+        if this.is_ruler_item_visible()
+            && this.is_protractor_item_visible()
+            && this.is_extension_glyph_shown()
+        {
+            Self::parent_open_flyout(this);
+        }
+    }
+}
 impl FerroObjectImpl for InkToolbarStencilButton {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
-        this.set_content(Some(Rc::new("Stencil".to_owned())));
-        AutomationProperties::set_name(this, Some("Stencil"));
+        strings::bind_content(this, "InkToolbarStencilButtonName");
+        this.create_stencil_flyout();
+    }
+    fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
+        Self::parent_on_property_changed(this, change);
+        let property = change.property();
+        if property == Self::selected_stencil_property().as_property()
+            || property == ToggleButton::is_checked_property().as_property()
+            || property == Self::is_ruler_item_visible_property().as_property()
+            || property == Self::is_protractor_item_visible_property().as_property()
+        {
+            this.synchronize_stencil_menu();
+        }
     }
 }
 ferro_properties! {impl InkToolbarStencilButton{
@@ -697,10 +821,100 @@ impl InkToolbarStencilButton {
             presenter: RefCell::new(None),
             ruler: RefCell::new(None),
             protractor: RefCell::new(None),
+            menu_items: RefCell::new(Vec::new()),
+            syncing_menu: Cell::new(false),
         }
     }
     pub fn new() -> Ref<Self> {
         instantiate(Self::construct())
+    }
+    fn create_stencil_flyout(&self) {
+        let panel = StackPanel::new();
+        let mut items = Vec::new();
+        for (kind, label) in [
+            (InkToolbarStencilKind::Ruler, "InkToolbarStencilRulerName"),
+            (
+                InkToolbarStencilKind::Protractor,
+                "InkToolbarStencilProtractorName",
+            ),
+        ] {
+            let item = InkToolbarFlyoutItem::new();
+            item.set_kind(InkToolbarFlyoutItemKind::RadioCheck);
+            strings::bind_content(&item, label);
+            let weak = self.to_ref().downgrade();
+            item.checked(move |_| {
+                if let Some(button) = weak.upgrade() {
+                    if button.syncing_menu.replace(true) {
+                        return;
+                    }
+                    button.set_selected_stencil(kind);
+                    button.set_is_checked(Some(true));
+                    button.syncing_menu.set(false);
+                    button.synchronize_stencil_menu();
+                }
+            });
+            let weak = self.to_ref().downgrade();
+            item.unchecked(move |_| {
+                if let Some(button) = weak.upgrade() {
+                    if button.syncing_menu.replace(true) {
+                        return;
+                    }
+                    if button.selected_stencil() == kind {
+                        button.set_is_checked(Some(false));
+                    }
+                    button.syncing_menu.set(false);
+                    button.synchronize_stencil_menu();
+                }
+            });
+            panel.children().add(&item);
+            items.push((kind, item));
+        }
+        *self.menu_items.borrow_mut() = items;
+        let flyout = Flyout::new();
+        flyout.set_content(Some(Rc::new(panel.upcast::<Control>())));
+        self.set_flyout(flyout);
+        self.synchronize_stencil_menu();
+    }
+    fn synchronize_stencil_menu(&self) {
+        if self.syncing_menu.replace(true) {
+            return;
+        }
+        let items = self.menu_items.borrow().clone();
+        let ruler = self.is_ruler_item_visible();
+        let protractor = self.is_protractor_item_visible();
+        if ruler != protractor {
+            self.set_current_value(
+                Self::selected_stencil_property(),
+                if ruler {
+                    InkToolbarStencilKind::Ruler
+                } else {
+                    InkToolbarStencilKind::Protractor
+                },
+            );
+        }
+        self.set_current_value(
+            InkToolbarMenuButton::is_extension_glyph_shown_property(),
+            ruler && protractor,
+        );
+        let size = i32::from(ruler) + i32::from(protractor);
+        let mut position = 0;
+        for (kind, item) in items {
+            let visible = if kind == InkToolbarStencilKind::Ruler {
+                ruler
+            } else {
+                protractor
+            };
+            item.set_is_visible(visible);
+            item.set_is_checked(Some(
+                self.selected_stencil() == kind && self.is_checked() == Some(true),
+            ));
+            if visible {
+                position += 1;
+            }
+            AutomationProperties::set_position_in_set(&item, if visible { position } else { 0 });
+            AutomationProperties::set_size_of_set(&item, size);
+        }
+        self.syncing_menu.set(false);
     }
     pub(crate) fn set_presenter(&self, value: Option<Rc<super::InkPresenter>>) {
         let ruler = value.as_ref().map(|p| p.ruler());
@@ -733,4 +947,31 @@ impl InkToolbarStencilButton {
     pub fn set_is_protractor_item_visible(&self, value: bool) {
         self.set_value(Self::is_protractor_item_visible_property(), value);
     }
+}
+
+/// Use a dedicated theme when one is installed, retaining the framework's native control
+/// theme otherwise. Resource changes invalidate the implicit theme through StyledElement.
+pub(crate) fn toolbar_style_key(
+    this: &StyledElement,
+    fallback: &'static TypeInfo,
+) -> &'static TypeInfo {
+    let actual = this.get_type();
+    if this.theme().is_some() {
+        return actual;
+    }
+    let mut candidate = Some(actual);
+    while let Some(kind) = candidate {
+        if kind == fallback {
+            break;
+        }
+        if this
+            .try_find_resource(&ResourceKey::Type(kind), None)
+            .flatten()
+            .is_some_and(|resource| resource.downcast_ref::<Ref<ControlTheme>>().is_some())
+        {
+            return kind;
+        }
+        candidate = kind.base_type();
+    }
+    fallback
 }

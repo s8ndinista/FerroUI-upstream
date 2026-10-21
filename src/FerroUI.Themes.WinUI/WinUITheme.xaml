@@ -86,6 +86,9 @@
         <MergeResourceInclude Source="/Resources/Glyphs.xaml" />
         <!-- resources:end -->
 
+        <!-- Inking resources use the independently pinned source of the control port. -->
+        <MergeResourceInclude Source="/Resources/InkToolbar.xaml" />
+
         <!-- The labels of the commands of the context flyout of the text controls (not part of the
              WinUI theme: WinUI takes them from the resources of the framework). -->
         <MergeResourceInclude Source="/Strings/InvariantResources.xaml" />

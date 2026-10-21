@@ -53,8 +53,14 @@ The data is under [`data/winui-inking`](data/winui-inking/README.md):
 - `tests-map.json` keeps the upstream test scenarios and local evidence.
 - `dependencies.json` distinguishes required OS dependencies from adjacent
   recognition/analysis services.
+- `service-api-map.json` audits 136 methods/getters/setters on 12 selected
+  external Windows classes. It identifies actual control calls separately from
+  additional dependency APIs and optional extensions.
 - `upstream/*.idl` are exact snapshots of all six IDLs, verified using their
   original Git blob hashes.
+- `upstream/windows-0.62.2-inking-services.txt` retains the audited external
+  declarations from `microsoft/windows-rs` revision
+  `32c3144490c016fe496a0aed769bce60987a2e9d` with an immutable content digest.
 
 The implementation follows [`PORTING-GUIDE.md`](PORTING-GUIDE.md). The source is
 MIT licensed; the complete Microsoft notice is retained beside the implementation
@@ -82,6 +88,16 @@ uses. The portable engine has no COM dependency and does not create a second
 windowing, property or layout system. This also means that passing portable tests
 does not establish Windows independent-thread latency or identical OS pixels.
 
+The 181 WinUI IDL members do not define every method of their returned Windows
+objects. The separate service ledger records the additional members instead of
+equating the wrapper API with the whole Windows Ink namespace. For example,
+the portable stroke currently has no `Recognized`, `PointerId`, wall-clock
+`StrokeStartedTime`, independently editable `StrokeDuration`, or WinRT
+`GetRenderingSegments` contract. `InkModelerAttributes` and retained container
+recognition results are also absent. The pinned control code does not call those
+APIs. They limit broader dependency compatibility and remain visible, while the
+required control gate covers the services actually called by the control source.
+
 ## 3. Implementation organization
 
 All paths below are relative to `src/FerroUI.Controls/inking`. Their exact status
@@ -96,7 +112,9 @@ and individual missing members are in the ledger.
 | OS point/drawing-attribute value contracts | `ink_point.rs`, `ink_drawing_attributes.rs` | `Point`, `Size`, `Matrix`, `Color` and validation errors |
 | OS strokes and construction | `ink_stroke.rs`, `ink_stroke_builder.rs` | Cached portable geometry and immutable input samples |
 | OS stroke collection and persistence | `ink_stroke_container.rs`, `persistence.rs` | Observable changes, selection, transforms and bounded byte parsing |
+| Portable clipboard transport | `ink_clipboard.rs` | The owning `TopLevel`'s `IClipboard`, application data formats, asynchronous transfers and disposal |
 | Ruler/protractor state and constraints | `ink_presenter_stencil.rs` | FerroUI geometry/transforms, with native manipulation parity tracked separately |
+| Stencil manipulation | `ink_stencil_input.rs` | Captured touch/mouse contacts, translation, rotation, resize and cancellation |
 | Toolbar orchestration and button manager | `ink_toolbar.rs` | Existing panel/children collection, styled properties and events |
 | Tool/pen/toggle/menu subclasses | `ink_toolbar_buttons.rs` | FerroUI radio, toggle and checkbox control bases |
 | Public toolbar enums | `ink_toolbar_types.rs` | Rust enums preserving upstream values and XAML names |
@@ -104,6 +122,7 @@ and individual missing members are in the ledger.
 | Live pen configuration and width slider | `ink_toolbar_configuration.rs` | Existing flyout, toggle, panel and slider controls |
 | Toolbar accessibility | `ink_toolbar_automation_peer.rs` | Named peers with selection, toggle, expand/collapse, range and text-value providers |
 | Optional native persistence/clipboard | `ink_platform_services.rs`; `src/Windows/FerroUI.WinUI/inking.rs` outside this directory | Local Rust futures and safe Windows Runtime projections |
+| XAML and declarative construction | `markup.rs`; `src/FerroUI.View` metadata outside this directory | Existing service/type registration, event binding and view builders |
 
 The shared toolbar module is an intentional file mapping: the small C++ headers
 share control inheritance and boilerplate, while the source ledger retains their
@@ -174,6 +193,33 @@ samples, pressure zero, extreme valid coordinates, transforms, sparse segment
 eraser intersections and malformed data. Rendering every captured sample as an
 unconnected dot would not preserve the stroke hit-testing or appearance contract.
 
+### Ruler and protractor
+
+Both stencils expose visibility, kind, affine transform and foreground/background
+colors. The ruler adds length, width, ticks and a compass. The protractor adds
+radius, accent color, resizability, graduations, rays, center marker and measured
+arc text. Transforms use the stencil's local top-left origin; the protractor
+center is `(radius, radius)`. Initial canvas sizing adjusts the transform while
+preserving the public size defaults.
+
+The defaults follow the documented service values: ruler length 1,600 DIPs
+(minimum 300), width 120 DIPs (minimum 120), protractor radius 280 DIPs and
+resizing enabled. The portable implementation additionally bounds dimensions
+and rejects invalid/singular transforms. See the Windows
+[length](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkpresenterruler.length),
+[width](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkpresenterruler.width),
+[radius](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkpresenterprotractor.radius)
+and [resizability](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkpresenterprotractor.isresizable)
+contracts.
+
+One touch translates a stencil; two touches rotate it and can resize a resizable
+protractor. Mouse dragging translates, Shift/right dragging rotates, and Ctrl
+dragging resizes the protractor. Capture is released when a guide is hidden or
+its canvas is disabled/detached. Pen input follows the guide and updates the
+protractor's measured arc; the angle-readout property controls actual text.
+The independent geometry and rendering algorithms do not establish the private
+Windows pixel-coverage or nib-masking behavior at a stencil boundary.
+
 ### Custom drying
 
 `activate_custom_drying` returns a stable synchronizer. `begin_dry` snapshots a
@@ -197,14 +243,26 @@ The default budgets are 64 MiB, 100,000 strokes, 65,536 points per stroke and
 1,000,000 total points. Counts and record boundaries are checked before Rust
 allocation, and failed loads preserve the existing document. Portable
 `copy_selected`/`paste` exchange this format under
-`application/x-ferroui-ink`; paste creates fresh identities and positions the
+the documented `application/x-ferroui-ink` MIME type; paste creates fresh identities and positions the
 visible bounds at the requested point.
+
+`InkClipboard` connects those bytes to FerroUI's existing `IClipboard` obtained
+from the owning `TopLevel`. Its application format is `org.ferroui.ink`, which
+each backend maps to its own native clipboard naming scheme. Copy snapshots
+only selected ink when invoked; paste appends fresh identities at the requested
+visible bounds and keeps existing ink if fetching or decoding fails. Clipboard
+read transfers are disposed even if an awaited read is canceled. This supports
+portable exchange between FerroUI applications; native Windows Ink exchange
+uses the separate OS adapter below.
 
 `save_async` intentionally defaults to `Portable`, unlike the Windows default
 GIF-with-ISF output. `save_with_format_async` makes the format explicit.
 `load_async` recognizes FERROINK magic and delegates other formats to an attached
 `IInkPlatformServices`. Missing native services produce `UnsupportedFormat`;
 `can_paste_from_clipboard` is false when no service is attached.
+Both portable and native save paths capture the requested strokes' values at
+method invocation, so edits made before the returned future is polled do not
+silently change the saved document.
 
 The optional `ferroui-winui::WindowsInkServices` adapter is compiled only on
 Windows. It uses `windows = 0.62.2`, `windows-collections = 0.3.2` and
@@ -339,14 +397,18 @@ The ledger checker runs without Rust or platform services:
 ```sh
 python scripts/inking/check_port.py
 python scripts/inking/check_port.py --json
+python scripts/inking/check_port.py --require-control-complete
 python scripts/inking/check_port.py --require-complete
 ```
 
 It verifies all 164 source identities are retained, the six IDL snapshots retain
 their Git blob hashes, every IDL type/member is represented, and mapped files,
 symbols and tests exist. A successful ordinary check means the record is
-internally consistent. `--require-complete` additionally rejects partial,
-unported and external entries. Neither mode executes behavior or compares pixels.
+internally consistent. `--require-control-complete` rejects gaps in control
+sources, IDLs, tests and required/direct services. `--require-complete` also
+includes additional dependency API and optional extension gaps. The JSON report
+lists each remaining record and its gate scope. Neither mode executes behavior
+or compares pixels.
 
 Rust validation is targeted at the controls crate and inking modules:
 
@@ -355,6 +417,8 @@ cargo check -p ferroui-controls
 cargo test -p ferroui-controls --lib inking::
 cargo check -p ferroui-winui --target x86_64-pc-windows-gnu
 cargo check -p ferroui-winui --tests --target x86_64-pc-windows-gnu
+# On Windows (does not touch the clipboard):
+cargo test -p ferroui-winui --lib inking::
 ```
 
 Execution results belong in the PR work log after the commands complete. A test
@@ -362,21 +426,51 @@ listed in `tests-map.json` is a scenario mapping, not an assertion that a test
 run happened. Do not count a constructor test as coverage for an upstream
 clipping, localization or accessibility test.
 
+Validation recorded on 2026-10-21: Rust 1.89 on Linux completed the focused
+controls test run with **71 inking tests passing**, plus one unrelated test
+whose name contained the filter substring (`shrinking`): 72 passed, zero failed.
+The narrower `inking::` filter above avoids that unrelated match. This run
+exercised portable logic and framework APIs; it did not execute Windows native
+services, physical pointer devices, accessibility clients or rendered comparisons.
+
+The Windows target cross-check also succeeds, including the native test code.
+The adapter has three conversion/guard tests and five non-ignored Windows
+fixtures covering real native conversion, ISF/GIF save/load, malformed-load
+atomicity, twist-loss opt-in and optional recognizer enumeration. The conversion
+fixture asserts native Windows getters directly so inverse conversion mistakes
+cannot pass only by canceling each other. Serialized coordinate/pressure tests
+allow bounded native quantization, and compare visible points even if Windows
+bakes a transform into coordinates. A test-only MTA worker and a 30-second
+completion deadline exercise native futures without a UI-thread wait.
+
+The separate `native_clipboard_round_trip` fixture is ignored by default because
+it replaces the user's global clipboard. It is intended for an isolated
+interactive Windows test session, explicitly invoked with:
+
+```sh
+cargo test -p ferroui-winui native_clipboard_round_trip -- --ignored
+```
+
+Cross-checking these fixtures is not a Windows execution result. Native records
+remain `partial` until the Windows CI run and clipboard fixture report success.
+
 The reconciled ledger currently contains:
 
 | Records | Adapted | Implemented | Partial | Not ported | Not applicable | External |
 |---|---:|---:|---:|---:|---:|---:|
 | 164 source files | 6 | 0 | 53 | 91 | 14 | 0 |
 | 45 IDL types | 26 | 10 | 9 | 0 | 0 | 0 |
-| 181 IDL members | 136 | 32 | 13 | 0 | 0 | 0 |
+| 181 IDL members | 140 | 32 | 9 | 0 | 0 | 0 |
 | 65 upstream API tests | 26 | 0 | 14 | 25 | 0 | 0 |
 | 12 dependency records | 0 | 0 | 9 | 0 | 0 | 3 |
+| 136 external service members | 98 | 0 | 15 | 23 | 0 | 0 |
 
 The ordinary ledger check passes. The strict completion gate still reports
-217 partial/missing/external records. These counts intentionally overlap by
+251 partial/missing/external records: 217 in required control scope and 34 in
+additional dependency/optional scope. These counts intentionally overlap by
 scope (a source file, its type and a member may each record the same boundary);
 they are not a percentage of implemented functionality. All declared public
-member names have mappings, while 13 retain an explicit semantic or platform
+member names have mappings, while 9 retain an explicit semantic or platform
 boundary. All 91 unported source files remain visible: 86 locale resources,
 two templates, two interaction suites and the diagnostics header.
 
@@ -387,7 +481,7 @@ two templates, two interaction suites and the diagnostics header.
 | Visual resources | Translate every required template part/state, tool glyph, animation, access-key resource and theme interaction from the two XAML source files; compare rendered results. |
 | Localization | Port the 86 resource files and connect localized palette names, pen configuration headings and tool descriptions to FerroUI's resource services. |
 | High contrast | Complete native system-color monitoring and palette filtering; compare real high-contrast themes, including changes while a palette is open. |
-| Stencils | Add full touch translation/rotation/resize and remaining protractor/ruler annotations. The angle-readout flag is stored but does not yet draw a readout. |
+| Stencils | Compare native stencil appearance and nib/pixel coverage at masking boundaries; portable manipulation, annotations and measured arc text are implemented. |
 | Toolbar edge cases | Compare automatic flyout placement, radial-controller integration, custom configuration presentation and duplicate stencil-button behavior. Multiple custom stencil children are currently accepted. |
 | Native interoperability | Run ISF/GIF fixtures, pencil/transform conversion, malformed files and cross-application clipboard on Windows; execute installed-language recognition cases. |
 | Runtime input/rendering | Exercise pointer capture, coalesced physical-pen telemetry and both renderer backends; compare smoothing, highlighter overlap and pencil appearance against Windows. |

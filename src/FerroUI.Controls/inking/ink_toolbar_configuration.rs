@@ -1,23 +1,27 @@
 //! Pen palette and width editing built from the existing FerroUI controls.
-use super::color_names::color_name;
+use super::color_names::{bind_color_name, high_contrast_colors};
+use super::ink_toolbar_buttons::{strings, toolbar_style_key};
 use super::{InkToolbarFlyoutItemKind, InkToolbarPenButton};
 use crate::automation::AutomationProperties;
 use crate::primitives::{RangeBase, TemplatedControlImpl, ToggleButton, ToggleButtonImpl};
+use crate::shapes::{Ellipse, Path};
 use crate::{
-    Border, ButtonImpl, ContentControlImpl, Control, ControlImpl, PanelImpl, Slider, SliderImpl,
-    StackPanel, StackPanelImpl, WrapPanel,
+    ButtonImpl, Canvas, ContentControlImpl, Control, ControlImpl, PanelImpl, Slider, SliderImpl,
+    StackPanel, StackPanelImpl, TextBlock, WrapPanel,
 };
 use ferroui_base::collections::FerroList;
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::{LayoutableImpl, Orientation};
-use ferroui_base::media::IBrush;
+use ferroui_base::media::immutable::ImmutableSolidColorBrush;
+use ferroui_base::media::{FontWeight, IBrush, PenLineCap, PenLineJoin, PolylineGeometry};
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
     ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate,
-    DirectProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty, FerroPropertyChangedEventArgs, Ref,
-    StyledElementImpl, StyledProperty, TypeInfo, VisualImpl,
+    DirectProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
+    FerroPropertyChangedEventArgs, Point, Ref, StyledElementImpl, StyledProperty, Thickness,
+    TypeInfo, VisualImpl,
 };
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -38,8 +42,8 @@ impl ControlImpl for InkToolbarStrokeWidthSlider {
 }
 
 impl StyledElementImpl for InkToolbarStrokeWidthSlider {
-    fn style_key_override(_this: &Self) -> &'static TypeInfo {
-        Slider::TYPE
+    fn style_key_override(this: &Self) -> &'static TypeInfo {
+        toolbar_style_key(this, Slider::TYPE)
     }
 }
 impl FerroObjectImpl for InkToolbarStrokeWidthSlider {
@@ -47,7 +51,7 @@ impl FerroObjectImpl for InkToolbarStrokeWidthSlider {
         Self::parent_constructed(this);
         this.set_small_change(0.5);
         this.set_large_change(2.0);
-        AutomationProperties::set_name(this, Some("Stroke width"));
+        strings::bind_name(this, "InkToolbarPenConfigurationSizeSliderName");
     }
 }
 impl InkToolbarStrokeWidthSlider {
@@ -70,6 +74,8 @@ pub struct InkToolbarPenConfigurationControl {
     palette_panel: RefCell<Option<Ref<WrapPanel>>>,
     slider: RefCell<Option<Ref<InkToolbarStrokeWidthSlider>>>,
     syncing: Cell<bool>,
+    displayed_palette: RefCell<Vec<Rc<dyn IBrush>>>,
+    preview: RefCell<Option<(Ref<Canvas>, Ref<Path>)>>,
 }
 ferro_class!(InkToolbarPenConfigurationControl:StackPanel);
 ferro_class_info!(InkToolbarPenConfigurationControl {
@@ -82,9 +88,31 @@ impl FerroObjectImpl for InkToolbarPenConfigurationControl {
         this.set_orientation(Orientation::Vertical);
         this.set_spacing(8.0);
         let palette = WrapPanel::new();
-        palette.set_max_width(240.0);
+        palette.set_width(312.0);
+        palette.set_margin(Thickness::new(4.0, 0.0, 4.0, 2.0));
+        let colors_title = TextBlock::new();
+        colors_title.set_font_weight(FontWeight::SemiBold);
+        colors_title.set_margin(Thickness::new(12.0, 0.0, 12.0, 0.0));
+        strings::bind_label(&colors_title, "InkToolbarPenConfigurationColorsLabel");
+        AutomationProperties::set_heading_level(&colors_title, 2);
+        let size_title = TextBlock::new();
+        size_title.set_font_weight(FontWeight::SemiBold);
+        size_title.set_margin(Thickness::new(12.0, 0.0, 12.0, 0.0));
+        strings::bind_label(&size_title, "InkToolbarPenConfigurationSizeLabel");
+        AutomationProperties::set_heading_level(&size_title, 2);
+        let preview_canvas = Canvas::new();
+        preview_canvas.set_width(296.0);
+        preview_canvas.set_margin(Thickness::new(12.0, 0.0, 12.0, 4.0));
+        preview_canvas.set_is_hit_test_visible(false);
+        let preview = Path::new();
+        preview.set_data(PolylineGeometry::with_points(PREVIEW_POINTS, false));
+        preview.set_stroke_line_cap(PenLineCap::Round);
+        preview.set_stroke_join(PenLineJoin::Round);
+        preview_canvas.children().add(preview.clone());
         let slider = InkToolbarStrokeWidthSlider::new();
-        slider.set_min_width(200.0);
+        slider.set_width(296.0);
+        slider.set_height(44.0);
+        slider.set_margin(Thickness::new(12.0, 0.0, 12.0, 0.0));
         let weak = this.to_ref().downgrade();
         slider.property_changed(move |change| {
             if change.property() != RangeBase::value_property().as_property() {
@@ -98,10 +126,20 @@ impl FerroObjectImpl for InkToolbarPenConfigurationControl {
                 }
             }
         });
+        this.children().add(colors_title);
         this.children().add(palette.clone());
+        this.children().add(size_title);
+        this.children().add(preview_canvas.clone());
         this.children().add(slider.clone());
         *this.palette_panel.borrow_mut() = Some(palette);
         *this.slider.borrow_mut() = Some(slider);
+        *this.preview.borrow_mut() = Some((preview_canvas, preview));
+        let weak = this.to_ref().downgrade();
+        this.resources_changed(move |_| {
+            if let Some(config) = weak.upgrade() {
+                config.rebuild_palette();
+            }
+        });
         AutomationProperties::set_name(this, Some("Pen configuration"));
         this.bind_pen();
     }
@@ -123,6 +161,8 @@ impl InkToolbarPenConfigurationControl {
             palette_panel: RefCell::new(None),
             slider: RefCell::new(None),
             syncing: Cell::new(false),
+            displayed_palette: RefCell::new(Vec::new()),
+            preview: RefCell::new(None),
         }
     }
     pub fn new() -> Ref<Self> {
@@ -149,6 +189,11 @@ impl InkToolbarPenConfigurationControl {
                 if let Some(config) = weak.upgrade() {
                     if change.property() == InkToolbarPenButton::palette_property().as_property() {
                         config.bind_palette();
+                    }
+                    let palette_changed = config.displayed_palette.borrow().as_slice()
+                        != pen_palette(&config).as_slice();
+                    if palette_changed {
+                        config.rebuild_palette();
                     }
                     config.synchronize();
                 }
@@ -183,21 +228,29 @@ impl InkToolbarPenConfigurationControl {
         let Some(pen) = self.pen_button() else {
             return;
         };
-        for (index, brush) in pen.palette().snapshot().iter().enumerate() {
+        let effective_palette = pen.effective_palette();
+        *self.displayed_palette.borrow_mut() = effective_palette.clone();
+        for (index, brush) in effective_palette.iter().enumerate() {
             let item = InkToolbarFlyoutItem::new();
-            item.set_kind(InkToolbarFlyoutItemKind::RadioCheck);
-            item.set_width(36.0);
-            item.set_height(36.0);
-            let swatch = Border::new();
-            swatch.set_width(20.0);
-            swatch.set_height(20.0);
-            swatch.set_background(Some(brush.clone()));
+            item.set_kind(InkToolbarFlyoutItemKind::Radio);
+            item.set_width(52.0);
+            item.set_height(52.0);
+            item.classes().add("ink-palette-item");
+            let swatch = Ellipse::new();
+            swatch.set_width(32.0);
+            swatch.set_height(32.0);
+            swatch.set_fill(Some(brush.clone()));
+            if let Some((_, system)) = high_contrast_colors(self, false) {
+                swatch.set_stroke(Some(
+                    Rc::new(ImmutableSolidColorBrush::new(system)) as Rc<dyn IBrush>
+                ));
+                swatch.set_stroke_thickness(1.0);
+            }
             item.set_content(Some(Rc::new(swatch.upcast::<Control>())));
-            let name = brush
-                .as_solid_color_brush()
-                .map(|s| color_name(s.color()))
-                .unwrap_or_else(|| format!("Brush {}", index + 1));
-            AutomationProperties::set_name(&item, Some(&name));
+            bind_color_name(
+                &item,
+                brush.as_solid_color_brush().map(|brush| brush.color()),
+            );
             let weak = pen.downgrade();
             item.checked(move |_| {
                 if let Some(pen) = weak.upgrade() {
@@ -228,7 +281,51 @@ impl InkToolbarPenConfigurationControl {
             }
         }
         self.syncing.set(false);
+        self.update_preview();
     }
+    /// The sample stroke, rendered with the active pen's drawing attributes.
+    pub fn stroke_preview(&self) -> Option<Ref<Path>> {
+        self.preview.borrow().as_ref().map(|(_, path)| path.clone())
+    }
+    fn update_preview(&self) {
+        let pen = self.pen_button();
+        let preview = self.preview.borrow().clone();
+        let (Some(pen), Some((canvas, path))) = (pen, preview) else {
+            return;
+        };
+        let attrs = pen.create_ink_drawing_attributes().ok();
+        let brush = attrs
+            .map(|attrs| Rc::new(ImmutableSolidColorBrush::new(attrs.color)) as Rc<dyn IBrush>)
+            .or_else(|| pen.selected_brush());
+        path.set_stroke(brush);
+        path.set_stroke_thickness(
+            attrs
+                .map(|attrs| attrs.size.width)
+                .unwrap_or_else(|| pen.selected_stroke_width()),
+        );
+        path.set_opacity(if attrs.is_some_and(|attrs| attrs.draw_as_highlighter) {
+            0.5
+        } else {
+            1.0
+        });
+        let min_y = PREVIEW_POINTS
+            .iter()
+            .map(|point| point.y)
+            .fold(f64::INFINITY, f64::min);
+        let max_y = PREVIEW_POINTS
+            .iter()
+            .map(|point| point.y)
+            .fold(f64::NEG_INFINITY, f64::max);
+        let height = max_y - min_y + pen.max_stroke_width().max(path.stroke_thickness()) + 10.0;
+        canvas.set_height(height);
+        Canvas::set_top(&path, height / 2.0 - (min_y + max_y) / 2.0);
+    }
+}
+fn pen_palette(config: &InkToolbarPenConfigurationControl) -> Vec<Rc<dyn IBrush>> {
+    config
+        .pen_button()
+        .map(|pen| pen.effective_palette())
+        .unwrap_or_default()
 }
 
 type ItemHandlers = Rc<HandlerList<dyn Fn(&InkToolbarFlyoutItem)>>;
@@ -250,8 +347,8 @@ impl ControlImpl for InkToolbarFlyoutItem {
 }
 
 impl StyledElementImpl for InkToolbarFlyoutItem {
-    fn style_key_override(_this: &Self) -> &'static TypeInfo {
-        ToggleButton::TYPE
+    fn style_key_override(this: &Self) -> &'static TypeInfo {
+        toolbar_style_key(this, ToggleButton::TYPE)
     }
 }
 impl FerroObjectImpl for InkToolbarFlyoutItem {
@@ -273,8 +370,10 @@ impl ToggleButtonImpl for InkToolbarFlyoutItem {
     fn toggle(this: &Self) {
         let value = match this.kind() {
             InkToolbarFlyoutItemKind::Simple => return,
-            InkToolbarFlyoutItemKind::Radio | InkToolbarFlyoutItemKind::RadioCheck => true,
-            InkToolbarFlyoutItemKind::Check => this.is_checked() != Some(true),
+            InkToolbarFlyoutItemKind::Radio => true,
+            InkToolbarFlyoutItemKind::Check | InkToolbarFlyoutItemKind::RadioCheck => {
+                this.is_checked() != Some(true)
+            }
         };
         this.set_current_value(ToggleButton::is_checked_property(), Some(value));
     }
@@ -322,3 +421,110 @@ fn subscribe(
         }
     })
 }
+
+// The source sample stroke; its fixed bounds avoid preview movement while resizing the nib.
+const PREVIEW_POINTS: [Point; 103] = [
+    Point::new(24.0, 28.5),
+    Point::new(26.175271, 26.452467),
+    Point::new(28.468156, 24.57762),
+    Point::new(30.860594, 22.862812),
+    Point::new(33.253032, 21.148004),
+    Point::new(35.745021, 19.593234),
+    Point::new(38.3185, 18.185855),
+    Point::new(40.891979, 16.778476),
+    Point::new(43.546946, 15.518487),
+    Point::new(46.26534, 14.39324),
+    Point::new(48.983733, 13.267993),
+    Point::new(51.765552, 12.277489),
+    Point::new(54.592735, 11.409078),
+    Point::new(57.419917, 10.540668),
+    Point::new(60.292463, 9.794352),
+    Point::new(63.192308, 9.1574822),
+    Point::new(66.092153, 8.5206123),
+    Point::new(69.019299, 7.9931887),
+    Point::new(71.955681, 7.5625631),
+    Point::new(74.892063, 7.1319376),
+    Point::new(77.837682, 6.7981102),
+    Point::new(80.774476, 6.5484328),
+    Point::new(83.711269, 6.2987555),
+    Point::new(86.639236, 6.1332282),
+    Point::new(89.540314, 6.0392029),
+    Point::new(92.12168, 5.9271775),
+    Point::new(94.691318, 5.9313799),
+    Point::new(97.248453, 6.040089),
+    Point::new(99.805587, 6.1487981),
+    Point::new(102.35022, 6.3620141),
+    Point::new(104.88157, 6.668016),
+    Point::new(107.41293, 6.974018),
+    Point::new(109.931, 7.3728059),
+    Point::new(112.43502, 7.852659),
+    Point::new(114.93904, 8.332512),
+    Point::new(117.42901, 8.8934302),
+    Point::new(119.90414, 9.5236926),
+    Point::new(122.37928, 10.153955),
+    Point::new(124.83959, 10.853562),
+    Point::new(127.28429, 11.610792),
+    Point::new(129.72899, 12.368022),
+    Point::new(132.15809, 13.182876),
+    Point::new(134.57081, 14.043632),
+    Point::new(136.98352, 14.904388),
+    Point::new(139.37986, 15.811047),
+    Point::new(141.75904, 16.751888),
+    Point::new(144.13822, 17.692728),
+    Point::new(146.50025, 18.667751),
+    Point::new(148.84434, 19.665234),
+    Point::new(150.92055, 20.558561),
+    Point::new(153.02009, 21.393996),
+    Point::new(155.13997, 22.171709),
+    Point::new(157.25986, 22.949423),
+    Point::new(159.40009, 23.669414),
+    Point::new(161.55771, 24.331854),
+    Point::new(163.71533, 24.994294),
+    Point::new(165.89033, 25.599182),
+    Point::new(168.07973, 26.146689),
+    Point::new(170.26914, 26.694195),
+    Point::new(172.47295, 27.184321),
+    Point::new(174.6882, 27.617235),
+    Point::new(176.90346, 28.050149),
+    Point::new(179.13015, 28.425851),
+    Point::new(181.3653, 28.744513),
+    Point::new(183.60046, 29.063175),
+    Point::new(185.84408, 29.324795),
+    Point::new(188.0932, 29.529545),
+    Point::new(190.34231, 29.734295),
+    Point::new(192.59692, 29.882174),
+    Point::new(194.85406, 29.973352),
+    Point::new(197.11119, 30.06453),
+    Point::new(199.37085, 30.099008),
+    Point::new(201.63006, 30.076955),
+    Point::new(203.88927, 30.054901),
+    Point::new(206.14803, 29.976318),
+    Point::new(208.40338, 29.841374),
+    Point::new(210.65872, 29.70643),
+    Point::new(212.91064, 29.515126),
+    Point::new(215.15617, 29.267631),
+    Point::new(219.64724, 28.772643),
+    Point::new(224.11274, 28.052893),
+    Point::new(228.52891, 27.109745),
+    Point::new(230.73699, 26.638171),
+    Point::new(232.93274, 26.110747),
+    Point::new(235.11319, 25.527643),
+    Point::new(237.29363, 24.94454),
+    Point::new(239.45877, 24.305756),
+    Point::new(241.60564, 23.611464),
+    Point::new(243.7525, 22.917171),
+    Point::new(245.88109, 22.167369),
+    Point::new(247.98843, 21.362228),
+    Point::new(250.09577, 20.557087),
+    Point::new(252.18187, 19.696606),
+    Point::new(254.24374, 18.780957),
+    Point::new(257.44071, 17.278777),
+    Point::new(260.5682, 15.598548),
+    Point::new(263.55223, 13.698859),
+    Point::new(265.04425, 12.749015),
+    Point::new(266.50041, 11.744305),
+    Point::new(267.91145, 10.679554),
+    Point::new(269.32249, 9.6148034),
+    Point::new(270.68842, 8.4900108),
+    Point::new(272.0, 7.3),
+];

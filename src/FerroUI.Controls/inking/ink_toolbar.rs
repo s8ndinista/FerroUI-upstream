@@ -1,4 +1,5 @@
 //! Live toolbar orchestration over FerroUI controls and the portable ink presenter.
+use super::ink_toolbar_buttons::strings;
 use super::*;
 use crate::automation::peers::AutomationControlType;
 use crate::automation::AutomationProperties;
@@ -8,9 +9,12 @@ use crate::{
     StackPanel, StackPanelImpl,
 };
 use ferroui_base::collections::NotifyCollectionChangedEventArgs;
-use ferroui_base::input::InputElementImpl;
+use ferroui_base::input::{
+    InputElement, InputElementImpl, InputElementImplExt, Key, KeyEventArgs, KeyboardNavigation,
+    KeyboardNavigationMode, NavigationMethod,
+};
 use ferroui_base::interactivity::InteractiveImpl;
-use ferroui_base::layout::{LayoutableImpl, Orientation};
+use ferroui_base::layout::{LayoutableImpl, LayoutableImplExt, Orientation};
 use ferroui_base::metadata::{into_markup_value, MarkupDelegate};
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::{EventArgs, HandlerList};
@@ -40,6 +44,7 @@ pub struct InkToolbar {
     selection_sync: Cell<bool>,
     recent_tool: RefCell<Option<WeakRef<InkToolbarToolButton>>>,
     current_presenter: RefCell<Option<Rc<InkPresenter>>>,
+    presenter_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     drawing_attributes: Cell<Option<InkDrawingAttributes>>,
     active_tool_changed: ToolbarHandlers,
     ink_drawing_attributes_changed: ToolbarHandlers,
@@ -73,7 +78,65 @@ ferro_class_info!(InkToolbar { new: InkToolbar::new, markup: {
         },
     ],
 } });
-ferro_impl_classes!(InkToolbar:StyledElementImpl,VisualImpl,LayoutableImpl,InteractiveImpl,InputElementImpl,StackPanelImpl);
+ferro_impl_classes!(InkToolbar:StyledElementImpl,VisualImpl,InteractiveImpl,StackPanelImpl);
+impl LayoutableImpl for InkToolbar {
+    fn measure_override(this: &Self, available_size: ferroui_base::Size) -> ferroui_base::Size {
+        if this.active_tool().is_none() {
+            let first_pen = this
+                .children()
+                .snapshot()
+                .iter()
+                .find_map(|child| child.cast::<InkToolbarPenButton>())
+                .map(|pen| pen.upcast::<InkToolbarToolButton>());
+            if first_pen.is_some() {
+                this.set_active_tool(first_pen);
+            }
+        }
+        Self::parent_measure_override(this, available_size)
+    }
+}
+impl InputElementImpl for InkToolbar {
+    fn on_key_down(this: &Self, event: &KeyEventArgs) {
+        Self::parent_on_key_down(this, event);
+        if event.handled() {
+            return;
+        }
+        let backward = match event.key {
+            Key::Left | Key::Up => true,
+            Key::Right | Key::Down => false,
+            _ => return,
+        };
+        let children = this.children().snapshot();
+        if children.len() <= 1 {
+            return;
+        }
+        let Some(current) = children
+            .iter()
+            .position(|child| child.is_keyboard_focus_within())
+        else {
+            return;
+        };
+        for offset in 1..children.len() {
+            let index = if backward {
+                (current + children.len() - offset) % children.len()
+            } else {
+                (current + offset) % children.len()
+            };
+            let child = &children[index];
+            if child.is_visible()
+                && child.is_effectively_enabled()
+                && child.focus_with(NavigationMethod::Directional, event.key_modifiers)
+            {
+                KeyboardNavigation::set_tab_once_active_element(
+                    this,
+                    Some(child.clone().upcast::<InputElement>()),
+                );
+                break;
+            }
+        }
+        event.set_handled(true);
+    }
+}
 impl ControlImpl for InkToolbar {
     fn on_create_automation_peer(this: &Self) -> Ref<crate::automation::peers::AutomationPeer> {
         super::InkToolbarAutomationPeer::new(this).upcast()
@@ -83,7 +146,6 @@ impl ControlImpl for InkToolbar {
 impl FerroObjectImpl for InkToolbar {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
-        this.set_spacing(4.0);
         this.set_orientation(Orientation::Horizontal);
         AutomationProperties::set_name(this, Some("Ink toolbar"));
         this.set_value(
@@ -160,6 +222,12 @@ ferro_properties! {impl InkToolbar{
     pub fn target_ink_presenter_property()->StyledProperty<Option<Rc<InkPresenter>>>{FerroProperty::register::<InkToolbar,_>("TargetInkPresenter",None)}
 }}
 impl InkToolbar {
+    fn static_constructor() {
+        StackPanel::spacing_property().override_default_value::<InkToolbar>(4.0);
+        KeyboardNavigation::tab_navigation_property()
+            .override_default_value::<InkToolbar>(KeyboardNavigationMode::Once);
+        InputElement::is_tab_stop_property().override_default_value::<InkToolbar>(false);
+    }
     pub fn construct() -> Self {
         Self {
             base: StackPanel::construct(),
@@ -168,6 +236,7 @@ impl InkToolbar {
             selection_sync: Cell::new(false),
             recent_tool: RefCell::new(None),
             current_presenter: RefCell::new(None),
+            presenter_subscription: RefCell::new(None),
             drawing_attributes: Cell::new(None),
             active_tool_changed: Rc::new(HandlerList::new()),
             ink_drawing_attributes_changed: Rc::new(HandlerList::new()),
@@ -298,9 +367,14 @@ impl InkToolbar {
             .as_ref()
             .and_then(WeakRef::upgrade);
         let children = self.children().snapshot();
-        let restore = recent.filter(|tool| children.contains(&tool.clone().upcast::<Control>()))
-            .or_else(|| children.iter().find_map(|child| child.cast::<InkToolbarPenButton>())
-                .map(|pen| pen.upcast()));
+        let restore = recent
+            .filter(|tool| children.contains(&tool.clone().upcast::<Control>()))
+            .or_else(|| {
+                children
+                    .iter()
+                    .find_map(|child| child.cast::<InkToolbarPenButton>())
+                    .map(|pen| pen.upcast())
+            });
         if let Some(restore) = restore {
             self.set_active_tool(Some(restore));
         }
@@ -407,57 +481,36 @@ impl InkToolbar {
             });
             pen.set_flyout(flyout);
         } else if let Some(eraser) = child.cast::<InkToolbarEraserButton>() {
-                let button = Button::new();
-                button.set_content(Some(Rc::new("Erase all ink".to_owned())));
-                button.bind_indexer(
-                    &ferroui_base::Visual::is_visible_property().bind(),
-                    &eraser.indexer(&InkToolbarEraserButton::is_clear_all_visible_property().bind()),
-                );
-                let weak = self.to_ref().downgrade();
-                button.add_handler(Button::click_event(), move |_, _| {
-                    if let Some(toolbar) = weak.upgrade() {
-                        toolbar.erase_all();
-                    }
-                });
-                let flyout = Flyout::new();
-                flyout.set_content(Some(Rc::new(button.upcast::<Control>())));
-                eraser.set_flyout(flyout);
+            let button = Button::new();
+            strings::bind_content(&button, "InkToolbarClearAllLabel");
+            button.bind_indexer(
+                &ferroui_base::Visual::is_visible_property().bind(),
+                &eraser.indexer(&InkToolbarEraserButton::is_clear_all_visible_property().bind()),
+            );
+            let weak = self.to_ref().downgrade();
+            button.add_handler(Button::click_event(), move |_, _| {
+                if let Some(toolbar) = weak.upgrade() {
+                    toolbar.erase_all();
+                }
+            });
+            let flyout = Flyout::new();
+            flyout.set_content(Some(Rc::new(button.upcast::<Control>())));
+            eraser.set_flyout(flyout);
         } else if let Some(tool) = child.cast::<InkToolbarCustomToolButton>() {
             let flyout = Flyout::new();
             let weak_tool = tool.downgrade();
             let weak_flyout = flyout.downgrade();
             flyout.opening(move |_| {
                 if let (Some(tool), Some(flyout)) = (weak_tool.upgrade(), weak_flyout.upgrade()) {
-                    flyout.set_content(tool.configuration_content().map(|content| Rc::new(content) as ferroui_base::BoxedValue));
+                    flyout.set_content(
+                        tool.configuration_content()
+                            .map(|content| Rc::new(content) as ferroui_base::BoxedValue),
+                    );
                 }
             });
             tool.set_flyout(flyout);
         } else if let Some(stencil) = child.cast::<InkToolbarStencilButton>() {
             stencil.set_presenter(self.effective_ink_presenter());
-            let panel = StackPanel::new();
-            for (kind, label) in [
-                (InkToolbarStencilKind::Ruler, "Ruler"),
-                (InkToolbarStencilKind::Protractor, "Protractor"),
-            ] {
-                let button = Button::new();
-                button.set_content(Some(Rc::new(label.to_owned())));
-                let visibility = match kind {
-                    InkToolbarStencilKind::Ruler => InkToolbarStencilButton::is_ruler_item_visible_property(),
-                    InkToolbarStencilKind::Protractor => InkToolbarStencilButton::is_protractor_item_visible_property(),
-                };
-                button.bind_indexer(&ferroui_base::Visual::is_visible_property().bind(), &stencil.indexer(&visibility.bind()));
-                let weak = stencil.downgrade();
-                button.add_handler(Button::click_event(), move |_, _| {
-                    if let Some(stencil) = weak.upgrade() {
-                        stencil.set_selected_stencil(kind);
-                        stencil.set_is_checked(Some(true));
-                    }
-                });
-                panel.children().add(button);
-            }
-            let flyout = Flyout::new();
-            flyout.set_content(Some(Rc::new(panel.upcast::<Control>())));
-            stencil.set_flyout(flyout);
         }
         self.update_flyout_placement();
     }
@@ -543,11 +596,30 @@ impl InkToolbar {
         let next = self.effective_ink_presenter();
         let previous = self.current_presenter.replace(next.clone());
         if previous.as_ref().map(Rc::as_ptr) != next.as_ref().map(Rc::as_ptr) {
+            let subscription = self.presenter_subscription.borrow_mut().take();
+            if let Some(subscription) = subscription {
+                subscription.dispose();
+            }
             if let Some(old) = previous {
                 old.set_ruler_visible(false);
                 old.set_protractor_visible(false);
             }
+            if let Some(presenter) = next.as_ref() {
+                let weak = self.to_ref().downgrade();
+                let source = Rc::downgrade(presenter);
+                let mode = Cell::new(presenter.high_contrast_adjustment());
+                let subscription = presenter.changed(move || {
+                    if let (Some(toolbar), Some(presenter)) = (weak.upgrade(), source.upgrade()) {
+                        let next = presenter.high_contrast_adjustment();
+                        if mode.replace(next) != next {
+                            toolbar.refresh_pen_palettes();
+                        }
+                    }
+                });
+                *self.presenter_subscription.borrow_mut() = Some(subscription);
+            }
         }
+        self.refresh_pen_palettes();
         for stencil in self
             .children()
             .snapshot()
@@ -558,6 +630,16 @@ impl InkToolbar {
         }
         self.apply_active_tool(false);
         self.apply_stencil();
+    }
+    fn refresh_pen_palettes(&self) {
+        for pen in self
+            .children()
+            .snapshot()
+            .iter()
+            .filter_map(|child| child.cast::<InkToolbarPenButton>())
+        {
+            pen.refresh_palette();
+        }
     }
     fn apply_stencil(&self) {
         let enabled = self.is_stencil_button_checked();
@@ -625,6 +707,14 @@ impl InkToolbar {
         {
             if let Some(flyout) = button.flyout().and_then(|f| f.cast::<PopupFlyoutBase>()) {
                 flyout.set_placement(placement);
+            }
+            for (name, direction) in [
+                (":flyout-top", PlacementMode::Top),
+                (":flyout-bottom", PlacementMode::Bottom),
+                (":flyout-left", PlacementMode::Left),
+                (":flyout-right", PlacementMode::Right),
+            ] {
+                button.pseudo_classes().set(name, placement == direction);
             }
         }
     }

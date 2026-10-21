@@ -3,7 +3,9 @@
 
 This checks bookkeeping, not behavior or visual parity. An `adapted` record
 describes a deliberate implementation difference; it is not a Windows runtime
-conformance result. `--require-complete` also rejects every recorded gap.
+conformance result. `--require-complete` rejects every recorded gap, including
+the separately labeled optional Windows dependency APIs. The narrower
+`--require-control-complete` checks the pinned control scope and direct services.
 """
 
 from __future__ import annotations
@@ -20,6 +22,9 @@ STATUSES = {"implemented", "adapted", "partial", "not_ported", "not_applicable",
 CODE_STATUSES = {"implemented", "adapted", "partial"}
 GAPS = {"partial", "not_ported", "external"}
 COMMIT = "9427b7216337ea3d7b19ac32d48c327286ee7138"
+WINDOWS_COMMIT = "32c3144490c016fe496a0aed769bce60987a2e9d"
+WINDOWS_CONTRACT_SHA256 = "358cd1f51721ad240af28f80d4a3a825c757eb1fd3d87c8f1dc716f3184e974c"
+SERVICE_ROLES = {"required_by_controls", "returned_service_api", "portable_engine_support", "optional_extension"}
 
 
 def idl_contract(text: str) -> dict[str, dict[str, tuple[str, int | None]]]:
@@ -85,7 +90,8 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repository-root", type=Path, default=Path(__file__).resolve().parents[2])
     parser.add_argument("--json", action="store_true", help="Print a machine-readable summary")
-    parser.add_argument("--require-complete", action="store_true", help="Fail if any recorded gap remains")
+    parser.add_argument("--require-complete", action="store_true", help="Fail if any recorded gap remains, including optional service APIs")
+    parser.add_argument("--require-control-complete", action="store_true", help="Fail if a pinned control/direct dependency gap remains")
     args = parser.parse_args()
     root = args.repository_root.resolve()
     data = root / "docs/porting/data/winui-inking"
@@ -123,6 +129,7 @@ def main() -> int:
     api = read("api-map.json")
     tests = read("tests-map.json")
     dependencies = read("dependencies.json")
+    services = read("service-api-map.json")
     files = sources["files"]
     file_map = {item["path"]: item for item in files}
     if len(files) != 164 or len(file_map) != 164 or sources.get("upstream_files") != 164:
@@ -186,15 +193,79 @@ def main() -> int:
 
     for item in dependencies["dependencies"]:
         status(item, item["id"], code=True)
+        if item.get("scope") not in {"required", "adjacent_os_service"}:
+            errors.append(f"{item['id']}: dependency must declare its required or adjacent scope")
+
+    # These are external Windows dependency declarations, not additional WinUI
+    # IDL members. The immutable extract makes an omitted overload visible.
+    projection = services["projection"]
+    if projection.get("commit") != WINDOWS_COMMIT or projection.get("version") != "0.62.2":
+        errors.append("Windows dependency projection differs from the pinned version")
+    projection_file = local_file(projection["contract_snapshot"])
+    service_contract = {}
+    if projection_file:
+        raw = projection_file.read_bytes()
+        digest = hashlib.sha256(raw).hexdigest()
+        if digest != WINDOWS_CONTRACT_SHA256 or digest != projection.get("contract_sha256"):
+            errors.append("Pinned Windows dependency declaration snapshot has changed")
+        class_name = None
+        for line in raw.decode("utf-8").splitlines():
+            if line.startswith("[") and line.endswith("]"):
+                class_name = line[1:-1]
+            elif match := re.match(r"pub fn (\w+)\b", line):
+                identifier = f"{class_name}.{match.group(1)}"
+                if class_name is None or identifier in service_contract:
+                    errors.append(f"Invalid dependency declaration in snapshot: {line}")
+                service_contract[identifier] = line
+    service_map = {}
+    for item in services["members"]:
+        identifier = item["type"] + "." + item["name"]
+        if item["id"] != identifier or identifier in service_map:
+            errors.append(f"Invalid or duplicate service member identity: {identifier}")
+        service_map[identifier] = item["projection_signature"]
+        status(item, identifier, code=True)
+        if item.get("control_role") not in SERVICE_ROLES:
+            errors.append(f"{identifier}: missing or invalid control dependency role")
+        references = item.get("upstream_references", [])
+        if item.get("control_role") == "required_by_controls" and not references:
+            errors.append(f"{identifier}: direct dependency has no upstream call reference")
+        if any(path not in file_map for path in references):
+            errors.append(f"{identifier}: unknown upstream call reference")
+    if service_map != service_contract or len(service_map) != 136:
+        errors.append("External service member ledger differs from the 136 pinned declarations")
+    if set(services["classes"]) != {item["type"] for item in services["members"]} or len(services["classes"]) != 12:
+        errors.append("External service ledger must retain all 12 selected classes")
+
     sections = {"files": files, "types": api["types"], "members": all_members,
-                "api_tests": tests["tests"], "dependencies": dependencies["dependencies"]}
+                "api_tests": tests["tests"], "dependencies": dependencies["dependencies"],
+                "service_members": services["members"]}
     summary = {key: dict(sorted(Counter(item["status"] for item in records).items()))
                for key, records in sections.items()}
-    gap_count = sum(item["status"] in GAPS for records in sections.values() for item in records)
+    remaining = []
+    for section, records in sections.items():
+        for item in records:
+            if item["status"] not in GAPS:
+                continue
+            required = (item.get("scope") != "adjacent_os_service"
+                        and (section != "service_members" or item["control_role"] == "required_by_controls"))
+            remaining.append({"section": section,
+                              "id": item.get("id", item.get("path", item.get("name"))),
+                              "status": item["status"], "required_control_scope": required,
+                              "notes": item["notes"]})
+    gap_count = len(remaining)
+    control_gap_count = sum(item["required_control_scope"] for item in remaining)
+    ledger_valid = not errors
     if args.require_complete and gap_count:
         errors.append(f"Full parity gate failed: {gap_count} records retain a partial, missing, or external status")
+    if args.require_control_complete and control_gap_count:
+        errors.append(f"Control parity gate failed: {control_gap_count} required-scope records retain a gap")
     report = {"commit": COMMIT, "summary": summary, "recorded_gaps": gap_count,
-              "ledger_valid": not errors, "behavioral_conformance": "not assessed by this script", "errors": errors}
+              "required_control_gaps": control_gap_count,
+              "additional_dependency_gaps": gap_count - control_gap_count,
+              "ledger_valid": ledger_valid, "completion_gate_passed": gap_count == 0,
+              "control_completion_gate_passed": control_gap_count == 0,
+              "remaining_records": remaining,
+              "behavioral_conformance": "not assessed by this script", "errors": errors}
     if args.json:
         print(json.dumps(report, indent=2))
     else:
@@ -202,9 +273,14 @@ def main() -> int:
         for name, counts in summary.items():
             print(f"  {name}: " + ", ".join(f"{value} {key}" for key, value in counts.items()))
         print(f"  recorded gaps: {gap_count}; behavior and pixels require separate tests")
+        print(f"  required control scope: {control_gap_count}; additional dependency scope: {gap_count - control_gap_count}")
         for error in errors:
             print(f"ERROR: {error}", file=sys.stderr)
-        print("Ledger valid." if not errors else "Ledger invalid.")
+        print("Ledger valid." if ledger_valid else "Ledger invalid.")
+        if ledger_valid and args.require_complete and gap_count:
+            print("Full parity gate remains open.")
+        if ledger_valid and args.require_control_complete and control_gap_count:
+            print("Control parity gate remains open.")
     return 1 if errors else 0
 
 

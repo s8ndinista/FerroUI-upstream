@@ -34,6 +34,10 @@ struct RecordingDrawingContext {
     rectangles: Vec<(Rect, Option<Rc<dyn IBrush>>)>,
     clips: Vec<Rect>,
     clip_pops: usize,
+    lines: Vec<(Point, Point)>,
+    ellipses: Vec<Rect>,
+    texts: Vec<String>,
+    opacities: Vec<f64>,
 }
 
 impl IDrawingContextCore for RecordingDrawingContext {
@@ -68,13 +72,16 @@ impl IDrawingContextCore for RecordingDrawingContext {
         self.clip_pops += 1;
     }
 
-    fn draw_line_core(&mut self, _pen: &Rc<dyn IPen>, _p1: Point, _p2: Point) {}
+    fn draw_line_core(&mut self, _pen: &Rc<dyn IPen>, p1: Point, p2: Point) {
+        self.lines.push((p1, p2));
+    }
     fn draw_ellipse_core(
         &mut self,
         _brush: Option<&Rc<dyn IBrush>>,
         _pen: Option<&Rc<dyn IPen>>,
-        _rect: Rect,
+        rect: Rect,
     ) {
+        self.ellipses.push(rect);
     }
     fn draw_bitmap(
         &mut self,
@@ -85,10 +92,15 @@ impl IDrawingContextCore for RecordingDrawingContext {
     ) {
     }
     fn custom(&mut self, _custom: &Arc<dyn ICustomDrawOperation>) {}
-    fn draw_glyph_run(&mut self, _brush: Option<&Rc<dyn IBrush>>, _run: &Rc<GlyphRun>) {}
+    fn draw_glyph_run(&mut self, _brush: Option<&Rc<dyn IBrush>>, run: &Rc<GlyphRun>) {
+        self.texts
+            .push(String::from_utf16_lossy(&run.characters().to_vec()));
+    }
     fn push_rounded_clip_core(&mut self, _rect: RoundedRect) {}
     fn push_geometry_clip_core(&mut self, _clip: &Ref<Geometry>) {}
-    fn push_opacity_core(&mut self, _opacity: f64) {}
+    fn push_opacity_core(&mut self, opacity: f64) {
+        self.opacities.push(opacity);
+    }
     fn push_opacity_mask_core(&mut self, _mask: &Rc<dyn IBrush>, _bounds: Rect) {}
     fn push_transform_core(&mut self, _matrix: Matrix) {}
     fn push_render_options_core(&mut self, _options: RenderOptions) {}
@@ -440,4 +452,173 @@ fn active_preview_reuses_geometry_and_invalidation_updates_only_its_stroke() {
     canvas.ink_presenter().cancel_all();
     assert!(pointer.captured().is_none());
     assert!(render(&canvas).geometries.is_empty());
+}
+
+#[test]
+fn touch_drag_moves_ruler_captures_and_releases_when_the_guide_is_hidden() {
+    let _scope = test_scope();
+    let _renderer = MockRenderInterfaceScope::install();
+    let (canvas, root) = attached_canvas();
+    let presenter = canvas.ink_presenter();
+    presenter.ruler().set_is_visible(true);
+    assert_eq!(presenter.input_device_types(), CoreInputDeviceTypes::PEN);
+    let original = presenter.ruler().transform();
+    let pointer = Pointer::new(Pointer::get_next_free_id(), PointerType::Touch, true);
+    let down = press(&canvas, &root, &pointer, Point::new(60.0, 50.0));
+    assert!(down.handled());
+    assert!(pointer.captured().is_some());
+    assert_eq!(render(&canvas).opacities, [0.5]);
+    let moved = PointerEventArgs::new(
+        Some(InputElement::pointer_moved_event()),
+        canvas.clone(),
+        pointer.clone(),
+        Some(&root),
+        Point::new(80.0, 60.0),
+        2,
+        pen_state(PointerUpdateKind::Other, 0.5),
+        KeyModifiers::NONE,
+    );
+    canvas.raise_event(&moved);
+    assert!(moved.handled());
+    let changed = presenter.ruler().transform();
+    assert!((changed.m31 - original.m31 - 20.0).abs() < 1e-9);
+    assert!((changed.m32 - original.m32 - 10.0).abs() < 1e-9);
+    assert!(presenter.stroke_container().get_strokes().is_empty());
+    presenter.ruler().set_is_visible(false);
+    assert!(pointer.captured().is_none());
+    presenter.ruler().set_is_visible(true);
+    assert_eq!(render(&canvas).opacities, [0.75]);
+}
+
+#[test]
+fn mouse_shift_drag_rotates_ruler_without_creating_ink() {
+    let _scope = test_scope();
+    let (canvas, root) = attached_canvas();
+    let guide = canvas.ink_presenter().ruler();
+    guide.set_is_visible(true);
+    let pointer = Pointer::new(Pointer::get_next_free_id(), PointerType::Mouse, true);
+    let down = PointerPressedEventArgs::new(
+        canvas.clone(),
+        pointer.clone(),
+        &root,
+        Point::new(100.0, 50.0),
+        1,
+        pen_state(PointerUpdateKind::LeftButtonPressed, 0.5),
+        KeyModifiers::SHIFT,
+        1,
+    );
+    canvas.raise_event(&down);
+    assert!(down.handled());
+    let moved = PointerEventArgs::new(
+        Some(InputElement::pointer_moved_event()),
+        canvas.clone(),
+        pointer.clone(),
+        Some(&root),
+        Point::new(80.0, 70.0),
+        2,
+        pen_state(PointerUpdateKind::Other, 0.5),
+        KeyModifiers::SHIFT,
+    );
+    canvas.raise_event(&moved);
+    assert!((guide.angle() - 90.0).abs() < 1e-9);
+    let released = PointerReleasedEventArgs::new(
+        canvas.clone(),
+        pointer.clone(),
+        &root,
+        Point::new(80.0, 70.0),
+        3,
+        pen_state(PointerUpdateKind::LeftButtonReleased, 0.5),
+        KeyModifiers::SHIFT,
+        MouseButton::Left,
+    );
+    canvas.raise_event(&released);
+    assert!(released.handled());
+    assert!(pointer.captured().is_none());
+    assert!(canvas
+        .ink_presenter()
+        .stroke_container()
+        .get_strokes()
+        .is_empty());
+}
+
+#[test]
+fn pen_uses_stencil_edges_and_protractor_draws_measured_angle_ticks_and_rays() {
+    let _scope = test_scope();
+    let _renderer = MockRenderInterfaceScope::install();
+    let (canvas, root) = attached_canvas();
+    let presenter = canvas.ink_presenter();
+    let guide = presenter.protractor();
+    guide.set_radius(30.0).unwrap();
+    guide
+        .set_transform(Matrix::create_translation(50.0, 20.0))
+        .unwrap();
+    guide.set_is_visible(true);
+    let pointer = Pointer::new(Pointer::get_next_free_id(), PointerType::Pen, true);
+    press(&canvas, &root, &pointer, Point::new(112.0, 50.0));
+    assert!(presenter.has_active_pointer(pointer.id()));
+    let moved = PointerEventArgs::new(
+        Some(InputElement::pointer_moved_event()),
+        canvas.clone(),
+        pointer.clone(),
+        Some(&root),
+        Point::new(101.0, 71.0),
+        2,
+        pen_state(PointerUpdateKind::Other, 0.8),
+        KeyModifiers::NONE,
+    );
+    canvas.raise_event(&moved);
+    let released = PointerReleasedEventArgs::new(
+        canvas.clone(),
+        pointer.clone(),
+        &root,
+        Point::new(80.0, 82.0),
+        3,
+        pen_state(PointerUpdateKind::LeftButtonReleased, 0.2),
+        KeyModifiers::NONE,
+        MouseButton::Left,
+    );
+    canvas.raise_event(&released);
+    assert!((guide.angle().unwrap() - 90.0).abs() < 1e-9);
+    let strokes = presenter.stroke_container().get_strokes();
+    assert_eq!(strokes.len(), 1);
+    for point in strokes[0].ink_points() {
+        assert!(((point.position.x - 80.0).hypot(point.position.y - 50.0) - 30.0).abs() < 1e-9);
+    }
+    let drawn = render(&canvas);
+    assert_eq!(drawn.ellipses, [Rect::new(0.0, 0.0, 60.0, 60.0)]);
+    assert_eq!(drawn.lines.len(), 78);
+    assert!(drawn.texts.concat().contains("90.0"));
+    guide.set_are_tick_marks_visible(false);
+    guide.set_are_rays_visible(false);
+    guide.set_is_angle_readout_visible(false);
+    let reduced = render(&canvas);
+    assert_eq!(reduced.lines.len(), 4);
+    assert!(reduced.texts.is_empty());
+    guide
+        .set_transform(Matrix::create_translation(60.0, 20.0))
+        .unwrap();
+    assert_eq!(guide.angle(), None);
+}
+
+#[test]
+fn disabling_a_canvas_releases_all_stencil_contacts() {
+    let _scope = test_scope();
+    let (canvas, root) = attached_canvas();
+    canvas.ink_presenter().ruler().set_is_visible(true);
+    let pointers: Vec<_> = [40.0, 100.0]
+        .into_iter()
+        .map(|x| {
+            let pointer = Pointer::new(Pointer::get_next_free_id(), PointerType::Touch, false);
+            assert!(press(&canvas, &root, &pointer, Point::new(x, 50.0)).handled());
+            assert!(pointer.captured().is_some());
+            pointer
+        })
+        .collect();
+    canvas.set_is_enabled(false);
+    assert!(pointers.iter().all(|pointer| pointer.captured().is_none()));
+    assert!(canvas
+        .ink_presenter()
+        .stroke_container()
+        .get_strokes()
+        .is_empty());
 }

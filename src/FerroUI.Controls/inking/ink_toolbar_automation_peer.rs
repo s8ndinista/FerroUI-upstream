@@ -1,24 +1,30 @@
 //! Accessibility adapters: reuse the framework providers and add inking-specific patterns.
+use super::ink_toolbar_buttons::strings;
 use super::{
     InkToolbar, InkToolbarFlyoutItem, InkToolbarFlyoutItemKind, InkToolbarMenuButton,
-    InkToolbarStrokeWidthSlider, InkToolbarToolButton,
+    InkToolbarStencilButton, InkToolbarStencilKind, InkToolbarStrokeWidthSlider, InkToolbarTool,
+    InkToolbarToolButton,
 };
 use crate::automation::peers::{
-    AutomationControlType, AutomationPeer, AutomationPeerImpl, ControlAutomationPeer,
-    ControlAutomationPeerImpl, RadioButtonAutomationPeer, RadioButtonAutomationPeerImpl,
-    RangeBaseAutomationPeerImpl, SliderAutomationPeer, ToggleButtonAutomationPeer,
+    AutomationControlType, AutomationPeer, AutomationPeerImpl, AutomationPeerImplExt,
+    ControlAutomationPeer, ControlAutomationPeerImpl, RadioButtonAutomationPeer,
+    RadioButtonAutomationPeerImpl, RangeBaseAutomationPeerImpl, RangeBaseAutomationPeerImplExt,
+    SliderAutomationPeer, ToggleButtonAutomationPeer,
 };
 use crate::automation::provider::{
-    IExpandCollapseProvider, ISelectionItemProvider, ISelectionProvider, IValueProvider,
-    ProviderAdapter, ProviderError,
+    IExpandCollapseProvider, IInvokeProvider, ISelectionItemProvider, ISelectionProvider,
+    IToggleProvider, IValueProvider, ProviderAdapter, ProviderError,
 };
 use crate::automation::{
-    ElementNotEnabledException, ExpandCollapsePatternIdentifiers, ExpandCollapseState,
+    AutomationProperties, ElementNotEnabledException, ExpandCollapsePatternIdentifiers,
+    ExpandCollapseState, ValuePatternIdentifiers,
 };
-use crate::Button;
+use crate::primitives::RangeBase;
+use crate::{Button, Panel};
+use ferroui_base::data::core::ValueType;
 use ferroui_base::{
-    ferro_class, ferro_class_info, ferro_impl_classes, instantiate, FerroObjectImpl,
-    FerroObjectImplExt, Ref,
+    ferro_class, ferro_class_info, ferro_impl_classes, instantiate, BoxedValue, FerroObjectImpl,
+    FerroObjectImplExt, FerroPropertyChangedEventArgs, Ref,
 };
 use std::rc::Rc;
 
@@ -28,6 +34,40 @@ fn button_state(owner: &Button) -> ExpandCollapseState {
         Some(f) if f.is_open() => ExpandCollapseState::Expanded,
         _ => ExpandCollapseState::Collapsed,
     }
+}
+fn append_text(base: Option<String>, suffix: String) -> Option<String> {
+    Some(match base.filter(|value| !value.is_empty()) {
+        Some(base) if !suffix.is_empty() => format!("{base}, {suffix}"),
+        Some(base) => base,
+        None => suffix,
+    })
+}
+fn is_builtin_pen(owner: &Button) -> bool {
+    owner.to_ref().cast::<InkToolbarToolButton>().is_some_and(|owner| {
+        matches!(
+            owner.tool_kind(),
+            InkToolbarTool::BallpointPen | InkToolbarTool::Pencil | InkToolbarTool::Highlighter
+        )
+    })
+}
+fn menu_has_dropdown(owner: &Button) -> bool {
+    owner.flyout().is_some()
+        && owner
+            .to_ref()
+            .cast::<InkToolbarStencilButton>()
+            .is_none_or(|owner| owner.is_ruler_item_visible() && owner.is_protractor_item_visible())
+}
+fn is_radio_item(owner: &InkToolbarFlyoutItem) -> bool {
+    matches!(
+        owner.kind(),
+        InkToolbarFlyoutItemKind::Radio | InkToolbarFlyoutItemKind::RadioCheck
+    )
+}
+// The existing framework selection-provider contract has a single error type.
+// Preserve rejection without panicking; native UIA_E_INVALIDOPERATION remains
+// distinguishable by the message, not by a separate HRESULT category.
+fn invalid_selection() -> ElementNotEnabledException {
+    ElementNotEnabledException::with_message("The requested selection operation is not supported.")
 }
 fn expand(owner: &Button) -> Result<(), ElementNotEnabledException> {
     if !owner.is_effectively_enabled() {
@@ -143,6 +183,50 @@ impl AutomationPeerImpl for InkToolbarToolButtonAutomationPeer {
     fn get_class_name_core(_this: &Self) -> String {
         "InkToolbarToolButton".to_owned()
     }
+    fn get_automation_control_type_core(this: &Self) -> AutomationControlType {
+        if is_builtin_pen(&this.owner_button()) {
+            AutomationControlType::Button
+        } else {
+            AutomationControlType::Custom
+        }
+    }
+    fn get_localized_control_type_core(this: &Self) -> String {
+        let owner = this.owner_button();
+        let key = if is_builtin_pen(&owner) && owner.flyout().is_some() {
+            "InkToolbarDropDownButtonControlTypeName"
+        } else {
+            "InkToolbarToolButtonControlTypeName"
+        };
+        strings::text(&owner, key)
+    }
+    fn get_help_text_core(this: &Self) -> Option<String> {
+        let owner = this.owner_button();
+        if is_builtin_pen(&owner) {
+            // Tooltip fallback must not replace an explicitly cleared color
+            // description: the native peer then reports only the palette hint.
+            append_text(
+                AutomationProperties::get_help_text(&owner),
+                strings::text(&owner, "InkToolbarColorPaletteHelpText"),
+            )
+        } else {
+            Self::parent_get_help_text_core(this)
+        }
+    }
+    fn get_name_core(this: &Self) -> Option<String> {
+        let owner = this.owner_button();
+        let name = Self::parent_get_name_core(this);
+        if owner
+            .cast::<InkToolbarToolButton>()
+            .is_some_and(|owner| owner.is_checked() == Some(true))
+        {
+            append_text(
+                name,
+                strings::text(&owner, "InkToolbarToolButtonSelectedStateName"),
+            )
+        } else {
+            name
+        }
+    }
 }
 impl InkToolbarToolButtonAutomationPeer {
     pub fn construct(owner: &InkToolbarToolButton) -> Self {
@@ -164,7 +248,11 @@ impl IExpandCollapseProvider for ProviderAdapter<InkToolbarToolButtonAutomationP
         self.0.clone().upcast()
     }
     fn expand_collapse_state(&self) -> ExpandCollapseState {
-        button_state(&self.0.owner_button())
+        // The upstream tool provider retains Collapsed even without L3 content.
+        match button_state(&self.0.owner_button()) {
+            ExpandCollapseState::LeafNode => ExpandCollapseState::Collapsed,
+            state => state,
+        }
     }
     fn shows_menu(&self) -> bool {
         true
@@ -187,13 +275,37 @@ impl ISelectionItemProvider for ProviderAdapter<InkToolbarToolButtonAutomationPe
         self.0.selection_container()
     }
     fn add_to_selection(&self) -> Result<(), ElementNotEnabledException> {
-        self.0.add_to_selection()
+        let owner = self.0.owner_button();
+        if !owner.is_effectively_enabled() {
+            return Err(ElementNotEnabledException::new());
+        }
+        if self.is_selected() {
+            Ok(())
+        } else {
+            Err(invalid_selection())
+        }
     }
     fn remove_from_selection(&self) -> Result<(), ElementNotEnabledException> {
-        self.0.remove_from_selection()
+        let owner = self.0.owner_button();
+        if !owner.is_effectively_enabled() {
+            return Err(ElementNotEnabledException::new());
+        }
+        if self.is_selected() {
+            Err(invalid_selection())
+        } else {
+            Ok(())
+        }
     }
     fn select(&self) -> Result<(), ElementNotEnabledException> {
-        self.0.select()
+        let owner = self.0.owner_button();
+        if !owner.is_effectively_enabled() {
+            return Err(ElementNotEnabledException::new());
+        }
+        owner
+            .cast::<InkToolbarToolButton>()
+            .expect("tool peer owner")
+            .set_is_checked(Some(true));
+        Ok(())
     }
 }
 
@@ -213,6 +325,49 @@ impl FerroObjectImpl for InkToolbarMenuButtonAutomationPeer {
 impl AutomationPeerImpl for InkToolbarMenuButtonAutomationPeer {
     fn get_class_name_core(_this: &Self) -> String {
         "InkToolbarMenuButton".to_owned()
+    }
+    fn get_automation_control_type_core(_this: &Self) -> AutomationControlType {
+        AutomationControlType::Button
+    }
+    fn get_localized_control_type_core(this: &Self) -> String {
+        let owner = this.owner_button();
+        strings::text(
+            &owner,
+            if menu_has_dropdown(&owner) {
+                "InkToolbarStencilDropDownControlTypeName"
+            } else {
+                "InkToolbarToolButtonControlTypeName"
+            },
+        )
+    }
+    fn get_name_core(this: &Self) -> Option<String> {
+        let owner = this.owner_button();
+        let persistent = strings::text(&owner, "InkToolbarStencilButtonName");
+        let mut name = Self::parent_get_name_core(this);
+        if let Some(stencil) = owner.cast::<InkToolbarStencilButton>() {
+            if name
+                .as_deref()
+                .is_none_or(|value| value.is_empty() || value == persistent)
+            {
+                name = Some(strings::text(
+                    &owner,
+                    match stencil.selected_stencil() {
+                        InkToolbarStencilKind::Ruler => "InkToolbarStencilRulerName",
+                        InkToolbarStencilKind::Protractor => "InkToolbarStencilProtractorName",
+                    },
+                ));
+            }
+        }
+        append_text(Some(persistent), name.unwrap_or_default())
+    }
+    fn get_provider_core(this: &Self, provider_type: ValueType) -> Option<BoxedValue> {
+        let dropdown = menu_has_dropdown(&this.owner_button());
+        if (provider_type == ValueType::of::<Rc<dyn IExpandCollapseProvider>>() && !dropdown)
+            || (provider_type == ValueType::of::<Rc<dyn IToggleProvider>>() && dropdown)
+        {
+            return None;
+        }
+        Self::parent_get_provider_core(this, provider_type)
     }
 }
 impl InkToolbarMenuButtonAutomationPeer {
@@ -235,13 +390,23 @@ impl IExpandCollapseProvider for ProviderAdapter<InkToolbarMenuButtonAutomationP
         self.0.clone().upcast()
     }
     fn expand_collapse_state(&self) -> ExpandCollapseState {
-        button_state(&self.0.owner_button())
+        let owner = self.0.owner_button();
+        if menu_has_dropdown(&owner) {
+            button_state(&owner)
+        } else {
+            ExpandCollapseState::LeafNode
+        }
     }
     fn shows_menu(&self) -> bool {
         true
     }
     fn expand(&self) -> Result<(), ElementNotEnabledException> {
-        expand(&self.0.owner_button())
+        let owner = self.0.owner_button();
+        if menu_has_dropdown(&owner) {
+            expand(&owner)
+        } else {
+            Ok(())
+        }
     }
     fn collapse(&self) -> Result<(), ElementNotEnabledException> {
         collapse(&self.0.owner_button())
@@ -253,11 +418,22 @@ pub struct InkToolbarFlyoutItemAutomationPeer {
     base: ToggleButtonAutomationPeer,
 }
 ferro_class!(InkToolbarFlyoutItemAutomationPeer:ToggleButtonAutomationPeer);
-ferro_class_info!(InkToolbarFlyoutItemAutomationPeer{interfaces:[Rc<dyn ISelectionItemProvider> => ProviderAdapter::as_selection_item_provider]});
+ferro_class_info!(InkToolbarFlyoutItemAutomationPeer{interfaces:[Rc<dyn ISelectionItemProvider> => ProviderAdapter::as_selection_item_provider,Rc<dyn IInvokeProvider> => ProviderAdapter::as_invoke_provider]});
 ferro_impl_classes!(InkToolbarFlyoutItemAutomationPeer:FerroObjectImpl,ControlAutomationPeerImpl);
 impl AutomationPeerImpl for InkToolbarFlyoutItemAutomationPeer {
     fn get_class_name_core(_this: &Self) -> String {
         "InkToolbarFlyoutItem".to_owned()
+    }
+    fn get_automation_control_type_core(_this: &Self) -> AutomationControlType {
+        AutomationControlType::MenuItem
+    }
+    fn get_provider_core(this: &Self, provider_type: ValueType) -> Option<BoxedValue> {
+        if provider_type == ValueType::of::<Rc<dyn ISelectionItemProvider>>()
+            && !is_radio_item(&this.owner_item())
+        {
+            return None;
+        }
+        Self::parent_get_provider_core(this, provider_type)
     }
 }
 impl InkToolbarFlyoutItemAutomationPeer {
@@ -274,14 +450,29 @@ impl InkToolbarFlyoutItemAutomationPeer {
             .cast()
             .expect("flyout item peer owner")
     }
-    fn set_selected(&self, value: bool) -> Result<(), ElementNotEnabledException> {
+    fn ensure_selection_enabled(
+        &self,
+    ) -> Result<Ref<InkToolbarFlyoutItem>, ElementNotEnabledException> {
         let owner = self.owner_item();
         if !owner.is_effectively_enabled() {
             return Err(ElementNotEnabledException::new());
         }
-        if owner.kind() != InkToolbarFlyoutItemKind::Simple {
-            owner.set_is_checked(Some(value));
+        if !is_radio_item(&owner) {
+            return Err(invalid_selection());
         }
+        Ok(owner)
+    }
+}
+impl IInvokeProvider for ProviderAdapter<InkToolbarFlyoutItemAutomationPeer> {
+    fn peer(&self) -> Ref<AutomationPeer> {
+        self.0.clone().upcast()
+    }
+    fn invoke(&self) -> Result<(), ElementNotEnabledException> {
+        let owner = self.0.owner_item();
+        if !owner.is_effectively_enabled() {
+            return Err(ElementNotEnabledException::new());
+        }
+        owner.perform_click();
         Ok(())
     }
 }
@@ -290,19 +481,52 @@ impl ISelectionItemProvider for ProviderAdapter<InkToolbarFlyoutItemAutomationPe
         self.0.clone().upcast()
     }
     fn is_selected(&self) -> bool {
-        self.0.owner_item().is_checked() == Some(true)
+        let owner = self.0.owner_item();
+        is_radio_item(&owner) && owner.is_checked() == Some(true)
     }
     fn selection_container(&self) -> Option<Rc<dyn ISelectionProvider>> {
         None
     }
     fn add_to_selection(&self) -> Result<(), ElementNotEnabledException> {
-        self.0.set_selected(true)
+        let owner = self.0.ensure_selection_enabled()?;
+        if owner.is_checked() == Some(true) {
+            return Ok(());
+        }
+        if owner
+            .visual_parent()
+            .and_then(|parent| parent.cast::<Panel>())
+            .is_some_and(|panel| {
+                panel
+                    .children()
+                    .snapshot()
+                    .iter()
+                    .filter_map(|child| child.cast::<InkToolbarFlyoutItem>())
+                    .any(|other| {
+                        other != owner && is_radio_item(&other) && other.is_checked() == Some(true)
+                    })
+            })
+        {
+            return Err(invalid_selection());
+        }
+        owner.perform_click();
+        Ok(())
     }
     fn remove_from_selection(&self) -> Result<(), ElementNotEnabledException> {
-        self.0.set_selected(false)
+        let owner = self.0.ensure_selection_enabled()?;
+        if owner.is_checked() == Some(true) {
+            if owner.kind() == InkToolbarFlyoutItemKind::Radio {
+                return Err(invalid_selection());
+            }
+            owner.perform_click();
+        }
+        Ok(())
     }
     fn select(&self) -> Result<(), ElementNotEnabledException> {
-        self.0.set_selected(true)
+        let owner = self.0.ensure_selection_enabled()?;
+        if owner.is_checked() != Some(true) {
+            owner.perform_click();
+        }
+        Ok(())
     }
 }
 
@@ -312,10 +536,31 @@ pub struct InkToolbarStrokeWidthSliderAutomationPeer {
 }
 ferro_class!(InkToolbarStrokeWidthSliderAutomationPeer:SliderAutomationPeer);
 ferro_class_info!(InkToolbarStrokeWidthSliderAutomationPeer{interfaces:[Rc<dyn IValueProvider> => ProviderAdapter::as_value_provider]});
-ferro_impl_classes!(InkToolbarStrokeWidthSliderAutomationPeer:FerroObjectImpl,ControlAutomationPeerImpl,RangeBaseAutomationPeerImpl);
+ferro_impl_classes!(InkToolbarStrokeWidthSliderAutomationPeer:FerroObjectImpl,ControlAutomationPeerImpl);
+impl RangeBaseAutomationPeerImpl for InkToolbarStrokeWidthSliderAutomationPeer {
+    fn owner_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
+        Self::parent_owner_property_changed(this, change);
+        if change.property() == RangeBase::value_property().as_property() {
+            this.raise_property_changed_event(
+                ValuePatternIdentifiers::value_property(),
+                change
+                    .get_old_value::<f64>()
+                    .map(|value| Rc::new(value.to_string()) as BoxedValue),
+                Some(Rc::new(change.get_new_value::<f64>().to_string()) as BoxedValue),
+            );
+        }
+    }
+}
 impl AutomationPeerImpl for InkToolbarStrokeWidthSliderAutomationPeer {
     fn get_class_name_core(_this: &Self) -> String {
         "InkToolbarStrokeWidthSlider".to_owned()
+    }
+    fn get_name_core(this: &Self) -> Option<String> {
+        let owner = this.owner_slider();
+        let range = strings::text(&owner, "InkToolbarStrokeWidthSliderRangeFormat")
+            .replace("%1!s!", &owner.minimum().to_string())
+            .replace("%2!s!", &owner.maximum().to_string());
+        append_text(Self::parent_get_name_core(this), range)
     }
 }
 impl InkToolbarStrokeWidthSliderAutomationPeer {
@@ -349,12 +594,12 @@ impl IValueProvider for ProviderAdapter<InkToolbarStrokeWidthSliderAutomationPee
             return Err(Box::new(ElementNotEnabledException::new()));
         }
         let value = value.unwrap_or("").parse::<f64>()?;
-        if !value.is_finite() || value < owner.minimum() || value > owner.maximum() {
+        if !value.is_finite() {
             return Err(Box::new(super::InkError::InvalidInput(
-                "Stroke width must lie within the slider range",
+                "Stroke width must be finite",
             )));
         }
-        owner.set_range_value(value);
+        owner.set_range_value(value.clamp(owner.minimum(), owner.maximum()));
         Ok(())
     }
 }

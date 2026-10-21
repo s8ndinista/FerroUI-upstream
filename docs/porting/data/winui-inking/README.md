@@ -10,6 +10,8 @@ Baseline: Microsoft WinUI
 | `api-map.json` | Every public type and declared member in those IDLs, including enum values and dependency-property registrations: 45 types and 181 members. Each member has its own disposition. |
 | `tests-map.json` | The 65 methods in the two upstream API-test suites, with explicit local test mappings where they exist. Interaction suites and test UIs remain separate entries in the source map. |
 | `dependencies.json` | OS services used by the source, portable replacements, compatibility boundaries and adjacent Windows Ink services. These are not presented as source files in WinUI. |
+| `service-api-map.json` | 136 methods/getters/setters across 12 selected Windows Ink dependency classes, pinned to the `windows` 0.62.2 projection. Each records whether WinUI actually invokes it, exposes the containing service, or does not require the optional API. |
+| `upstream/windows-0.62.2-inking-services.txt` | Immutable declaration extract for those external classes, with the original projection revision and source digest. This is separate from the six WinUI IDLs. |
 
 ## Status meanings
 
@@ -34,15 +36,44 @@ Run from the repository root:
 ```sh
 python scripts/inking/check_port.py
 python scripts/inking/check_port.py --json
+python scripts/inking/check_port.py --require-control-complete
 python scripts/inking/check_port.py --require-complete
 ```
 
 The normal check validates ledger structure, immutable IDL hashes, exhaustive
-type/member accounting and local evidence paths/symbols. It deliberately does
-not infer behavior from symbol names. The last command additionally fails while
-any partial, missing or external record remains. Test execution, platform
+type/member accounting, the external service declaration extract and local
+evidence paths/symbols. It deliberately does not infer behavior from symbol
+names. `--require-control-complete` rejects gaps in the pinned control sources,
+IDLs, tests, required dependencies and directly invoked external methods.
+`--require-complete` additionally includes the broader dependency API and optional
+extension audit. The JSON report contains every remaining record and identifies
+which gate includes it. Test execution, platform
 interoperability and visual comparisons are separate evidence described in
 [`../../winui-inking.md`](../../winui-inking.md).
+
+## External service scope
+
+The 181 WinUI declarations reference external OS objects; they do not declare
+the whole Windows Ink namespace. The separate dependency audit makes those
+boundaries visible without silently adding all adjacent Windows interfaces to
+the required control port. For example, WinUI invokes the stroke container's
+save/load/selection methods and drawing-attribute setters. It does not invoke
+`InkModelerAttributes`, recognition-state APIs or `InkStroke.PointerId`.
+
+The external records use `control_role`:
+
+- `required_by_controls`: an actual call in the pinned control implementation,
+  with the calling file recorded in `upstream_references`.
+- `returned_service_api`: additional public API on an object exposed by the
+  control, or a nested property. Missing members limit broader service parity.
+- `portable_engine_support`: constructors, samples and stroke-building APIs
+  that support the independent portable renderer.
+- `optional_extension`: advanced/nested or adjacent OS services that the pinned
+  controls do not require, including the optional native recognition extension.
+
+Neither gate represents a percentage of functionality. Source, type, member,
+test and service records intentionally overlap, and passing the structural
+check does not establish the behavior of any of them.
 
 ## Updating a record
 
@@ -59,6 +90,8 @@ disappear. A new upstream baseline needs a deliberate inventory/API comparison.
 
 ## License
 
-The IDL snapshots and derived declarations are Copyright (c) Microsoft
-Corporation. All rights reserved, under the MIT License. The full notice is in
+The IDL snapshots and WinUI-derived declarations are Copyright (c) Microsoft
+Corporation. All rights reserved, under the MIT License. The Windows dependency
+declaration extract is from Microsoft Rust for Windows, MIT OR Apache-2.0; its
+MIT notice is retained with the other Microsoft attribution. The full notice is in
 [`../../../../src/FerroUI.Controls/inking/NOTICE.md`](../../../../src/FerroUI.Controls/inking/NOTICE.md).

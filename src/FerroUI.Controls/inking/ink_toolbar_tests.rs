@@ -9,6 +9,225 @@ use ferroui_base::media::{Color, IBrush};
 use ferroui_base::Point;
 
 #[test]
+fn localized_names_update_from_resources_without_overwriting_local_values() {
+    use crate::automation::AutomationProperties;
+    use ferroui_base::controls::ResourceKey;
+    use ferroui_base::utilities::CultureInfo;
+    let _scope = test_scope();
+    struct RestoreCulture(CultureInfo);
+    impl Drop for RestoreCulture {
+        fn drop(&mut self) {
+            CultureInfo::set_current_ui_culture(self.0.clone());
+        }
+    }
+    let _culture = RestoreCulture(CultureInfo::current_ui_culture());
+    CultureInfo::set_current_ui_culture(CultureInfo::get_culture_info("pl-PL"));
+    let pen = InkToolbarBallpointPenButton::new();
+    assert_eq!(
+        AutomationProperties::get_name(&pen).as_deref(),
+        Some("Pióro kulkowe")
+    );
+    pen.resources()
+        .add_value("InkToolbarBallpointPenButtonName", "Drawing pen".to_owned());
+    assert_eq!(
+        AutomationProperties::get_name(&pen).as_deref(),
+        Some("Drawing pen")
+    );
+    pen.resources().set(
+        "InkToolbarBallpointPenButtonName",
+        Some(Rc::new("Updated pen".to_owned())),
+    );
+    assert_eq!(
+        AutomationProperties::get_name(&pen).as_deref(),
+        Some("Updated pen")
+    );
+    AutomationProperties::set_name(&pen, Some("Application name"));
+    pen.resources()
+        .remove(&ResourceKey::from("InkToolbarBallpointPenButtonName"));
+    assert_eq!(
+        AutomationProperties::get_name(&pen).as_deref(),
+        Some("Application name")
+    );
+}
+
+#[test]
+fn color_names_quantize_known_families_and_format_unknown_rgb() {
+    use super::color_names::{color_name, color_resource_key};
+    let _scope = test_scope();
+    let control = Control::new();
+    control
+        .resources()
+        .add_value("InkToolbarColorNameRed", "Localized red".to_owned());
+    assert_eq!(
+        color_resource_key(Color::from_rgb(0xe0, 0x18, 0x1f)),
+        Some("InkToolbarColorNameRed")
+    );
+    assert_eq!(
+        color_name(&control, Color::from_rgb(0xe0, 0x18, 0x1f)),
+        "Localized red"
+    );
+    control.resources().add_value(
+        "InkToolbarColorRgbFormat",
+        "red=%1!u!; green=%2!u!; blue=%3!u!".to_owned(),
+    );
+    assert_eq!(
+        color_name(&control, Color::from_rgb(17, 49, 123)),
+        "red=17; green=49; blue=123"
+    );
+}
+
+#[test]
+fn high_contrast_adjustment_obeys_original_system_and_seven_to_one_policy() {
+    use super::color_names::{adjust_high_contrast_color, contrast_ratio};
+    let black = Color::from_rgb(0, 0, 0);
+    let white = Color::from_rgb(255, 255, 255);
+    let gray = Color::from_rgb(128, 128, 128);
+    assert!((contrast_ratio(black, white) - 21.0).abs() < 1e-12);
+    assert!((contrast_ratio(gray, gray) - 1.0).abs() < 1e-12);
+    assert_eq!(
+        adjust_high_contrast_color(
+            gray,
+            white,
+            black,
+            InkHighContrastAdjustment::UseOriginalColors
+        ),
+        gray
+    );
+    assert_eq!(
+        adjust_high_contrast_color(
+            gray,
+            white,
+            black,
+            InkHighContrastAdjustment::UseSystemColors
+        ),
+        black
+    );
+    assert_eq!(
+        adjust_high_contrast_color(
+            gray,
+            white,
+            black,
+            InkHighContrastAdjustment::UseSystemColorsWhenNecessary
+        ),
+        black
+    );
+    assert_eq!(
+        adjust_high_contrast_color(
+            black,
+            white,
+            gray,
+            InkHighContrastAdjustment::UseSystemColorsWhenNecessary
+        ),
+        black
+    );
+}
+
+#[test]
+fn contrast_palette_switch_restores_normal_selection_and_tracks_presenter_policy() {
+    use crate::ThemeVariantScope;
+    use ferroui_base::styling::ThemeVariant;
+    let _scope = test_scope();
+    let scope = ThemeVariantScope::new();
+    let toolbar = InkToolbar::new();
+    let presenter = InkPresenter::new();
+    toolbar.set_target_ink_presenter(Some(presenter.clone()));
+    scope.set_child(&toolbar);
+    let pen = toolbar
+        .active_tool()
+        .unwrap()
+        .cast::<InkToolbarPenButton>()
+        .unwrap();
+    pen.set_selected_brush_index(7);
+    let normal_color = pen.create_ink_drawing_attributes().unwrap().color;
+    scope
+        .resources()
+        .add_value("SystemColorWindowColor", Color::from_rgb(0, 0, 0));
+    scope
+        .resources()
+        .add_value("SystemColorWindowTextColor", Color::from_rgb(255, 255, 255));
+    scope.set_requested_theme_variant(Some(ThemeVariant::new(
+        "HighContrast",
+        Some(ThemeVariant::dark()),
+    )));
+    assert!(pen.effective_palette().len() < pen.palette().count());
+    assert!(pen
+        .effective_palette()
+        .iter()
+        .all(|brush| super::color_names::contrast_ratio(
+            brush.as_solid_color_brush().unwrap().color(),
+            Color::from_rgb(0, 0, 0)
+        ) >= 7.0));
+    presenter.set_high_contrast_adjustment(InkHighContrastAdjustment::UseSystemColors);
+    assert_eq!(pen.effective_palette().len(), 1);
+    presenter.set_high_contrast_adjustment(InkHighContrastAdjustment::UseOriginalColors);
+    assert_eq!(pen.effective_palette().len(), 30);
+    scope.set_requested_theme_variant(Some(ThemeVariant::light()));
+    assert_eq!(pen.effective_palette().len(), 30);
+    assert_eq!(pen.selected_brush_index(), 7);
+    assert_eq!(
+        pen.create_ink_drawing_attributes().unwrap().color,
+        normal_color
+    );
+}
+
+#[test]
+fn pen_preview_uses_source_path_and_follows_attributes() {
+    use ferroui_base::media::PolylineGeometry;
+    let _scope = test_scope();
+    let pen = InkToolbarBallpointPenButton::new();
+    let config = InkToolbarPenConfigurationControl::for_pen(&pen);
+    let preview = config.stroke_preview().unwrap();
+    let path = preview.data().unwrap().cast::<PolylineGeometry>().unwrap();
+    assert_eq!(path.points().len(), 103);
+    pen.set_selected_stroke_width(9.0);
+    pen.set_selected_brush_index(7);
+    assert_eq!(preview.stroke_thickness(), 9.0);
+    assert_eq!(
+        preview
+            .stroke()
+            .unwrap()
+            .as_solid_color_brush()
+            .unwrap()
+            .color(),
+        pen.create_ink_drawing_attributes().unwrap().color
+    );
+    assert_eq!(preview.opacity(), 1.0);
+    let highlighter = InkToolbarHighlighterButton::new();
+    let highlighter_config = InkToolbarPenConfigurationControl::for_pen(&highlighter);
+    let preview = highlighter_config.stroke_preview().unwrap();
+    assert_eq!(preview.opacity(), 0.5);
+    assert_eq!(preview.stroke_thickness(), 16.0 / 3.0);
+}
+
+#[test]
+fn toolbar_style_key_tracks_available_theme_and_returns_to_native_fallback() {
+    use crate::RadioButton;
+    use ferroui_base::controls::ResourceKey;
+    use ferroui_base::styling::ControlTheme;
+    let _scope = test_scope();
+    let pen = InkToolbarBallpointPenButton::new();
+    assert!(std::ptr::eq(pen.style_key(), RadioButton::TYPE));
+    let inherited = ControlTheme::with_target_type(InkToolbarPenButton::TYPE);
+    pen.resources()
+        .add_value(ResourceKey::Type(InkToolbarPenButton::TYPE), inherited);
+    assert!(std::ptr::eq(pen.style_key(), InkToolbarPenButton::TYPE));
+    let specific = ControlTheme::with_target_type(InkToolbarBallpointPenButton::TYPE);
+    pen.resources().add_value(
+        ResourceKey::Type(InkToolbarBallpointPenButton::TYPE),
+        specific,
+    );
+    assert!(std::ptr::eq(
+        pen.style_key(),
+        InkToolbarBallpointPenButton::TYPE
+    ));
+    pen.resources()
+        .remove(&ResourceKey::Type(InkToolbarBallpointPenButton::TYPE));
+    pen.resources()
+        .remove(&ResourceKey::Type(InkToolbarPenButton::TYPE));
+    assert!(std::ptr::eq(pen.style_key(), RadioButton::TYPE));
+}
+
+#[test]
 fn default_controls_and_selection_match_upstream() {
     let _scope = test_scope();
     let toolbar = InkToolbar::new();
@@ -226,7 +445,12 @@ fn configuration_slider_and_palette_stay_synchronized() {
     pen.set_selected_stroke_width(11.0);
     assert_eq!(slider.value(), 11.0);
     pen.set_selected_brush_index(7);
-    let palette = config.children().get(0).cast::<crate::WrapPanel>().unwrap();
+    let palette = config
+        .children()
+        .snapshot()
+        .iter()
+        .find_map(|child| child.cast::<crate::WrapPanel>())
+        .unwrap();
     assert_eq!(
         palette
             .children()
@@ -305,7 +529,8 @@ fn slider_value_automation_validates_text_and_disabled_state() {
     provider.set_value(Some("8.5")).unwrap();
     assert_eq!(slider.value(), 8.5);
     assert!(provider.set_value(Some("NaN")).is_err());
-    assert!(provider.set_value(Some("40")).is_err());
+    provider.set_value(Some("40")).unwrap();
+    assert_eq!(slider.value(), 20.0);
     slider.set_is_enabled(false);
     assert!(provider.set_value(Some("2")).is_err());
 }

@@ -8,7 +8,9 @@ pub struct InkSynchronizer {
     active_batch: RefCell<Option<Vec<u32>>>,
 }
 impl PartialEq for InkSynchronizer {
-    fn eq(&self, other: &Self) -> bool { std::ptr::eq(self, other) }
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self, other)
+    }
 }
 
 impl InkSynchronizer {

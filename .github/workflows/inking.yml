@@ -1,0 +1,71 @@
+name: Inking compatibility
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/inking.yml'
+      - 'src/FerroUI.Controls/inking/**'
+      - 'src/FerroUI.Controls/register_types.rs'
+      - 'src/FerroUI.Controls/rust_paths.rs'
+      - 'src/FerroUI.View/generated/builders.rs'
+      - 'src/FerroUI.View/tests/inking_tests.rs'
+      - 'src/Windows/FerroUI.WinUI/**'
+      - 'src/FerroUI.Themes.WinUI/**'
+      - 'samples/ControlCatalog/Pages/*Inking*'
+      - 'samples/ControlCatalog/Pages/inking_page.rs'
+      - 'scripts/inking/**'
+      - 'scripts/winui-inking/**'
+      - 'docs/porting/data/winui-inking/**'
+      - 'Cargo.lock'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: inking-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_PROFILE_DEV_DEBUG: 0
+  CARGO_PROFILE_TEST_DEBUG: 0
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+jobs:
+  portable:
+    name: Portable ink, markup and WebAssembly
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d
+        with:
+          toolchain: '1.89.0'
+          targets: wasm32-unknown-unknown
+      - name: Pinned source, member and test accounting
+        run: python3 scripts/inking/check_port.py
+      - name: Generated markup paths and Rust builders
+        run: |
+          python3 scripts/generate_markup_types.py --target rust-paths --check
+          python3 scripts/generate_view_builders.py --check
+      - name: Portable engine, routed input, rendering and toolbar tests
+        run: cargo test --locked -p ferroui-controls --lib inking::
+      - name: Declarative Rust and runtime XAML integration
+        run: cargo test --locked -p ferroui-view --lib inking_tests
+      - name: Compiled toolbar themes and resource dictionaries
+        run: cargo test --locked -p ferroui-themes-winui --lib ink_toolbar
+      - name: WebAssembly control compilation
+        run: cargo check --locked -p ferroui-controls --target wasm32-unknown-unknown
+
+  windows:
+    name: Native Windows ink interoperability
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d
+        with:
+          toolchain: '1.89.0'
+      - name: Native ISF, GIF, conversion and failure-atomicity fixtures
+        run: cargo test --locked -p ferroui-winui --lib inking::

@@ -4,7 +4,7 @@ use ferroui_base::input::PointerType;
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::Size;
 use std::cell::{Cell, RefCell};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 use std::rc::Rc;
 
 #[derive(Clone, PartialEq)]
@@ -28,10 +28,43 @@ impl InkStrokesErasedEventArgs {
 
 struct ActiveStroke {
     points: Vec<InkPoint>,
+    fragments: Vec<Vec<InkPoint>>,
+    last_point: InkPoint,
+    sample_count: usize,
     attributes: InkDrawingAttributes,
     last_event: InkPointerEventArgs,
     erasing: bool,
-    preview: Option<Rc<InkStroke>>,
+    preview: Option<Vec<Rc<InkStroke>>>,
+}
+
+impl ActiveStroke {
+    fn append_visible(
+        &mut self,
+        parts: Vec<Vec<InkPoint>>,
+        point: InkPoint,
+    ) -> Result<(), InkError> {
+        self.last_point = point;
+        self.preview = None;
+        for part in parts.into_iter().filter(|part| !part.is_empty()) {
+            if !self.points.is_empty() && self.points.last() != part.first() {
+                self.fragments.push(std::mem::take(&mut self.points));
+            }
+            for sample in part {
+                if self.points.last() != Some(&sample) {
+                    if self.sample_count >= InkPersistenceLimits::DEFAULT.max_points_per_stroke {
+                        return Err(InkError::LimitExceeded);
+                    }
+                    self.points.push(sample);
+                    self.sample_count += 1;
+                }
+            }
+        }
+        // The next outside point must start a new fragment after an interior gap.
+        if !self.points.is_empty() && self.points.last() != Some(&point) {
+            self.fragments.push(std::mem::take(&mut self.points));
+        }
+        Ok(())
+    }
 }
 
 /// UI-thread ink coordinator. Services and input callbacks are stable, synchronous
@@ -94,10 +127,10 @@ impl InkPresenter {
         let weak = Rc::downgrade(&presenter);
         presenter.container.changed(move || {
             if let Some(p) = weak.upgrade() {
-                let live = p.container.get_strokes();
+                let live: HashSet<_> = p.container.get_strokes().iter().map(Rc::as_ptr).collect();
                 p.pending_dry
                     .borrow_mut()
-                    .retain(|stroke| live.iter().any(|s| Rc::ptr_eq(s, stroke)));
+                    .retain(|stroke| live.contains(&Rc::as_ptr(stroke)));
                 p.invalidate();
             }
         });
@@ -317,7 +350,16 @@ impl InkPresenter {
             return Ok(e.handled());
         }
         self.input_activated.set(true);
-        let point = self.constrained_point(e.point);
+        let active_ink = self
+            .active
+            .borrow()
+            .get(&e.pointer_id)
+            .is_some_and(|stroke| !stroke.erasing);
+        let point = if phase == InkPointerPhase::Pressed || !active_ink {
+            e.point
+        } else {
+            self.constrained_point(e.point)
+        };
         match phase {
             InkPointerPhase::Pressed => {
                 if self.has_active_pointer(e.pointer_id) {
@@ -332,10 +374,22 @@ impl InkPresenter {
                 }
                 let erasing = self.processing.mode() == InkInputProcessingMode::Erasing
                     || (e.is_eraser && self.input.is_eraser_input_enabled());
+                let point = if erasing {
+                    point
+                } else {
+                    self.protractor.begin_ink();
+                    self.constrained_point(point)
+                };
+                let visible = erasing
+                    || (!self.ruler.blocks_ink(point.position)
+                        && !self.protractor.blocks_ink(point.position));
                 self.active.borrow_mut().insert(
                     e.pointer_id,
                     ActiveStroke {
-                        points: vec![point],
+                        points: if visible { vec![point] } else { Vec::new() },
+                        fragments: Vec::new(),
+                        last_point: point,
+                        sample_count: usize::from(visible),
                         attributes: self.attributes.get(),
                         last_event: e.clone(),
                         erasing,
@@ -351,34 +405,38 @@ impl InkPresenter {
                 Ok(true)
             }
             InkPointerPhase::Moved | InkPointerPhase::Released => {
-                let exceeds_limit = self
-                    .active
-                    .borrow()
-                    .get(&e.pointer_id)
-                    .is_some_and(|stroke| {
-                        !stroke.erasing
-                            && stroke.points.last().is_some_and(|last| *last != point)
-                            && stroke.points.len()
-                                >= InkPersistenceLimits::DEFAULT.max_points_per_stroke
-                    });
-                if exceeds_limit {
-                    self.cancel_pointer(e.pointer_id);
-                    return Err(InkError::LimitExceeded);
-                }
                 let step = {
                     let mut active = self.active.borrow_mut();
-                    active.get_mut(&e.pointer_id).map(|stroke| {
-                        let previous = stroke.points.last().copied().unwrap_or(point);
-                        if previous != point {
-                            if stroke.erasing {
-                                stroke.points.clear();
+                    active
+                        .get_mut(&e.pointer_id)
+                        .map(|stroke| {
+                            let previous = stroke.last_point;
+                            if previous != point {
+                                if stroke.erasing {
+                                    stroke.points.clear();
+                                    stroke.points.push(point);
+                                    stroke.last_point = point;
+                                } else {
+                                    let parts = super::ink_presenter_stencil::clip_stencil_segment(
+                                        previous,
+                                        point,
+                                        &self.ruler,
+                                        &self.protractor,
+                                    );
+                                    stroke.append_visible(parts, point)?;
+                                }
                             }
-                            stroke.points.push(point);
-                            stroke.preview = None;
-                        }
-                        stroke.last_event = e.clone();
-                        (stroke.erasing, previous.position)
-                    })
+                            stroke.last_event = e.clone();
+                            Ok::<_, InkError>((stroke.erasing, previous.position))
+                        })
+                        .transpose()
+                };
+                let step = match step {
+                    Ok(step) => step,
+                    Err(error) => {
+                        self.cancel_pointer(e.pointer_id);
+                        return Err(error);
+                    }
                 };
                 let Some((erasing, previous)) = step else {
                     self.unprocessed_input.raise(
@@ -405,11 +463,19 @@ impl InkPresenter {
                     }
                 }
                 if phase == InkPointerPhase::Released {
-                    if let Some(stroke) = released.filter(|s| !s.erasing) {
+                    if let Some(mut stroke) = released.filter(|s| !s.erasing) {
                         let epoch = self.epoch.get();
                         self.stroke_input.ended.raise(e);
                         if epoch == self.epoch.get() && self.enabled.get() {
-                            let completed = match InkStroke::new(stroke.points, stroke.attributes) {
+                            if !stroke.points.is_empty() {
+                                stroke.fragments.push(stroke.points);
+                            }
+                            let completed = match stroke
+                                .fragments
+                                .into_iter()
+                                .map(|points| InkStroke::new(points, stroke.attributes))
+                                .collect::<Result<Vec<_>, _>>()
+                            {
                                 Ok(completed) => completed,
                                 Err(error) => {
                                     self.invalidate();
@@ -417,18 +483,25 @@ impl InkPresenter {
                                 }
                             };
                             if self.custom_drying.get() {
-                                self.pending_dry.borrow_mut().push(completed.clone());
-                            }
-                            if let Err(error) = self.container.add_stroke(completed.clone()) {
                                 self.pending_dry
                                     .borrow_mut()
-                                    .retain(|pending| !Rc::ptr_eq(pending, &completed));
+                                    .extend(completed.iter().cloned());
+                            }
+                            if let Err(error) =
+                                self.container.add_strokes(completed.iter().cloned())
+                            {
+                                let rejected: HashSet<_> =
+                                    completed.iter().map(Rc::as_ptr).collect();
+                                self.pending_dry
+                                    .borrow_mut()
+                                    .retain(|pending| !rejected.contains(&Rc::as_ptr(pending)));
                                 self.invalidate();
                                 return Err(error);
                             }
-                            self.collected.raise(&InkStrokesCollectedEventArgs {
-                                strokes: vec![completed],
-                            });
+                            if !completed.is_empty() {
+                                self.collected
+                                    .raise(&InkStrokesCollectedEventArgs { strokes: completed });
+                            }
                         }
                     }
                 } else if !erasing {
@@ -464,10 +537,17 @@ impl InkPresenter {
         let mut active = self.active.borrow_mut();
         for stroke in active.values_mut().filter(|s| !s.erasing) {
             if stroke.preview.is_none() {
-                stroke.preview = InkStroke::new(stroke.points.clone(), stroke.attributes).ok();
+                stroke.preview = stroke
+                    .fragments
+                    .iter()
+                    .chain(std::iter::once(&stroke.points))
+                    .filter(|points| !points.is_empty())
+                    .map(|points| InkStroke::new(points.clone(), stroke.attributes))
+                    .collect::<Result<Vec<_>, _>>()
+                    .ok();
             }
             if let Some(preview) = &stroke.preview {
-                strokes.push(preview.clone());
+                strokes.extend(preview.iter().cloned());
             }
         }
         strokes

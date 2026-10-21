@@ -21,6 +21,8 @@ pub type InkServiceFuture<T> = Pin<Box<dyn Future<Output = Result<T, InkError>>>
 /// Windows ink engine for ISF, embedded ISF/GIF and the system ink clipboard.
 /// Core drawing, collection editing and portable persistence require no service.
 pub trait IInkPlatformServices {
+    /// Capture the supplied strokes' values before returning the future.
+    /// Stroke handles remain editable by their owners while native I/O awaits.
     fn save(
         &self,
         strokes: Vec<Rc<InkStroke>>,

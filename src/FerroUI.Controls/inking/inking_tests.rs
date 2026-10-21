@@ -11,6 +11,93 @@ fn event(id: i32, x: f64, y: f64) -> InkPointerEventArgs {
         InkPoint::new(Point::new(x, y), 0.5).unwrap(),
     )
 }
+
+#[test]
+fn eraser_release_callback_can_start_a_new_stroke_with_the_same_pointer() {
+    let p = InkPresenter::new();
+    draw(&p, 1, 100.0);
+    p.input_processing_configuration()
+        .set_mode(InkInputProcessingMode::Erasing);
+    let weak = Rc::downgrade(&p);
+    p.strokes_erased(move |_| {
+        let p = weak.upgrade().unwrap();
+        p.input_processing_configuration()
+            .set_mode(InkInputProcessingMode::Inking);
+        p.process_pointer(InkPointerPhase::Pressed, &event(2, 500.0, 500.0))
+            .unwrap();
+    });
+    p.process_pointer(InkPointerPhase::Pressed, &event(2, 0.0, 20.0))
+        .unwrap();
+    p.process_pointer(InkPointerPhase::Released, &event(2, 130.0, 20.0))
+        .unwrap();
+    assert!(p.has_active_pointer(2));
+    assert!(p.stroke_container().is_empty());
+    p.process_pointer(InkPointerPhase::Released, &event(2, 510.0, 500.0))
+        .unwrap();
+    assert_eq!(p.stroke_container().len(), 1);
+    assert_eq!(
+        p.stroke_container().get_strokes()[0].ink_points()[0].position,
+        Point::new(500.0, 500.0)
+    );
+}
+
+#[test]
+fn exact_sample_limit_accepts_an_identical_release_and_rejects_an_extra_point() {
+    let p = InkPresenter::new();
+    let limit = InkPersistenceLimits::DEFAULT.max_points_per_stroke;
+    p.process_pointer(InkPointerPhase::Pressed, &event(1, 0.0, 0.0))
+        .unwrap();
+    for i in 1..limit {
+        p.process_pointer(InkPointerPhase::Moved, &event(1, i as f64, 0.0))
+            .unwrap();
+    }
+    p.process_pointer(
+        InkPointerPhase::Released,
+        &event(1, (limit - 1) as f64, 0.0),
+    )
+    .unwrap();
+    assert_eq!(
+        p.stroke_container().get_strokes()[0].ink_points().len(),
+        limit
+    );
+    p.process_pointer(InkPointerPhase::Pressed, &event(2, 0.0, 1.0))
+        .unwrap();
+    for i in 1..limit {
+        p.process_pointer(InkPointerPhase::Moved, &event(2, i as f64, 1.0))
+            .unwrap();
+    }
+    assert_eq!(
+        p.process_pointer(InkPointerPhase::Released, &event(2, limit as f64, 1.0)),
+        Err(InkError::LimitExceeded)
+    );
+    assert!(!p.has_active_pointer(2));
+    assert_eq!(p.stroke_container().len(), 1);
+}
+
+#[test]
+fn markup_unprocessed_event_preserves_shared_handled_state() {
+    use ferroui_base::metadata::{into_markup_value, MarkupDelegate, MarkupTyped};
+    crate::register_types();
+    let p = InkPresenter::new();
+    p.input_processing_configuration()
+        .set_mode(InkInputProcessingMode::None);
+    let input = p.unprocessed_input();
+    let pressed = <InkUnprocessedInput as MarkupTyped>::MARKUP
+        .find_event("PointerPressed")
+        .unwrap();
+    let handled = <InkPointerEventArgs as MarkupTyped>::MARKUP
+        .find_property("Handled")
+        .unwrap();
+    let handler = MarkupDelegate::new(move |args| {
+        (handled.set.unwrap())(&[args[1].clone(), into_markup_value(true)]).unwrap();
+        None
+    });
+    (pressed.add)(&[into_markup_value(input), into_markup_value(handler)]).unwrap();
+    let first = event(1, 0.0, 0.0);
+    assert!(p.process_pointer(InkPointerPhase::Pressed, &first).unwrap());
+    assert!(first.handled());
+    assert!(p.stroke_container().is_empty());
+}
 fn draw(presenter: &InkPresenter, id: i32, x: f64) {
     presenter
         .process_pointer(InkPointerPhase::Pressed, &event(id, x, 20.0))

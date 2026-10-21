@@ -79,7 +79,12 @@ macro_rules! identity_equality {
         fn eq(&self, other: &Self) -> bool { std::ptr::eq(self, other) }
     })* };
 }
-identity_equality!(InkInputProcessingConfiguration, InkInputConfiguration, InkStrokeInput, InkUnprocessedInput);
+identity_equality!(
+    InkInputProcessingConfiguration,
+    InkInputConfiguration,
+    InkStrokeInput,
+    InkUnprocessedInput
+);
 
 impl InkPointerEventArgs {
     pub fn new(pointer_id: i32, device_type: PointerType, point: InkPoint) -> Self {

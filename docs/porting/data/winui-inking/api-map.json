@@ -2299,7 +2299,7 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
       ],
-      "notes": "Stable portable ruler/protractor services, selection and visibility are connected. Native stencil manipulation, full annotations and exact appearance remain incomplete.",
+      "notes": "Stable portable ruler/protractor services, exclusive visibility, touch/mouse translation and rotation, protractor resize and annotations are connected. Exact Windows stencil rasterization and appearance still require visual comparison.",
       "members": [
         {
           "name": "InkToolbarStencilButton",
@@ -2320,7 +2320,7 @@
           "kind": "property",
           "declaration": "Windows.UI.Input.Inking.InkPresenterRuler Ruler{ get; };",
           "id": "InkToolbarStencilButton.Ruler",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
             "src/FerroUI.Controls/inking/ink_presenter_stencil.rs"
@@ -2328,14 +2328,14 @@
           "symbols": [
             "ruler"
           ],
-          "notes": "Read-only stable Rc service of the effective presenter. Portable drawing/constraints are implemented; full OS stencil appearance, manipulation and annotation behavior remain incomplete."
+          "notes": "Read-only stable Rc service of the effective presenter. It supplies portable properties, drawing, pen constraints and touch/mouse manipulation through FerroUI; exact OS pixels are recorded at the renderer dependency boundary."
         },
         {
           "name": "Protractor",
           "kind": "property",
           "declaration": "Windows.UI.Input.Inking.InkPresenterProtractor Protractor{ get; };",
           "id": "InkToolbarStencilButton.Protractor",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
             "src/FerroUI.Controls/inking/ink_presenter_stencil.rs"
@@ -2343,7 +2343,7 @@
           "symbols": [
             "protractor"
           ],
-          "notes": "Read-only stable Rc service of the effective presenter. Portable drawing/constraints are implemented; full OS stencil appearance, manipulation and annotation behavior remain incomplete."
+          "notes": "Read-only stable Rc service of the effective presenter. It supplies portable properties, drawing, pen constraints and touch/mouse manipulation through FerroUI; exact OS pixels are recorded at the renderer dependency boundary."
         },
         {
           "name": "SelectedStencil",
@@ -2392,7 +2392,7 @@
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty RulerProperty{ get; };",
           "id": "InkToolbarStencilButton.RulerProperty",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
             "src/FerroUI.Controls/inking/ink_presenter_stencil.rs"
@@ -2400,14 +2400,14 @@
           "symbols": [
             "ruler_property"
           ],
-          "notes": "Read-only stable Rc service of the effective presenter. Portable drawing/constraints are implemented; full OS stencil appearance, manipulation and annotation behavior remain incomplete."
+          "notes": "Read-only stable Rc service of the effective presenter. It supplies portable properties, drawing, pen constraints and touch/mouse manipulation through FerroUI; exact OS pixels are recorded at the renderer dependency boundary."
         },
         {
           "name": "ProtractorProperty",
           "kind": "dependency_property",
           "declaration": "static Microsoft.UI.Xaml.DependencyProperty ProtractorProperty{ get; };",
           "id": "InkToolbarStencilButton.ProtractorProperty",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
             "src/FerroUI.Controls/inking/ink_presenter_stencil.rs"
@@ -2415,7 +2415,7 @@
           "symbols": [
             "protractor_property"
           ],
-          "notes": "Read-only stable Rc service of the effective presenter. Portable drawing/constraints are implemented; full OS stencil appearance, manipulation and annotation behavior remain incomplete."
+          "notes": "Read-only stable Rc service of the effective presenter. It supplies portable properties, drawing, pen constraints and touch/mouse manipulation through FerroUI; exact OS pixels are recorded at the renderer dependency boundary."
         },
         {
           "name": "SelectedStencilProperty",
@@ -2579,7 +2579,7 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
       ],
-      "notes": "Legacy ruler toggle controls the portable ruler. Native stencil touch manipulation and visual fidelity remain incomplete.",
+      "notes": "Legacy ruler toggle controls the portable ruler, including touch/mouse manipulation and annotations. Native rasterization and visual fidelity require separate comparison.",
       "members": [
         {
           "name": "InkToolbarRulerButton",

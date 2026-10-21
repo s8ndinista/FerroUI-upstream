@@ -5,6 +5,7 @@ mod ink_events;
 mod markup;
 pub(crate) use markup::register_markup;
 mod ink_platform_services;
+mod ink_clipboard;
 mod ink_point;
 mod ink_drawing_attributes;
 mod ink_stroke;
@@ -14,6 +15,7 @@ mod persistence;
 mod ink_input;
 mod ink_presenter;
 mod ink_presenter_stencil;
+mod ink_stencil_input;
 mod ink_synchronizer;
 mod ink_canvas;
 mod ink_canvas_automation_peer;
@@ -26,11 +28,12 @@ mod ink_toolbar_automation_peer;
 
 pub use ink_point::{InkError, InkPoint};
 pub use ink_platform_services::*;
+pub use ink_clipboard::InkClipboard;
 pub use ink_drawing_attributes::*;
 pub use ink_stroke::InkStroke;
 pub use ink_stroke_builder::InkStrokeBuilder;
 pub use ink_stroke_container::InkStrokeContainer;
-pub use persistence::InkPersistenceLimits;
+pub use persistence::{InkPersistenceLimits, INK_MIME_TYPE};
 pub use ink_input::*;
 pub use ink_presenter::*;
 pub use ink_presenter_stencil::*;
@@ -48,3 +51,9 @@ mod inking_tests;
 
 #[cfg(test)]
 mod ink_canvas_tests;
+
+#[cfg(test)]
+mod ink_parity_tests;
+
+#[cfg(test)]
+mod ink_stencil_tests;

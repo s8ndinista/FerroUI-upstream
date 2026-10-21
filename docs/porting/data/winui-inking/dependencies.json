@@ -68,9 +68,10 @@
       "status": "partial",
       "rust_files": [
         "src/Windows/FerroUI.WinUI/inking.rs",
-        "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+        "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+        "src/FerroUI.Controls/inking/ink_clipboard.rs"
       ],
-      "notes": "WindowsInkServices calls native CopySelectedToClipboard/CanPasteFromClipboard/PasteFromClipboard, preserving the selection contract using temporary native strokes. Cross-application Windows clipboard fixtures are still required; non-Windows payload copying remains distinct."
+      "notes": "WindowsInkServices calls native CopySelectedToClipboard/CanPasteFromClipboard/PasteFromClipboard with temporary selected native strokes. An explicitly opt-in Windows clipboard fixture is present but not executed. Separately, InkClipboard uses existing FerroUI IClipboard application-format transport for portable selected snapshots and fresh-ID paste, with cancellation-safe transfer disposal."
     },
     {
       "id": "ruler-and-protractor",
@@ -80,9 +81,10 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_presenter_stencil.rs",
         "src/FerroUI.Controls/inking/ink_canvas.rs",
-        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
+        "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
+        "src/FerroUI.Controls/inking/ink_stencil_input.rs"
       ],
-      "notes": "Stable portable stencil services expose visibility, transforms, size and basic annotation state. Canvas draws guides and constrains pen points. Full OS stencil touch manipulation, annotations and native appearance are not reproduced."
+      "notes": "Stable portable services expose the full audited ruler/protractor properties; canvas draws ticks, compass, measured arc text/rays and center markers. Touch/mouse translation, two-contact rotation, protractor resize and capture cancellation use FerroUI input. Exact native pixel/nib masking and appearance remain unverified; geometry uses bounded independent algorithms."
     },
     {
       "id": "high-contrast-services",
