@@ -92,6 +92,7 @@ RUST_PATH_CRATES = [
     "FerroUI.Themes.Fluent",
     "FerroUI.Themes.WinUI",
     "FerroUI.OpenGL",
+    "FerroUI.View",
 ]
 UPSTREAM_PROJECTS = {
     "FerroUI.Base": "Avalonia.Base",

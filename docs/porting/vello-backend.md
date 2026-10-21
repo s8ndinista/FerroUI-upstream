@@ -1172,7 +1172,7 @@ The other way is the second configuration of `browser-platform.md`: `wasm32-unkn
 
 ## 13. Open work, in one list (2026-10-10)
 
-The owner will supply patches for this backend; no optimization or tuning is in progress (the backend is kept building and its tests green). This section gathers every open item of the sections above in one place, so that a patch can be checked against it. Each row names where the evidence is. Nothing here is new; where a section and this list disagree, the section is the record.
+Since 2026-10-19 the speed of the backend against Skia is worked on, on every desktop platform and in all three modes (section 14). This section gathers every open item of the sections above in one place, so that a patch can be checked against it. Each row names where the evidence is. Nothing here is new; where a section and this list disagree, the section is the record.
 
 ### 13.1 Wrong output (correctness)
 
@@ -1202,7 +1202,7 @@ The owner will supply patches for this backend; no optimization or tuning is in 
 | T8 | Variation coordinates have no member in the contracts: shaping and advances use the default instance | section 8, "Text" |
 | T9 | The font stack was run on macOS only (and with registered collections in the browser) | section 8, "Text"; 12.1 |
 
-### 13.3 Speed and memory (not being worked on)
+### 13.3 Speed and memory (as of 2026-10-10; section 14 is the current record)
 
 | # | What | Mode | Where |
 |---|---|---|---|
@@ -1241,3 +1241,276 @@ The owner will supply patches for this backend; no optimization or tuning is in 
 | V3 | That a frame scheduled on the backend's own command queue is always in order with the present of the platform | 11.2 |
 | V4 | Browsers other than Chrome; a real loss of a WebGL context; a scaling other than 1 in the browser; the composed site of two modules with both backends | 12.4, 12.7 items 10, 11 |
 | V5 | Dependencies that describe themselves as early: `linesweeper` for combined geometries (a panic in it is caught and gives the empty geometry), the glyph atlas of the hybrid renderer for bitmap fonts | section 9 item 6, 4.1 |
+
+## 14. Speed against Skia (from 2026-10-19)
+
+The goal: each of the three modes as fast as the Skia backend or faster, on macOS, Windows and Linux. This section is the record of what was measured and changed; each round of changes is a pull request with its numbers. The summary of the whole work, the cost model, the experiments that were not kept and the open designs are in `vello-performance.md`.
+
+### 14.1 How it is measured
+
+(The Skia numbers of 14.2 to 14.4 were measured under load; 14.5 has the comparison of every renderer in one session.)
+
+The frame benchmarks of the catalog (section 11.1) on the Metal surface that is not on screen, 2560 by 1600 pixels (scaling 2), on an Apple M3 Pro, in an optimised build. Every frame waits until the device has drawn it, so a time holds the work of the GPU, for Skia (Graphite) as for Vello. The test binary is built once and run once a renderer and a benchmark:
+
+```sh
+cargo test -p control-catalog --release --lib --no-run
+FERROUI_TEST_RENDERER=vello-hybrid FERROUI_BENCH_SURFACE=metal FERROUI_BENCH_SCALING=2 \
+  target/release/deps/control_catalog-<hash> frame_benchmark_buttons_page --ignored --nocapture --test-threads=1
+```
+
+(`cargo test` itself builds the two sample crates again on every run, four minutes each, through their build scripts; running the binary does not.) `FERROUI_VELLO_PERF=1000` adds the phases of a frame (section 11.1).
+
+### 14.2 Where the time went (2026-10-19)
+
+Median milliseconds a frame; the tour is the time of all its frames.
+
+| Scenario | Skia | hybrid | GPU | CPU |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.26 | 1.05 | 2.02 | 4.26 |
+| buttons page, scrolled 20 pixels a frame | 2.28 | 4.15 | 3.30 | 8.02 |
+| text block page, drawn again | 0.85 | 2.38 | 2.86 | 7.21 |
+| effects page, every box drawn again | 7.05 | 8.10 | 46.06 | 39.40 |
+| effects page, one box drawn again | 2.24 | 3.16 | 17.13 | 13.09 |
+| catalog tour, first round | 1028 | 1522 | 1659 | 3345 |
+| catalog tour, second round | 472 | 1437 | 1649 | 3558 |
+
+The phases (`FERROUI_VELLO_PERF`) and `/usr/bin/sample` of the tour:
+
+- **Hybrid.** The text page: recording the scene 1.13 ms, of which glyph runs 0.84 (the strips of every outline made on the processor for every frame); the render call 0.16; waiting for the device 1.0. In the tour, recording is mostly the strips of paths (`StripGenerator::generate_with_clip`) and of clips (`ClipState::push_clip_path`): rectangles and the rectangle clips of the compositor went through the path code of the renderer, which has a way of its own for them.
+- **CPU, in a window.** The text page: the render of the whole frame 1.85 ms, the upload of the whole frame 1.54 (16 MB, into a texture made for the frame), the device 1.0. A frame that changes one button costs the same as one that changes all.
+- **CPU, every scene.** A render context of the size of the target (the storage of its strips and tiles) and the resources of the renderer (the outlines of glyphs, the hinting instances of fonts) were made for every scene.
+
+### 14.3 Round 1 (2026-10-20)
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **Rectangles and rectangle clips take the way of the renderers for them** (`IVelloSceneSink::fill_rect`, `push_clip_rect`): the hybrid renderer records a rectangle without strips when it lies in a rectangle clip, the CPU renderer fills it without making strips. A rectangle without anti-aliasing, the clips of the compositor among them, is the one with its sides on the nearest edges between pixels, which the anti-aliased way paints exactly | `scene/vello_cpu_scene_sink.rs` (`axis_aligned_rect`), `scene/vello_hybrid_scene_sink.rs`, `drawing_context_impl.rs` (`draw_rectangle`, `push_clip`, `draw_brush_in_device_space`) |
+| 2 | **Text of the hybrid mode from the glyph atlas of its renderer**: a glyph is rasterized once, at a quarter of a pixel across and on a whole pixel down, and drawn as an image, as Skia draws text. Aliased text stays outlines. The comparison harness gives the hybrid mode bounds of its own against the CPU mode for six text scenes (0.13 to 1.67 %; measured 0.055 to 1.080 %), and against Skia every text scene is as near as in the CPU mode or nearer (`text_latin_sizes`: 3.92 % against 4.24 %). A text scene drawn twice differs in one pixel by one digit (the atlas holds the glyphs of the first draw): the hybrid mode has the allowance of the GPU mode for that | `scene/vello_hybrid_scene_sink.rs`; the harness: `modes.rs` (`BOUNDS`), `lib.rs` |
+| 3 | **The CPU mode keeps its render contexts and the resources of its renderer** from scene to scene on a thread (`RendererPool`), by size, four at most | `scene/vello_cpu_scene_sink.rs` |
+| 4 | **A kept target that is drawn again in part is rendered there only** in the CPU mode: when the drawing context says which rectangles it clears (`retain_target`) and nothing but clips was recorded, the scene goes on in a render context of the rectangle around them, placed on the target (`RasterizerSettings::offset`). If the clips that bound it end and drawing goes on, the rest is recorded in a context of the whole target and rendered over it | `scene/vello_cpu_scene_sink.rs` (tests in the same file) |
+| 5 | **The CPU frame of a window is uploaded where it changed**: the window keeps a texture with the pixels of the frame, the sink says which rectangle its render changed (`rendered_rect`), and only that is written into the texture before the copy into the drawable | `gpu/metal.rs` (`WindowFrame::Memory`), `surface_render_target.rs` (`take_changed`), `gpu/vello_wgpu_device.rs` |
+
+After the round, the same benchmarks:
+
+| Scenario | Skia | hybrid | GPU | CPU |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.26 | **0.91** | 1.95 | **0.55** |
+| buttons page, scrolled 20 pixels a frame | 2.28 | **2.22** | 3.25 | 6.17 |
+| text block page, drawn again | 0.85 | 1.35 | 2.81 | 5.77 |
+| effects page, every box drawn again | 7.05 | 7.51 | 42.14 | 37.01 |
+| effects page, one box drawn again | 2.24 | 3.16 | 14.82 | 9.47 |
+| catalog tour, first round | 1028 | **900** | 1500 | 2469 |
+| catalog tour, second round | 472 | 887 | 1606 | 2442 |
+
+Bold: as fast as Skia or faster. The pixels: the comparison harness (32 tests), the tests of the crate (517, 3 new) and the render tests (376 pass, the one failure of section 8, the aliased circle) give what they gave before, but for the text of the hybrid mode (item 2).
+
+### 14.4 Round 2 (2026-10-20): software framebuffers, the thread pool, shadow pictures
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **The framebuffer of a window keeps its frame** (premultiplied RGBA, the format of the renderers) and says that it retains it and can be drawn into directly: the compositor draws what changed into it, without a layer of its own, and the CPU mode renders only that (round 1, item 4). When the frame is presented it is converted into the framebuffer: where it changed when the platform keeps the framebuffer, all of it otherwise, row by row (premultiplied BGRA, the format of the platforms, is the swap of two bytes in a word). Before, the compositor drew into a layer, the layer was drawn whole into a scene of the framebuffer, and that scene was rendered and converted whole every frame. A new frame of a framebuffer the platform keeps starts with what the framebuffer holds | `framebuffer_render_target.rs`, `helpers/pixel_format_helper.rs` (`from_premul_rgba_rect`), `surface_render_target.rs` (`write_pixels`) |
+| 2 | **The thread pool of the CPU renderer** renders a scene of 512 by 512 pixels or more (the cores but one, at most seven workers), on every target but the web. Its render contexts are kept with the others (round 1, item 3), by size and number of workers; a context of the rectangles a kept target clears renders on the thread that draws. The renderer has no filter layers with its thread pool: such a scene says so, and the drawing context draws an effect into a scene of its own on the thread that draws, as it does for the GPU mode | `scene/vello_cpu_scene_sink.rs` (`render_threads`), `drawing_context_impl/effects.rs`, the manifest of the crate |
+| 3 | **The picture of a box shadow without a closed form is kept** on the thread that draws: the same shape, blur, color and size at another place on whole pixels or in the next frame is the same picture (32 MB of pictures at most, those used least recently go). Section 13.3, P7 | `drawing_context_impl/box_shadows.rs` (`ShadowPictures`) |
+
+The software framebuffer, as on Linux and Windows without a GPU, measured with the raster surface of the benchmarks (`FERROUI_BENCH_SURFACE` unset, 2560 by 1600), against Skia raster:
+
+| Scenario | Skia raster | CPU, before round 2 | CPU, after |
+|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.56 | 4.11 | **0.57** |
+| buttons page, scrolled 20 pixels a frame | 3.38 | 8.03 | **2.51** |
+| text block page, drawn again | 2.49 | 7.52 | **2.01** |
+| effects page, every box drawn again | 77.16 | 38.52 | **20.44** |
+| effects page, one box drawn again | 6.18 | 12.57 | 6.34 |
+| catalog tour, first round | 1677 | 3136 | **1390** |
+| catalog tour, second round | 1745 | 3146 | **1403** |
+
+The Metal surface after round 2:
+
+| Scenario | Skia | hybrid | GPU | CPU |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.26 | **0.84** | 2.05 | **0.62** |
+| buttons page, scrolled 20 pixels a frame | 2.28 | 2.29 | 3.34 | 4.84 |
+| text block page, drawn again | 0.85 | 1.39 | 2.90 | 4.45 |
+| effects page, every box drawn again | 7.05 | 7.80 | 22.38 | 22.62 |
+| effects page, one box drawn again | 2.24 | 3.42 | 7.19 | 6.88 |
+| catalog tour, first round | 1028 | **891** | 1410 | 2179 |
+| catalog tour, second round | 472 | 945 | 1402 | 2191 |
+
+What a frame of the hybrid mode is now: on the text page about 0.85 ms on the processor (recording 0.64, of which glyph runs 0.36; the render call 0.19) and about 1 ms of waiting for the device, of which about 0.25 ms is the copy of the frame of the window into the drawable (measured by leaving it out) and about 0.3 ms the hand-over between the queues; in the tour 911 of 1511 samples of the frame are that wait. The Skia backend copies its layer into the drawable as well.
+
+### 14.5 Correction: one session for every renderer (2026-10-20)
+
+The Skia column of 14.2, 14.3 and 14.4 was measured in the first session, where `cargo test` built the two sample crates again before every run: the machine was loaded or warm, and Skia came out slower than it is (scrolled 2.28 ms where it is 1.15, the first round of the tour 1028 ms where it is 557). The Vello columns of those tables were measured in later sessions without that. The comparisons in them that say Vello is as fast as Skia or faster hold for the pointer across the buttons, the effects pages and the software framebuffer, and not for the scrolled page and the tour on the Metal surface.
+
+Every renderer measured again from the same build in one session (Skia before the others and after them; the two Skia runs agree within 0.1 ms), after round 2:
+
+| Scenario (Metal surface) | Skia | hybrid | GPU | CPU |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.08 | **0.72** | 1.17 | **0.62** |
+| buttons page, scrolled 20 pixels a frame | 1.15 | 2.31 | 2.45 | 4.90 |
+| text block page, drawn again | 0.70 | 1.42 | 2.01 | 4.37 |
+| effects page, every box drawn again | 9.68 | **7.99** | 11.59 | 22.72 |
+| effects page, one box drawn again | 3.88 | **3.37** | 4.85 | 6.84 |
+| catalog tour, first round | 557 | 871 | 1119 | 2179 |
+| catalog tour, second round | 466 | 905 | 1133 | 2269 |
+
+(The GPU column already holds the changes of round 3, the next pull request: filter scenes on the device and bounded scenes.)
+
+| Scenario (raster surface) | Skia raster | CPU |
+|---|---|---|
+| buttons page, the pointer moving across the buttons | 1.48 | **0.56** |
+| buttons page, scrolled 20 pixels a frame | 3.27 | **2.39** |
+| text block page, drawn again | 2.42 | **1.90** |
+| effects page, every box drawn again | 77.38 | **20.12** |
+| effects page, one box drawn again | 6.18 | 6.26 |
+| catalog tour, first round | 1633 | **1367** |
+| catalog tour, second round | 1716 | **1357** |
+
+From now on a comparison is made this way: one build, every renderer in one session, Skia first and last.
+
+### 14.6 Round 3 (2026-10-20): the GPU mode
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **The filter scenes of the GPU mode are drawn on the device by the hybrid renderer** (in a build with both GPU modes): an effect, a blurred box shadow and the content of an effect under a clip were scenes of the CPU renderer, uploaded, because the compute renderer has no filters; now they are scenes of the sparse-strips renderer on the same device, composed as textures | `drawing_context_impl/effects.rs` (`filter_scene_device`) |
+| 2 | **A kept target of the GPU mode is rendered where it is cleared**: the sink composes over its target (`retained_targets`), and before anything but clips was recorded a scene of the rectangles a kept target clears becomes a scene of the rectangle around them, rendered into a texture of its size, which starts with what the target holds there unless the cleared rectangles cover all of it, and copied into its place. Clips that end while drawing goes on put the bounded scene into a scene of the whole target at its place. A whole frame that is not composed over its target starts with a copy of it made on the device. Before, every frame of a window drew all of it, starting with the frame before as a paint | `scene/vello_gpu_scene_sink.rs` (`retain_target`, `render_over_target`), `gpu/device_surface_render_target.rs`; tests: `gpu/layer_tests.rs` |
+| 3 | The frame benchmarks print the time of a frame **without waiting for the device**, which a window on screen does not do: the Metal surface of the benchmarks counts its waits | `gpu/metal_offscreen.rs`, `samples/ControlCatalog/tests/frame_benchmark.rs` |
+
+One session, the build before the round (main) and after it, then Skia; median milliseconds a frame (after the slash: without waiting for the device):
+
+| Scenario | Skia | GPU before | GPU after | hybrid |
+|---|---|---|---|---|
+| buttons page, the pointer moving across the buttons | 0.95 / 0.19 | 1.97 | 1.04 / 0.65 | **0.66** / 0.34 |
+| buttons page, scrolled 20 pixels a frame | 1.25 / 0.46 | 3.22 | 2.35 / 0.81 | 2.20 / 1.11 |
+| text block page, drawn again | 0.67 / 0.19 | 2.82 | 1.91 / 0.79 | 1.34 / 0.48 |
+| effects page, every box drawn again | 9.75 / 2.76 | 22.26 | 11.12 / 9.68 | **7.65** / 6.52 |
+| effects page, one box drawn again | 3.86 / 1.14 | 6.91 | 4.63 / 4.07 | **3.13** / 2.56 |
+| catalog tour, first round | 514 | 1369 | 1053 | 872 |
+| catalog tour, second round | 426 | 1375 | 1089 | 864 |
+
+What separates the Metal modes from Skia where they are slower: on the processor, the sparse-strips renderer makes the strips of every path and glyph of a frame (Skia records commands and its device does the rest: 0.2 to 0.5 ms a frame on the processor against 0.3 to 1.1 for the hybrid mode); on the device, a whole page takes the hybrid renderer about 0.43 ms (measured by rendering every scene twice), and each frame of the benchmarks waits about 0.6 ms more for the copy of the frame of the window into the drawable and the hand-over between the two command queues (11.2). Both are the renderers' or the design of 11.2; what the backend does around them is listed in 14.2 to 14.6.
+
+### 14.7 Linux and Windows, as found (2026-10-19)
+
+- The backend draws a window of these platforms in the CPU mode only: `wgpu` is built with Metal alone, and `create_gpu` takes the Metal device of macOS only. A platform that hands out graphics (X11 with GLX, its default; Wayland with EGL, its default; Windows with ANGLE on Direct3D 11, its default) makes the backend panic; it draws when the platform renders in software.
+- In software every frame of these platforms was whole: the framebuffers are not kept (X11 `XPutImage` and `XShm`, Wayland `wl_shm` with a new buffer every frame, Windows `SetDIBitsToDevice`), so the compositor drew into a layer of its own and the whole layer into the framebuffer; the framebuffers are BGRA, so the CPU mode rendered into pixels of its own and converted all of them. Round 2 (item 1) keeps the frame in the render target instead: what changed is rendered, and only the conversion into the framebuffer is whole.
+- What will close it: a `wgpu` device of the backend's own on Vulkan (Linux) and Direct3D 12 (Windows) with a surface made from the handle of the window (`XID`, `HWND`), whatever graphics the platform chose; and a framebuffer target that keeps its frame in the format the renderer draws, converting only what changed.
+
+
+### 14.8 Round 4 (2026-10-20): the windows of Linux and Windows
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **A graphics context the backend cannot draw with no longer makes it panic**: `create_gpu` gives `None`, the reason is logged, and the windows of the platform are drawn into their framebuffers in software | `gpu/mod.rs`, `platform_render_interface.rs` |
+| 2 | **The GPU modes draw the windows of Linux and Windows on a device of the backend's own**, whatever graphics the platform chose for its compositor: `wgpu` on Vulkan, or on OpenGL through EGL where Vulkan has no adapter that is hardware (Linux), or on Direct3D 12 (Windows), with a surface of `wgpu` made from the handle of the window (`XID`, `HWND`) and a swap chain of its own. The frame of the window is kept as on macOS (`WindowFrames`, shared with `gpu/metal.rs` now). An adapter that is software (lavapipe, WARP) is not used unless `FERROUI_VELLO_ALLOW_SOFTWARE_ADAPTER=1`: the CPU mode is faster there. On X11 the surface is made with a connection to the X server of the backend's own; the X11 and Win32 platforms hand out the handle of the window as a native handle surface (`try_get_surface_kind`). An adapter without compute shaders is asked for the limits of WebGL2 | `gpu/window_surface.rs`, `gpu/window_frame.rs`, `gpu/vello_wgpu_device.rs` (`device_descriptor`); `src/FerroUI.X11/x11_window.rs` (`RenderWindowHandle`), `src/Windows/FerroUI.Win32/window_impl.rs` |
+| 3 | **The swap chain of a window that is closed is dropped when the next frame of a window starts**: the compositor disposes a render target with the graphics context of the platform current, and with a context of GLX current on the thread EGL cannot make its own current (Mesa refuses with `BadAccess`) | `gpu/window_surface.rs` (`retired`) |
+| 4 | **X11: the render window is sized to the top-level by the framebuffer surface and the native handle surface**, as the surfaces of GLX and EGL size it before they draw. With GLX the platform resizes the render window only when a frame of GLX is drawn: a backend that drew otherwise beside a GLX platform drew into a render window of the size the window had first (a black band at the bottom of a window that grew) | `src/FerroUI.X11/x11_framebuffer_surface.rs`, `x11_window.rs` |
+| 5 | Composition targets print the times of their frames when `FERROUI_FRAME_TIMES=1` (count, median, mean, 95th percentile, longest), for every backend: what measures a window on screen | `src/FerroUI.Base/rendering/composition/server/server_composition_target.rs` |
+| 6 | **The windows of a platform whose graphics are OpenGL that the GPU modes do not draw are drawn in the CPU mode and presented through the context of the platform** (`VelloGlWindows`): the frame is kept by the render target, what changed is uploaded into a texture of the context (`glTexSubImage2D`, added to the GL interface with `glPixelStorei`) and the texture is copied into the framebuffer of the surface (`glBlitFramebuffer`), found through the render target factory of the context first (the surfaces of the composition modes of Windows), as the Skia backend finds it. On Windows a framebuffer drawn with GDI does not show in a window of WinUI composition or DirectComposition, the default: with no Direct3D 12 device that is hardware the window was black | `gl_window.rs`, `vello_backend_context.rs`, `src/FerroUI.OpenGL/gl_interface.rs` |
+| 7 | TreeDataGrid: the presenter counts its items again while it realizes them (the catalog tour panicked in a layout pass of a page that was being taken down, with every renderer; DEVIATIONS.md) | `src/TreeDataGrid/.../tree_data_grid_presenter_base.rs` |
+
+Measured in the Parallels virtual machine Ubuntu 24.04 ARM64 on the M3 Pro (OpenGL accelerated by the host through virgl; Vulkan only lavapipe, so the backend takes OpenGL), on its X11 desktop at a scaling of 2 (2200 by 1600 pixels), the catalog showing every page for 150 ms (`FERROUI_SMOKE_PAGES=150`, `FERROUI_FRAME_TIMES=1`), one session, Skia first and last; milliseconds a frame:
+
+| Renderer | median | mean | p95 |
+|---|---|---|---|
+| Skia, GLX (two runs) | 2.55, 2.19 | 6.10, 3.82 | 9.98, 12.03 |
+| Vello, its default modes (the hybrid mode on OpenGL) | **2.54** | 5.11 | **6.60** |
+| Skia, software (`FERROUI_SMOKE_RENDERING=software`) | 14.49 | 15.64 | 23.30 |
+| Vello, the CPU mode in software | **13.82** | 15.29 | 26.28 |
+
+The hybrid mode on lavapipe (allowed explicitly) draws the catalog correctly at 92 ms a frame, the GPU mode at 73: a device that is software is no place for them. In software both backends spend about half of a frame in `XPutImage` of the whole frame (4.8 ms measured): the framebuffers of X11 are presented whole.
+
+The Parallels virtual machine Windows 11 ARM64 on the same Mac (Direct3D 11 accelerated by the host, which ANGLE uses; Direct3D 12 only WARP, so the backend draws in the CPU mode, presented through ANGLE (item 6); the window as the system composed it has the content of the catalog), the same tour, one session:
+
+| Renderer | median | mean | p95 |
+|---|---|---|---|
+| Skia, ANGLE with WinUI composition (two runs) | 6.53, 6.20 | 7.47, 7.42 | 13.30, 14.71 |
+| Vello, its default modes (the CPU mode through ANGLE; two runs) | 8.09, 7.89 | 8.50, 8.38 | 14.36, 12.82 |
+| Skia, software | 7.50 | 7.96 | 12.29 |
+| Vello, the CPU mode in software | **5.82** | 6.91 | **11.78** |
+
+Through ANGLE the CPU mode is 1.6 ms a frame slower than Skia, which draws on the device: the upload of what changed (1.2 ms a frame in the tour, about 10 MB), the recording and the render on the processor (2.1 ms), the present (2.2 ms). What closes it is drawing on the device of the context of the platform: `wgpu` over an existing context of OpenGL (`Adapter::new_external`), the hybrid mode on ANGLE, GLX, EGL and CGL alike, which is the next round. Not yet run: Wayland (whose windows hand out no handle: the GL presenter of item 6 draws its EGL surfaces), and a machine with a Vulkan or Direct3D 12 device that is hardware (whether a swap chain of `wgpu` on the window of a composition mode of Windows shows is not verified).
+
+Seen once in four runs of the tests of the crate (macOS): `the_layer_of_a_scene_on_a_device_is_a_texture_and_keeps_what_was_drawn_into_it` found its layer corrupted (the device reported lost), and passed alone and in the next three runs: of the kind of 13.1, C9.
+
+### 14.9 Round 5 (2026-10-20): the hybrid mode on the context of OpenGL of the platform
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **Where the machine has no Vulkan or Direct3D 12 device that is hardware, the device of the GPU modes is made over the context of OpenGL of the platform** (`VelloGlGpu`): `wgpu` on OpenGL with an adapter of the existing context (`gles::Adapter::new_external`, through the loader of the GL interface), which makes no context of its own and uses the one that is current: the compositor renders and disposes with the context of the platform current, and a session of a surface makes it current with the surface. The hybrid mode draws the frame of a window into a texture of that context (`WindowFrames`), which is copied into the framebuffer of the session (`glBlitFramebuffer`) before the session presents; the surfaces are found as the Skia backend finds them (the render target factory of the context first). The device is not the one other threads draw into memory with. The order of `create_gpu` on Linux and Windows: a device that is hardware on Vulkan or Direct3D 12; the context of OpenGL of the platform; on Linux without one, OpenGL through EGL on a device of the backend's own | `gpu/gl_context_gpu.rs`, `gpu/mod.rs`, `gl_window.rs` (`gl_render_target`, `blit_texture`), `gpu/window_surface.rs` |
+| 2 | `wgpu` with OpenGL on Windows (its feature `gles`) | the manifest of the crate |
+
+The same machines and tour as 14.8, one session each, milliseconds a frame:
+
+| | Skia (two runs) | Vello (two runs) |
+|---|---|---|
+| Windows 11 ARM64, ANGLE on Direct3D 11: median | 7.01, 7.46 | **4.73, 4.33** (the hybrid mode on the context of ANGLE) |
+| mean | 8.90, 8.84 | **7.75, 6.30** |
+| p95 | 15.55, 15.88 | **13.18, 11.45** |
+| Ubuntu 24.04 ARM64, GLX on virgl: median | 1.71, 2.42 | 2.74, 2.61 (the hybrid mode on the context of GLX) |
+| mean | 3.56, 4.12 | 5.11, 4.72 |
+| p95 | 5.70, 7.36 | 7.65, 6.85 |
+
+The window as the system composed it (Windows) and as X shows it (Linux) has the content of the catalog, upright. The first frame of the hybrid mode on a context of OpenGL takes up to 1.2 s (the shaders of the renderer are compiled by the driver; Skia's first frame there 0.26 s).
+
+## 15. Experimental: stock Vello used the way it is fast (from 2026-10-20)
+
+The renderer crates stay those of crates.io; what changes is how the backend and the compositor drive them. The work is on the branch `vello-renderer-experimental` (a draft pull request).
+
+### 15.1 What the measures say
+
+On a full redraw of the catalog at 2560 by 1600 (Metal, M3 Pro), the hybrid mode spent about 2.5 times Skia's processor time and about 1.5 times its GPU time. The processor time is the coverage of every path, which the sparse-strips renderers compute on the processor while a scene is recorded: replaying the draw list of every visual into a new scene each frame (as the drawing context of the contract does, and as Skia is driven) pays it again for content that only moved. Vello itself has no way to keep it: `vello_gpu` and `vello_cpu` removed their recordings in 0.0.8, and only classic `vello` appends one scene to another (`Scene::append`), which is how Xilem keeps the drawing of its widgets and Graphite its documents.
+
+### 15.2 Changes
+
+| # | Change | Where |
+|---|---|---|
+| 1 | **A depth buffer for the hybrid renderer**: `vello_gpu` draws what is opaque front to back and leaves out the pixels it covers | `scene/vello_hybrid_scene_sink.rs` |
+| 2 | **The Metal queues ordered by a shared event**: the device's queue signals an `MTLSharedEvent` behind the frame and a command buffer of the platform's queue waits for it ahead of the presentation; the processor no longer waits until the frame is scheduled (`waitUntilScheduled` remains the fallback) | `gpu/metal.rs` |
+| 3 | **Fragments** (`IDrawingContextImplWithFragments`, an optional extension of the drawing context reached like the effects one): the compositor keeps what the backend made of the draw list of a visual and has it drawn again while the draw list and its resources do not change. The GPU mode keeps a scene of `vello` per visual and appends it whole; it draws a fragment again only at the transform it was made at moved by whole pixels, with the opacity and options it was made with, and keeps none that paints with an image or blends with what lies outside it. Other backends and modes keep none | `FerroUI.Base` (`platform/i_drawing_context_impl_with_fragments.rs`, `server_composition_draw_list_visual.rs`), `drawing_context_impl/fragments.rs`, `scene/vello_gpu_scene_sink.rs`, `gpu/fragment_tests.rs` |
+
+### 15.3 Measures
+
+One session, one build, the frame benchmarks of the catalog on the Metal surface at scaling 2; median milliseconds a frame, with the device waited for / without:
+
+| Scenario | Skia | hybrid, before 1-2 | hybrid, after 1-2 |
+|---|---|---|---|
+| pointer moving across buttons | 0.78 / 0.18 | 0.77 / 0.42 | 0.73 / 0.28 |
+| wheel scrolling 20 px a frame | 1.20 / 0.45 | 2.33 / 1.22 | 1.73 / 1.04 |
+| text page drawn again | 0.70 / 0.21 | 1.39 / 0.52 | 1.22 / 0.44 |
+
+(Skia's two runs of the second session: 1.14 and 0.90, 1.59 and 0.94, 0.69 and 0.70; the first two lines of Skia vary between runs by up to a factor of 1.7.)
+
+| Scenario | Skia | GPU mode, before 3 | GPU mode, after 3 | hybrid |
+|---|---|---|---|---|
+| pointer moving across buttons | 0.64 / 0.16 | 1.11 / 0.36 | 1.12 / 0.34 | 0.74 / 0.30 |
+| wheel scrolling 20 px a frame | 0.92 / 0.34 | 2.51 / 0.71 | 2.26 / 0.48 | 1.80 / 1.10 |
+| text page drawn again | 0.69 / 0.20 | 2.00 / 0.57 | 1.99 / 0.56 | 1.26 / 0.45 |
+| catalog tour 2 (total ms) | 483 | 1150 | 1150 | 853 |
+
+Fragments take a third of the processor time of the GPU mode off a scrolled frame and leave the pixels as they were (`gpu/fragment_tests.rs`: equal at the place a fragment was made, within one level moved by whole pixels). The GPU mode stays bound by its GPU: a Metal trace of the scrolled frames has about 0.85 ms of compute passes of `vello` and 0.3 ms of copies (the region of a kept frame, and the frame into the drawable with the alpha premultiplied) a frame, where Skia's whole frame takes about 0.6 ms of GPU. The hybrid mode stays the faster one, and the default.
+
+### 15.4 Not built: retained texture layers in the compositor
+
+(`vello-performance.md`, section 9, has this design with the others that are open.)
+
+The Vello work stops here (2026-10-20): Skia stays the default backend, and its speed is enough for now. This is the design of the next step for the hybrid mode, the one that would close the gap on scrolling and on content that moves.
+
+**What it is for.** In a scrolled frame nothing changes but the offset of the content: the hybrid mode computes the coverage of every path of it again, while Skia only records commands for the GPU. A retained layer draws such a subtree once into a texture of the device and, in the frames after, composes the texture at its new place: for `vello_gpu` one rectangle painted with an image, and no strips. Only what changed inside the subtree, and what scrolls into view, is drawn again. It is the way Graphite keeps the tiles of its documents, applied to visuals.
+
+**What exists.** The bitmap cache of a visual (`ServerCompositionVisualCache`, the cache mode of the contract) already does most of it:
+
+- it renders the subtree into an offscreen layer of the render interface (`create_offscreen_render_target`);
+- it is the dirty rectangle collector of its subtree in the update pass (`push_cache_if_needed`), so a change inside the subtree re-renders only that part of the layer, while a change of the transform of the visual itself dirties only the target;
+- it composes the layer with `draw_bitmap`, snapped to the pixels of the device.
+
+**What has to be added.**
+
+1. **A layer that is not asked for.** A visual gets a retained layer from the compositor itself, not from its cache mode, when its own transform changed in two frames in a row while nothing else in its subtree did (the content of a scroll viewer, a panel that slides). It loses it when its subtree changes in most frames, after some frames without a move, or when the budget of the layers (memory of the device) is spent. The visual's `cache()` returns the explicit cache or this one, so the update and render passes take both the same way.
+2. **The part that is visible, and a margin.** The bitmap cache renders the whole bounds of the subtree, clamped to the largest texture (which loses resolution): the content of a long list would be a texture of tens of megabytes. A retained layer holds the bounds of the subtree within the clip it is drawn in, widened by a margin (a viewport in the direction of the move), in the pixels of the device. When the visible part leaves the layer, the layer moves: what it still holds is copied to its new place on the device (`copy_texture_region`), and the strip that came into view is drawn as a dirty rectangle of the cache.
+3. **The same pixels.** A layer is drawn again only when the transform of the visual to the device is the one it was rendered at moved by whole pixels; another scale or a fraction of a pixel renders it again, so text, snapped rectangles and flattened curves are where they would be. Composing source-over is associative, so the pixels are those of drawing the subtree directly, but for the rounding of the layer (one level of 255). A subtree is not retained when the opacity at the visual is not 1 (the drawing context multiplies opacity into each paint: a group opacity on the layer would compose overlapping shapes differently), when something in it is composed other than source-over with what lies below it, or when an effect or an opacity mask is pushed at the visual itself.
+4. **Only where it gains.** The render interface says whether it wants retained layers: an optional feature of the context of the render interface (asked as the other optional features are), which the Vello backend gives in the hybrid and CPU modes. The Skia backend gives it only if a measure shows that it gains: it composes its own layers on the GPU already, and a texture per subtree costs memory and a copy.
+
+**How it would be measured.** The frame benchmarks of the catalog (scrolling 20 px a frame, the pointer across buttons, the tour), in one session with Skia first and last (section 14.1), and the comparison harness for the pixels: a scene drawn through a retained layer against the same scene drawn directly, at the place it was rendered at and moved by whole pixels.
+
+**After it.** The scene of a full redraw (new content, which no layer holds) built in bands on several threads: the drawing context records into a list the threads can share, each thread replays it into a scene of `vello_gpu` of its band, and the bands are the textures of the frame of the window, so that no copy is added.

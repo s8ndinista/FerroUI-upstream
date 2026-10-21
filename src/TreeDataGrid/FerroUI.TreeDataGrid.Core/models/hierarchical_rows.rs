@@ -28,7 +28,13 @@ pub struct HierarchicalRows<M: TreeModel> {
     controller: Weak<dyn IExpanderRowController<M>>,
     roots: RefCell<Option<Rc<RootRows<M>>>>,
     expander_column: Rc<dyn IExpanderColumn<M>>,
-    flattened_rows: RefCell<Vec<Rc<HierarchicalRow<M>>>>,
+    // The rows shown, depth first. The list is shared with the arguments of the changes it raises
+    // (a snapshot: a clone of the `Rc`), so that the rows of a change are not copied for it; a
+    // change while a snapshot is held copies the list first (`Rc::make_mut`).
+    flattened_rows: RefCell<Rc<Vec<RowRef>>>,
+    // The indent of each flattened row (a row keeps its indent), read by the scans of the
+    // descendants of a row without reaching the rows.
+    flattened_indents: RefCell<Vec<i32>>,
     comparison: RefCell<Option<Comparison<M>>>,
     ignore_collection_changes: Cell<bool>,
     changed: RowsChangedEvent,
@@ -46,7 +52,8 @@ impl<M: TreeModel> HierarchicalRows<M> {
             controller,
             roots: RefCell::new(None),
             expander_column,
-            flattened_rows: RefCell::new(Vec::new()),
+            flattened_rows: RefCell::new(Rc::new(Vec::new())),
+            flattened_indents: RefCell::new(Vec::new()),
             comparison: RefCell::new(comparison.clone()),
             ignore_collection_changes: Cell::new(false),
             changed: RowsChangedEvent::default(),
@@ -92,12 +99,23 @@ impl<M: TreeModel> HierarchicalRows<M> {
 
     /// The row at `index`.
     pub fn get_typed(&self, index: usize) -> Rc<HierarchicalRow<M>> {
-        self.flattened_rows.borrow()[index].clone()
+        Self::typed(&self.flattened_rows.borrow()[index]).this()
     }
 
     /// The rows.
     pub fn to_vec_typed(&self) -> Vec<Rc<HierarchicalRow<M>>> {
-        self.flattened_rows.borrow().clone()
+        self.flattened_rows.borrow().iter().map(|row| Self::typed(row).this()).collect()
+    }
+
+    /// A flattened row as the hierarchical row it is.
+    #[inline]
+    fn typed(row: &RowRef) -> &HierarchicalRow<M> {
+        row.as_any().downcast_ref::<HierarchicalRow<M>>().expect("a hierarchical row")
+    }
+
+    /// The flattened rows, to change (copied first while a snapshot of them is held).
+    fn rows_mut(&self) -> std::cell::RefMut<'_, Vec<RowRef>> {
+        std::cell::RefMut::map(self.flattened_rows.borrow_mut(), Rc::make_mut)
     }
 
     /// The root rows, in sorted order.
@@ -113,20 +131,25 @@ impl<M: TreeModel> HierarchicalRows<M> {
 
     /// Expands the rows on the way to the model at `index` (`Expand`).
     pub fn expand(&self, index: &IndexPath) {
-        let mut rows: Option<Vec<Rc<HierarchicalRow<M>>>> = Some(self.roots().to_vec());
+        let mut rows: Option<Rc<RootRows<M>>> = Some(self.roots());
         for i in 0..index.count() {
             let Some(current) = rows.take() else {
                 break;
             };
-            let model_index = index.get(i);
-            match current.into_iter().find(|row| row.model_index() == model_index) {
+            match Self::find_row(&current, index.get(i)) {
                 Some(row) => {
                     row.set_is_expanded(true);
-                    rows = row.children();
+                    rows = row.expanded_child_rows();
                 }
                 None => break,
             }
         }
+    }
+
+    /// The row of `rows` (in their order) whose model index is `model_index`; the rows are read
+    /// through their list rather than copied.
+    fn find_row(rows: &RootRows<M>, model_index: i32) -> Option<Rc<HierarchicalRow<M>>> {
+        (0..rows.count()).map(|i| rows.get(i)).find(|row| row.model_index() == model_index)
     }
 
     /// Expands or collapses the rows below `row` (all rows: `None`) by `predicate`, with one reset
@@ -144,7 +167,8 @@ impl<M: TreeModel> HierarchicalRows<M> {
             Self::expand_collapse_recursive_core(&children, predicate);
         }
         self.ignore_collection_changes.set(false);
-        self.flattened_rows.borrow_mut().clear();
+        self.rows_mut().clear();
+        self.flattened_indents.borrow_mut().clear();
         self.initialize_rows();
         self.raise_reset();
     }
@@ -152,18 +176,17 @@ impl<M: TreeModel> HierarchicalRows<M> {
     /// Collapses the row of the model at `index` (`Collapse`).
     pub fn collapse(&self, index: &IndexPath) {
         let count = index.count();
-        let mut rows: Option<Vec<Rc<HierarchicalRow<M>>>> = Some(self.roots().to_vec());
+        let mut rows: Option<Rc<RootRows<M>>> = Some(self.roots());
         for i in 0..count {
             let Some(current) = rows.take() else {
                 break;
             };
-            let model_index = index.get(i);
-            match current.into_iter().find(|row| row.model_index() == model_index) {
+            match Self::find_row(&current, index.get(i)) {
                 Some(row) => {
                     if i == count - 1 {
                         row.set_is_expanded(false);
                     }
-                    rows = row.children();
+                    rows = row.expanded_child_rows();
                 }
                 None => break,
             }
@@ -192,7 +215,8 @@ impl<M: TreeModel> HierarchicalRows<M> {
         self.ignore_collection_changes.set(true);
         self.roots().set_items(items);
         self.ignore_collection_changes.set(false);
-        self.flattened_rows.borrow_mut().clear();
+        self.rows_mut().clear();
+        self.flattened_indents.borrow_mut().clear();
         self.initialize_rows();
         self.raise_reset();
     }
@@ -201,7 +225,8 @@ impl<M: TreeModel> HierarchicalRows<M> {
     pub fn sort(&self, comparison: Option<Comparison<M>>) {
         *self.comparison.borrow_mut() = comparison.clone();
         self.roots().sort(comparison.clone());
-        self.flattened_rows.borrow_mut().clear();
+        self.rows_mut().clear();
+        self.flattened_indents.borrow_mut().clear();
         self.initialize_rows();
         self.raise_reset();
         for row in self.roots().to_vec() {
@@ -221,7 +246,7 @@ impl<M: TreeModel> HierarchicalRows<M> {
         self.flattened_rows
             .borrow()
             .iter()
-            .position(|row| row.model_index_path() == *model_index)
+            .position(|row| Self::typed(row).has_model_index_path(model_index))
             .map_or(-1, |i| i as i32)
     }
 
@@ -232,27 +257,34 @@ impl<M: TreeModel> HierarchicalRows<M> {
             return Some(-1);
         }
         let rows = self.flattened_rows.borrow();
-        (from_row_index..rows.len()).find(|&i| rows[i].has_model_index_path(model_index)).map(|i| i as i32)
+        (from_row_index..rows.len()).find(|&i| Self::typed(&rows[i]).has_model_index_path(model_index)).map(|i| i as i32)
     }
 
     fn initialize_rows(&self) {
         let mut rows = Vec::new();
-        for row in self.roots().to_vec() {
-            Self::collect_rows_and_descendants(row, &mut rows);
-        }
-        self.flattened_rows.borrow_mut().splice(0..0, rows);
+        Self::collect_child_rows(&self.roots(), &mut rows);
+        self.flattened_indents.borrow_mut().splice(0..0, rows.iter().map(|row| row.indent()));
+        self.rows_mut().splice(0..0, rows.into_iter().map(|row| row as RowRef));
     }
 
     /// The rows `AddRowsAndDescendants` inserts for `row`: the row and the rows of its expanded
     /// descendants, depth first. The reference inserts them into the flattened list one by one; the
-    /// port collects them and inserts them at once (`add`), which moves the rows after them once.
+    /// port collects them and inserts them at once (`insert_rows`), which moves the rows after them
+    /// once.
     fn collect_rows_and_descendants(row: Rc<HierarchicalRow<M>>, rows: &mut Vec<Rc<HierarchicalRow<M>>>) {
-        let children = row.children();
+        let children = row.expanded_child_rows();
         rows.push(row);
         if let Some(children) = children {
-            for child in children {
-                Self::collect_rows_and_descendants(child, rows);
-            }
+            Self::collect_child_rows(&children, rows);
+        }
+    }
+
+    /// The rows of `children` and of their expanded descendants, depth first.
+    fn collect_child_rows(children: &RootRows<M>, rows: &mut Vec<Rc<HierarchicalRow<M>>>) {
+        let children = children.to_vec();
+        rows.reserve(children.len());
+        for row in children {
+            Self::collect_rows_and_descendants(row, rows);
         }
     }
 
@@ -282,21 +314,27 @@ impl<M: TreeModel> HierarchicalRows<M> {
         });
     }
 
-    fn add(&self, index: usize, items: &[Rc<HierarchicalRow<M>>]) {
-        let mut rows = Vec::new();
+    fn add(&self, index: usize, items: Vec<Rc<HierarchicalRow<M>>>) {
+        let mut rows = Vec::with_capacity(items.len());
         for row in items {
-            Self::collect_rows_and_descendants(row.clone(), &mut rows);
+            Self::collect_rows_and_descendants(row, &mut rows);
         }
+        self.insert_rows(index, rows);
+    }
+
+    /// Inserts `rows` at `index` of the flattened rows and raises the change.
+    fn insert_rows(&self, index: usize, rows: Vec<Rc<HierarchicalRow<M>>>) {
         if rows.is_empty() {
             return;
         }
-        let added: Vec<RowRef> =
-            if self.changed.has_handlers() { rows.iter().map(|r| r.clone() as RowRef).collect() } else { Vec::new() };
-        self.flattened_rows.borrow_mut().splice(index..index, rows);
+        let count = rows.len();
+        self.flattened_indents.borrow_mut().splice(index..index, rows.iter().map(|row| row.indent()));
+        self.rows_mut().splice(index..index, rows.into_iter().map(|row| row as RowRef));
         if self.changed.has_handlers() {
+            let snapshot = self.flattened_rows.borrow().clone();
             self.changed.raise(&RowsChangedArgs {
                 action: NotifyCollectionChangedAction::Add,
-                new_items: &added,
+                new_items: &snapshot[index..index + count],
                 old_items: &[],
                 new_starting_index: index as i32,
                 old_starting_index: -1,
@@ -308,8 +346,8 @@ impl<M: TreeModel> HierarchicalRows<M> {
         if count == 0 {
             return;
         }
-        let old_items: Vec<RowRef> =
-            self.flattened_rows.borrow_mut().drain(index..index + count).map(|r| r as RowRef).collect();
+        self.flattened_indents.borrow_mut().drain(index..index + count);
+        let old_items: Vec<RowRef> = self.rows_mut().drain(index..index + count).collect();
         if self.changed.has_handlers() {
             self.changed.raise(&RowsChangedArgs {
                 action: NotifyCollectionChangedAction::Remove,
@@ -325,7 +363,7 @@ impl<M: TreeModel> HierarchicalRows<M> {
         let mut i = row_index;
         while count > 0 {
             let row = self.flattened_rows.borrow()[i].clone();
-            match row.children_count() {
+            match Self::typed(&row).children_count() {
                 Some(children) if children > 0 => i = self.advance(i + 1, children as i32),
                 _ => i += 1,
             }
@@ -335,13 +373,13 @@ impl<M: TreeModel> HierarchicalRows<M> {
     }
 
     fn get_descendent_row_count(&self, row_index: i32) -> usize {
-        let rows = self.flattened_rows.borrow();
+        let indents = self.flattened_indents.borrow();
         if row_index == -1 {
-            return rows.len();
+            return indents.len();
         }
-        let depth = rows[row_index as usize].indent();
+        let depth = indents[row_index as usize];
         let mut i = row_index as usize + 1;
-        while i < rows.len() && rows[i].indent() > depth {
+        while i < indents.len() && indents[i] > depth {
             i += 1;
         }
         i - (row_index as usize + 1)
@@ -362,7 +400,7 @@ impl<M: TreeModel> HierarchicalRows<M> {
         match e.action {
             NotifyCollectionChangedAction::Add => {
                 let insert = self.advance(first, e.new_starting_index);
-                self.add(insert, &Self::typed_rows(e.new_items));
+                self.add(insert, Self::typed_rows(e.new_items));
             }
             NotifyCollectionChangedAction::Remove => {
                 let start = self.advance(first, e.old_starting_index);
@@ -373,25 +411,28 @@ impl<M: TreeModel> HierarchicalRows<M> {
                 let start = self.advance(first, e.old_starting_index);
                 let end = self.advance(start, e.old_items.len() as i32);
                 self.remove(start, end - start);
-                self.add(start, &Self::typed_rows(e.new_items));
+                self.add(start, Self::typed_rows(e.new_items));
             }
             NotifyCollectionChangedAction::Move => {
                 let from_start = self.advance(first, e.old_starting_index);
                 let from_end = self.advance(from_start, e.old_items.len() as i32);
                 self.remove(from_start, from_end - from_start);
                 let to = self.advance(first, e.new_starting_index);
-                self.add(to, &Self::typed_rows(e.new_items));
+                self.add(to, Self::typed_rows(e.new_items));
             }
             NotifyCollectionChangedAction::Reset => {
                 let children = if parent_row_index >= 0 {
-                    self.flattened_rows.borrow()[parent_row_index as usize].children()
+                    let parent = Self::typed(&self.flattened_rows.borrow()[parent_row_index as usize]).this();
+                    parent.expanded_child_rows()
                 } else {
-                    Some(self.roots().to_vec())
+                    Some(self.roots())
                 };
                 let count = self.get_descendent_row_count(parent_row_index);
                 self.remove(first, count);
                 if let Some(children) = children {
-                    self.add(first, &children);
+                    let mut rows = Vec::new();
+                    Self::collect_child_rows(&children, &mut rows);
+                    self.insert_rows(first, rows);
                 }
             }
         }
@@ -404,7 +445,7 @@ impl<M: TreeModel> IRows for HierarchicalRows<M> {
     }
 
     fn get(&self, index: usize) -> RowRef {
-        self.get_typed(index)
+        self.flattened_rows.borrow()[index].clone()
     }
 
     fn model_index_to_row_index(&self, model_index: &IndexPath) -> i32 {
@@ -414,7 +455,7 @@ impl<M: TreeModel> IRows for HierarchicalRows<M> {
     fn row_index_to_model_index(&self, row_index: i32) -> IndexPath {
         let rows = self.flattened_rows.borrow();
         if row_index >= 0 && (row_index as usize) < rows.len() {
-            rows[row_index as usize].model_index_path()
+            Self::typed(&rows[row_index as usize]).model_index_path()
         } else {
             IndexPath::UNSELECTED
         }

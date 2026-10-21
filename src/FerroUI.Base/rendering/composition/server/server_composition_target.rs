@@ -53,6 +53,14 @@ pub struct ServerCompositionTarget {
     visited_visuals: Cell<i32>,
     is_waiting_for_ready_render_target: Cell<bool>,
     is_waiting_for_render_loop_wakeup: Cell<bool>,
+    /// The times of the frames the target drew, when the environment asks
+    /// for them (`FERROUI_FRAME_TIMES=1`): a summary is printed to the
+    /// standard error when the target is disposed. Not from the reference: a
+    /// diagnostic that measures render backends in a window on screen
+    /// (docs/porting/vello-backend.md, section 14).
+    frame_times: RefCell<Option<Vec<std::time::Duration>>>,
+    /// Whether the render that is running drew a frame.
+    drew_frame: Cell<bool>,
 }
 
 impl ServerCompositionTarget {
@@ -109,6 +117,10 @@ impl ServerCompositionTarget {
                 visited_visuals: Cell::new(0),
                 is_waiting_for_ready_render_target: Cell::new(false),
                 is_waiting_for_render_loop_wakeup: Cell::new(false),
+                frame_times: RefCell::new(
+                    std::env::var("FERROUI_FRAME_TIMES").is_ok_and(|value| value == "1").then(Vec::new),
+                ),
+                drew_frame: Cell::new(false),
             }
         })
     }
@@ -224,6 +236,41 @@ impl ServerCompositionTarget {
     }
 
     pub fn render(self: &Rc<Self>) {
+        if self.frame_times.borrow().is_none() {
+            return self.render_frame();
+        }
+        self.drew_frame.set(false);
+        let start = std::time::Instant::now();
+        self.render_frame();
+        if self.drew_frame.get() {
+            if let Some(times) = self.frame_times.borrow_mut().as_mut() {
+                times.push(start.elapsed());
+            }
+        }
+    }
+
+    /// The times of the frames the target drew, as a line of text: their
+    /// count, median, mean, 95th percentile and longest.
+    fn frame_times_summary(&self) -> Option<String> {
+        let mut times = self.frame_times.borrow().clone()?;
+        if times.is_empty() {
+            return None;
+        }
+        times.sort();
+        let ms = |duration: std::time::Duration| duration.as_secs_f64() * 1000.0;
+        let mean = times.iter().map(|time| ms(*time)).sum::<f64>() / times.len() as f64;
+        Some(format!(
+            "frame times of composition target {}: {} frames; ms per frame: median {:.3}, mean {:.3}, p95 {:.3}, max {:.3}",
+            self.id,
+            times.len(),
+            ms(times[times.len() / 2]),
+            mean,
+            ms(times[(times.len() * 95 / 100).min(times.len() - 1)]),
+            ms(times[times.len() - 1]),
+        ))
+    }
+
+    fn render_frame(self: &Rc<Self>) {
         self.is_waiting_for_ready_render_target.set(false);
         self.is_waiting_for_render_loop_wakeup.set(false);
 
@@ -287,6 +334,7 @@ impl ServerCompositionTarget {
             transparency_level: self.transparency_level(),
             platform_specific_scene_info: self.platform_specific_scene_info(),
         };
+        self.drew_frame.set(true);
         let (mut render_target_context, properties) = match render_target.try_create_drawing_context(&scene_info) {
             Ok(created) => created,
             Err(RenderTargetError::NotReady(_)) => {
@@ -494,6 +542,9 @@ impl IServerObject for ServerCompositionTarget {
     fn dispose(&self) {
         if self.disposed.replace(true) {
             return;
+        }
+        if let Some(summary) = self.frame_times_summary() {
+            eprintln!("{summary}");
         }
         self.reset_render_target();
         if let (Some(compositor), Some(this)) = (self.compositor(), self.this.upgrade()) {

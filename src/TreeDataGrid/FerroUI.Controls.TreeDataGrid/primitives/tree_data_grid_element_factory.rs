@@ -89,7 +89,7 @@ impl TreeDataGridElementFactoryImpl for DefaultBehavior {}
 /// Creates the elements of the presenters and keeps the recycled ones, by recycle key and by the
 /// parent they were recycled from.
 pub struct TreeDataGridElementFactory {
-    recycle_pools: RefCell<FxHashMap<RecycleKey, RecyclePool>>,
+    recycle_pools: RefCell<RecyclePools>,
     behavior: Box<dyn TreeDataGridElementFactoryImpl>,
 }
 
@@ -109,7 +109,7 @@ impl Default for TreeDataGridElementFactory {
 
 impl TreeDataGridElementFactory {
     fn construct(behavior: Box<dyn TreeDataGridElementFactoryImpl>) -> Self {
-        Self { recycle_pools: RefCell::new(FxHashMap::default()), behavior }
+        Self { recycle_pools: RefCell::new(RecyclePools::default()), behavior }
     }
 
     /// A factory with the default behaviour.
@@ -155,7 +155,7 @@ impl TreeDataGridElementFactory {
         let parent = element.parent();
         let is_panel = parent.as_ref().is_some_and(|parent| parent.is::<Panel>());
 
-        self.recycle_pools.borrow_mut().entry(recycle_key).or_default().add(element.clone(), parent, is_panel);
+        self.recycle_pools.borrow_mut().get_or_insert(recycle_key).add(element.clone(), parent, is_panel);
     }
 
     /// Determines whether an existing element can be reused for the supplied data without returning
@@ -279,6 +279,50 @@ struct ParentBucket {
 /// Each pooled element is indexed both by its current parent and, when it can be reparented, by the
 /// fallback list. An element leaves the pool entirely when it is taken: the pool does not retain
 /// controls after they are checked out.
+/// The pools of a factory by recycle key. A factory usually reuses the elements of one key many
+/// times in a row (the cells of a column, the rows of a presenter), so the pool used last is
+/// compared with the key before the key is hashed.
+#[derive(Default)]
+struct RecyclePools {
+    pools: Vec<(RecycleKey, RecyclePool)>,
+    index: FxHashMap<RecycleKey, usize>,
+    last: Option<usize>,
+}
+
+impl RecyclePools {
+    fn position(&mut self, key: &str) -> Option<usize> {
+        if let Some(last) = self.last {
+            if self.pools[last].0.as_ref() == key {
+                return Some(last);
+            }
+        }
+        let position = self.index.get(key).copied();
+        if position.is_some() {
+            self.last = position;
+        }
+        position
+    }
+
+    fn get_mut(&mut self, key: &str) -> Option<&mut RecyclePool> {
+        let position = self.position(key)?;
+        Some(&mut self.pools[position].1)
+    }
+
+    fn get_or_insert(&mut self, key: RecycleKey) -> &mut RecyclePool {
+        let position = match self.position(&key) {
+            Some(position) => position,
+            None => {
+                let position = self.pools.len();
+                self.index.insert(key.clone(), position);
+                self.pools.push((key, RecyclePool::default()));
+                self.last = Some(position);
+                position
+            }
+        };
+        &mut self.pools[position].1
+    }
+}
+
 #[derive(Default)]
 struct RecyclePool {
     entries: Vec<Option<Entry>>,
@@ -316,20 +360,15 @@ impl RecyclePool {
         };
 
         if let Some(parent) = &parent {
-            let last = self.by_parent.entry(parent.clone()).or_default().last;
-            self.entry(id).parent_previous = last;
-
-            match last {
-                Some(last) => self.entry(last).parent_next = Some(id),
-                None => {
-                    if let Some(bucket) = self.by_parent.get_mut(parent) {
-                        bucket.first = Some(id);
-                    }
-                }
+            let bucket = self.by_parent.entry(parent.clone()).or_default();
+            let last = bucket.last;
+            bucket.last = Some(id);
+            if last.is_none() {
+                bucket.first = Some(id);
             }
-
-            if let Some(bucket) = self.by_parent.get_mut(parent) {
-                bucket.last = Some(id);
+            self.entry(id).parent_previous = last;
+            if let Some(last) = last {
+                self.entry(last).parent_next = Some(id);
             }
         }
 
@@ -363,25 +402,25 @@ impl RecyclePool {
         };
 
         if let Some(parent) = parent {
-            match previous {
-                Some(previous) => self.entry(previous).parent_next = next,
-                None => {
-                    if let Some(bucket) = self.by_parent.get_mut(&parent) {
+            if let Some(previous) = previous {
+                self.entry(previous).parent_next = next;
+            }
+            if let Some(next) = next {
+                self.entry(next).parent_previous = previous;
+            }
+            let empty = match self.by_parent.get_mut(&parent) {
+                Some(bucket) => {
+                    if previous.is_none() {
                         bucket.first = next;
                     }
-                }
-            }
-
-            match next {
-                Some(next) => self.entry(next).parent_previous = previous,
-                None => {
-                    if let Some(bucket) = self.by_parent.get_mut(&parent) {
+                    if next.is_none() {
                         bucket.last = previous;
                     }
+                    bucket.first.is_none()
                 }
-            }
-
-            if self.by_parent.get(&parent).is_some_and(|bucket| bucket.first.is_none()) {
+                None => false,
+            };
+            if empty {
                 self.by_parent.remove(&parent);
             }
         }

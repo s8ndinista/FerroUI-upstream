@@ -85,81 +85,84 @@ cargo test --release -p ferroui-treedatagrid-benchmarks --lib run_benchmarks -- 
 
 The first run of the port was faster in 37 of the 71 benchmarks, with a geometric mean of the ratio of 0.91: scrolling was 1.5 to 1.9 times slower, reusing an element 2.5 times, finding a column 1.8 times. The profiles showed the costs in the framework and in the port's own code rather than in the algorithms, which follow the reference: the scroll presenter translating every anchor candidate to itself walked both visuals up to the root (`transform_to_visual`, now one walk for an ancestor) and read the render transform of every visual it passed through the value store (now only for the visuals that have one); maps keyed by identities hashed with SipHash (the layout queues, the scroll anchors, the pools of the element factory, the collection change listeners: now the Fx hasher); the recycle keys were type names built on every lookup (now interned); the text of a cell went through the composite formatter for the default format `{0}`; a column lookup called an outlined geometry check. The deviations this needed are in `DEVIATIONS.md` (sections Visual tree and TreeDataGrid).
 
-After these changes the port is as fast or faster in 58 of the 71 benchmarks, with a geometric mean of the ratio port / reference of 0.68. Of the 13 others, 12 are within 14 % of the reference (scrolls that realize rows and cells, bursts of changes of the items, reusing an element from a pool of 100): what remains there is spread over allocation and the property system of the framework. Expanding and collapsing a thousand rows takes 1.8 to 1.9 times as long (14.5 against 7.7 microseconds): the rows of an expansion are counted references, copied into the flattened rows and into the arguments of the change the handlers receive, where the reference copies plain references; a contract of the change that does not copy the rows would remove it.
+After these changes the port was as fast or faster in 58 of the 71 benchmarks. A second round removed the rest of the gap without changing behaviour or the public API: the effective viewports of a layout pass share the viewports of their common ancestors (`DEVIATIONS.md`, Layout), the cells presenter finds its grid once per measure, the element factory looks up a pool and the bucket of a parent once per step, and expanding and collapsing rows no longer copies the roots and the children at every level of the path or the rows a second time into the flattened rows. Three build scripts left running for days by earlier builds had kept three cores busy during the first runs of both suites; they were stopped, and both suites were run again on the quiet machine for the table below.
+
+After the second round the port was as fast or faster in 64 of the 71 benchmarks, with a geometric mean of the ratio port / reference of 0.62; expanding and collapsing a thousand rows was 11 % slower and six others within 3 %. A third round (#244) took most of the remaining cost out of the framework, again without changing behaviour: an expansion keeps its flattened rows copy-on-write and the depths of the rows beside them, a sort reads the models once, and the allocations of creating and rebinding controls were counted by call site and removed where they were not needed. A list of event handlers allocates on its first handler and keeps up to two handlers in that one allocation (most lists of an object never get one, and they were a third of the allocations of a first layout), the change events of a collection take their tokens from a counter of the process instead of one of their own, a template binding subscribes to property changes by token with handlers it makes once, a reevaluation of a value store and the effective viewports of a layout pass reuse their lists, and a cell takes the text and the value its binding pushes without copying them again (`DEVIATIONS.md`, TreeDataGrid). A first layout allocates a third less than before.
+
+The port is now as fast or faster in all 71 benchmarks, with a geometric mean of the ratio port / reference of 0.56. The closest are the scrolls of the far columns and of all columns with neutral columns (1.00 and 0.97) and the reuse of an element of a pool of 100 (0.99).
 
 | Benchmark | Parameters | Reference (.NET) | Port | Port / reference |
 |---|---|---|---|---|
-| ColumnGeometryBenchmarks.locate_viewport | ColumnCount=1000 | 13.7 ns | 10.0 ns | 0.73 |
-| ColumnGeometryBenchmarks.locate_viewport | ColumnCount=20 | 6.7 ns | 6.0 ns | 0.88 |
-| ColumnGeometryBenchmarks.locate_viewport | ColumnCount=200 | 10.7 ns | 7.8 ns | 0.73 |
-| ColumnLayoutBenchmarks.commit_unchanged_widths | ColumnCount=1000 | 11.6 ns | 3.3 ns | 0.29 |
-| ColumnLayoutBenchmarks.commit_unchanged_widths | ColumnCount=20 | 11.2 ns | 3.3 ns | 0.30 |
-| ColumnLayoutBenchmarks.commit_unchanged_widths | ColumnCount=200 | 14.1 ns | 3.3 ns | 0.23 |
-| ColumnWidthBatchBenchmarks.batched_width_commit | Layout=Auto, RowCount=20 | 16.14 us | 2.73 us | 0.17 |
-| ColumnWidthBatchBenchmarks.batched_width_commit | Layout=Auto, RowCount=40 | 16.99 us | 3.41 us | 0.20 |
-| ColumnWidthBatchBenchmarks.batched_width_commit | Layout=Mixed, RowCount=20 | 16.87 us | 3.03 us | 0.18 |
-| ColumnWidthBatchBenchmarks.batched_width_commit | Layout=Mixed, RowCount=40 | 17.11 us | 4.05 us | 0.24 |
-| ColumnWidthBatchBenchmarks.incremental_width_commits | Layout=Auto, RowCount=20 | 18.05 us | 4.73 us | 0.26 |
-| ColumnWidthBatchBenchmarks.incremental_width_commits | Layout=Auto, RowCount=40 | 20.09 us | 7.31 us | 0.36 |
-| ColumnWidthBatchBenchmarks.incremental_width_commits | Layout=Mixed, RowCount=20 | 18.59 us | 5.56 us | 0.30 |
-| ColumnWidthBatchBenchmarks.incremental_width_commits | Layout=Mixed, RowCount=40 | 21.42 us | 9.13 us | 0.43 |
-| ElementFactoryBenchmarks.same_parent_reuse | PoolSize=10 | 59.1 ns | 60.6 ns | 1.03 |
-| ElementFactoryBenchmarks.same_parent_reuse | PoolSize=100 | 70.9 ns | 79.2 ns | 1.12 |
-| ElementFactoryBenchmarks.same_parent_reuse | PoolSize=1000 | 90.7 ns | 90.6 ns | 1.00 |
-| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Auto, CacheLength=0 | 1.74 ms | 755.51 us | 0.44 |
-| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Auto, CacheLength=0.5 | 1.67 ms | 1.36 ms | 0.81 |
-| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Fixed, CacheLength=0 | 1.80 ms | 1.04 ms | 0.58 |
-| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Fixed, CacheLength=0.5 | 1.66 ms | 1.34 ms | 0.81 |
-| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Mixed, CacheLength=0 | 919.56 us | 802.30 us | 0.87 |
-| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Mixed, CacheLength=0.5 | 1.68 ms | 1.41 ms | 0.84 |
-| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Star, CacheLength=0 | 1.81 ms | 773.44 us | 0.43 |
-| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Star, CacheLength=0.5 | 1.66 ms | 1.36 ms | 0.82 |
-| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Auto, CacheLength=0 | 1.02 ms | 779.72 us | 0.77 |
-| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Auto, CacheLength=0.5 | 1.68 ms | 1.35 ms | 0.81 |
-| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Fixed, CacheLength=0 | 1.09 ms | 729.30 us | 0.67 |
-| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Fixed, CacheLength=0.5 | 1.62 ms | 1.27 ms | 0.79 |
-| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Mixed, CacheLength=0 | 901.76 us | 775.56 us | 0.86 |
-| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Mixed, CacheLength=0.5 | 1.71 ms | 1.41 ms | 0.83 |
-| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Star, CacheLength=0 | 1.05 ms | 763.82 us | 0.73 |
-| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Star, CacheLength=0.5 | 1.64 ms | 1.31 ms | 0.80 |
-| NeutralSourceBenchmarks.create_source_and_presentation | NeutralSource=false | 5.74 us | 2.62 us | 0.46 |
-| NeutralSourceBenchmarks.create_source_and_presentation | NeutralSource=true | 5.71 us | 2.75 us | 0.48 |
-| NeutralSourceBenchmarks.expand_collapse_thousand_rows | NeutralSource=false | 7.65 us | 14.59 us | 1.91 |
-| NeutralSourceBenchmarks.expand_collapse_thousand_rows | NeutralSource=true | 8.01 us | 14.42 us | 1.80 |
-| NeutralSourceBenchmarks.sort_thousand_rows | NeutralSource=false | 710.78 us | 75.42 us | 0.11 |
-| NeutralSourceBenchmarks.sort_thousand_rows | NeutralSource=true | 73.00 us | 73.44 us | 1.01 |
-| TemplateCellRecyclingBenchmarks.alternating_template_providers |  | 2.35 us | 1.45 us | 0.62 |
-| TemplateCellRecyclingBenchmarks.same_template_provider |  | 2.33 us | 1.40 us | 0.60 |
-| VirtualizationBenchmarks.collection_insert_remove_burst | NeutralSource=false | 51.13 us | 57.21 us | 1.12 |
-| VirtualizationBenchmarks.collection_insert_remove_burst | NeutralSource=true | 54.31 us | 53.93 us | 0.99 |
-| VirtualizationBenchmarks.collection_move_burst | NeutralSource=false | 20.99 us | 23.83 us | 1.14 |
-| VirtualizationBenchmarks.collection_move_burst | NeutralSource=true | 23.96 us | 23.87 us | 1.00 |
-| VirtualizationBenchmarks.create_and_layout_grid | NeutralSource=false | 1.97 ms | 1.06 ms | 0.54 |
-| VirtualizationBenchmarks.create_and_layout_grid | NeutralSource=true | 2.08 ms | 1.09 ms | 0.52 |
-| VirtualizationBenchmarks.detach_reattach | NeutralSource=false | 888.92 us | 514.66 us | 0.58 |
-| VirtualizationBenchmarks.detach_reattach | NeutralSource=true | 885.75 us | 519.40 us | 0.59 |
-| VirtualizationBenchmarks.forced_stationary_vertical_layouts | NeutralSource=false | 4.79 us | 4.00 us | 0.83 |
-| VirtualizationBenchmarks.forced_stationary_vertical_layouts | NeutralSource=true | 4.68 us | 3.88 us | 0.83 |
-| VirtualizationBenchmarks.horizontal_column_scrolls | NeutralSource=false | 176.28 us | 172.49 us | 0.98 |
-| VirtualizationBenchmarks.horizontal_column_scrolls | NeutralSource=true | 157.28 us | 176.29 us | 1.12 |
-| VirtualizationBenchmarks.horizontal_far_column_scrolls | NeutralSource=false | 162.19 us | 161.84 us | 1.00 |
-| VirtualizationBenchmarks.horizontal_far_column_scrolls | NeutralSource=true | 142.61 us | 160.37 us | 1.12 |
-| VirtualizationBenchmarks.horizontal_small_scrolls | NeutralSource=false | 20.20 us | 18.10 us | 0.90 |
-| VirtualizationBenchmarks.horizontal_small_scrolls | NeutralSource=true | 20.06 us | 17.77 us | 0.89 |
-| VirtualizationBenchmarks.horizontal_unbatched_small_scrolls | NeutralSource=false | 40.43 us | 43.44 us | 1.07 |
-| VirtualizationBenchmarks.horizontal_unbatched_small_scrolls | NeutralSource=true | 40.44 us | 44.42 us | 1.10 |
-| VirtualizationBenchmarks.vertical_buffered_jitter_scrolls | NeutralSource=false | 24.98 us | 24.57 us | 0.98 |
-| VirtualizationBenchmarks.vertical_buffered_jitter_scrolls | NeutralSource=true | 24.78 us | 23.61 us | 0.95 |
-| VirtualizationBenchmarks.vertical_buffered_small_scrolls | NeutralSource=false | 23.25 us | 21.01 us | 0.90 |
-| VirtualizationBenchmarks.vertical_buffered_small_scrolls | NeutralSource=true | 23.29 us | 21.26 us | 0.91 |
-| VirtualizationBenchmarks.vertical_jitter_scrolls | NeutralSource=false | 101.20 us | 113.27 us | 1.12 |
-| VirtualizationBenchmarks.vertical_jitter_scrolls | NeutralSource=true | 103.42 us | 117.95 us | 1.14 |
-| VirtualizationBenchmarks.vertical_row_scrolls | NeutralSource=false | 34.68 us | 32.89 us | 0.95 |
-| VirtualizationBenchmarks.vertical_row_scrolls | NeutralSource=true | 34.57 us | 33.56 us | 0.97 |
-| VirtualizationBenchmarks.vertical_small_scrolls | NeutralSource=false | 19.75 us | 17.82 us | 0.90 |
-| VirtualizationBenchmarks.vertical_small_scrolls | NeutralSource=true | 19.89 us | 18.47 us | 0.93 |
-| VirtualizationBenchmarks.vertical_unbatched_small_scrolls | NeutralSource=false | 24.97 us | 22.68 us | 0.91 |
-| VirtualizationBenchmarks.vertical_unbatched_small_scrolls | NeutralSource=true | 24.58 us | 21.91 us | 0.89 |
+| ColumnGeometryBenchmarks.locate_viewport | ColumnCount=1000 | 12.9 ns | 9.7 ns | 0.75 |
+| ColumnGeometryBenchmarks.locate_viewport | ColumnCount=20 | 6.4 ns | 5.9 ns | 0.92 |
+| ColumnGeometryBenchmarks.locate_viewport | ColumnCount=200 | 10.2 ns | 7.5 ns | 0.74 |
+| ColumnLayoutBenchmarks.commit_unchanged_widths | ColumnCount=1000 | 11.1 ns | 3.3 ns | 0.29 |
+| ColumnLayoutBenchmarks.commit_unchanged_widths | ColumnCount=20 | 10.9 ns | 3.2 ns | 0.29 |
+| ColumnLayoutBenchmarks.commit_unchanged_widths | ColumnCount=200 | 11.0 ns | 3.2 ns | 0.29 |
+| ColumnWidthBatchBenchmarks.batched_width_commit | Layout=Auto, RowCount=20 | 15.86 us | 2.37 us | 0.15 |
+| ColumnWidthBatchBenchmarks.batched_width_commit | Layout=Auto, RowCount=40 | 16.73 us | 3.06 us | 0.18 |
+| ColumnWidthBatchBenchmarks.batched_width_commit | Layout=Mixed, RowCount=20 | 16.38 us | 2.72 us | 0.17 |
+| ColumnWidthBatchBenchmarks.batched_width_commit | Layout=Mixed, RowCount=40 | 16.87 us | 3.74 us | 0.22 |
+| ColumnWidthBatchBenchmarks.incremental_width_commits | Layout=Auto, RowCount=20 | 18.14 us | 4.36 us | 0.24 |
+| ColumnWidthBatchBenchmarks.incremental_width_commits | Layout=Auto, RowCount=40 | 19.70 us | 6.96 us | 0.35 |
+| ColumnWidthBatchBenchmarks.incremental_width_commits | Layout=Mixed, RowCount=20 | 18.07 us | 5.19 us | 0.29 |
+| ColumnWidthBatchBenchmarks.incremental_width_commits | Layout=Mixed, RowCount=40 | 21.31 us | 8.77 us | 0.41 |
+| ElementFactoryBenchmarks.same_parent_reuse | PoolSize=10 | 60.1 ns | 45.5 ns | 0.76 |
+| ElementFactoryBenchmarks.same_parent_reuse | PoolSize=100 | 62.4 ns | 61.7 ns | 0.99 |
+| ElementFactoryBenchmarks.same_parent_reuse | PoolSize=1000 | 87.6 ns | 66.5 ns | 0.76 |
+| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Auto, CacheLength=0 | 934.81 us | 638.49 us | 0.68 |
+| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Auto, CacheLength=0.5 | 1.71 ms | 1.14 ms | 0.66 |
+| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Fixed, CacheLength=0 | 923.78 us | 625.24 us | 0.68 |
+| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Fixed, CacheLength=0.5 | 1.71 ms | 1.12 ms | 0.66 |
+| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Mixed, CacheLength=0 | 929.89 us | 652.40 us | 0.70 |
+| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Mixed, CacheLength=0.5 | 1.74 ms | 1.15 ms | 0.66 |
+| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Star, CacheLength=0 | 1.05 ms | 651.30 us | 0.62 |
+| FirstLayoutBenchmarks.legacy_natural_width_probe | Layout=Star, CacheLength=0.5 | 1.68 ms | 1.15 ms | 0.69 |
+| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Auto, CacheLength=0 | 1.16 ms | 645.54 us | 0.56 |
+| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Auto, CacheLength=0.5 | 1.73 ms | 1.14 ms | 0.66 |
+| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Fixed, CacheLength=0 | 1.58 ms | 637.26 us | 0.40 |
+| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Fixed, CacheLength=0.5 | 1.63 ms | 1.07 ms | 0.66 |
+| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Mixed, CacheLength=0 | 903.47 us | 647.87 us | 0.72 |
+| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Mixed, CacheLength=0.5 | 1.76 ms | 1.15 ms | 0.65 |
+| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Star, CacheLength=0 | 955.97 us | 619.20 us | 0.65 |
+| FirstLayoutBenchmarks.resolved_width_constraint | Layout=Star, CacheLength=0.5 | 1.66 ms | 1.08 ms | 0.65 |
+| NeutralSourceBenchmarks.create_source_and_presentation | NeutralSource=false | 5.60 us | 2.17 us | 0.39 |
+| NeutralSourceBenchmarks.create_source_and_presentation | NeutralSource=true | 6.09 us | 2.11 us | 0.35 |
+| NeutralSourceBenchmarks.expand_collapse_thousand_rows | NeutralSource=false | 7.48 us | 6.18 us | 0.83 |
+| NeutralSourceBenchmarks.expand_collapse_thousand_rows | NeutralSource=true | 7.81 us | 6.12 us | 0.78 |
+| NeutralSourceBenchmarks.sort_thousand_rows | NeutralSource=false | 719.42 us | 38.94 us | 0.05 |
+| NeutralSourceBenchmarks.sort_thousand_rows | NeutralSource=true | 70.41 us | 39.88 us | 0.57 |
+| TemplateCellRecyclingBenchmarks.alternating_template_providers |  | 2.41 us | 1.38 us | 0.57 |
+| TemplateCellRecyclingBenchmarks.same_template_provider |  | 2.44 us | 1.34 us | 0.55 |
+| VirtualizationBenchmarks.collection_insert_remove_burst | NeutralSource=false | 55.97 us | 43.95 us | 0.79 |
+| VirtualizationBenchmarks.collection_insert_remove_burst | NeutralSource=true | 51.15 us | 45.01 us | 0.88 |
+| VirtualizationBenchmarks.collection_move_burst | NeutralSource=false | 20.70 us | 18.19 us | 0.88 |
+| VirtualizationBenchmarks.collection_move_burst | NeutralSource=true | 23.48 us | 18.26 us | 0.78 |
+| VirtualizationBenchmarks.create_and_layout_grid | NeutralSource=false | 1.97 ms | 876.95 us | 0.44 |
+| VirtualizationBenchmarks.create_and_layout_grid | NeutralSource=true | 2.01 ms | 885.05 us | 0.44 |
+| VirtualizationBenchmarks.detach_reattach | NeutralSource=false | 878.35 us | 445.86 us | 0.51 |
+| VirtualizationBenchmarks.detach_reattach | NeutralSource=true | 888.87 us | 460.49 us | 0.52 |
+| VirtualizationBenchmarks.forced_stationary_vertical_layouts | NeutralSource=false | 4.69 us | 1.70 us | 0.36 |
+| VirtualizationBenchmarks.forced_stationary_vertical_layouts | NeutralSource=true | 4.78 us | 1.65 us | 0.35 |
+| VirtualizationBenchmarks.horizontal_column_scrolls | NeutralSource=false | 176.41 us | 146.71 us | 0.83 |
+| VirtualizationBenchmarks.horizontal_column_scrolls | NeutralSource=true | 156.78 us | 152.62 us | 0.97 |
+| VirtualizationBenchmarks.horizontal_far_column_scrolls | NeutralSource=false | 164.39 us | 132.39 us | 0.81 |
+| VirtualizationBenchmarks.horizontal_far_column_scrolls | NeutralSource=true | 140.46 us | 139.96 us | 1.00 |
+| VirtualizationBenchmarks.horizontal_small_scrolls | NeutralSource=false | 20.00 us | 14.74 us | 0.74 |
+| VirtualizationBenchmarks.horizontal_small_scrolls | NeutralSource=true | 19.28 us | 14.71 us | 0.76 |
+| VirtualizationBenchmarks.horizontal_unbatched_small_scrolls | NeutralSource=false | 39.45 us | 37.50 us | 0.95 |
+| VirtualizationBenchmarks.horizontal_unbatched_small_scrolls | NeutralSource=true | 39.07 us | 37.00 us | 0.95 |
+| VirtualizationBenchmarks.vertical_buffered_jitter_scrolls | NeutralSource=false | 24.28 us | 17.98 us | 0.74 |
+| VirtualizationBenchmarks.vertical_buffered_jitter_scrolls | NeutralSource=true | 24.07 us | 17.80 us | 0.74 |
+| VirtualizationBenchmarks.vertical_buffered_small_scrolls | NeutralSource=false | 23.06 us | 17.02 us | 0.74 |
+| VirtualizationBenchmarks.vertical_buffered_small_scrolls | NeutralSource=true | 22.76 us | 17.11 us | 0.75 |
+| VirtualizationBenchmarks.vertical_jitter_scrolls | NeutralSource=false | 97.58 us | 86.00 us | 0.88 |
+| VirtualizationBenchmarks.vertical_jitter_scrolls | NeutralSource=true | 99.23 us | 92.92 us | 0.94 |
+| VirtualizationBenchmarks.vertical_row_scrolls | NeutralSource=false | 34.86 us | 24.53 us | 0.70 |
+| VirtualizationBenchmarks.vertical_row_scrolls | NeutralSource=true | 33.94 us | 24.81 us | 0.73 |
+| VirtualizationBenchmarks.vertical_small_scrolls | NeutralSource=false | 19.42 us | 14.52 us | 0.75 |
+| VirtualizationBenchmarks.vertical_small_scrolls | NeutralSource=true | 19.34 us | 14.59 us | 0.75 |
+| VirtualizationBenchmarks.vertical_unbatched_small_scrolls | NeutralSource=false | 24.51 us | 16.42 us | 0.67 |
+| VirtualizationBenchmarks.vertical_unbatched_small_scrolls | NeutralSource=true | 24.44 us | 16.41 us | 0.67 |
 
-71 benchmarks compared; the port is as fast or faster in 58; geometric mean of port / reference: 0.68.
-
+71 benchmarks compared; the port is as fast or faster in 71; geometric mean of port / reference: 0.56.

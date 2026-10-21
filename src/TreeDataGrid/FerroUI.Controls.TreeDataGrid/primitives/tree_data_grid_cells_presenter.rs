@@ -41,6 +41,10 @@ pub struct TreeDataGridCellsPresenter {
     row_index: Cell<i32>,
     child_index_changed: Rc<ChildIndexChangedHandlers>,
     child_index_provider: OnceCell<Rc<CellsPresenterChildIndexProvider>>,
+    // The grid of the presenter while it measures (`GetSelection` walks up to it for every realized
+    // cell in the reference): the presenter does not change its place in the tree during a
+    // measure, so the grid is found once; its selection is still read for each cell.
+    measure_grid: RefCell<Option<Option<Ref<crate::TreeDataGrid>>>>,
 }
 
 ferro_class! {
@@ -138,6 +142,15 @@ impl LayoutableImpl for TreeDataGridCellsPresenter {
         if this.row_index.get() == -1 {
             Size::default()
         } else {
+            struct EndMeasure<'a>(&'a TreeDataGridCellsPresenter);
+            impl Drop for EndMeasure<'_> {
+                fn drop(&mut self) {
+                    *self.0.measure_grid.borrow_mut() = None;
+                }
+            }
+            let grid = this.find_ancestor_of_type::<crate::TreeDataGrid>(false);
+            *this.measure_grid.borrow_mut() = Some(grid);
+            let _end = EndMeasure(this);
             this.presenter.measure_override(this, available_size)
         }
     }
@@ -353,6 +366,7 @@ impl TreeDataGridCellsPresenter {
             row_index: Cell::new(-1),
             child_index_changed: Rc::new(HandlerList::new()),
             child_index_provider: OnceCell::new(),
+            measure_grid: RefCell::new(None),
         }
     }
 
@@ -583,6 +597,10 @@ impl TreeDataGridCellsPresenter {
         }
 
         let row_index = self.row_index.get();
+        // The grid is found once for the cells rebound here (the presenter does not change its
+        // place in the tree while it rebinds its cells); its selection is read for each cell, as
+        // the reference's `GetSelection()`.
+        let tree_data_grid = self.find_ancestor_of_type::<crate::TreeDataGrid>(false);
 
         for (i, element) in elements.iter().enumerate() {
             let Some(cell) = element.as_ref().and_then(|element| element.cast::<TreeDataGridCell>()) else {
@@ -601,7 +619,7 @@ impl TreeDataGridCellsPresenter {
             cell.set_recycling_column(Some(column.clone()));
             self.raise_child_index_changed(element.as_ref().expect("a cell"), cell.row_index());
 
-            let selection = self.get_selection();
+            let selection = tree_data_grid.as_ref().and_then(|tree_data_grid| tree_data_grid.selection_interaction());
             // A cell whose earlier rebind failed has no model to reuse or dispose.
             match model {
                 Some(model) if Self::try_reuse_cell(&*rows, &column, &model, row_index) => {
@@ -638,8 +656,11 @@ impl TreeDataGridCellsPresenter {
     }
 
     fn get_selection(&self) -> Option<Rc<dyn ITreeDataGridSelectionInteraction>> {
-        self.find_ancestor_of_type::<crate::TreeDataGrid>(false)
-            .and_then(|tree_data_grid| tree_data_grid.selection_interaction())
+        let grid = match self.measure_grid.borrow().as_ref() {
+            Some(grid) => grid.clone(),
+            None => self.find_ancestor_of_type::<crate::TreeDataGrid>(false),
+        };
+        grid.and_then(|tree_data_grid| tree_data_grid.selection_interaction())
     }
 }
 

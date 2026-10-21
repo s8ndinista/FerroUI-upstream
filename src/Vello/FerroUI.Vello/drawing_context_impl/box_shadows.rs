@@ -296,12 +296,30 @@ impl DrawingContextImpl {
         // renderer draws as much of the content of a filter layer as its
         // filter reaches.
         let scene_transform = Affine::translate((-bounds.x0, -bounds.y0)) * transform;
+
+        // A picture the CPU renderer makes is kept: the same shadow at
+        // another place on whole pixels, or in the next frame, is the same
+        // picture.
+        let key = (!self.filter_scene_on_device())
+            .then(|| ShadowKey::new(path, fill_rule, scene_transform, std_deviation, color, width, height));
+        if let Some(image) = key.as_ref().and_then(ShadowPictures::get) {
+            self.draw_image_at_pixels(image, bounds.x0, bounds.y0);
+            return;
+        }
+
         let mut scene = self.create_filter_scene(width, height);
         scene.push_filter_layer(&VelloSceneFilter::Blur { std_deviation: std_deviation as f32 }, scene_transform);
         scene.fill(path, fill_rule, scene_transform, &VelloScenePaint::solid(color), BlendMode::default(), true);
         scene.pop_layer();
 
-        self.draw_filter_scene(&mut *scene, bounds.x0, bounds.y0, crate::perf::Phase::ShadowAsImage);
+        match key {
+            Some(key) => {
+                let image = self.render_filter_scene_to_image(&mut *scene, crate::perf::Phase::ShadowAsImage);
+                ShadowPictures::insert(key, image.clone());
+                self.draw_image_at_pixels(image, bounds.x0, bounds.y0);
+            }
+            None => self.draw_filter_scene(&mut *scene, bounds.x0, bounds.y0, crate::perf::Phase::ShadowAsImage),
+        }
     }
 
     /// Draws an image with its pixels on the pixels of the scene of the
@@ -326,5 +344,124 @@ impl DrawingContextImpl {
         let paint = VelloScenePaint { brush, transform: Affine::translate((x, y)) };
 
         self.sink().fill(&path, Fill::NonZero, Affine::IDENTITY, &paint, BlendMode::default(), false);
+    }
+}
+
+/// What makes the picture of a blurred shape: the shape in the pixels of
+/// its scene, how it is filled, the blur, the color and the size of the
+/// scene. The numbers are kept as their bits: a picture is reused for the
+/// very same shape only.
+#[derive(Clone, PartialEq, Eq, Hash)]
+struct ShadowKey {
+    path: Vec<u64>,
+    fill_rule: u8,
+    std_deviation: u64,
+    color: [u32; 4],
+    size: (u16, u16),
+}
+
+impl ShadowKey {
+    fn new(
+        path: &BezPath,
+        fill_rule: Fill,
+        transform: Affine,
+        std_deviation: f64,
+        color: AlphaColor<Srgb>,
+        width: u16,
+        height: u16,
+    ) -> Self {
+        let mut points = Vec::with_capacity(path.elements().len() * 5);
+        let mut push = |tag: u64, element_points: &[kurbo::Point]| {
+            points.push(tag);
+            for point in element_points {
+                let point = transform * *point;
+                points.push(point.x.to_bits());
+                points.push(point.y.to_bits());
+            }
+        };
+        for element in path.elements() {
+            match *element {
+                kurbo::PathEl::MoveTo(p) => push(0, &[p]),
+                kurbo::PathEl::LineTo(p) => push(1, &[p]),
+                kurbo::PathEl::QuadTo(a, b) => push(2, &[a, b]),
+                kurbo::PathEl::CurveTo(a, b, c) => push(3, &[a, b, c]),
+                kurbo::PathEl::ClosePath => push(4, &[]),
+            }
+        }
+        Self {
+            path: points,
+            fill_rule: matches!(fill_rule, Fill::EvenOdd) as u8,
+            std_deviation: std_deviation.to_bits(),
+            color: color.components.map(f32::to_bits),
+            size: (width, height),
+        }
+    }
+}
+
+/// The pictures of blurred shapes the CPU renderer made, kept on the thread
+/// that draws: a box shadow without a closed form is the same picture from
+/// frame to frame. The pictures used least recently go once they hold more
+/// than [`ShadowPictures::BYTES`].
+struct ShadowPictures {
+    pictures: std::collections::HashMap<ShadowKey, (peniko::ImageData, u64)>,
+    bytes: usize,
+    uses: u64,
+}
+
+ferroui_base::ferro_thread_local! {
+    static SHADOW_PICTURES: std::cell::RefCell<Option<ShadowPictures>> = const { std::cell::RefCell::new(None) };
+}
+
+impl ShadowPictures {
+    /// The most pixel bytes the pictures of a thread hold.
+    const BYTES: usize = 32 * 1024 * 1024;
+
+    fn get(key: &ShadowKey) -> Option<peniko::ImageData> {
+        SHADOW_PICTURES
+            .try_with(|pictures| {
+                let mut pictures = pictures.borrow_mut();
+                let pictures = pictures.as_mut()?;
+                pictures.uses += 1;
+                let uses = pictures.uses;
+                let (image, used) = pictures.pictures.get_mut(key)?;
+                *used = uses;
+                Some(image.clone())
+            })
+            .ok()
+            .flatten()
+    }
+
+    fn insert(key: ShadowKey, image: peniko::ImageData) {
+        let size = image.data.data().len();
+        if size > Self::BYTES / 4 {
+            return;
+        }
+        let _ = SHADOW_PICTURES.try_with(|pictures| {
+            let mut pictures = pictures.borrow_mut();
+            let pictures = pictures.get_or_insert_with(|| ShadowPictures {
+                pictures: std::collections::HashMap::new(),
+                bytes: 0,
+                uses: 0,
+            });
+            pictures.uses += 1;
+            if let Some((old, _)) = pictures.pictures.insert(key, (image, pictures.uses)) {
+                pictures.bytes -= old.data.data().len();
+            }
+            pictures.bytes += size;
+
+            if pictures.bytes > Self::BYTES {
+                let mut by_use: Vec<(u64, ShadowKey)> =
+                    pictures.pictures.iter().map(|(key, (_, used))| (*used, key.clone())).collect();
+                by_use.sort_unstable_by_key(|(used, _)| *used);
+                for (_, key) in by_use {
+                    if pictures.bytes <= Self::BYTES / 2 {
+                        break;
+                    }
+                    if let Some((image, _)) = pictures.pictures.remove(&key) {
+                        pictures.bytes -= image.data.data().len();
+                    }
+                }
+            }
+        });
     }
 }

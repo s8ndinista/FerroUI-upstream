@@ -18,6 +18,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "allocator-api2"
+version = "0.2.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
+
+[[package]]
+name = "android_system_properties"
+version = "0.1.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ae221649c9976a6f6c56ae1facf410f3ddb33cc661c4b7b61020a912d4237fbc"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "annotate-snippets"
 version = "0.12.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -36,7 +51,7 @@ checksum = "940b3a0ca603d1eade50a4846a2afffd5ef57a9feac2c0e2ec2e14f9ead76000"
 
 [[package]]
 name = "app-without-lifetime"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -247,7 +262,7 @@ dependencies = [
 
 [[package]]
 name = "binding-demo"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -437,7 +452,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -463,7 +478,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog-android"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "control-catalog",
  "ferroui-android",
@@ -473,7 +488,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog-browser"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "control-catalog",
  "ferroui-base",
@@ -485,7 +500,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog-desktop"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "control-catalog",
  "ferroui-base",
@@ -502,7 +517,7 @@ dependencies = [
 
 [[package]]
 name = "control-catalog-ios"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "control-catalog",
  "ferroui-base",
@@ -516,7 +531,7 @@ dependencies = [
 
 [[package]]
 name = "control-gallery-winui"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "control-catalog",
  "ferroui-base",
@@ -531,7 +546,7 @@ dependencies = [
 
 [[package]]
 name = "control-samples"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -570,6 +585,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "01a7799fd6b852db0e61728dde9a204c423b44d689dbd432522543614b490e78"
 dependencies = [
  "cfg-if",
+]
+
+[[package]]
+name = "crossbeam-channel"
+version = "0.5.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "82b8f8f868b36967f9606790d1903570de9ceaf870a7bf9fbbd3016d636a2cb2"
+dependencies = [
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "crossbeam-deque"
+version = "0.8.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "622f3fc73690be383c7214310406f28a90e6edeadc3cea882f9d71e495b9711a"
+dependencies = [
+ "crossbeam-epoch",
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "crossbeam-epoch"
+version = "0.9.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc74980687109a3b14c72fd458107bf0baa1da1a1a805e178d15501ba9b86d9d"
+dependencies = [
+ "crossbeam-utils",
 ]
 
 [[package]]
@@ -820,7 +863,7 @@ checksum = "f4beca3cb2444e3304ac30843cc091f44ed58932353cd492ce740067bfce6b12"
 
 [[package]]
 name = "ferroui"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-browser",
@@ -829,6 +872,7 @@ dependencies = [
  "ferroui-controls-treedatagrid",
  "ferroui-desktop",
  "ferroui-dialogs",
+ "ferroui-dynamic-data",
  "ferroui-harfbuzz",
  "ferroui-headless",
  "ferroui-markup",
@@ -837,7 +881,12 @@ dependencies = [
  "ferroui-metal",
  "ferroui-native",
  "ferroui-opengl",
+ "ferroui-reactive",
+ "ferroui-reactiveui",
+ "ferroui-reactiveui-controls",
  "ferroui-skia",
+ "ferroui-splat",
+ "ferroui-system",
  "ferroui-themes-fluent",
  "ferroui-themes-simple",
  "ferroui-themes-winui",
@@ -850,7 +899,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-android"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -858,27 +907,29 @@ dependencies = [
  "ferroui-opengl",
  "ferroui-skia",
  "ferroui-vulkan",
- "jni-sys",
+ "jni-sys 0.4.1",
  "libc",
  "skia-safe",
 ]
 
 [[package]]
 name = "ferroui-base"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "bitflags",
  "ferroui-build-scan",
+ "ferroui-system",
  "libc",
  "paste",
  "rust_decimal",
  "rustc-hash 2.1.3",
+ "smallvec",
  "time",
 ]
 
 [[package]]
 name = "ferroui-benchmarks"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -893,7 +944,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-browser"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -908,7 +959,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-build"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -919,7 +970,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-build-scan"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -928,19 +979,20 @@ dependencies = [
 
 [[package]]
 name = "ferroui-controls"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "bitflags",
  "encoding_rs",
  "ferroui-base",
  "ferroui-build-scan",
  "ferroui-remote-protocol",
+ "ferroui-system",
  "rustc-hash 2.1.3",
 ]
 
 [[package]]
 name = "ferroui-controls-color-picker"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -953,7 +1005,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-controls-treedatagrid"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -967,7 +1019,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-designer-support"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -981,7 +1033,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-designer-support-tests"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "control-catalog",
  "ferroui-base",
@@ -996,7 +1048,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-desktop"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1009,7 +1061,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-dialogs"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -1019,8 +1071,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferroui-dynamic-data"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-reactive",
+ "ferroui-system",
+]
+
+[[package]]
+name = "ferroui-dynamic-data-tests"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-dynamic-data",
+ "ferroui-reactive",
+ "ferroui-reactive-testing",
+ "ferroui-system",
+]
+
+[[package]]
 name = "ferroui-fonts-inter"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1029,7 +1099,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-freedesktop"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "bitflags",
  "ferroui-base",
@@ -1040,7 +1110,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-harfbuzz"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1049,7 +1119,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-headless"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1060,7 +1130,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-headless-vnc"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "bitflags",
  "des",
@@ -1077,7 +1147,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-integration-tests-appium"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1087,7 +1157,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-integration-tests-win32"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1099,7 +1169,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-ios"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "bitflags",
  "block2",
@@ -1122,7 +1192,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-leak-tests"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1132,7 +1202,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-linuxframebuffer"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1145,7 +1215,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-markup"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1153,7 +1223,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-markup-xaml"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -1163,7 +1233,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-markup-xaml-loader"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -1174,7 +1244,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-markup-xaml-tests"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -1189,18 +1259,18 @@ dependencies = [
 
 [[package]]
 name = "ferroui-metal"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
 ]
 
 [[package]]
 name = "ferroui-microcom"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 
 [[package]]
 name = "ferroui-native"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "cc",
  "ferroui-base",
@@ -1216,7 +1286,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-opengl"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -1226,12 +1296,92 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferroui-reactive"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-system",
+]
+
+[[package]]
+name = "ferroui-reactive-testing"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-reactive",
+]
+
+[[package]]
+name = "ferroui-reactive-tests"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-reactive",
+ "ferroui-reactive-testing",
+ "ferroui-system",
+]
+
+[[package]]
+name = "ferroui-reactiveui"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-reactive",
+ "ferroui-splat",
+ "ferroui-system",
+ "paste",
+]
+
+[[package]]
+name = "ferroui-reactiveui-controls"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-build-scan",
+ "ferroui-controls",
+ "ferroui-reactive",
+ "ferroui-reactiveui",
+ "ferroui-splat",
+ "ferroui-system",
+]
+
+[[package]]
+name = "ferroui-reactiveui-testing"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-reactive",
+ "ferroui-reactive-testing",
+ "ferroui-reactiveui",
+ "ferroui-splat",
+ "ferroui-system",
+]
+
+[[package]]
+name = "ferroui-reactiveui-testing-tests"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-reactive",
+ "ferroui-reactive-testing",
+ "ferroui-reactiveui",
+ "ferroui-reactiveui-testing",
+ "ferroui-splat",
+ "ferroui-system",
+]
+
+[[package]]
+name = "ferroui-reactiveui-tests"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-reactive",
+ "ferroui-reactive-testing",
+ "ferroui-reactiveui",
+ "ferroui-splat",
+ "ferroui-system",
+]
+
+[[package]]
 name = "ferroui-remote-protocol"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 
 [[package]]
 name = "ferroui-render-backends-comparison"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1246,7 +1396,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-render-tests"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1259,7 +1409,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-skia"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "cc",
  "ferroui-base",
@@ -1273,8 +1423,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferroui-splat"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-system",
+]
+
+[[package]]
+name = "ferroui-splat-tests"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-splat",
+ "ferroui-system",
+]
+
+[[package]]
+name = "ferroui-system"
+version = "0.4.0-preview.1"
+dependencies = [
+ "smallvec",
+]
+
+[[package]]
 name = "ferroui-themes-fluent"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -1286,7 +1458,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-themes-simple"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -1300,7 +1472,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-themes-winui"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -1312,7 +1484,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-treedatagrid-benchmarks"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-benchmarks",
@@ -1323,7 +1495,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-treedatagrid-core"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -1332,7 +1504,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-vello"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1359,14 +1531,44 @@ dependencies = [
  "wasm-bindgen",
  "web-sys",
  "wgpu",
+ "x11-dl",
  "zune-bmp",
  "zune-core",
  "zune-jpeg",
 ]
 
 [[package]]
+name = "ferroui-view"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-build-scan",
+ "ferroui-controls",
+ "ferroui-controls-color-picker",
+ "ferroui-controls-treedatagrid",
+ "ferroui-desktop",
+ "ferroui-dialogs",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-markup-xaml-loader",
+ "ferroui-reactiveui",
+ "ferroui-reactiveui-controls",
+ "ferroui-themes-fluent",
+ "ferroui-view-macros",
+]
+
+[[package]]
+name = "ferroui-view-macros"
+version = "0.4.0-preview.1"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "ferroui-vulkan"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ash",
  "ferroui-base",
@@ -1374,7 +1576,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-wayland"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "bitflags",
  "ferroui-base",
@@ -1399,7 +1601,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-win32"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "bitflags",
  "ferroui-base",
@@ -1416,7 +1618,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-winui"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1428,7 +1630,7 @@ dependencies = [
 
 [[package]]
 name = "ferroui-x11"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "bitflags",
  "ferroui-base",
@@ -1505,7 +1707,7 @@ version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbf1df16263783918b7da396077521f92b729ef7c429444dfcf03581f1448b77"
 dependencies = [
- "hashbrown",
+ "hashbrown 0.17.1",
  "linebender_resource_handle",
  "memmap2",
  "objc2",
@@ -1644,7 +1846,7 @@ checksum = "9f1218dedd5348c1b166ec3b8b3cbca49d2f527bd43b3fa072ea5123c523ed3f"
 dependencies = [
  "bytemuck",
  "foldhash",
- "hashbrown",
+ "hashbrown 0.17.1",
  "log",
  "peniko",
  "png",
@@ -1660,8 +1862,43 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 
 [[package]]
+name = "glow"
+version = "0.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "29038e1c483364cc6bb3cf78feee1816002e127c331a1eec55a4d202b9e1adb5"
+dependencies = [
+ "js-sys",
+ "slotmap",
+ "wasm-bindgen",
+ "web-sys",
+]
+
+[[package]]
+name = "glutin_wgl_sys"
+version = "0.6.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2c4ee00b289aba7a9e5306d57c2d05499b2e5dc427f84ac708bd2c090212cf3e"
+dependencies = [
+ "gl_generator",
+]
+
+[[package]]
+name = "gpu-allocator"
+version = "0.28.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51255ea7cfaadb6c5f1528d43e92a82acb2b96c43365989a28b2d44ee38f8795"
+dependencies = [
+ "ash",
+ "hashbrown 0.16.1",
+ "log",
+ "presser",
+ "thiserror",
+ "windows 0.62.2",
+]
+
+[[package]]
 name = "gpu-interop"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ash",
  "ferroui-base",
@@ -1714,6 +1951,17 @@ checksum = "b13f1cead31867a0d5b5e8905c262bc02b77701b8cd45ef402988f33745f9b7c"
 dependencies = [
  "cc",
  "pkg-config",
+]
+
+[[package]]
+name = "hashbrown"
+version = "0.16.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
+dependencies = [
+ "allocator-api2",
+ "equivalent",
+ "foldhash",
 ]
 
 [[package]]
@@ -1863,7 +2111,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855"
 dependencies = [
  "equivalent",
- "hashbrown",
+ "hashbrown 0.17.1",
 ]
 
 [[package]]
@@ -1877,7 +2125,7 @@ dependencies = [
 
 [[package]]
 name = "integration-test-app"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -1917,6 +2165,15 @@ name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8f42a60cbdf9a97f5d2305f08a87dc4e09308d1276d28c869c684d7777685682"
+
+[[package]]
+name = "jni-sys"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "41a652e1f9b6e0275df1f15b32661cf0d4b78d4d87ddec5e0c3c20f097433258"
+dependencies = [
+ "jni-sys 0.4.1",
+]
 
 [[package]]
 name = "jni-sys"
@@ -1971,6 +2228,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cb26cec98cce3a3d96cbb7bced3c4b16e3d13f27ec56dbd62cbc8f39cfb9d653"
 dependencies = [
  "cpufeatures",
+]
+
+[[package]]
+name = "khronos-egl"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6aae1df220ece3c0ada96b8153459b67eebe9ae9212258bb0134ae60416fdf76"
+dependencies = [
+ "libc",
+ "libloading",
+ "pkg-config",
 ]
 
 [[package]]
@@ -2233,11 +2501,11 @@ dependencies = [
 
 [[package]]
 name = "microcom-codegen"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 
 [[package]]
 name = "mini-mvvm"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build-scan",
@@ -2301,7 +2569,7 @@ dependencies = [
  "cfg_aliases",
  "codespan-reporting",
  "half",
- "hashbrown",
+ "hashbrown 0.17.1",
  "indexmap",
  "libm",
  "log",
@@ -2309,6 +2577,7 @@ dependencies = [
  "num-traits",
  "once_cell",
  "rustc-hash 1.1.0",
+ "spirv",
  "thiserror",
  "unicode-ident",
 ]
@@ -2319,10 +2588,19 @@ version = "30.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "590afbf58a6f4f62873cd5cff4468061844bafa1cdf399cc954537c22d768d49"
 dependencies = [
- "hashbrown",
+ "hashbrown 0.17.1",
  "indexmap",
  "rustc-hash 1.1.0",
  "thiserror",
+]
+
+[[package]]
+name = "ndk-sys"
+version = "0.6.0+11769913"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ee6cda3051665f1fb8d9e08fc35c96d5a244fb1be711a03b71118828afc9a873"
+dependencies = [
+ "jni-sys 0.3.1",
 ]
 
 [[package]]
@@ -2495,6 +2773,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
 
 [[package]]
+name = "ordered-channel"
+version = "1.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95be4d57809897b5a7539fc15a7dfe0e84141bc3dfaa2e9b1b27caa90acf61ab"
+dependencies = [
+ "crossbeam-channel",
+]
+
+[[package]]
+name = "ordered-float"
+version = "5.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c7c9e0d9b23589f26070720bac724174bfec1083e82f7854cdd0267518343c0"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "ordered-stream"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2608,7 +2904,7 @@ checksum = "f6b464fbc74e149a392436b17d523f769e057cb6877f6a5c4618bc6f11800548"
 
 [[package]]
 name = "platform-sanity-checks"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -2694,6 +2990,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "925383efa346730478fb4838dbe9137d2a47675ad789c546d150a6e1dd4ab31c"
 
 [[package]]
+name = "presser"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e8cf8e6a8aa66ce33f63993ffc4ea4271eb5b0530a9002db8455ea6050c77bfa"
+
+[[package]]
 name = "prettyplease"
 version = "0.2.37"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2752,6 +3054,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
 
 [[package]]
+name = "range-alloc"
+version = "0.1.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ca45419789ae5a7899559e9512e58ca889e41f04f1f2445e9f4b290ceccd1d08"
+
+[[package]]
 name = "raw-window-handle"
 version = "0.6.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2767,6 +3075,79 @@ dependencies = [
  "objc2-core-foundation",
  "objc2-foundation",
  "objc2-quartz-core",
+]
+
+[[package]]
+name = "rayon"
+version = "1.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fb39b166781f92d482534ef4b4b1b2568f42613b53e5b6c160e24cfbfa30926d"
+dependencies = [
+ "either",
+ "rayon-core",
+]
+
+[[package]]
+name = "rayon-core"
+version = "1.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "22e18b0f0062d30d4230b2e85ff77fdfe4326feb054b9783a3460d8435c8ab91"
+dependencies = [
+ "crossbeam-deque",
+ "crossbeam-utils",
+]
+
+[[package]]
+name = "reactive-demo"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-desktop",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-reactive",
+ "ferroui-reactive-testing",
+ "ferroui-reactiveui",
+ "ferroui-reactiveui-controls",
+ "ferroui-reactiveui-testing",
+ "ferroui-splat",
+ "ferroui-system",
+ "ferroui-themes-winui",
+ "sample-build",
+ "sample-support",
+ "sample-testing",
+ "serde",
+ "serde_json",
+ "ureq",
+]
+
+[[package]]
+name = "reactiveui-example"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-desktop",
+ "ferroui-dynamic-data",
+ "ferroui-fonts-inter",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-reactive",
+ "ferroui-reactive-testing",
+ "ferroui-reactiveui",
+ "ferroui-reactiveui-controls",
+ "ferroui-splat",
+ "ferroui-system",
+ "ferroui-themes-winui",
+ "libc",
+ "mini-mvvm",
+ "sample-build",
+ "sample-support",
+ "sample-testing",
+ "serde",
+ "serde_json",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2820,7 +3201,7 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "render-demo"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "control-samples",
  "ferroui-base",
@@ -2959,7 +3340,7 @@ checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
 
 [[package]]
 name = "safe-area-demo"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -2974,7 +3355,7 @@ dependencies = [
 
 [[package]]
 name = "safe-area-demo-android"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-android",
  "ferroui-base",
@@ -2984,7 +3365,7 @@ dependencies = [
 
 [[package]]
 name = "safe-area-demo-desktop"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -2995,7 +3376,7 @@ dependencies = [
 
 [[package]]
 name = "safe-area-demo-ios"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -3014,14 +3395,14 @@ dependencies = [
 
 [[package]]
 name = "sample-build"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-build",
 ]
 
 [[package]]
 name = "sample-support"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -3030,7 +3411,7 @@ dependencies = [
 
 [[package]]
 name = "sample-testing"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -3043,7 +3424,7 @@ dependencies = [
 
 [[package]]
 name = "sandbox"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -3138,6 +3519,255 @@ dependencies = [
 ]
 
 [[package]]
+name = "seven-guis-cells-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-cells-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-cells-macros"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-circle-drawer-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-circle-drawer-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-circle-drawer-macros"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-counter-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-counter-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-counter-macros"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-crud-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-crud-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-crud-macros"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-flight-booker-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-flight-booker-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-flight-booker-macros"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-model"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-themes-winui",
+ "ferroui-view",
+]
+
+[[package]]
+name = "seven-guis-temperature-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-temperature-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-temperature-macros"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-tests"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-view",
+ "seven-guis-cells-builders",
+ "seven-guis-cells-hooks",
+ "seven-guis-cells-macros",
+ "seven-guis-circle-drawer-builders",
+ "seven-guis-circle-drawer-hooks",
+ "seven-guis-circle-drawer-macros",
+ "seven-guis-counter-builders",
+ "seven-guis-counter-hooks",
+ "seven-guis-counter-macros",
+ "seven-guis-crud-builders",
+ "seven-guis-crud-hooks",
+ "seven-guis-crud-macros",
+ "seven-guis-flight-booker-builders",
+ "seven-guis-flight-booker-hooks",
+ "seven-guis-flight-booker-macros",
+ "seven-guis-model",
+ "seven-guis-temperature-builders",
+ "seven-guis-temperature-hooks",
+ "seven-guis-temperature-macros",
+ "seven-guis-timer-builders",
+ "seven-guis-timer-hooks",
+ "seven-guis-timer-macros",
+]
+
+[[package]]
+name = "seven-guis-timer-builders"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-timer-hooks"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "seven-guis-timer-macros"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
 name = "sha3"
 version = "0.10.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3183,7 +3813,7 @@ checksum = "e3a9fe34e3e7a50316060351f37187a3f546bce95496156754b601a5fa71b76e"
 
 [[package]]
 name = "single-project-sandbox"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-android",
  "ferroui-base",
@@ -3251,12 +3881,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
+name = "slotmap"
+version = "1.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bdd58c3c93c3d278ca835519292445cb4b0d4dc59ccfdf7ceadaab3f8aeb4038"
+dependencies = [
+ "version_check",
+]
+
+[[package]]
 name = "smallvec"
 version = "1.16.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9395f0f0eee849a9b707b2f06bb92a6a422090e2123bb2ef8e87a0e61892a8e"
 dependencies = [
  "serde",
+]
+
+[[package]]
+name = "spirv"
+version = "0.4.0+sdk-1.4.341.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d9571ea910ebd84c86af4b3ed27f9dbdc6ad06f17c5f96146b2b671e2976744f"
+dependencies = [
+ "bitflags",
 ]
 
 [[package]]
@@ -3375,7 +4023,7 @@ dependencies = [
 
 [[package]]
 name = "text-test-app"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -3406,6 +4054,15 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 3.0.6",
+]
+
+[[package]]
+name = "thread_local"
+version = "1.1.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f60246a4944f24f6e018aa17cdeffb7818b76356965d03b07d6a9886e8962185"
+dependencies = [
+ "cfg-if",
 ]
 
 [[package]]
@@ -3535,7 +4192,7 @@ dependencies = [
 
 [[package]]
 name = "treedatagrid-demo"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -3704,9 +4361,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed1fec424fbba6acf6cbc78bb526447eb77590d95f40419d598870fe37535212"
 dependencies = [
  "bytemuck",
+ "crossbeam-channel",
  "glifo",
- "hashbrown",
+ "hashbrown 0.17.1",
+ "ordered-channel",
  "png",
+ "rayon",
+ "thread_local",
  "vello_common",
 ]
 
@@ -3731,7 +4392,7 @@ checksum = "f0e01b02c55094a3bcfbf80d736221a74bc3f8914b566298b4ad3c9f05e7ac08"
 dependencies = [
  "bytemuck",
  "glifo",
- "hashbrown",
+ "hashbrown 0.17.1",
  "js-sys",
  "log",
  "thiserror",
@@ -3774,8 +4435,36 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
 
 [[package]]
+name = "view-gallery"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-controls-color-picker",
+ "ferroui-controls-treedatagrid",
+ "ferroui-markup-xaml",
+ "ferroui-themes-fluent",
+ "ferroui-treedatagrid-core",
+ "ferroui-view",
+ "seven-guis-model",
+]
+
+[[package]]
+name = "view-interop"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-view",
+ "sample-build",
+ "seven-guis-model",
+]
+
+[[package]]
 name = "virtualization-demo"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "control-samples",
  "ferroui-base",
@@ -4045,7 +4734,7 @@ dependencies = [
  "cfg-if",
  "cfg_aliases",
  "document-features",
- "hashbrown",
+ "hashbrown 0.17.1",
  "js-sys",
  "log",
  "portable-atomic",
@@ -4074,7 +4763,7 @@ dependencies = [
  "bytemuck",
  "cfg_aliases",
  "document-features",
- "hashbrown",
+ "hashbrown 0.17.1",
  "indexmap",
  "log",
  "naga",
@@ -4088,6 +4777,7 @@ dependencies = [
  "smallvec",
  "thiserror",
  "wgpu-core-deps-apple",
+ "wgpu-core-deps-emscripten",
  "wgpu-core-deps-windows-linux-android",
  "wgpu-hal",
  "wgpu-naga-bridge",
@@ -4099,6 +4789,15 @@ name = "wgpu-core-deps-apple"
 version = "30.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "061f3d319a40d39d00b1ecc2c33b89fe21d4e6fe01859df3500a3a8ecccd6b68"
+dependencies = [
+ "wgpu-hal",
+]
+
+[[package]]
+name = "wgpu-core-deps-emscripten"
+version = "30.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d98b86cf4abf524a902dd35f18ca6a3f08fc2ae9847c8f10b48e30491b1f0b86"
 dependencies = [
  "wgpu-hal",
 ]
@@ -4118,35 +4817,54 @@ version = "30.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6b7fb58561a792bc237628ba0792e332de418fefe145f13b5ed8201e6d52f58"
 dependencies = [
+ "android_system_properties",
  "arrayvec",
+ "ash",
+ "bit-set 0.10.0",
  "bitflags",
  "block2",
  "bytemuck",
  "cfg-if",
  "cfg_aliases",
- "hashbrown",
+ "glow",
+ "glutin_wgl_sys",
+ "gpu-allocator",
+ "hashbrown 0.17.1",
+ "js-sys",
+ "khronos-egl",
+ "libc",
  "libloading",
  "log",
  "naga",
  "naga-types",
+ "ndk-sys",
  "objc2",
  "objc2-core-foundation",
  "objc2-core-graphics",
  "objc2-foundation",
  "objc2-metal",
  "objc2-quartz-core",
+ "once_cell",
+ "ordered-float",
  "parking_lot",
  "portable-atomic",
  "portable-atomic-util",
  "profiling",
+ "range-alloc",
  "raw-window-handle",
  "raw-window-metal",
  "renderdoc-sys",
  "smallvec",
  "static_assertions",
  "thiserror",
+ "wasm-bindgen",
+ "wayland-sys",
+ "web-sys",
  "wgpu-naga-bridge",
  "wgpu-types",
+ "windows 0.62.2",
+ "windows-core 0.62.2",
+ "windows-result 0.4.1",
 ]
 
 [[package]]
@@ -4504,7 +5222,7 @@ dependencies = [
 
 [[package]]
 name = "winui-embed-sample"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -4524,7 +5242,7 @@ dependencies = [
 
 [[package]]
 name = "winui-theme-gallery"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-controls",
@@ -4564,7 +5282,7 @@ dependencies = [
 
 [[package]]
 name = "xaml-include-fixture-application"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -4578,7 +5296,7 @@ dependencies = [
 
 [[package]]
 name = "xaml-include-fixture-theme"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "ferroui-base",
  "ferroui-build",
@@ -4589,7 +5307,7 @@ dependencies = [
 
 [[package]]
 name = "xamlx"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "roxmltree 0.20.0",
 ]
@@ -4612,7 +5330,7 @@ checksum = "163b33ed8786455e2fa5d72f554057ce3f3182425434f756cd39c99839d88e23"
 
 [[package]]
 name = "xembed-sample"
-version = "0.2.0"
+version = "0.4.0-preview.1"
 dependencies = [
  "control-catalog",
  "ferroui-base",

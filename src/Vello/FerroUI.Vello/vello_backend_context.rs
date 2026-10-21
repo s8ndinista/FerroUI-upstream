@@ -21,6 +21,10 @@ pub struct VelloContext {
     /// hybrid mode draws to.
     #[cfg(feature = "hybrid-webgl")]
     web_gl: Option<Rc<crate::web_gl::VelloWebGlGpu>>,
+    /// The context of OpenGL of the platform, through which the windows
+    /// the GPU modes do not draw are presented ([`crate::gl_window`]).
+    #[cfg(not(target_family = "wasm"))]
+    gl_windows: Option<Rc<crate::gl_window::VelloGlWindows>>,
 }
 
 impl VelloContext {
@@ -33,7 +37,16 @@ impl VelloContext {
             gpu: None,
             #[cfg(feature = "hybrid-webgl")]
             web_gl: None,
+            #[cfg(not(target_family = "wasm"))]
+            gl_windows: None,
         }
+    }
+
+    /// The context, with the context of OpenGL of the platform to present
+    /// the windows the GPU modes do not draw through.
+    #[cfg(not(target_family = "wasm"))]
+    pub fn with_gl_windows(self, gl_windows: Option<Rc<crate::gl_window::VelloGlWindows>>) -> Self {
+        Self { gl_windows, ..self }
     }
 
     /// Creates the backend context of the WebGL2 context of a canvas: the
@@ -77,6 +90,13 @@ impl IPlatformRenderInterfaceContext for VelloContext {
         #[cfg(feature = "hybrid-webgl")]
         if let Some(web_gl) = &self.web_gl {
             if let Some(target) = web_gl.try_create_render_target(surfaces, &self.rendering_modes) {
+                return target;
+            }
+        }
+
+        #[cfg(not(target_family = "wasm"))]
+        if let Some(gl_windows) = &self.gl_windows {
+            if let Some(target) = gl_windows.try_create_render_target(surfaces, &self.rendering_modes) {
                 return target;
             }
         }

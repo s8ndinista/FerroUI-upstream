@@ -10,8 +10,8 @@ The master status of the port: every upstream project, file, type and member (pu
 
 Two numbers, because one hides what the other shows.
 
-1. **Of what is in scope: 100.0%.** The 39 upstream projects that are in scope have 36201 members (public, protected and internal) in files that apply to the port. 30353 have a counterpart, 0 are missing and 5848 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
-2. **Of everything upstream has: 81.2%.** Every C# source project of the extraction, in scope or not, has 37382 members; the port has a counterpart for 30353. The total includes the 5848 waived members, the 1181 members of files marked not applicable and the 0 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
+1. **Of what is in scope: 100.0%.** The 39 upstream projects that are in scope have 36188 members (public, protected and internal) in files that apply to the port. 30351 have a counterpart, 0 are missing and 5837 are waived: declared not ported, each with a reason ([waiver-audit.md](waiver-audit.md)). The percentage is `present / (total - waived)`. It says nothing about projects that are out of scope, and it counts a waived member as if it did not exist.
+2. **Of everything upstream has: 81.2%.** Every C# source project of the extraction, in scope or not, has 37382 members; the port has a counterpart for 30351. The total includes the 5837 waived members, the 1194 members of files marked not applicable and the 0 members of projects that are out of scope or not started. The rest of that distance is what [REMAINING.md](REMAINING.md) lists; part of it is never ported by design (the waived and not applicable members), so this number does not reach 100.
 
 Both numbers match names, not behaviour (Legend, below). Projects the extraction does not read (analyzers, generators of upstream's own build, the D-Bus library) are listed in REMAINING.md with their size in files.
 
@@ -55,15 +55,15 @@ Percentages are `present / (total - waived)`. Member matching is by name with re
 
 | | Ported | Total | Waived | % |
 |---|---:|---:|---:|---:|
-| C# files | 2795 | 2795 | 0 | 100.0% |
-| Types | 3938 | 4348 | 410 | 100.0% |
-| Members | 30353 | 36201 | 5848 | 100.0% |
+| C# files | 2794 | 2794 | 0 | 100.0% |
+| Types | 3937 | 4346 | 409 | 100.0% |
+| Members | 30351 | 36188 | 5837 | 100.0% |
 | Contracts (interfaces) | 494 | 543 | - | 91.0% |
 | Property registrations | 1219 | 1234 | - | 98.8% |
 | Routed events | 108 | 108 | - | 100.0% |
 | Other files (native sources, XAML, TypeScript, fonts) | 243 | 265 | - | 91.7% |
 
-148 upstream files are not applicable and not counted. Out of the current scope (below): 0 files, 0 types, 0 members.
+149 upstream files are not applicable and not counted. Out of the current scope (below): 0 files, 0 types, 0 members.
 
 ## Projects
 
@@ -74,7 +74,7 @@ The % column is member coverage (file coverage for plain file lists).
 | [XamlX](tracking/XamlX.md) | `external/XamlX/src/XamlX` | `external/XamlX/src/XamlX` | `xamlx` | 62/62 | 172/177 (5 waived) | 722/878 (156 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Native (native sources)](tracking/Avalonia.Native_native_sources.md) | `native/Avalonia.Native` | `native/FerroUI.Native` | (Objective-C++ sources built by ferroui-native) | 62/62 | - | - | 100.0% | 1 - desktop (macOS) | P0 |
 | [Avalonia.Android](tracking/Avalonia.Android.md) | `src/Android/Avalonia.Android` | `src/Android/FerroUI.Android` | `ferroui-android` | 58/58 | 86/88 (2 waived) | 394/447 (53 waived) | 100.0% | 6 - mobile (Android) | P1 |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/Avalonia.Base` | `src/FerroUI.Base` | `ferroui-base` | 1248/1248 | 1524/1659 (135 waived) | 10360/11393 (1033 waived) | 100.0% | 0 - core | P0 |
+| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/Avalonia.Base` | `src/FerroUI.Base` | `ferroui-base` | 1247/1247 | 1523/1657 (134 waived) | 10358/11380 (1022 waived) | 100.0% | 0 - core | P0 |
 | [Avalonia.Build.Tasks](tracking/Avalonia.Build.Tasks.md) | `src/Avalonia.Build.Tasks` | `src/FerroUI.Build.Tasks` | `ferroui-build` | 6/6 | 6/7 (1 waived) | 7/35 (28 waived) | 100.0% | 2 - xaml + themes | P1 |
 | [Avalonia.Controls](tracking/Avalonia.Controls.md) | `src/Avalonia.Controls` | `src/FerroUI.Controls` | `ferroui-controls` | 540/540 | 623/630 (7 waived) | 6262/6412 (150 waived) | 100.0% | 1 - controls | P0 |
 | [Avalonia.Controls.ColorPicker](tracking/Avalonia.Controls.ColorPicker.md) | `src/Avalonia.Controls.ColorPicker` | `src/FerroUI.Controls.ColorPicker` | `ferroui-controls-color-picker` | 39/39 | 41/41 | 726/726 | 100.0% | 3 - extras | P2 |
@@ -322,6 +322,8 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `samples/IntegrationTestApp` | `samples/IntegrationTestApp` (not tracked) |
 | `samples/MiniMvvm` | `samples/MiniMvvm` (not tracked) |
 | `samples/PlatformSanityChecks` | `samples/PlatformSanityChecks` (not tracked) |
+| `samples/ReactiveDemo` | none (FerroUI only) |
+| `samples/ReactiveUIExample` | none (FerroUI only) |
 | `samples/RenderDemo` | `samples/RenderDemo` (not tracked) |
 | `samples/SafeAreaDemo` | `samples/SafeAreaDemo` (not tracked) |
 | `samples/SafeAreaDemo.Android` | `samples/SafeAreaDemo.Android` (not tracked) |
@@ -334,6 +336,7 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `samples/Sandbox` | `samples/Sandbox` (not tracked) |
 | `samples/SingleProjectSandbox` | `samples/SingleProjectSandbox` (not tracked) |
 | `samples/TextTestApp` | `samples/TextTestApp` (not tracked) |
+| `samples/TreeDataGridDemo` | none (FerroUI only) |
 | `samples/VirtualizationDemo` | `samples/VirtualizationDemo` (not tracked) |
 | `samples/WinUIEmbedSample` | `samples/WinUIEmbedSample` (not tracked) |
 | `samples/WinUIThemeGallery` | none (FerroUI only) |
@@ -349,13 +352,21 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `src/FerroUI.DesignerSupport` | `src/Avalonia.DesignerSupport` |
 | `src/FerroUI.Desktop` | `src/Avalonia.Desktop` |
 | `src/FerroUI.Dialogs` | `src/Avalonia.Dialogs` |
+| `src/FerroUI.DynamicData` | none (FerroUI only) |
 | `src/FerroUI.Fonts.Inter` | `src/Avalonia.Fonts.Inter` |
 | `src/FerroUI.FreeDesktop` | `src/Avalonia.FreeDesktop` |
 | `src/FerroUI.Metal` | `src/Avalonia.Metal` |
 | `src/FerroUI.MicroCom` | `src/Avalonia.MicroCom` |
 | `src/FerroUI.Native` | `src/Avalonia.Native` |
 | `src/FerroUI.OpenGL` | `src/Avalonia.OpenGL` |
+| `src/FerroUI.Reactive` | `Rx.NET/Source/src/System.Reactive` (Rx.NET: [System.Reactive](tracking/reactive/System.Reactive.md)) |
+| `src/FerroUI.Reactive.Testing` | `Rx.NET/Source/src/Microsoft.Reactive.Testing` (Rx.NET: [Microsoft.Reactive.Testing](tracking/reactive/Microsoft.Reactive.Testing.md)) |
+| `src/FerroUI.ReactiveUI` | none (FerroUI only) |
+| `src/FerroUI.ReactiveUI.Controls` | none (FerroUI only) |
+| `src/FerroUI.ReactiveUI.Testing` | none (FerroUI only) |
 | `src/FerroUI.Remote.Protocol` | `src/Avalonia.Remote.Protocol` |
+| `src/FerroUI.Splat` | none (FerroUI only) |
+| `src/FerroUI.System` | none (FerroUI only) |
 | `src/FerroUI.Themes.Fluent` | `src/Avalonia.Themes.Fluent` |
 | `src/FerroUI.Themes.Simple` | `src/Avalonia.Themes.Simple` |
 | `src/FerroUI.Themes.WinUI` | none (FerroUI only) |
@@ -370,6 +381,8 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `src/Markup/FerroUI.Markup.Xaml` | `src/Markup/Avalonia.Markup.Xaml` |
 | `src/Markup/FerroUI.Markup.Xaml.Loader` | `src/Markup/Avalonia.Markup.Xaml.Loader` |
 | `src/Skia/FerroUI.Skia` | `src/Skia/Avalonia.Skia` |
+| `src/TreeDataGrid/FerroUI.Controls.TreeDataGrid` | none (FerroUI only) |
+| `src/TreeDataGrid/FerroUI.TreeDataGrid.Core` | none (FerroUI only) |
 | `src/Vello/FerroUI.Vello` | none (FerroUI only) |
 | `src/Windows/FerroUI.Win32` | `src/Windows/Avalonia.Win32` |
 | `src/Windows/FerroUI.WinUI` | `src/Windows/Avalonia.WinUI` |
@@ -377,12 +390,18 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `src/tools/MicroCom.CodeGenerator` | none (FerroUI only) |
 | `tests/FerroUI.Benchmarks` | `tests/Avalonia.Benchmarks` (not tracked) |
 | `tests/FerroUI.DesignerSupport.Tests` | `tests/Avalonia.DesignerSupport.Tests` (not tracked) |
+| `tests/FerroUI.DynamicData.Tests` | none (FerroUI only) |
 | `tests/FerroUI.IntegrationTests.Appium` | `tests/Avalonia.IntegrationTests.Appium` (not tracked) |
 | `tests/FerroUI.IntegrationTests.Win32` | `tests/Avalonia.IntegrationTests.Win32` (not tracked) |
 | `tests/FerroUI.LeakTests` | `tests/Avalonia.LeakTests` (not tracked) |
 | `tests/FerroUI.Markup.Xaml.UnitTests` | `tests/Avalonia.Markup.Xaml.UnitTests` (not tracked) |
+| `tests/FerroUI.Reactive.Tests` | `Rx.NET/Source/tests/Tests.System.Reactive` (Rx.NET: tests, [TRACKING.md](tracking/reactive/TRACKING.md)) |
+| `tests/FerroUI.ReactiveUI.Testing.Tests` | none (FerroUI only) |
+| `tests/FerroUI.ReactiveUI.Tests` | none (FerroUI only) |
 | `tests/FerroUI.RenderBackends.Comparison` | none (FerroUI only) |
 | `tests/FerroUI.RenderTests` | none (FerroUI only) |
+| `tests/FerroUI.Splat.Tests` | none (FerroUI only) |
+| `tests/FerroUI.TreeDataGrid.Benchmarks` | none (FerroUI only) |
 | `tests/XamlIncludeFixture/Application` | none (FerroUI only) |
 | `tests/XamlIncludeFixture/Theme` | none (FerroUI only) |
 
@@ -390,7 +409,7 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 
 ## Rust-only files
 
-444 Rust source files have no upstream counterpart (35 without a recorded reason). They are listed at the end of each project page.
+439 Rust source files have no upstream counterpart (35 without a recorded reason). They are listed at the end of each project page.
 
 | Project | Rust file | Reason |
 |---|---|---|
@@ -412,16 +431,12 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/core/plugins/property_info_accessor_factory.rs` | the accessor factories of compiled binding paths for plain properties, in the crate of the paths; upstream's are in `MarkupExtensions/CompiledBindings/PropertyInfoAccessorFactory.cs` of Avalonia.Markup.Xaml |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/core/plugins/untyped_accessor_plugin.rs` | property accessors over untyped getters and setters of the markup metadata: takes the place of the accessors upstream builds from `PropertyInfo` |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/core/weak_value.rs` | a reference to a binding source that does not keep it alive: a weak reference to an object upstream |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/model/event.rs` | the contracts of the .NET runtime library that bindings observe on a model object (`INotifyPropertyChanged`, `INotifyCollectionChanged`, `INotifyDataErrorInfo`, events, indexers) and the declaration of a model type, which takes the place of reflection over the object |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/model/i_bindable_indexer.rs` | the contracts of the .NET runtime library that bindings observe on a model object (`INotifyPropertyChanged`, `INotifyCollectionChanged`, `INotifyDataErrorInfo`, events, indexers) and the declaration of a model type, which takes the place of reflection over the object |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/model/i_notify_collection_changed.rs` | the contracts of the .NET runtime library that bindings observe on a model object (`INotifyPropertyChanged`, `INotifyCollectionChanged`, `INotifyDataErrorInfo`, events, indexers) and the declaration of a model type, which takes the place of reflection over the object |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/model/i_notify_data_error_info.rs` | the contracts of the .NET runtime library that bindings observe on a model object (`INotifyPropertyChanged`, `INotifyCollectionChanged`, `INotifyDataErrorInfo`, events, indexers) and the declaration of a model type, which takes the place of reflection over the object |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/model/i_notify_property_changed.rs` | the contracts of the .NET runtime library that bindings observe on a model object (`INotifyPropertyChanged`, `INotifyCollectionChanged`, `INotifyDataErrorInfo`, events, indexers) and the declaration of a model type, which takes the place of reflection over the object |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/data/model/model_type.rs` | the contracts of the .NET runtime library that bindings observe on a model object (`INotifyPropertyChanged`, `INotifyCollectionChanged`, `INotifyDataErrorInfo`, events, indexers) and the declaration of a model type, which takes the place of reflection over the object |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/diagnostics/perf_counters.rs` | counters of the work the framework does per operation, behind the feature `perf-counters` (docs/porting/performance, design 09): not from upstream, which is measured with the tools of its runtime |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/element_ref.rs` | a reference to an element that the holder does not own, held weakly and compared by identity: the value type of properties that point sideways or up the tree (a placement target, the target of a label), a plain object reference upstream |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/ferro_thread_local.rs` | the declaration of thread-local variables: `thread_local!` on every target but Android, where each would take one of the 128 keys of the C library of a process (docs/porting/android-platform.md, section 5.1); thread-static fields of the managed runtime upstream |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/ferro_thread_local/table.rs` | the table of thread-local variables of a thread on Android behind one key of the C library (docs/porting/android-platform.md, section 5.1); the managed runtime keeps thread-static fields itself upstream |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/i_support_initialize.rs` | counterpart of .NET `System.ComponentModel.ISupportInitialize` |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/input/i_command.rs` | counterpart of .NET `System.Windows.Input.ICommand` |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/input/platform/clipboard_error.rs` | the error of a failed clipboard operation, by category: upstream lets the exceptions of the platform through |
@@ -526,7 +541,6 @@ FerroUI-only crates have no upstream source directory (for example the MicroCom 
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/rust_paths.rs` | generated by scripts/generate_markup_types.py: the public Rust paths of the registered types of the crate, which the emitter of the XAML compiler writes into generated code |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/styling/test_support.rs` | classes shared by the styling tests: the control library is a separate crate, so the tests use minimal classes in place of the controls of the upstream tests |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/styling/testing.rs` | the port of `StyleHelpers` of the upstream test projects, for this crate and the crates built on it, and the members of styling the benchmarks reach (the trait of the kinds of selectors, the styling pass of the value store), which upstream's benchmark project reaches through its access to the internals |
-| [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/threading/cancellation_token.rs` | counterpart of .NET `CancellationToken`, `CancellationTokenSource` and `CancellationTokenRegistration` |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/threading/dispatcher_task.rs` | futures that run on a dispatcher: the executor half of what upstream gets from `Task` and its synchronization context (porting guide: asynchronous members return DispatcherTask) |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/threading/dispatcher_tests_exception.rs` | a part of an upstream test suite (`&lt;Suite&gt;Tests_&lt;Part&gt;.cs` or `&lt;Suite&gt;Tests.&lt;Part&gt;.cs`): the scanner takes only `*_tests.rs` for a test file |
 | [Avalonia.Base](tracking/Avalonia.Base.md) | `src/FerroUI.Base/type_system.rs` | object model runtime (Ref/WeakRef handles, TypeInfo, class macros): replaces the CLR type system, virtual dispatch and GC references |

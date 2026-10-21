@@ -340,6 +340,21 @@ mod imp {
             Some(win32_text_rendering::system_parameters(self.composited.load(Ordering::Acquire)))
         }
 
+        /// The handle of the window as a native handle surface, for a
+        /// render backend that makes a surface of its own from it (the
+        /// Vello backend, docs/porting/vello-backend.md, section 14): the
+        /// handle and the scaling as they are now.
+        fn try_get_surface_kind(&self, kind: std::any::TypeId) -> Option<std::rc::Rc<dyn Any>> {
+            (kind == std::any::TypeId::of::<dyn INativePlatformHandleSurface>()).then(|| {
+                let handle: std::rc::Rc<dyn INativePlatformHandleSurface> = std::rc::Rc::new(WindowImplPlatformHandle {
+                    hwnd: AtomicIsize::new(self.hwnd.load(Ordering::Acquire)),
+                    scaling_bits: AtomicU64::new(self.scaling_bits.load(Ordering::Acquire)),
+                    composited: AtomicBool::new(self.composited.load(Ordering::Acquire)),
+                });
+                std::rc::Rc::new(handle) as std::rc::Rc<dyn Any>
+            })
+        }
+
         fn as_any(&self) -> &dyn Any {
             self
         }

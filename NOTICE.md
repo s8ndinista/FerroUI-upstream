@@ -59,6 +59,54 @@ Avalonia itself incorporates code from other projects (for example WPF-derived l
 - License: MIT, Copyright (c) Microsoft Corporation
 - Used for: the WinUI theme `src/FerroUI.Themes.WinUI`, whose resource and control theme documents are ported from the theme of WinUI 3 (`generic.xaml` and the theme resources of the controls library; see `src/FerroUI.Themes.WinUI/NOTICE.md`, which holds the license text, and `docs/porting/winui-theme.md`).
 
+## Reactive Extensions for .NET (Rx.NET)
+
+- Project: <https://github.com/dotnet/reactive> (`Rx.NET/Source`, commit `89e05b8`)
+- License: MIT, Copyright (c) .NET Foundation and Contributors
+- Used for: `src/FerroUI.Reactive` (a port of System.Reactive), `src/FerroUI.Reactive.Testing` (a port of Microsoft.Reactive.Testing) and their unit tests in `tests/FerroUI.Reactive.Tests`, ported from `Tests.System.Reactive` (`docs/porting/reactive.md`).
+
+## Splat
+
+- Project: <https://github.com/reactiveui/splat> (commit `39466de`)
+- License: MIT, Copyright (c) ReactiveUI 2018 - 2025
+- Used for: `src/FerroUI.Splat` (a port of Splat.Core, Splat.Logging, Splat.Builder, and the mode detection and feature usage tracking of Splat) and its unit tests in `tests/FerroUI.Splat.Tests`, ported from Splat.Tests, Splat.Logging.Tests and Splat.Builder.Tests (`docs/porting/reactive.md`).
+
+## DynamicData
+
+- Project: <https://github.com/reactivemarbles/DynamicData> (`src`, commit `65016e5`)
+- License: MIT, Copyright (c) Roland Pheasant 2011-2022
+- Used for: `src/FerroUI.DynamicData` (a port of DynamicData) and its unit tests in `tests/FerroUI.DynamicData.Tests`, ported from `DynamicData.Tests` (`docs/porting/reactive.md`).
+
+## ReactiveUI
+
+- Project: <https://github.com/reactiveui/ReactiveUI> (`src/ReactiveUI.Core`, `src/ReactiveUI.Shared`, `src/Shared`, `src/ReactiveUI.Testing`, `src/ReactiveUI.Testing.Reactive`, commit `721f544`)
+- License: MIT, Copyright (c) .NET Foundation and Contributors
+- Used for: `src/FerroUI.ReactiveUI` (a port of ReactiveUI in its System.Reactive flavour), `src/FerroUI.ReactiveUI.Testing` (a port of ReactiveUI.Testing) and their unit tests in `tests/FerroUI.ReactiveUI.Tests` and `tests/FerroUI.ReactiveUI.Testing.Tests`, ported from ReactiveUI.Tests, ReactiveUI.Builder.Tests, ReactiveUI.Splat.Tests and ReactiveUI.Testing.Tests (`docs/porting/reactive.md`).
+
+## ReactiveUI.Binding
+
+- Project: <https://github.com/reactiveui/ReactiveUI.Binding.SourceGenerators> (`src/ReactiveUI.Binding.Shared`, commit `d1e1b65`)
+- License: MIT, Copyright (c) ReactiveUI Association Incorporated 2019 - 2026
+- Used for: the run time of the property observation, output properties, bindings, converters, interactions and view location in `src/FerroUI.ReactiveUI/binding`, and their unit tests in `tests/FerroUI.ReactiveUI.Tests/tests/binding`, ported from ReactiveUI.Binding.Tests and ReactiveUI.Binding.GeneratedCode.Tests (`docs/porting/reactive.md`).
+
+## ReactiveUI.Primitives
+
+- Project: <https://github.com/reactiveui/Primitives> (`src/ReactiveUI.Primitives.Reactive`, `src/Primitives.Platform.Reactive.Shared`, `src/Primitives.Core`, commit `18e8a85`)
+- License: MIT, Copyright (c) 2019-2026 ReactiveUI Association Incorporated
+- Used for: the System.Reactive extras that ReactiveUI calls, in `src/FerroUI.ReactiveUI/primitives` and in the delayed notifications of `src/FerroUI.ReactiveUI/reactive_object`.
+
+## ReactiveUI.Avalonia
+
+- Project: <https://github.com/reactiveui/ReactiveUI.Avalonia> (`src/ReactiveUI.Avalonia`, `src/Shared`, commit `26f23b5`), with `ReactiveUI.Binding.Avalonia.Shared` of ReactiveUI.Binding (commit `d1e1b65`) and the scheduler of `ReactiveUI.Primitives.Avalonia.Reactive` (commit `18e8a85`)
+- License: MIT, Copyright (c) 2019-2026 ReactiveUI and Avalonia Teams, and Contributors
+- Used for: `src/FerroUI.ReactiveUI.Controls` (the integration of ReactiveUI with FerroUI) and its unit tests, ported from ReactiveUI.Avalonia.Tests and ReactiveUI.Binding.Avalonia.Tests (`docs/porting/reactive.md`); and `samples/ReactiveUIExample` (the port of its example application, `src/examples`, and its tests).
+
+## ReactiveUI.Samples
+
+- Project: <https://github.com/reactiveui/ReactiveUI.Samples> (`wpf/getting-started/ReactiveDemo`, commit `8e7ca27`)
+- License: MIT, Copyright (c) .NET Foundation and Contributors
+- Used for: `samples/ReactiveDemo` (the port of `ReactiveDemo`, the getting-started sample of the ReactiveUI documentation; see `samples/ReactiveDemo/NOTICE.md`).
+
 ## RemoteViewing
 
 - Project: <https://github.com/quamotion/remoteviewing> (package `Quamotion.RemoteViewing` 1.1.211)

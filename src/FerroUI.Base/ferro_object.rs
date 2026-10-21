@@ -404,6 +404,12 @@ impl FerroObject {
         self.inheritance_parent.borrow().as_ref().and_then(WeakRef::upgrade)
     }
 
+    /// Whether `parent` is the inheritance parent of the object (`InheritanceParent == parent`),
+    /// without taking a handle to it.
+    pub(crate) fn is_inheritance_parent(&self, parent: &FerroObject) -> bool {
+        self.inheritance_parent.borrow().as_ref().is_some_and(|weak| weak.points_at(parent))
+    }
+
     /// Sets the parent object that inherited property values are inherited
     /// from.
     pub fn set_inheritance_parent(&self, value: impl Into<Nullable<FerroObject>>) {
@@ -814,6 +820,19 @@ impl FerroObject {
                 this.property_changed.remove(token);
             }
         })
+    }
+
+    /// Subscribes `handler` to property changes on this object and returns
+    /// the token that [`remove_property_changed_handler`](Self::remove_property_changed_handler)
+    /// takes: [`property_changed`](Self::property_changed) for a subscriber
+    /// that keeps the object and the token itself, so that no handle is made.
+    pub fn add_property_changed_handler(&self, handler: Rc<dyn Fn(&FerroPropertyChangedEventArgs<'_>)>) -> u64 {
+        self.property_changed.add(handler)
+    }
+
+    /// Ends a subscription of [`add_property_changed_handler`](Self::add_property_changed_handler).
+    pub fn remove_property_changed_handler(&self, token: u64) -> bool {
+        self.property_changed.remove(token)
     }
 
     /// The number of subscribers to property changes on this object (a

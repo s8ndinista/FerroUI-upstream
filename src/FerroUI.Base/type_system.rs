@@ -899,6 +899,12 @@ impl<T: ObjectType> WeakRef<T> {
         std::ptr::addr_eq(self.ptr.as_ptr(), Rc::as_ptr(&object.ptr))
     }
 
+    /// Whether the weak reference points at `object` (which, being borrowed, is alive).
+    #[inline]
+    pub(crate) fn points_at(&self, object: &T) -> bool {
+        std::ptr::addr_eq(self.ptr.as_ptr(), object as *const T)
+    }
+
     /// Whether two weak references point at the same object, alive or not.
     #[inline]
     pub fn ptr_eq<U: ObjectType>(&self, other: &WeakRef<U>) -> bool {

@@ -4,6 +4,118 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+### Added
+
+- **Components that run again** in `ferroui-view` (phase 1 of the declarative API, `docs/declarative-ui.md`, sections 7 and 8):
+  - `rerender(..)` and `#[component(rerender)]`: a component whose function runs again when a signal it read changes or its parent runs again; `#[component(rerender, memo)]` skips a run for equal parameters;
+  - hooks: `use_hook`, `use_signal`, `use_memo`, `use_effect`, `use_effect_with`; contexts: `provide_context`, `use_context`;
+  - a reconciler that patches the mounted controls into the elements a component returns: siblings matched by key and by place, equal values left alone, values that are gone cleared, handlers attached again, controls kept;
+  - the 7GUIs tasks as components that run again (`samples/SevenGuis/Hooks`), in the scenario tests with the other ports;
+  - `docs/declarative-ui-react.md`, a comparison of the API with React, and the plan of the phases that remain.
+- **XAML and templates** in `ferroui-view` (phase 2, `docs/declarative-ui.md`, section 9):
+  - `ComponentHost`, a control that shows a component in XAML or any tree of controls; `register_component` names components for its `Component` property; `register_types` registers the types of the crate for markup (`using:FerroUI.View`);
+  - `template(|item: T| ..)`, a data template whose items are components, which recycles its hosts through a pool so that a virtualized list patches its items as it scrolls;
+  - `use_data_context`, `use_data_context_value` and `use_parent_control`;
+  - with the feature `xaml`: `load_xaml`, `load_xaml_uri`, `xaml` and `use_xaml`, XAML in a component;
+  - the sample `samples/ViewInterop`: a virtualized directory of 10,000 people with XAML details and a component inside the XAML.
+- **The rest of the API** in `ferroui-view` (phase 3, `docs/declarative-ui.md`, section 10):
+  - the builders of the TreeDataGrid, the colour picker, the dialogs and the ReactiveUI controls, each behind a feature (`treedatagrid`, `color-picker`, `dialogs`, `reactiveui`), from the same generator;
+  - styles: `style("Button.accent").set(..).nested(style("^:pointerover")..)`, `style_of(selector)`, and `.styles([..])` of an element;
+  - hooks: `use_parent_property`, `use_theme_variant`, `use_resource`, `use_resource_as`;
+  - transitions and animations: `transition`, `transition_eased`, `transitions`, `ms`, `animation(..).key_frame(..)`, `use_animation`;
+  - a `Popup` holds its child element, and a property that holds a control of a class (`context_menu`) takes an element;
+  - `ferroui-view` exports its type model, so compiled XAML names `ComponentHost`; `samples/ViewInterop` compiles its XAML;
+  - the sample `samples/ViewGallery`: styles, the theme variant and resources, a transition, a context menu, a `ColorView` and a `TreeDataGrid`, light and dark.
+
+### Changed
+
+- **`ferroui-view`**: mounting is built on instances that the reconciler patches (`mount.rs`). A routed handler attached by an element is detached when the owner of the element ends. A dynamic list may give other dynamic lists.
+
+## [0.4.0-preview.1] - 2026-10-20
+
+The first preview of 0.4. It adds:
+- a declarative Rust API for user interfaces without XAML: element builders for every control, the `rsx!` macro and `#[component]`, and signals that the properties of controls follow ([docs/declarative-ui.md](docs/declarative-ui.md), phase 0 of issue #237);
+- the 7GUIs as samples, each task in two versions, one with the builders and one with the macros;
+- the performance work on the Vello backend: in software it is now as fast as Skia or faster on macOS, Linux and Windows, as it is with ANGLE on the Windows virtual machine, and on Metal it is faster for partial redraws and effects ([docs/porting/vello-performance.md](docs/porting/vello-performance.md)).
+
+Two crates join: `ferroui-view` and `ferroui-view-macros`. As a preview, it may change any part of the public API.
+
+### Added
+
+- **`ferroui-view`**: the declarative API, built beside the controls and adding nothing to them:
+  - an element tree that is data (the class, a key, a name, classes, property values, handlers and children), mounted into controls between `begin_init` and `end_init`;
+  - element builders with chained setters for every control and property of `ferroui-controls`, generated from their sources by `scripts/generate_view_builders.py` (a check in the continuous integration keeps them current); a setter takes a value, a signal, a memo or a closure, with conversions of the common types;
+  - a reactive runtime of signals, memos, effects and owners with `Copy` handles, which the properties of controls follow;
+  - children that follow state: keyed lists (`for_each`), conditions (`show`, `show_else`) and `dynamic`;
+  - `launch`, `launch_with`, `launch_themed` and `open_window` (feature `desktop`).
+- **`ferroui-view-macros`**: `rsx!`, with attributes, shorthand, attached properties (`Grid.row`), method-call attributes, `if` and `for`; and `#[component]`, which makes a function a component with its builder.
+- **The 7GUIs samples** (`samples/SevenGuis`): counter, temperature converter, flight booker, timer, CRUD, circle drawer and cells, each a crate of its own in a builders version and a macros version, on the WinUI 3 theme, with a shared crate for the logic and the state and 14 scenario tests. The screenshots and the code of each are in [docs/declarative-ui.md](docs/declarative-ui.md).
+- **Vello performance**, rounds 1 to 5 and an experimental round (#263 to #268), on the published Vello crates without patches:
+  - rectangles and rectangle clips drawn by the renderers' own paths; text of the hybrid mode from its glyph atlas;
+  - the CPU mode keeps its render contexts, renders kept targets and windows only where they changed, renders large scenes on the thread pool of `vello_cpu`, and keeps the pictures of box shadows;
+  - the GPU mode draws its filters on the device and renders kept targets only where they are cleared;
+  - on Linux and Windows a device of the backend's own (Vulkan or OpenGL through EGL; Direct3D 12), and the hybrid mode on the OpenGL context of the platform (ANGLE on Windows);
+  - a depth buffer for the hybrid renderer, so opaque content is drawn front to back; the Metal queues ordered by a shared event instead of a wait on the processor;
+  - `FERROUI_FRAME_TIMES`, and benchmark and profiling scripts (`scripts/vello-perf`).
+- **Draw-list fragments**: `IDrawingContextImplWithFragments` in `ferroui-base`, an optional extension of the drawing context (`None` by default), lets a backend keep what it made of the commands of a draw-list visual and draw it again in later frames until the commands or their resources change. The GPU mode of Vello uses it. The deviation is recorded in `docs/porting/DEVIATIONS.md`.
+
+### Known limitations
+
+- **No reconciler yet.** A component runs once; what changes later is changed through signals and the children that follow state. Running a component again and comparing its element trees is the next phase ([docs/declarative-ui.md](docs/declarative-ui.md), section 8).
+- **Builders for the controls of `ferroui-controls` only.** The TreeDataGrid, the colour picker and other crates of controls are used through `Element::Existing` until the generator covers them.
+- **Vello stays optional.** Skia is the default backend. On a real GPU, a full redraw (scrolling, a page drawn again) is still slower with Vello than with Skia. Vulkan and Direct3D 12 were tested in software only, not on hardware.
+- The limitations of 0.3.0 below still apply.
+
+## [0.3.0] - 2026-10-19
+
+The third release. It is `0.3.0-preview.1` as a stable release: the reactive foundation for applications written in the MVVM pattern, with nothing changed since the preview. It contains:
+- ports of Rx.NET, DynamicData, Splat and ReactiveUI, with ReactiveUI.Binding and ReactiveUI.Testing;
+- their integration with the controls;
+- the samples ReactiveDemo (a crate browser) and ReactiveUIExample (with a DynamicData page);
+- the guide [docs/mvvm.md](docs/mvvm.md).
+
+The additions and the known limitations are those of `0.3.0-preview.1` below. Within 0.3 the public API is kept; 0.4.0 may change it.
+
+## [0.3.0-preview.1] - 2026-10-19
+
+The first preview of 0.3. It adds the reactive foundation for applications written in the MVVM pattern:
+- ports of Rx.NET (System.Reactive and Microsoft.Reactive.Testing), DynamicData, Splat and ReactiveUI (with the run time of ReactiveUI.Binding and ReactiveUI.Testing);
+- their integration with the controls;
+- two samples and a guide ([docs/mvvm.md](docs/mvvm.md)).
+
+None of the new libraries depends on the user interface except the integration. Eight crates join: `ferroui-system`, `ferroui-reactive`, `ferroui-reactive-testing`, `ferroui-dynamic-data`, `ferroui-splat`, `ferroui-reactiveui`, `ferroui-reactiveui-testing` and `ferroui-reactiveui-controls`. As a preview, it may change any part of the public API.
+
+### Added
+
+- **`ferroui-splat`**: a port of Splat (phase 6 of `docs/porting/reactive.md`): the service locator (`AppLocator`) with the modern and generic-first dependency resolvers, logging (`IEnableLogger`, `IFullLogger`, the log managers and wrapping loggers, `LogHost`), mode detection, feature usage tracking and the application builder (`AppBuilder`, `IModule`), with 864 ported tests.
+- **`ferroui-system`**: the parts of the .NET base class library that FerroUI and its reusable libraries share, in a crate with no dependency on the framework: `ferro_thread_local!` with its table for Android, the multicast events (`Event`, `HandlerList`), `INotifyPropertyChanged`, `INotifyCollectionChanged` with the arguments of a change (`NotifyCollectionChangedAction`, `NotifyCollectionChangedEventArgs`, `CollectionChange`), and `CancellationToken` with its source and registration. It is the first step of the reactive foundation (`docs/porting/reactive.md`). `ferroui-base` depends on it and re-exports every item at the path it had there, so no code changes.
+- **`ferroui-reactive`**: the core of a port of Rx.NET's System.Reactive (`docs/porting/reactive.md`, phase 2): the disposables, the schedulers (immediate, current thread, virtual time, historical), the subjects (`Subject`, `BehaviorSubject`, `AsyncSubject`, `ReplaySubject` with its bounded, unbounded and windowed forms, `ConnectableObservable`), `Notification`, the observers, `Observable::create` and the first operators (`select`, `where_`), single-threaded like the object model of FerroUI. The interfaces it implements (`IObservable`, `IObserver`, `IDisposable`) moved to `ferroui-system`, where the framework finds them too.
+- **`ferroui-reactive-testing`**: the port of Microsoft.Reactive.Testing (`TestScheduler`, hot and cold test observables, recorded notifications and subscriptions, `assert_messages!`). The unit tests of Rx.NET for the core are ported in `tests/FerroUI.Reactive.Tests`.
+- **`ferroui-reactive` operators** (phase 3): the query operators of System.Reactive and the experimental ones of `ObservableEx`, the pull adapters (`collect`, `chunkify`, `most_recent`), `Subscribe` with a `CancellationToken`, `DisableOptimizations`, `ObserverBase` and `ObservableBase`; 2,453 ported unit tests. The blocking operators (`Wait`, `First`, `ToEnumerable`, ...) are left out on purpose: they would deadlock the only thread. The async forms come with phase 4.
+- **Tasks and asynchronous Rx** (phase 4): `ferroui-system` gains `Task<T>` and `TaskCompletionSource<T>`, the running of futures on their thread (`spawn_local`, a thread poster for wakes from other threads, `block_on`, `run` for background work), `CancellationToken::register_local`, `SynchronizationContext` and `IProgress<T>`. `ferroui-reactive` gains the asynchronous forms of Rx over them: `from_async`, `start_async`, `to_task`, `run_async` and `get_awaiter`, `for_each_async`, the task forms of `select_many`, `create`, `defer` and `using`, `schedule_async` with `sleep` and `yield_`, `to_async` for the arities 0 to 16, and the `SynchronizationContext` forms of `observe_on` and `subscribe_on`.
+- **`ferroui-dynamic-data`**: a port of DynamicData (phase 5 of `docs/porting/reactive.md`): change sets of keyed caches and of lists, `SourceCache` and `SourceList` with their nested edits, the cache and list operators (transforms with their asynchronous forms, filters, sorting, paging and virtualisation, grouping, joins, `And`/`Or`/`Xor`/`Except` and `Switch`, the lifecycle of items, buffering and expiry), the binding to observable collections (`ObservableCollectionExtended`, `Bind`, `SortAndBind`), aggregation (`Count`, `Sum`, `Avg`, `Min`, `Max`, `StdDev`) and `ObservableChangeSet`, with 2,193 ported tests. `ferroui-system` gains `Dictionary` with the order of enumeration of .NET, `ObservableCollection` and typed property paths (`PropertyPath`, `prop!`), the counterpart of upstream's expressions.
+- **`ferroui-reactiveui`** and **`ferroui-reactiveui-testing`**: a port of ReactiveUI in its System.Reactive flavour (phase 7 of `docs/porting/reactive.md`). It covers `ReactiveObject` and `ReactiveRecord` with the macros `reactive_object!` and `reactive_properties!` (the counterpart of the `[Reactive]` source generator), `ReactiveCommand`, interactions, the property observation of ReactiveUI.Binding (`when_any_value` and its family over typed property paths, `ObservableAsPropertyHelper` and `to_property`), the bindings (`bind`, `one_way_bind`, `bind_to`, `bind_command`, `bind_interaction`) with their type converters, views and view location, activation (`when_activated`), routing, the message bus, suspension and AutoPersist, `ReactiveProperty`, and the ReactiveUI builder. ReactiveUI.Testing is ported on the virtual-time `TestScheduler`. The crates have 2,207 ported tests. `ferroui-system` gains `INotifyPropertyChanging`, `INotifyDataErrorInfo`, `BackingField` and the type-erased steps of property paths.
+- **`ferroui-reactiveui-controls`**: the integration of ReactiveUI with FerroUI (phase 8 of `docs/porting/reactive.md`):
+  - `FerroScheduler` on the dispatcher, whose synchronization context becomes the UI thread's;
+  - the property observation of FerroUI objects (`ferro_prop!`), the view-thread invoker, and command binding to controls through `ReactiveCommandAdapter`;
+  - the activation of views on loading and unloading;
+  - `ReactiveUserControl` and `ReactiveWindow` (their view model follows `DataContext`), `RoutedViewHost` and `ViewModelViewHost`;
+  - the automatic item template of `ItemsControl`s, `AutoSuspendHelper`, view registration, and `use_reactive_ui` on the application builder;
+  - 166 ported tests.
+- **The ReactiveUI samples**, both on the WinUI 3 theme (`ferroui-themes-winui`):
+  - `samples/ReactiveDemo` (`cargo run -p reactive-demo`): the port of `ReactiveDemo`, the getting-started sample of ReactiveUI (ReactiveUI.Samples), a crates.io browser (the reference browses NuGet) with a throttled search, a reactive command and views located for their view models; with `--no-default-features` it searches an in-memory catalogue of crates instead of crates.io; 28 tests;
+  - `samples/ReactiveUIExample` (`cargo run -p reactiveui-example`): the port of the example application of the ReactiveUI integration (routing, view model view hosts, live metrics, a command lab with interactions, `AutoSuspendHelper`), with a DynamicData page that the reference does not have; 75 tests.
+- **Items sources from the reactive libraries**: the `ObservableCollection` of `ferroui-system` is an items source of the controls, as in .NET, so a collection that DynamicData's `sort_and_bind` or `bind` fills (`ObservableCollectionExtended::collection()`) is shown by a `ListBox` or an `ItemsControl` directly.
+- **Port tracking for several references**: the port-status tooling tracks Rx.NET beside the framework (`docs/porting/tracking/reactive/`).
+
+### Known limitations
+
+- **One thread.** The observables, view models and subscriptions are single-threaded, as FerroUI's object model is. Work on another thread goes through `ferroui_system::threading::tasks::run` and comes back to the thread that started it; there is no thread-pool scheduler.
+- **No reflection or expression trees.** Property paths (`prop!`) stand for the expressions of .NET. The `*Unsafe` overloads, `WhenAnyDynamic`, assembly scanning and the type-based APIs of Splat are not ported. The adapters of Splat and ReactiveUI to other dependency-injection containers are not ported either; a port of Microsoft.Extensions.DependencyInjection is tracked separately.
+- **Types that wait for a later preview.** The binding converters of `DateTime`, `DateTimeOffset`, `DateOnly`, `TimeOnly`, `Uri` and `Decimal`, and the Rx and DynamicData tests that use `Decimal`, wait until those types move from `ferroui-base` to `ferroui-system`.
+- Every difference from the reference libraries is recorded in `docs/porting/DEVIATIONS.md`, sections Reactive, DynamicData, Splat, ReactiveUI, ReactiveUI controls and Samples.
+- The limitations of 0.2.0 below still apply.
+
 ## [0.2.0] - 2026-10-18
 
 The second release. It adds the TreeDataGrid: the port of TreeDataGrid, its demo and its benchmarks, with the pages of the demo in the ControlCatalog. Scrolling a TreeDataGrid led to changes of the framework that make translating a visual into the coordinates of an ancestor, and the layout queues, faster for every control. The port follows upstream at 66b7273b9a, as 0.1.0 did: upstream has no later commits.
@@ -12,11 +124,14 @@ The second release. It adds the TreeDataGrid: the port of TreeDataGrid, its demo
 
 - **TreeDataGrid**: the port of TreeDataGrid (<https://github.com/wieslawsoltes/TreeDataGrid>) as two new crates. `ferroui-treedatagrid-core` is the framework-neutral data layer: flat and hierarchical sources, value, text, check box, template and hierarchical expander columns, sorting, expansion, filtering, row and cell selection. `ferroui-controls-treedatagrid` is the control: a virtualizing view of rows and columns with star and auto column layout, resizing and sorting from the headers, row and cell selection, editing, row drag and drop, automation peers, the Generic and Fluent themes, and declarative columns in markup (`<TreeDataGrid ItemsSource=".."><TreeDataGridTextColumn Binding=".." /></TreeDataGrid>`). The tests of the reference are ported (the 198 tests of the core and the 497 of the control pass), and `docs/porting/treedatagrid.md` describes the port.
 - **The TreeDataGrid demo** (`samples/TreeDataGridDemo`, `cargo run -p treedatagrid-demo`): every page of the reference demo (countries with filtering and editing, a file tree, people declared in markup, drag and drop, the articles of the day from Wikipedia, finding a displayed row, rows of different heights, template column reuse) and the core demo. The ControlCatalog shows the same pages in its new page TreeDataGrid of the section Collections & Data.
-- **The TreeDataGrid benchmarks** (`tests/FerroUI.TreeDataGrid.Benchmarks`): the benchmark suite of the reference on the harness of the workspace. Run on one machine against the reference's suite, the port is as fast or faster in 58 of the 71 benchmarks, with a geometric mean of the ratio port / reference of 0.68 (`docs/porting/treedatagrid.md`, section 6).
+- **The TreeDataGrid benchmarks** (`tests/FerroUI.TreeDataGrid.Benchmarks`): the benchmark suite of the reference on the harness of the workspace. Run on one machine against the reference's suite, the port is as fast or faster in all 71 benchmarks, with a geometric mean of the ratio port / reference of 0.56 (`docs/porting/treedatagrid.md`, section 6).
 - **The feature `treedatagrid` of the facade crate `ferroui`**: the modules `controls_treedatagrid` and `treedatagrid_core`.
 
 ### Changed
 
+- **The effective viewports of a layout pass** (`EffectiveViewportChanged`) share the viewports of the ancestors of their listeners while the geometry of the visuals is unchanged, where each listener walked from the root down to itself; the viewports are the same (`docs/porting/DEVIATIONS.md`, Layout). Data context changes compare the inheritance parent of a child without taking a handle to it.
+- **Fewer allocations when creating and rebinding controls**: a list of event handlers (`HandlerList`) allocates on its first handler and keeps up to two handlers in that one allocation, the change events of collections take their tokens from a counter of the process (`HandlerList::with_ordered_ids`, `Event::with_ordered_ids`), template bindings subscribe to property changes by token (`FerroObject::add_property_changed_handler` and `remove_property_changed_handler`), and a reevaluation of a value store and the effective viewports of a layout pass reuse their lists. A first layout of a TreeDataGrid allocates a third less. `HandlerList::snapshot` and `Event::snapshot` return a `HandlerSnapshot`, which dereferences to the slice of the handlers.
+- **TreeDataGrid**: an observer of a cell binding (`ICellBinding::subscribe`) takes the value by value, and `ITextCellOptions` adds `has_default_string_format`; a text cell no longer copies its text and its value again.
 - **Translating a visual into the coordinates of one of its ancestors** (`Visual::transform_to_visual`, `translate_point`) walks up from the visual once, where it walked both visuals up to the root; the transforms of the visual tree and the effective viewport read the render transform only of visuals that have one; the layout queues and the scroll anchors of a scroll presenter keep their entries in maps with the Fx hasher. The results are the same (`docs/porting/DEVIATIONS.md`, Visual tree); scrolling a list of many realized rows spent most of its time there.
 - **The day items of the calendar of the WinUI 3 theme** have the padding 0,0,0,2, which places the text of the days where WinUI 3 draws it at a scaling of 2 (CDB-10).
 
@@ -26,7 +141,6 @@ The second release. It adds the TreeDataGrid: the port of TreeDataGrid, its demo
 
 ### Known limitations
 
-- **Expanding and collapsing many rows of a TreeDataGrid** takes about twice as long as in the reference (14.5 against 7.7 microseconds for a thousand rows); 12 other benchmarks of the TreeDataGrid are up to 14 % slower than the reference (`docs/porting/treedatagrid.md`, section 6).
 - **The Wikipedia page of the TreeDataGrid demo** loads only with the demo's feature `online` (the default of the demo, not used by the ControlCatalog), and the names of its drag and drop page are not the reference's (`docs/porting/DEVIATIONS.md`, TreeDataGrid).
 - The limitations of 0.1.0 below still apply: verification on continuous integration, virtual machines, the iOS simulator and the Android emulator rather than real devices; the experimental Vello backend; the open parts of XAML; the browser scripts outside the packages.
 
@@ -187,7 +301,10 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.2.0...main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.4.0-preview.1...main
+[0.4.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.4.0-preview.1
+[0.3.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0
+[0.3.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0-preview.1
 [0.2.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.2.0
 [0.1.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0
 [0.1.0-preview.4]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.1.0-preview.4
