@@ -10,21 +10,22 @@ use ember_core::{
 use ferroui_base::input::gesture_recognizers::{PullGestureRecognizer, SwipeGestureRecognizer};
 use ferroui_base::input::platform::ClipboardExtensions;
 use ferroui_base::input::{InputElement, InputElementImpl, Key, KeyEventArgs, KeyModifiers};
-use ferroui_base::interactivity::{InteractiveImpl, RoutedEventArgs};
+use ferroui_base::interactivity::{InteractiveImpl, RoutedEventArgs, RoutedEventHandlerToken};
 use ferroui_base::layout::LayoutableImpl;
 use ferroui_base::rendering::composition::{ElementComposition, ICompositionObjectAnimations};
-use ferroui_base::threading::{Dispatcher, DispatcherPriority};
+use ferroui_base::threading::{Dispatcher, DispatcherPriority, DispatcherTimer};
 use ferroui_base::utilities::Uri;
 use ferroui_base::{
-    BoxedValue, FerroObjectImpl, Ref, StyledElementImpl, Thickness, VisualImpl, WeakRef,
-    ferro_class, ferro_class_info, ferro_impl_classes, instantiate,
+    ferro_class, ferro_class_info, ferro_impl_classes, instantiate, BoxedValue, FerroObjectImpl,
+    Ref, StyledElementImpl, Thickness, VisualImpl, WeakRef,
 };
 use ferroui_controls::automation::AutomationProperties;
 use ferroui_controls::primitives::TemplatedControlImpl;
 use ferroui_controls::templates::FuncDataTemplate;
 use ferroui_controls::{
     Border, Button, ColumnDefinitions, ContentControl, ContentControlImpl, Control, ControlImpl,
-    ControlImplExt, Grid, ListBox, StackPanel, TextBlock, TextBox, TopLevel, UserControl,
+    ControlImplExt, Grid, ListBox, ScrollViewer, StackPanel, TextBlock, TextBox, TopLevel,
+    UserControl,
 };
 use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, BTreeSet};
@@ -91,6 +92,7 @@ pub struct ReaderView {
     detail: RefCell<DetailRoute>,
     history: RefCell<Vec<DetailRoute>>,
     stories: RefCell<Vec<HnItem>>,
+    rendered_stories: RefCell<Vec<HnItem>>,
     search_story_ids: RefCell<BTreeMap<u64, u64>>,
     selected: Cell<Option<u64>>,
     next: Cell<Option<usize>>,
@@ -103,7 +105,9 @@ pub struct ReaderView {
     downloading: Cell<bool>,
     thread_budget: Cell<usize>,
     thread_sort: Cell<ThreadSort>,
+    find_revision: Cell<u64>,
     layout_mode: Cell<u8>,
+    back_handler: RefCell<Option<(WeakRef<TopLevel>, RoutedEventHandlerToken)>>,
 }
 ferro_class!(ReaderView: UserControl);
 ferro_class_info!(ReaderView {
@@ -115,11 +119,17 @@ xaml_class!(ReaderView, "/ReaderView.xaml");
 impl ControlImpl for ReaderView {
     fn on_loaded(this: &Self, e: &RoutedEventArgs) {
         Self::parent_on_loaded(this, e);
+        this.connect_platform_back();
         this.start();
         this.apply_layout();
     }
     fn on_unloaded(this: &Self, e: &RoutedEventArgs) {
         this.remember_thread();
+        if let Some((top, token)) = this.back_handler.borrow_mut().take() {
+            if let Some(top) = top.upgrade() {
+                top.remove_handler(TopLevel::back_requested_event(), token);
+            }
+        }
         Self::parent_on_unloaded(this, e);
     }
 }
@@ -138,6 +148,7 @@ impl ReaderView {
             detail: RefCell::new(DetailRoute::Welcome),
             history: RefCell::new(Vec::new()),
             stories: RefCell::new(Vec::new()),
+            rendered_stories: RefCell::new(Vec::new()),
             search_story_ids: RefCell::new(BTreeMap::new()),
             selected: Cell::new(None),
             next: Cell::new(None),
@@ -150,7 +161,9 @@ impl ReaderView {
             downloading: Cell::new(false),
             thread_budget: Cell::new(120),
             thread_sort: Cell::new(ThreadSort::Ranked),
+            find_revision: Cell::new(0),
             layout_mode: Cell::new(255),
+            back_handler: RefCell::new(None),
         }
     }
     pub fn new() -> Ref<Self> {
@@ -277,7 +290,21 @@ impl ReaderView {
         self.textbox("ThreadFind").property_changed(move |e| {
             if e.property() == TextBox::text_property().as_property() {
                 if let Some(v) = weak.upgrade() {
-                    v.render_thread();
+                    let revision = v.find_revision.get().wrapping_add(1);
+                    v.find_revision.set(revision);
+                    let weak = v.to_ref().downgrade();
+                    DispatcherTimer::run_once(
+                        move || {
+                            if let Some(view) = weak
+                                .upgrade()
+                                .filter(|view| view.find_revision.get() == revision)
+                            {
+                                view.render_thread();
+                            }
+                        },
+                        Duration::from_millis(180),
+                        DispatcherPriority::BACKGROUND,
+                    );
                 }
             }
         });
@@ -386,6 +413,23 @@ impl ReaderView {
             );
         });
     }
+    fn connect_platform_back(&self) {
+        if self.back_handler.borrow().is_some() {
+            return;
+        }
+        if let Some(top) = TopLevel::get_top_level(Some(self)) {
+            let weak = self.to_ref().downgrade();
+            let token = top.back_requested(move |_, event| {
+                if let Some(view) = weak.upgrade() {
+                    if *view.detail.borrow() != DetailRoute::Welcome {
+                        view.go_back();
+                        event.set_handled(true);
+                    }
+                }
+            });
+            *self.back_handler.borrow_mut() = Some((top.downgrade(), token));
+        }
+    }
     fn start(&self) {
         if self.started.replace(true) {
             return;
@@ -403,12 +447,29 @@ impl ReaderView {
         };
         *self.repository.borrow_mut() = Some(repo.clone());
         let weak = self.to_ref().downgrade();
-        drop(Dispatcher::ui_thread().invoke_async_task_local(move||async move{
-            let result=repo.load_state().await;
-            if let Some(v)=weak.upgrade(){
-                match result {Ok(state)=>{crate::theme::apply(&state.preferences);*v.state.borrow_mut()=state;v.state_ready.set(true);},Err(error)=>v.status(&format!("Reading state could not be restored: {error}. Saving is paused to protect your existing data. Import a backup in Settings to recover it."))}
-                v.load_feed(0,FetchMode::CacheFirst);
-                if let Some(location)=services::take_initial_location(){if let Some(id)=item_from_location(&location){v.open_item_internal(id,false);}}
+        drop(Dispatcher::ui_thread().invoke_async_task_local(move || async move {
+            let result = repo.load_state().await;
+            if let Some(view) = weak.upgrade() {
+                // A backup import can complete while storage is still opening.
+                // Its newer state must win over the outstanding startup snapshot.
+                if !view.state_ready.get() {
+                    match result {
+                        Ok(state) => {
+                            crate::theme::apply(&state.preferences);
+                            *view.state.borrow_mut() = state;
+                            view.state_ready.set(true);
+                        }
+                        Err(error) => view.status(&format!(
+                            "Reading state could not be restored: {error}. Saving is paused to protect your existing data. Import a backup in Settings to recover it."
+                        )),
+                    }
+                }
+                view.load_feed(0, FetchMode::CacheFirst);
+                if let Some(location) = services::take_initial_location() {
+                    if let Some(id) = item_from_location(&location) {
+                        view.open_item_internal(id, false);
+                    }
+                }
             }
         }));
     }
@@ -474,6 +535,13 @@ impl ReaderView {
         );
     }
     fn select_feed(&self, route: FeedRoute) {
+        if let Some(scroll) = self
+            .get_control::<ListBox>("Stories")
+            .scroll()
+            .and_then(|s| s.cast::<ScrollViewer>())
+        {
+            scroll.set_offset(ferroui_base::Vector::default());
+        }
         self.feed.replace(route);
         self.stories.borrow_mut().clear();
         self.search_story_ids.borrow_mut().clear();
@@ -599,9 +667,43 @@ impl ReaderView {
         let state = self.state.borrow().clone();
         let stories = self.visible_stories();
         let list = self.get_control::<ListBox>("Stories");
-        list.items().clear();
-        for item in stories {
-            list.items().add(Some(Rc::new(item) as BoxedValue));
+        if *self.rendered_stories.borrow() != stories {
+            let scroll = list.scroll().and_then(|s| s.cast::<ScrollViewer>());
+            let offset = scroll.as_ref().map(|s| s.offset()).unwrap_or_default();
+            let focused = list.is_keyboard_focus_within();
+            *self.rendered_stories.borrow_mut() = stories.clone();
+            list.items().clear();
+            for item in stories {
+                list.items().add(Some(Rc::new(item) as BoxedValue));
+            }
+            if let Some(scroll) = scroll {
+                let weak = self.to_ref().downgrade();
+                let generation = self.feed_generation.get();
+                Dispatcher::ui_thread().post_local(
+                    move || {
+                        if let Some(view) = weak
+                            .upgrade()
+                            .filter(|v| v.feed_generation.get() == generation)
+                        {
+                            scroll.set_offset(offset);
+                            if focused {
+                                view.get_control::<ListBox>("Stories").focus();
+                            }
+                        }
+                    },
+                    DispatcherPriority::LOADED,
+                );
+            }
+        } else {
+            // Keep containers, scroll position and keyboard focus when only local state changes.
+            for card in list
+                .get_visual_descendants()
+                .filter_map(|v| v.cast::<StoryCard>())
+            {
+                if let Some(id) = card.tag().and_then(|v| v.downcast_ref::<u64>().copied()) {
+                    self.update_card_state(&card, id, &state);
+                }
+            }
         }
         let empty = list.items().count() == 0;
         self.get_control::<StackPanel>("FeedEmpty")
@@ -616,6 +718,7 @@ impl ReaderView {
     fn story_card(&self, item: &HnItem) -> Ref<StoryCard> {
         let card = StoryCard::new();
         let state = self.state.borrow();
+        card.set_tag(Some(Rc::new(item.id)));
         let title = ember_content::HtmlDocument::parse(
             item.title
                 .as_deref()
@@ -632,19 +735,7 @@ impl ReaderView {
             item.descendants.unwrap_or(0)
         )));
         card.set_score_label(Some(&format!("↑ {}", item.score.unwrap_or(0))));
-        card.set_status_label(Some(if state.is_saved(item.id) {
-            "SAVED"
-        } else if state.is_read(item.id) {
-            "READ"
-        } else {
-            ""
-        }));
-        card.classes()
-            .set("selected", self.selected.get() == Some(item.id));
-        if state.preferences.compact {
-            card.set_min_height(110.0);
-            card.set_padding(Thickness::uniform(12.0));
-        }
+        self.update_card_state(&card, item.id, &state);
         AutomationProperties::set_name(
             &card,
             Some(&format!(
@@ -661,6 +752,28 @@ impl ReaderView {
                 v.open_item(id);
             }
         });
+        self.wire_card_swipe(&card, id);
+        card
+    }
+    fn update_card_state(&self, card: &StoryCard, id: u64, state: &ReaderState) {
+        card.set_status_label(Some(if state.is_saved(id) {
+            "SAVED"
+        } else if state.is_read(id) {
+            "READ"
+        } else {
+            ""
+        }));
+        card.classes()
+            .set("selected", self.selected.get() == Some(id));
+        if state.preferences.compact {
+            card.set_min_height(110.0);
+            card.set_padding(Thickness::uniform(12.0));
+        } else {
+            card.set_min_height(142.0);
+            card.set_padding(Thickness::symmetric(18.0, 16.0));
+        }
+    }
+    fn wire_card_swipe(&self, card: &StoryCard, id: u64) {
         let swipe = SwipeGestureRecognizer::new();
         swipe.set_can_horizontally_swipe(true);
         swipe.set_can_vertically_swipe(false);
@@ -669,7 +782,8 @@ impl ReaderView {
         let distance = Rc::new(Cell::new(0.0));
         let distance_move = distance.clone();
         card.add_handler(InputElement::swipe_gesture_event(), move |_, e| {
-            distance_move.set(distance_move.get() + e.delta().x);
+            // FerroUI reports content displacement; invert it to follow the finger.
+            distance_move.set(distance_move.get() - e.delta().x);
         });
         let weak = self.to_ref().downgrade();
         card.add_handler(InputElement::swipe_gesture_ended_event(), move |_, _| {
@@ -685,7 +799,6 @@ impl ReaderView {
                 }
             }
         });
-        card
     }
     fn current_item(&self) -> Option<HnItem> {
         if !matches!(*self.detail.borrow(), DetailRoute::Thread(_)) {
@@ -812,17 +925,13 @@ impl ReaderView {
         }
         let state = self.state.borrow().clone();
         let query = self.textbox("ThreadFind").text().unwrap_or_default();
-        let anchor = self
-            .thread_control
-            .borrow()
-            .as_ref()
-            .and_then(|c| crate::thread_view::viewport_anchor(c))
-            .or_else(|| {
-                state
-                    .items
-                    .get(&thread.root.id)
-                    .and_then(|local| local.scroll_anchor)
-            });
+        let anchor = match self.thread_control.borrow().as_ref() {
+            Some(control) => crate::thread_view::viewport_anchor(control),
+            None => state
+                .items
+                .get(&thread.root.id)
+                .and_then(|local| local.scroll_anchor),
+        };
         let weak = self.to_ref().downgrade();
         let control = crate::thread_view::build(
             &thread,
@@ -862,9 +971,7 @@ impl ReaderView {
         let mut state = self.state.borrow_mut();
         let local = state.items.entry(id).or_default();
         local.seen_comments.extend(thread.items.keys().copied());
-        if anchor.is_some() {
-            local.scroll_anchor = anchor;
-        }
+        local.scroll_anchor = anchor;
         drop(state);
         self.changed();
     }
@@ -977,7 +1084,9 @@ impl ReaderView {
         );
     }
     fn download(&self) {
-        if self.downloading.get() { return; }
+        if self.downloading.get() {
+            return;
+        }
         if !self.state_ready.get() {
             self.status("Download is paused until reading data is restored. Import a backup in Settings first.");
             return;
@@ -1166,6 +1275,7 @@ impl ReaderView {
                     entry.read_at = None;
                     entry.last_opened_at = None;
                     entry.seen_comments.clear();
+                    entry.scroll_anchor = None;
                 }
                 self.changed();
                 self.render_stories();

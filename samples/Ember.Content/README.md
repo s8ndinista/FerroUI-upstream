@@ -49,10 +49,14 @@ time. Redirect handling and external navigation remain the host's responsibility
 
 SelectableTextBlock, native Inline/Run/Bold/Italic/Span/Underline elements, inline HyperlinkButton
 controls, Grid, Border and ScrollViewer render the document. Code retains whitespace and scrolls
-horizontally. Text wraps within the caller's finite width. Every link is a real focusable control
+horizontally; long code also scrolls vertically inside a `max_code_height` viewport (420 logical
+pixels by default), with scroll chaining back to the containing thread. Text wraps within the
+caller's finite width. Every link is a real focusable control
 with an accessible name and destination description. `link_min_height` supports 44-pixel touch
 targets; `max_link_width` limits long link captions on a narrow viewport. Text surrounding links
-remains selectable. Embedded link controls are separate selection units, so use `plain_text()` for
+remains selectable. Paragraphs containing links use natural line metrics with reader spacing so
+tall touch targets reserve their full height without overlapping subsequent content. Embedded
+link controls are separate selection units, so use `plain_text()` for
 copying the entire document including link captions.
 
 The host supplies the current theme's text, link, code-surface and quote brushes through

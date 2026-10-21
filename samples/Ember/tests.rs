@@ -1,13 +1,68 @@
 //! End-to-end retained-control tests: actual pointer input, compositor frames,
 //! responsive layout, durable state and offline recovery against a deterministic API.
 use crate::{App, ReaderView, SAMPLE};
-use ember_core::{BoxFuture, HttpClient, MemoryStore, ReaderError, Repository, Store};
+use ember_core::{BoxFuture, HttpClient, MemoryStore, ReaderError, ReaderState, Repository, Store};
 use ferroui_base::Ref;
-use ferroui_controls::{Button, Control, TextBlock, Window};
+use ferroui_controls::automation::AutomationProperties;
+use ferroui_controls::{Button, Control, ListBox, TextBlock, TextBox, Window};
 use sample_testing::Shell;
 use serde_json::json;
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
+use std::future::poll_fn;
 use std::rc::Rc;
+use std::task::{Poll, Waker};
+
+/// Capture the startup snapshot before yielding, just as a storage transaction can finish
+/// before its completion is delivered to the UI. Later writes still complete normally.
+struct DelayedStartupStore {
+    inner: Rc<MemoryStore>,
+    started: Cell<bool>,
+    released: Cell<bool>,
+    waker: RefCell<Option<Waker>>,
+    fail_read: bool,
+}
+impl DelayedStartupStore {
+    fn release(&self) {
+        self.released.set(true);
+        if let Some(waker) = self.waker.borrow_mut().take() {
+            waker.wake();
+        }
+    }
+}
+impl Store for DelayedStartupStore {
+    fn get<'a>(&'a self, key: &'a str) -> BoxFuture<'a, Result<Option<String>, ReaderError>> {
+        Box::pin(async move {
+            let snapshot = self.inner.get(key).await?;
+            if key == "reader:state" && !self.started.replace(true) {
+                poll_fn(|context| {
+                    if self.released.get() {
+                        Poll::Ready(())
+                    } else {
+                        *self.waker.borrow_mut() = Some(context.waker().clone());
+                        Poll::Pending
+                    }
+                })
+                .await;
+                if self.fail_read {
+                    return Err(ReaderError::Storage("delayed startup read failed".into()));
+                }
+            }
+            Ok(snapshot)
+        })
+    }
+    fn put<'a>(&'a self, key: &'a str, value: &'a str) -> BoxFuture<'a, Result<(), ReaderError>> {
+        self.inner.put(key, value)
+    }
+    fn remove<'a>(&'a self, key: &'a str) -> BoxFuture<'a, Result<(), ReaderError>> {
+        self.inner.remove(key)
+    }
+    fn scan_prefix<'a>(
+        &'a self,
+        prefix: &'a str,
+    ) -> BoxFuture<'a, Result<Vec<(String, String)>, ReaderError>> {
+        self.inner.scan_prefix(prefix)
+    }
+}
 
 struct FixtureHttp {
     offline: Rc<Cell<bool>>,
@@ -75,7 +130,7 @@ impl HttpClient for FixtureHttp {
 fn start(
     width: f64,
     height: f64,
-    store: Rc<MemoryStore>,
+    store: Rc<dyn Store>,
     offline: Rc<Cell<bool>>,
 ) -> (Shell, Ref<Window>, Ref<ReaderView>) {
     crate::set_repository_factory(Rc::new(move || {
@@ -130,6 +185,86 @@ fn ready<T>(mut future: BoxFuture<'_, T>) -> T {
 }
 
 #[test]
+fn backup_import_survives_a_delayed_startup_snapshot_or_error() {
+    for fail_read in [false, true] {
+        let inner = Rc::new(MemoryStore::default());
+        let mut original = ReaderState::default();
+        original.toggle_saved(1002, 1);
+        ready(inner.put("reader:state", &original.export_json().unwrap())).unwrap();
+        let store = Rc::new(DelayedStartupStore {
+            inner: inner.clone(),
+            started: Cell::new(false),
+            released: Cell::new(false),
+            waker: RefCell::new(None),
+            fail_read,
+        });
+        let (shell, window, view) = start(1440.0, 940.0, store.clone(), Rc::new(Cell::new(false)));
+        assert!(
+            store.started.get(),
+            "startup storage read must be suspended"
+        );
+        assert!(!store.released.get());
+
+        click(&shell, &window, &view.get_control::<Button>("ThemeButton"));
+        let input = view
+            .get_visual_descendants()
+            .filter_map(|node| node.cast::<TextBox>())
+            .find(|input| {
+                AutomationProperties::get_name(input).as_deref() == Some("Reading data JSON")
+            })
+            .expect("real Settings backup input");
+        let mut imported = ReaderState::default();
+        imported.toggle_saved(1001, 2);
+        input.set_text(Some(&imported.export_json().unwrap()));
+        let import = view
+            .get_visual_descendants()
+            .filter_map(|node| node.cast::<Button>())
+            .find(|button| {
+                AutomationProperties::get_name(button).as_deref() == Some("Import this backup")
+            })
+            .expect("real Settings import action");
+        import.bring_into_view();
+        shell.settle();
+        click(&shell, &window, &import);
+        let persisted = ready(inner.get("reader:state")).unwrap().unwrap();
+        assert_eq!(
+            ReaderState::import_json(&persisted).unwrap().saved_ids(),
+            vec![1001]
+        );
+        assert!(
+            !store.released.get(),
+            "import must finish before startup resumes"
+        );
+
+        store.release();
+        for _ in 0..8 {
+            shell.settle();
+        }
+        assert_eq!(
+            view.get_control::<TextBlock>("StatusText")
+                .text()
+                .as_deref(),
+            Some("Reading library imported."),
+            "a superseded startup result must not show a stale restore error"
+        );
+        click(&shell, &window, &view.get_control::<Button>("NavSaved"));
+        assert_eq!(view.get_control::<ListBox>("Stories").items().count(), 1);
+        assert_eq!(
+            first_story(&window).headline().as_deref(),
+            Some("Small tools, carefully made")
+        );
+        // Opening the imported story writes read tracking, proving the imported state remains
+        // authoritative for subsequent saves as well as the visible library.
+        click(&shell, &window, &first_story(&window));
+        let persisted = ready(inner.get("reader:state")).unwrap().unwrap();
+        let persisted = ReaderState::import_json(&persisted).unwrap();
+        assert_eq!(persisted.saved_ids(), vec![1001]);
+        assert!(persisted.is_read(1001));
+        window.close();
+    }
+}
+
+#[test]
 fn unreadable_saved_state_is_never_replaced_by_automatic_read_tracking() {
     let store = Rc::new(MemoryStore::default());
     let original = "{a damaged backup that must remain recoverable";
@@ -163,22 +298,19 @@ fn phone_back_restores_more_and_thread_without_history_cycles() {
         Some("Explore Ember")
     );
     click(&shell, &window, &view.get_control::<Button>("BackButton"));
-    assert!(
-        view.get_control::<ferroui_controls::Border>("FeedPane")
-            .is_effectively_visible()
-    );
+    assert!(view
+        .get_control::<ferroui_controls::Border>("FeedPane")
+        .is_effectively_visible());
     click(&shell, &window, &first_story(&window));
     click(&shell, &window, &view.get_control::<Button>("ThemeButton"));
     click(&shell, &window, &view.get_control::<Button>("BackButton"));
-    assert!(
-        view.get_control::<Button>("SaveButton")
-            .is_effectively_visible()
-    );
+    assert!(view
+        .get_control::<Button>("SaveButton")
+        .is_effectively_visible());
     click(&shell, &window, &view.get_control::<Button>("BackButton"));
-    assert!(
-        view.get_control::<ferroui_controls::Border>("FeedPane")
-            .is_effectively_visible()
-    );
+    assert!(view
+        .get_control::<ferroui_controls::Border>("FeedPane")
+        .is_effectively_visible());
     window.close();
 }
 
@@ -201,9 +333,59 @@ fn unsaving_removes_the_card_from_the_visible_saved_list() {
             .count(),
         0
     );
+    assert!(view
+        .get_control::<ferroui_controls::StackPanel>("FeedEmpty")
+        .is_effectively_visible());
+    window.close();
+}
+
+#[test]
+fn opening_a_story_preserves_feed_position_and_platform_back_returns_to_the_feed() {
+    use ferroui_base::interactivity::RoutedEventArgs;
+    use ferroui_controls::{ListBox, ScrollViewer, TopLevel};
+    let (shell, window, view) = start(
+        390.0,
+        844.0,
+        Rc::new(MemoryStore::default()),
+        Rc::new(Cell::new(false)),
+    );
+    let stories = view.get_control::<ListBox>("Stories");
+    stories.scroll_into_view(5);
+    shell.settle();
+    let scroll = stories
+        .scroll()
+        .and_then(|v| v.cast::<ScrollViewer>())
+        .unwrap();
+    let before = scroll.offset();
+    assert!(before.y > 0.0, "test must begin away from the feed's top");
+    let card = window
+        .get_visual_descendants()
+        .filter_map(|v| v.cast::<crate::controls::StoryCard>())
+        .find(|card| {
+            let bounds = Shell::bounds_of(&window, card);
+            bounds.y > 250.0 && bounds.bottom() < 740.0
+        })
+        .expect("visible card in scrolled feed");
+    click(&shell, &window, &card);
+    let event = RoutedEventArgs::with_event(TopLevel::back_requested_event());
+    window.raise_event(&event);
+    shell.settle();
     assert!(
-        view.get_control::<ferroui_controls::StackPanel>("FeedEmpty")
-            .is_effectively_visible()
+        event.handled(),
+        "platform Back is consumed inside a discussion"
+    );
+    assert!(view
+        .get_control::<ferroui_controls::Border>("FeedPane")
+        .is_effectively_visible());
+    assert!(
+        (scroll.offset().y - before.y).abs() < 1.0,
+        "read state must not reset the feed scroll position"
+    );
+    let event = RoutedEventArgs::with_event(TopLevel::back_requested_event());
+    window.raise_event(&event);
+    assert!(
+        !event.handled(),
+        "platform Back remains available to the OS on the home screen"
     );
     window.close();
 }
@@ -218,16 +400,14 @@ fn desktop_pointer_navigation_save_and_library_are_connected() {
     );
     assert_eq!(title(&view), "Front page");
     click(&shell, &window, &first_story(&window));
-    assert!(
-        view.get_control::<Button>("SaveButton")
-            .is_effectively_visible()
-    );
-    assert!(
-        view.get_control::<TextBlock>("DetailTitle")
-            .text()
-            .unwrap_or_default()
-            .contains("comments")
-    );
+    assert!(view
+        .get_control::<Button>("SaveButton")
+        .is_effectively_visible());
+    assert!(view
+        .get_control::<TextBlock>("DetailTitle")
+        .text()
+        .unwrap_or_default()
+        .contains("comments"));
     click(&shell, &window, &view.get_control::<Button>("SaveButton"));
     click(&shell, &window, &view.get_control::<Button>("NavSaved"));
     assert_eq!(title(&view), "Saved for later");
@@ -248,21 +428,16 @@ fn phone_back_navigation_and_offline_reopen_keep_saved_content() {
     let offline = Rc::new(Cell::new(false));
     {
         let (shell, window, view) = start(390.0, 844.0, store.clone(), offline.clone());
-        assert!(
-            view.get_control::<ferroui_controls::Border>("BottomNavigation")
-                .is_effectively_visible()
-        );
-        assert!(
-            !view
-                .get_control::<ferroui_controls::Border>("NavigationRail")
-                .is_effectively_visible()
-        );
+        assert!(view
+            .get_control::<ferroui_controls::Border>("BottomNavigation")
+            .is_effectively_visible());
+        assert!(!view
+            .get_control::<ferroui_controls::Border>("NavigationRail")
+            .is_effectively_visible());
         click(&shell, &window, &first_story(&window));
-        assert!(
-            !view
-                .get_control::<ferroui_controls::Border>("FeedPane")
-                .is_effectively_visible()
-        );
+        assert!(!view
+            .get_control::<ferroui_controls::Border>("FeedPane")
+            .is_effectively_visible());
         click(&shell, &window, &view.get_control::<Button>("SaveButton"));
         click(
             &shell,
@@ -270,10 +445,9 @@ fn phone_back_navigation_and_offline_reopen_keep_saved_content() {
             &view.get_control::<Button>("DownloadButton"),
         );
         click(&shell, &window, &view.get_control::<Button>("BackButton"));
-        assert!(
-            view.get_control::<ferroui_controls::Border>("FeedPane")
-                .is_effectively_visible()
-        );
+        assert!(view
+            .get_control::<ferroui_controls::Border>("FeedPane")
+            .is_effectively_visible());
         window.close();
     }
     offline.set(true);
@@ -281,12 +455,11 @@ fn phone_back_navigation_and_offline_reopen_keep_saved_content() {
     click(&shell, &window, &view.get_control::<Button>("MobileSaved"));
     assert_eq!(title(&view), "Saved for later");
     click(&shell, &window, &first_story(&window));
-    assert!(
-        view.get_control::<TextBlock>("DetailTitle")
-            .text()
-            .unwrap_or_default()
-            .contains("4 comments")
-    );
+    assert!(view
+        .get_control::<TextBlock>("DetailTitle")
+        .text()
+        .unwrap_or_default()
+        .contains("4 comments"));
     window.close();
 }
 
@@ -297,6 +470,7 @@ fn capture_real_control_tree_in_desktop_and_phone_themes() {
         (1440.0, 940.0, true, "desktop-dark"),
         (390.0, 844.0, false, "phone-light"),
         (390.0, 844.0, true, "phone-dark"),
+        (1024.0, 820.0, false, "tablet-custom"),
     ] {
         let (shell, window, view) = start(
             width,
@@ -308,6 +482,14 @@ fn capture_real_control_tree_in_desktop_and_phone_themes() {
             ferroui_controls::Application::current()
                 .unwrap()
                 .set_requested_theme_variant(Some(ferroui_base::styling::ThemeVariant::dark()));
+        }
+        if name == "tablet-custom" {
+            crate::theme::apply(&ember_core::Preferences {
+                theme: ember_core::ThemeMode::Custom,
+                accent: "#2DD4BF".to_owned(),
+                custom_background: Some("#092F2A".to_owned()),
+                ..Default::default()
+            });
         }
         if width > 900.0 {
             click(&shell, &window, &first_story(&window));

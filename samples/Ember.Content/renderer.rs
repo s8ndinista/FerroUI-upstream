@@ -1,15 +1,22 @@
 use crate::{Block, HtmlDocument, Inline};
-use ferroui_base::layout::{HorizontalAlignment, VerticalAlignment};
+use ferroui_base::input::InputElementImpl;
+use ferroui_base::interactivity::InteractiveImpl;
+use ferroui_base::layout::{
+    HorizontalAlignment, LayoutableImpl, LayoutableImplExt, VerticalAlignment,
+};
 use ferroui_base::media::{Brushes, FontFamily, FontWeight, IBrush, TextDecorations, TextWrapping};
-use ferroui_base::{CornerRadius, Ref, Thickness};
+use ferroui_base::{
+    ferro_class, ferro_class_info, ferro_impl_classes, instantiate, CornerRadius, FerroObjectImpl,
+    Ref, Size, StaticType, StyledElementImpl, Thickness, TypeInfo, VisualImpl,
+};
 use ferroui_controls::automation::AutomationProperties;
 use ferroui_controls::documents::{
     Bold, InlineCollection, Italic, LineBreak, Run, Span, Underline,
 };
-use ferroui_controls::primitives::ScrollBarVisibility;
+use ferroui_controls::primitives::{ScrollBarVisibility, TemplatedControlImpl};
 use ferroui_controls::{
-    Border, ColumnDefinitions, Control, Grid, HyperlinkButton, ScrollViewer, SelectableTextBlock,
-    StackPanel, TextBlock,
+    Border, ButtonImpl, ColumnDefinitions, ContentControlImpl, Control, ControlImpl, Grid,
+    HyperlinkButton, ScrollViewer, SelectableTextBlock, StackPanel, TextBlock,
 };
 use std::rc::Rc;
 
@@ -30,6 +37,8 @@ pub struct RenderOptions {
     pub link_min_height: f64,
     /// Limit a long inline link to this width so its caption can wrap on narrow screens.
     pub max_link_width: f64,
+    /// Keep a long preformatted block inside a scrollable viewport, even in an unbounded row.
+    pub max_code_height: f64,
 }
 
 impl Default for RenderOptions {
@@ -45,6 +54,7 @@ impl Default for RenderOptions {
             code_font_family: FontFamily::new("Cascadia Code, SFMono-Regular, Consolas, monospace"),
             link_min_height: 32.0,
             max_link_width: 320.0,
+            max_code_height: 420.0,
         }
     }
 }
@@ -86,16 +96,18 @@ fn render_blocks(
                     .add(paragraph(inlines, options, activate_link));
             }
             Block::Heading { level, content } => {
-                let heading = paragraph(content, options, activate_link);
-                heading.set_font_weight(FontWeight::SemiBold);
                 let scale = match level {
                     1 => 1.65,
                     2 => 1.4,
                     3 => 1.2,
                     _ => 1.05,
                 };
-                heading.set_font_size(finite(options.font_size, 16.0).clamp(10.0, 48.0) * scale);
-                heading.set_line_height(heading.font_size() * 1.3);
+                let mut heading_options = options.clone();
+                heading_options.font_size =
+                    finite(options.font_size, 16.0).clamp(10.0, 48.0) * scale;
+                heading_options.line_height = heading_options.font_size * 1.3;
+                let heading = paragraph(content, &heading_options, activate_link);
+                heading.set_font_weight(FontWeight::SemiBold);
                 heading.classes().add("ember-html-heading");
                 panel.children().add(heading);
             }
@@ -150,7 +162,14 @@ fn render_blocks(
                 text.set_font_size((finite(options.font_size, 16.0) * 0.9).clamp(10.0, 36.0));
                 let scroll = ScrollViewer::new();
                 scroll.set_horizontal_scroll_bar_visibility(ScrollBarVisibility::Auto);
-                scroll.set_vertical_scroll_bar_visibility(ScrollBarVisibility::Disabled);
+                scroll.set_vertical_scroll_bar_visibility(ScrollBarVisibility::Auto);
+                scroll.set_is_scroll_chaining_enabled(true);
+                scroll.set_max_height(finite(options.max_code_height, 420.0).clamp(120.0, 2000.0));
+                AutomationProperties::set_name(&scroll, Some("Code block"));
+                AutomationProperties::set_help_text(
+                    &scroll,
+                    Some("Scroll vertically or horizontally to read the code."),
+                );
                 scroll.set_content(Some(Control::boxed(&text)));
                 let border = Border::new();
                 border.classes().add("ember-html-code");
@@ -183,10 +202,29 @@ fn paragraph(
     activate_link: &Rc<dyn Fn(&str)>,
 ) -> Ref<SelectableTextBlock> {
     let text = text_block(options);
+    if contains_link(inlines) {
+        // A fixed text line height clamps an embedded control's natural height. A wrapped
+        // caption or 44px touch target would then overlap the following line/paragraph.
+        // Let the inline control establish its height while preserving extra reader spacing.
+        let extra_spacing = (text.line_height() - text.font_size() * 1.2).max(0.0);
+        text.set_line_height(f64::NAN);
+        text.set_line_spacing(extra_spacing);
+    }
     let collection = InlineCollection::new();
     add_inlines(inlines, &collection, options, activate_link);
     text.set_inlines(Some(collection));
     text
+}
+
+fn contains_link(inlines: &[Inline]) -> bool {
+    inlines.iter().any(|inline| match inline {
+        Inline::Link { .. } => true,
+        Inline::Strong(children)
+        | Inline::Emphasis(children)
+        | Inline::Underline(children)
+        | Inline::Strike(children) => contains_link(children),
+        _ => false,
+    })
 }
 
 fn text_block(options: &RenderOptions) -> Ref<SelectableTextBlock> {
@@ -251,7 +289,7 @@ fn add_inlines(
                     add_inlines(content, output, options, activate_link);
                     continue;
                 };
-                let link = HyperlinkButton::new();
+                let link = InlineLink::new();
                 link.classes().add("ember-html-link");
                 link.set_padding(Thickness::symmetric(2.0, 0.0));
                 link.set_min_height(finite(options.link_min_height, 32.0).clamp(24.0, 80.0));
@@ -263,11 +301,14 @@ fn add_inlines(
                     link.set_foreground(Some(brush.clone()));
                 }
                 let label = Inline::plain_text(content);
-                let caption = TextBlock::new();
+                let caption = &link.caption;
                 caption.set_text(Some(&label));
                 caption.set_text_wrapping(TextWrapping::Wrap);
                 caption.set_text_decorations(Some(TextDecorations::underline()));
-                link.set_content(Some(Control::boxed(&caption)));
+                if let Some(brush) = &options.link_brush {
+                    caption.set_foreground(Some(brush.clone()));
+                }
+                link.set_content(Some(Control::boxed(caption)));
                 AutomationProperties::set_name(&link, Some(&label));
                 AutomationProperties::set_help_text(&link, Some(&destination));
                 // Leave NavigateUri unset: only the host decides how to launch, route internal
@@ -277,6 +318,59 @@ fn add_inlines(
                 output.add_control(link);
             }
         }
+    }
+}
+
+/// An embedded control otherwise uses its bottom edge as a text baseline. Publish the
+/// caption's measured baseline instead, so a centered touch target stays aligned with the
+/// surrounding sentence, including when its caption wraps over several lines.
+#[repr(C)]
+struct InlineLink {
+    base: HyperlinkButton,
+    caption: Ref<TextBlock>,
+}
+
+ferro_class!(InlineLink: HyperlinkButton);
+ferro_class_info!(InlineLink {
+    new: InlineLink::new
+});
+ferro_impl_classes!(
+    InlineLink: FerroObjectImpl,
+    VisualImpl,
+    InteractiveImpl,
+    InputElementImpl,
+    ControlImpl,
+    TemplatedControlImpl,
+    ContentControlImpl,
+    ButtonImpl
+);
+
+impl StyledElementImpl for InlineLink {
+    fn style_key_override(_this: &Self) -> &'static TypeInfo {
+        <HyperlinkButton as StaticType>::TYPE
+    }
+}
+
+impl LayoutableImpl for InlineLink {
+    fn measure_core(this: &Self, available_size: Size) -> Size {
+        let size = Self::parent_measure_core(this, available_size);
+        let caption = &this.caption;
+        let top = ((size.height - caption.desired_size().height) / 2.0).max(0.0);
+        let baseline = top
+            + caption.padding().top
+            + caption.layout_rounding_offset()
+            + caption.text_layout().baseline();
+        TextBlock::set_baseline_offset_on(this, baseline);
+        size
+    }
+}
+
+impl InlineLink {
+    fn new() -> Ref<Self> {
+        instantiate(Self {
+            base: HyperlinkButton::construct(),
+            caption: TextBlock::new(),
+        })
     }
 }
 

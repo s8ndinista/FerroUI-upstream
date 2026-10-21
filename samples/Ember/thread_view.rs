@@ -2,8 +2,8 @@
 
 use ember_content::{HtmlDocument, RenderOptions};
 use ember_core::{
-    HnItem, ReaderState, ThreadOptions, ThreadRow, ThreadSnapshot, ThreadSort, flatten_thread,
-    relative_time,
+    flatten_thread, flatten_thread_with_match, relative_time, HnItem, ReaderState, ThreadOptions,
+    ThreadRow, ThreadSnapshot, ThreadSort,
 };
 use ferroui_base::controls::ResourceKey;
 use ferroui_base::layout::{HorizontalAlignment, Orientation, VerticalAlignment};
@@ -62,6 +62,43 @@ struct ThreadAnchors {
     indices: BTreeMap<u64, i32>,
     parents: BTreeMap<u64, u64>,
 }
+
+/// Comment rows already own their item data. Keep only the header/footer payload here,
+/// rather than retaining another copy of every comment body in a downloaded thread.
+struct ThreadContext {
+    root: HnItem,
+    poll_options: BTreeMap<u64, HnItem>,
+    loaded_comments: usize,
+    pending_comments: usize,
+    missing_comments: usize,
+    complete: bool,
+    stale: bool,
+    warning: Option<String>,
+}
+
+impl From<&ThreadSnapshot> for ThreadContext {
+    fn from(snapshot: &ThreadSnapshot) -> Self {
+        Self {
+            root: snapshot.root.clone(),
+            poll_options: snapshot
+                .root
+                .parts
+                .iter()
+                .filter_map(|id| snapshot.items.get(id).map(|item| (*id, item.clone())))
+                .collect(),
+            loaded_comments: snapshot
+                .items
+                .keys()
+                .filter(|&&id| id != snapshot.root.id && !snapshot.root.parts.contains(&id))
+                .count(),
+            pending_comments: snapshot.pending_ids.len(),
+            missing_comments: snapshot.missing_ids.len(),
+            complete: snapshot.complete,
+            stale: snapshot.stale,
+            warning: snapshot.warning.clone(),
+        }
+    }
+}
 impl PartialEq for ConversationRow {
     fn eq(&self, other: &Self) -> bool {
         self.key == other.key
@@ -86,17 +123,38 @@ pub fn build(
         show_dead: state.preferences.show_dead,
         ..Default::default()
     };
-    let comments = flatten_thread(snapshot, &options);
+    let mut matched_documents = BTreeMap::new();
+    let comments = if query.is_empty() {
+        flatten_thread(snapshot, &options)
+    } else {
+        flatten_thread_with_match(snapshot, &options, |item, query| {
+            if item.author().to_lowercase().contains(query) {
+                return true;
+            }
+            let document = HtmlDocument::parse(item.text.as_deref().unwrap_or_default());
+            let matches = document.plain_text().to_lowercase().contains(query);
+            // Reuse search parsing for the first matching rows, without retaining thousands
+            // of parsed documents when a broad query matches a downloaded conversation.
+            if matches && matched_documents.len() < 128 {
+                matched_documents.insert(item.id, document);
+            }
+            matches
+        })
+    };
     let mut rows = vec![Rc::new(ConversationRow {
         key: 0,
         kind: RowKind::Header,
         document: OnceCell::new(),
     })];
     for comment in comments {
+        let document = matched_documents
+            .remove(&comment.id)
+            .map(OnceCell::from)
+            .unwrap_or_default();
         rows.push(Rc::new(ConversationRow {
             key: rows.len(),
             kind: RowKind::Comment(comment),
-            document: OnceCell::new(),
+            document,
         }));
     }
     if rows.len() == 1 {
@@ -145,7 +203,7 @@ pub fn build(
     }) as BoxedValue));
     list.set_items_source(Some(ItemsSource::from_values(rows)));
     AutomationProperties::set_name(&list, Some("Hacker News conversation"));
-    let snapshot = Rc::new(snapshot.clone());
+    let snapshot = Rc::new(ThreadContext::from(snapshot));
     let state = Rc::new(state.clone());
     let query = query.to_owned();
     list.set_item_template(Some(FuncDataTemplate::for_type::<Rc<ConversationRow>>(
@@ -172,6 +230,7 @@ pub fn build(
 }
 
 /// The first comment intersecting the viewport, including a partially visible comment.
+/// Returns `None` while the story header is visible so a refresh preserves the top.
 /// This uses realized containers rather than estimating an index from variable row heights.
 pub fn viewport_anchor(control: &Control) -> Option<u64> {
     let list = conversation_list(control)?;
@@ -189,12 +248,13 @@ pub fn viewport_anchor(control: &Control) -> Option<u64> {
             let item = list.item_from_container(&container)?;
             let row = item.downcast_ref::<Rc<ConversationRow>>()?;
             match &row.kind {
-                RowKind::Comment(comment) => Some((origin.y, comment.id)),
+                RowKind::Header => Some((origin.y, None)),
+                RowKind::Comment(comment) => Some((origin.y, Some(comment.id))),
                 _ => None,
             }
         })
         .min_by(|a, b| a.0.total_cmp(&b.0))
-        .map(|(_, id)| id)
+        .and_then(|(_, id)| id)
 }
 
 /// Restores reading context after rebuilding a thread. If an ancestor was collapsed,
@@ -276,7 +336,7 @@ fn scroll_anchor_into_view(list: &ListBox, index: i32) {
 }
 
 fn header(
-    snapshot: &ThreadSnapshot,
+    snapshot: &ThreadContext,
     state: &ReaderState,
     sort: ThreadSort,
     actions: &Rc<dyn Fn(ThreadAction)>,
@@ -637,7 +697,7 @@ fn comment_row(
     outer.upcast()
 }
 
-fn poll_options(snapshot: &ThreadSnapshot, actions: &Rc<dyn Fn(ThreadAction)>) -> Ref<Control> {
+fn poll_options(snapshot: &ThreadContext, actions: &Rc<dyn Fn(ThreadAction)>) -> Ref<Control> {
     let panel = StackPanel::new();
     panel.set_spacing(12.0);
     panel.children().add(muted("POLL RESULTS"));
@@ -645,11 +705,11 @@ fn poll_options(snapshot: &ThreadSnapshot, actions: &Rc<dyn Fn(ThreadAction)>) -
         .root
         .parts
         .iter()
-        .filter_map(|id| snapshot.items.get(id))
+        .filter_map(|id| snapshot.poll_options.get(id))
         .map(|item| item.score.unwrap_or(0).max(0))
         .fold(0i64, i64::saturating_add);
     for id in &snapshot.root.parts {
-        let Some(option) = snapshot.items.get(id) else {
+        let Some(option) = snapshot.poll_options.get(id) else {
             panel
                 .children()
                 .add(muted("A poll option is still loading."));
@@ -685,19 +745,13 @@ fn poll_options(snapshot: &ThreadSnapshot, actions: &Rc<dyn Fn(ThreadAction)>) -
     panel.upcast()
 }
 
-fn footer(snapshot: &ThreadSnapshot, actions: &Rc<dyn Fn(ThreadAction)>) -> Ref<Control> {
+fn footer(snapshot: &ThreadContext, actions: &Rc<dyn Fn(ThreadAction)>) -> Ref<Control> {
     let panel = StackPanel::new();
     panel.set_spacing(10.0);
     panel.set_margin(Thickness::uniform(12.0));
     panel.children().add(muted(&format!(
         "{} comments loaded · {} pending · {} unavailable",
-        snapshot
-            .items
-            .values()
-            .filter(|item| item.id != snapshot.root.id && !snapshot.root.parts.contains(&item.id))
-            .count(),
-        snapshot.pending_ids.len(),
-        snapshot.missing_ids.len()
+        snapshot.loaded_comments, snapshot.pending_comments, snapshot.missing_comments
     )));
     if let Some(warning) = &snapshot.warning {
         panel.children().add(muted(warning));
@@ -713,7 +767,7 @@ fn footer(snapshot: &ThreadSnapshot, actions: &Rc<dyn Fn(ThreadAction)>) -> Ref<
 }
 
 fn empty(
-    snapshot: &ThreadSnapshot,
+    snapshot: &ThreadContext,
     query: &str,
     actions: &Rc<dyn Fn(ThreadAction)>,
 ) -> Ref<Control> {
@@ -761,7 +815,8 @@ pub fn render_options(state: &ReaderState) -> RenderOptions {
         font_size: state.preferences.font_size,
         line_height: state.preferences.font_size * state.preferences.line_height,
         foreground: brush("EmberText"),
-        link_brush: brush("SystemControlHighlightAccentBrush"),
+        link_brush: brush("HyperlinkButtonForeground")
+            .or_else(|| brush("SystemControlHighlightAccentBrush")),
         code_background: brush("EmberCode"),
         quote_brush: brush("EmberMuted"),
         link_min_height: 44.0,
@@ -843,10 +898,76 @@ fn brush(key: &str) -> Option<Rc<dyn IBrush>> {
 mod tests {
     use super::*;
     use ferroui_base::interactivity::RoutedEventArgs;
-    use ferroui_controls::Window;
     use ferroui_controls::testing::UnitTestApplication;
+    use ferroui_controls::{HyperlinkButton, SelectableTextBlock, Window};
     use sample_testing::{Shell, TestGlobalClock};
     use std::cell::RefCell;
+
+    #[test]
+    fn conversation_find_matches_visible_decoded_text_with_ancestor_context() {
+        let clock = Rc::new(TestGlobalClock::default());
+        let _application = UnitTestApplication::start(sample_testing::services(clock));
+        let root = HnItem {
+            id: 1000,
+            kids: vec![2001, 2003],
+            ..Default::default()
+        };
+        let parent = HnItem {
+            id: 2001,
+            parent: Some(1000),
+            kids: vec![2002],
+            text: Some("<p>fish &amp; chips</p>".into()),
+            ..Default::default()
+        };
+        let child = HnItem {
+            id: 2002,
+            parent: Some(2001),
+            text: Some("<p><b>native</b> <i>text</i> <a href='https://attributeonly.example'>a link</a></p>".into()),
+            ..Default::default()
+        };
+        let inert = HnItem {
+            id: 2003,
+            parent: Some(1000),
+            text: Some("<script>hiddenneedle</script><p>safe content</p>".into()),
+            ..Default::default()
+        };
+        let snapshot = ThreadSnapshot {
+            root,
+            items: [parent, child, inert]
+                .into_iter()
+                .map(|item| (item.id, item))
+                .collect(),
+            complete: true,
+            ..Default::default()
+        };
+        for (query, expected) in [
+            ("fish & chips", vec![2001]),
+            ("  NATIVE TEXT  ", vec![2001, 2002]),
+            ("attributeonly", vec![]),
+            ("hiddenneedle", vec![]),
+            ("<script>", vec![]),
+        ] {
+            let control = build(
+                &snapshot,
+                &ReaderState::default(),
+                query,
+                ThreadSort::Ranked,
+                Rc::new(|_| {}),
+            );
+            let list = control.cast::<ListBox>().unwrap();
+            let ids: Vec<_> = (0..list.items().count())
+                .filter_map(|index| {
+                    let item = list.items().get_at(index)?;
+                    let row = item.downcast_ref::<Rc<ConversationRow>>()?;
+                    match &row.kind {
+                        RowKind::Comment(comment) => Some(comment.id),
+                        _ => None,
+                    }
+                })
+                .collect();
+            assert_eq!(ids, expected, "query: {query}");
+        }
+    }
 
     #[test]
     fn collapsed_deleted_and_dead_comments_do_not_expose_retained_html() {
@@ -889,6 +1010,110 @@ mod tests {
     }
 
     #[test]
+    fn inline_touch_links_share_the_sentence_baseline_at_reader_font_sizes() {
+        let shell = Shell::start(&crate::SAMPLE, 390.0, 844.0, || crate::App::new().upcast());
+        for (font_size, caption) in [
+            (17.0, "the design notes".to_owned()),
+            (22.0, "the design notes".to_owned()),
+            (17.0, "a wrapped link caption ".repeat(12)),
+        ] {
+            let document = HtmlDocument::parse(&format!(
+                "<p>See <a href='https://example.com/'>{caption}</a>.</p><p>Next paragraph.</p>"
+            ));
+            let mut options = render_options(&ReaderState::default());
+            options.font_size = font_size;
+            options.line_height = font_size * 1.55;
+            let content = ember_content::render(&document, &options, Rc::new(|_| {}));
+            content.set_margin(Thickness::uniform(20.0));
+            let window = Window::new();
+            window.set_width(390.0);
+            window.set_height(844.0);
+            window.set_content(Some(Control::boxed(&content)));
+            window.show();
+            for _ in 0..4 {
+                shell.settle();
+            }
+            let paragraph = content
+                .get_visual_descendants()
+                .find_map(|node| node.cast::<SelectableTextBlock>())
+                .expect("native selectable paragraph");
+            let link = paragraph
+                .get_visual_descendants()
+                .find_map(|node| node.cast::<HyperlinkButton>())
+                .expect("native inline hyperlink");
+            let caption = link
+                .get_visual_descendants()
+                .find_map(|node| node.cast::<TextBlock>())
+                .expect("measured link caption");
+            let sentence_baseline = Shell::bounds_of(&window, &paragraph).top()
+                + paragraph.padding().top
+                + paragraph.layout_rounding_offset()
+                + paragraph.text_layout().baseline();
+            let caption_baseline = Shell::bounds_of(&window, &caption).top()
+                + caption.padding().top
+                + caption.layout_rounding_offset()
+                + caption.text_layout().baseline();
+            assert!(
+                (sentence_baseline - caption_baseline).abs() <= 1.0,
+                "sentence baseline {sentence_baseline} must align with caption {caption_baseline} at {font_size}px"
+            );
+            assert!(link.bounds().height >= 44.0, "keep the full touch target");
+            window.close();
+        }
+    }
+
+    #[test]
+    fn phone_rich_links_wrap_and_activate_once_while_long_code_stays_bounded() {
+        let shell = Shell::start(&crate::SAMPLE, 390.0, 844.0, || crate::App::new().upcast());
+        let url = format!("https://example.com/{}", "a".repeat(200));
+        let code = "    let unbroken_line = 1234567890;".repeat(5) + "\n";
+        let document = HtmlDocument::parse(&format!(
+            "<p><a href='{url}'>{url}</a></p><pre>{}</pre>",
+            code.repeat(80)
+        ));
+        let calls = Rc::new(RefCell::new(Vec::new()));
+        let observed = calls.clone();
+        let content = ember_content::render(
+            &document,
+            &render_options(&ReaderState::default()),
+            Rc::new(move |url| observed.borrow_mut().push(url.to_owned())),
+        );
+        content.set_margin(Thickness::uniform(20.0));
+        let window = Window::new();
+        window.set_width(390.0);
+        window.set_height(844.0);
+        window.set_content(Some(Control::boxed(&content)));
+        window.show();
+        for _ in 0..4 {
+            shell.settle();
+        }
+        let link = content
+            .get_visual_descendants()
+            .find_map(|node| node.cast::<HyperlinkButton>())
+            .expect("native link is part of the rendered visual tree");
+        let link_bounds = Shell::bounds_of(&window, &link);
+        assert!(link_bounds.height >= 44.0);
+        assert!(link_bounds.right() <= 370.0);
+        shell.click(0, link_bounds.center());
+        assert_eq!(*calls.borrow(), vec![url]);
+        let code_scroll = content
+            .get_visual_descendants()
+            .filter_map(|node| node.cast::<ScrollViewer>())
+            .find(|scroll| AutomationProperties::get_name(scroll).as_deref() == Some("Code block"))
+            .expect("preformatted code has its own native viewport");
+        assert!(code_scroll.bounds().height <= 420.0);
+        assert!(code_scroll.extent().height > code_scroll.viewport().height);
+        assert!(code_scroll.extent().width > code_scroll.viewport().width);
+        assert!(
+            Shell::bounds_of(&window, &code_scroll).top() >= link_bounds.bottom(),
+            "wrapped touch links must reserve their full height before the next block"
+        );
+        assert!(code_scroll.is_scroll_chaining_enabled());
+        assert!(content.bounds().width <= 350.0);
+        window.close();
+    }
+
+    #[test]
     fn long_threads_virtualize_rows_and_keep_scrolled_actions_attached_to_their_item() {
         let shell = Shell::start(&crate::SAMPLE, 390.0, 620.0, || crate::App::new().upcast());
         let root = HnItem {
@@ -928,7 +1153,6 @@ mod tests {
             Rc::new(move |action| observed.borrow_mut().push(action)),
         );
         let list = content.cast::<ListBox>().unwrap();
-        restore_anchor(&content, 2020);
         let window = Window::new();
         window.set_width(390.0);
         window.set_height(620.0);
@@ -938,7 +1162,11 @@ mod tests {
             shell.settle();
         }
         assert_eq!(list.items().count(), 201);
-        assert_eq!(viewport_anchor(&content), Some(2020));
+        assert_eq!(
+            viewport_anchor(&content),
+            None,
+            "a visible story header anchors the top"
+        );
         for index in [20, 170, 10] {
             restore_anchor(&content, 2000 + index as u64);
             for _ in 0..4 {
@@ -966,6 +1194,20 @@ mod tests {
             );
         }
         assert_eq!(calls.borrow().len(), 3);
+        let replacement = build(
+            &snapshot,
+            &ReaderState::default(),
+            "",
+            ThreadSort::Ranked,
+            Rc::new(|_| {}),
+        );
+        // A rebuilt view is not attached yet when the controller applies saved context.
+        restore_anchor(&replacement, 2010);
+        window.set_content(Some(Control::boxed(&replacement)));
+        for _ in 0..4 {
+            shell.settle();
+        }
+        assert_eq!(viewport_anchor(&replacement), Some(2010));
         assert!(shell.take_binding_reports().is_empty());
         window.close();
     }

@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/ferroui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              x:Class="Ember.ReaderView" Background="{DynamicResource EmberBackground}">
+  <InputPaneAwareDecorator Behavior="Resize">
   <Grid RowDefinitions="Auto,*,Auto,Auto">
     <Border BorderBrush="{DynamicResource EmberBorder}" BorderThickness="0,0,0,1" Background="{DynamicResource EmberSurface}" Padding="20,12">
       <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="16">
@@ -50,7 +51,7 @@
       </Border>
       <Border x:Name="FeedPane" Grid.Column="1" BorderBrush="{DynamicResource EmberBorder}" BorderThickness="0,0,1,0" Padding="20,24,16,12">
         <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="14">
-          <StackPanel x:Name="FeedHeader" Spacing="7">
+          <StackPanel x:Name="FeedHeader" Spacing="7" Background="Transparent">
             <TextBlock x:Name="FeedEyebrow" Text="THE INTERNET, CONSIDERED." Classes="eyebrow" />
             <Grid ColumnDefinitions="*,Auto">
               <TextBlock x:Name="FeedTitle" Text="Front page" FontSize="28" FontWeight="Bold" />
@@ -111,4 +112,5 @@
       </UniformGrid>
     </Border>
   </Grid>
+  </InputPaneAwareDecorator>
 </UserControl>

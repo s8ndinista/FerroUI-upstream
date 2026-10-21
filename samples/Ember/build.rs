@@ -1,1 +1,3 @@
-fn main() { sample_build::SampleBuild::new("Ember").run(); }
+fn main() {
+    sample_build::SampleBuild::new("Ember").run();
+}

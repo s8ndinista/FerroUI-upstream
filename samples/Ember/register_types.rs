@@ -1,12 +1,16 @@
+use crate::controls::StoryCard;
 use crate::markup::XamlClass;
 use crate::{App, ReaderView};
-use crate::controls::StoryCard;
 use ferroui_base::metadata::MarkupAssembly;
 use ferroui_base::TypeInfo;
 const NAMESPACES: &[(&str, &str)] = &[("ember", "Ember"), ("ember::controls", "Ember.Controls")];
 const TYPES: &[&TypeInfo] = &[App::TYPE, ReaderView::TYPE, StoryCard::TYPE];
 pub static ASSEMBLY: MarkupAssembly = MarkupAssembly {
-    name: "Ember", crate_name: "ember", xmlns_definitions: &[], xmlns_prefixes: &[], metadata: &[],
+    name: "Ember",
+    crate_name: "ember",
+    xmlns_definitions: &[],
+    xmlns_prefixes: &[],
+    metadata: &[],
 };
 pub(crate) const CLASSES: &[&XamlClass] = &[&App::XAML_CLASS, &ReaderView::XAML_CLASS];
 pub fn register_types() {
