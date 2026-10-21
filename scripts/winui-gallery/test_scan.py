@@ -236,6 +236,8 @@ class EvidenceTests(unittest.TestCase):
             tests = [{"path": "sample.rs", "name": "exercises_contract"}]
             verified = scan.verify_execution(root, {"record": "execution.json"}, ["sample.rs"], tests)
             self.assertEqual(verified["result"], "passed")
+            with self.assertRaisesRegex(ValueError, "does not cover"):
+                scan.verify_execution(root, {"record": "execution.json"}, ["sample.rs"], [])
             source.write_text("fn exercises_contract() { changed(); }")
             with self.assertRaisesRegex(ValueError, "stale"):
                 scan.verify_execution(root, {"record": "execution.json"}, ["sample.rs"], tests)
@@ -243,6 +245,79 @@ class EvidenceTests(unittest.TestCase):
     def test_unknown_api_contract_fails(self):
         with self.assertRaisesRegex(ValueError, "Unknown API contract"):
             scan.apply_api_evidence(Path("."), {"types": []}, {"members": {"missing": {"status": "partial"}}})
+
+    def test_partial_api_execution_is_checked_without_promoting_behavior(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "sample.rs"
+            source.write_text("fn exercises_subset() {}")
+            record = {"schema_version": 1, "command": ["cargo", "test"], "result": "passed",
+                      "passed_tests": ["exercises_subset"],
+                      "source_sha256": {"sample.rs": scan.digest(source.read_bytes())}}
+            (root / "execution.json").write_text(scan.canonical(record))
+            evidence = {"status": "partial", "implementation": ["sample.rs"],
+                        "tests": [{"path": "sample.rs", "name": "exercises_subset"}],
+                        "execution": {"record": "execution.json"}}
+            for scope, identity in (("types", "N.Widget"), ("members", "N.Widget::property:Value")):
+                mapping = {"types": [{"upstream": "N.Widget", "behavior": "unverified",
+                           "members": [{"id": "N.Widget::property:Value", "behavior": "unverified", "audience": "public-source"}]}]}
+                manifest = {scope: {identity: evidence}}
+                scan.apply_api_evidence(root, mapping, manifest)
+                row = mapping["types"][0] if scope == "types" else mapping["types"][0]["members"][0]
+                self.assertEqual(row["behavior"], "partial")
+                self.assertEqual(row["execution"]["result"], "passed")
+                source.write_text("fn exercises_subset() { changed(); }")
+                with self.assertRaisesRegex(ValueError, "stale"):
+                    scan.apply_api_evidence(root, mapping, manifest)
+                source.write_text("fn exercises_subset() {}")
+
+
+class SummaryTests(unittest.TestCase):
+    @staticmethod
+    def member(kind="property", behavior="unverified", audience="public-source"):
+        return {"kind": kind, "behavior": behavior, "audience": audience, "status": "source-candidate"}
+
+    def summarize(self, types, pages=None):
+        api = {"limitations": [], "types": [{"id": item["upstream"], "kind": "enum" if item["upstream"].endswith("Symbol") else "class"} for item in types]}
+        catalog = {"pages": [], "unlisted_control_info_ids": []}
+        return scan.summarize(api, catalog, {"code": [], "xaml": []}, {"types": types}, {"pages": pages or []})
+
+    def test_behavior_counts_exclude_private_types_and_members_and_separate_enum_values(self):
+        types = [
+            {"upstream": "Microsoft.UI.Xaml.Controls.Symbol", "audience": "public-source", "behavior": "verified", "status": "source-candidate",
+             "members": [self.member("enum-value", "verified"), self.member("enum-value", "verified"), self.member("enum-value", "verified", "private")]},
+            {"upstream": "N.Partial", "audience": "public-source", "behavior": "partial", "status": "source-candidate", "members": [self.member(behavior="partial")]},
+            {"upstream": "N.Candidate", "audience": "public-source", "behavior": "unverified", "status": "source-candidate", "members": [self.member()]},
+            {"upstream": "N.Private", "audience": "private", "behavior": "verified", "status": "source-candidate", "members": [self.member(behavior="verified")]},
+        ]
+        summary = self.summarize(types)["upstream"]
+        self.assertEqual(summary["types_public_source"], 3)
+        self.assertEqual(summary["types_private_source"], 1)
+        self.assertEqual(summary["members_public_source"], 4)
+        self.assertEqual(summary["types_behavior"], {"verified": 1, "partial": 1, "unverified": 1})
+        self.assertEqual(summary["members_behavior"], {"verified": 2, "partial": 1, "unverified": 1})
+        self.assertEqual(summary["non_enum_members_behavior"], {"verified": 0, "partial": 1, "unverified": 1})
+        self.assertEqual(summary["verified_enum_values_by_type"], [{"type": "Microsoft.UI.Xaml.Controls.Symbol", "count": 2}])
+        self.assertEqual(summary["verified_types"], [{"id": "Microsoft.UI.Xaml.Controls.Symbol", "kind": "enum", "public_members": 2}])
+
+    def test_declaration_candidate_never_becomes_verified_in_summary(self):
+        types = [{"upstream": "N.Button", "audience": "public-source", "status": "source-candidate", "members": [self.member()]}]
+        summary = self.summarize(types)["upstream"]
+        self.assertEqual(summary["type_candidates"], {"source-candidate": 1})
+        self.assertEqual(summary["types_behavior"], {"verified": 0, "partial": 0, "unverified": 1})
+        self.assertEqual(summary["members_behavior"], {"verified": 0, "partial": 0, "unverified": 1})
+
+    def test_report_shows_page_state_totals_and_behavior_separately(self):
+        pages = [{"id": str(index), "category": "Basic", "status": state, "examples_total": 1}
+                 for index, state in enumerate(["pending", "partial", "partial", "ported", "verified"])]
+        summary = self.summarize([], pages)
+        self.assertEqual(summary["gallery"]["page_statuses"], {"pending": 1, "partial": 2, "ported": 1, "verified": 1})
+        report = scan.report(summary, {"pages": pages}, {"repositories": {}})
+        self.assertIn("| Type contracts | 0 | 0 | 0 |", report)
+        self.assertIn("| partial | 2 |", report)
+        self.assertLess(report.index("| Page state | Count |"), report.index("| Page | Category | State |"))
+        self.assertIn("Members excluding enum values", report)
+        self.assertIn("No complete type contract has been verified", report)
 
 
 if __name__ == "__main__":

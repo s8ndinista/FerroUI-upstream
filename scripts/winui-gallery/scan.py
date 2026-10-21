@@ -725,7 +725,7 @@ def verify_execution(repo: Path, evidence: dict, implementation: list[str], test
     if record.get("schema_version") != SCHEMA or record.get("result") != "passed" or not record.get("command"):
         raise ValueError(f"Execution record does not describe a successful test run: {path}")
     passed = set(record.get("passed_tests", []))
-    if not passed or any(test["name"] not in passed for test in tests):
+    if not tests or not passed or any(test["name"] not in passed for test in tests):
         raise ValueError(f"Execution record does not cover the declared tests: {path}")
     hashes = record.get("source_sha256", {})
     required = set(implementation) | {t["path"] for t in tests}
@@ -756,6 +756,7 @@ def apply_api_evidence(repo: Path, mapping: dict, manifest: dict) -> None:
         if state == "verified":
             if not implementations or not tests:
                 raise ValueError("Verified API contract requires implementation and tests")
+        if state == "verified" or evidence.get("execution"):
             contracts[identity]["execution"] = verify_execution(repo, evidence.get("execution"), implementations, tests)
         contracts[identity]["behavior"] = state
         contracts[identity]["evidence"] = evidence
@@ -767,16 +768,19 @@ def apply_api_evidence(repo: Path, mapping: dict, manifest: dict) -> None:
         state = evidence.get("status", "partial")
         if state not in ("partial", "verified"):
             raise ValueError(f"Invalid API type evidence status: {state}")
+        implementations, tests = evidence.get("implementation", []), evidence.get("tests", [])
+        for path in implementations:
+            evidence_path(repo, path)
+        for test in tests:
+            text = evidence_path(repo, test["path"]).read_text()
+            if not re.search(r"\b(?:fn|def)\s+" + re.escape(test["name"]) + r"\b", text):
+                raise ValueError(f"Missing API type test anchor: {test}")
         if state == "verified":
             if any(m["behavior"] != "verified" for m in item["members"] if m["audience"] != "private"):
                 raise ValueError(f"Verified API type has unverified members: {identity}")
-            implementations, tests = evidence.get("implementation", []), evidence.get("tests", [])
             if not implementations or not tests:
                 raise ValueError(f"Verified API type requires implementation and tests: {identity}")
-            for test in tests:
-                text = evidence_path(repo, test["path"]).read_text()
-                if not re.search(r"\b(?:fn|def)\s+" + re.escape(test["name"]) + r"\b", text):
-                    raise ValueError(f"Missing API type test anchor: {test}")
+        if state == "verified" or evidence.get("execution"):
             item["execution"] = verify_execution(repo, evidence.get("execution"), implementations, tests)
         item["behavior"] = state
         item["evidence"] = evidence
@@ -832,6 +836,23 @@ def page_map(repo: Path, pages: dict, api_map: dict, manifest: dict) -> dict:
 def summarize(api: dict, pages: dict, usage: dict, mapping: dict, page_mapping: dict) -> dict:
     public = [x for x in mapping["types"] if x["audience"] != "private"]
     public_members = [m for x in public for m in x["members"] if m["audience"] != "private"]
+    def behavior_counts(entries: list[dict]) -> dict:
+        counts = Counter(entry.get("behavior", "unverified") for entry in entries)
+        states = ("verified", "partial", "unverified")
+        if set(counts) - set(states):
+            raise ValueError("Invalid behavioral parity status in comparison")
+        return {state: counts[state] for state in states}
+
+    enum_values = [member for member in public_members if member["kind"] == "enum-value"]
+    other_members = [member for member in public_members if member["kind"] != "enum-value"]
+    api_kinds = {item["id"]: item["kind"] for item in api.get("types", [])}
+    verified_types = [{"id": item["upstream"], "kind": api_kinds.get(item["upstream"], "unknown"),
+                       "public_members": sum(member["audience"] != "private" for member in item["members"])}
+                      for item in public if item.get("behavior") == "verified"]
+    verified_enum_values = [{"type": item["upstream"], "count": sum(
+        member["audience"] != "private" and member["kind"] == "enum-value"
+        and member.get("behavior") == "verified" for member in item["members"])} for item in public]
+    verified_enum_values = [item for item in verified_enum_values if item["count"]]
     imports = sorted({x for entry in usage["code"] for x in entry["imports"]})
     platform = [x for x in imports if x.startswith(("Windows.", "Microsoft.Windows.", "Microsoft.Graphics.",
                                                    "Microsoft.Web.WebView2.", "WinRT.", "CommunityToolkit."))]
@@ -840,11 +861,18 @@ def summarize(api: dict, pages: dict, usage: dict, mapping: dict, page_mapping: 
         "upstream": {"types_public_source": len(public), "types_private_source": len(mapping["types"]) - len(public),
                      "members_public_source": len(public_members),
                      "type_candidates": dict(sorted(Counter(x["status"] for x in public).items())),
-                     "member_candidates": dict(sorted(Counter(x["status"] for x in public_members).items()))},
+                     "member_candidates": dict(sorted(Counter(x["status"] for x in public_members).items())),
+                     "types_behavior": behavior_counts(public),
+                     "members_behavior": behavior_counts(public_members),
+                     "enum_values_behavior": behavior_counts(enum_values),
+                     "non_enum_members_behavior": behavior_counts(other_members),
+                     "verified_types": sorted(verified_types, key=lambda item: item["id"]),
+                     "verified_enum_values_by_type": sorted(verified_enum_values, key=lambda item: item["type"])},
         "gallery": {"pages": len(pages["pages"]), "catalog_examples": sum(len(p["examples"]) for p in pages["pages"]),
                     "markup_examples": sum(len(p.get("markup_examples", [])) for p in pages["pages"]),
                     "snippet_files": len({s["path"] for p in pages["pages"] for s in p["snippets"]}),
-                    "page_statuses": dict(sorted(Counter(p["status"] for p in page_mapping["pages"]).items())),
+                    "page_statuses": {state: sum(page["status"] == state for page in page_mapping["pages"])
+                                      for state in ("pending", "partial", "ported", "verified")},
                     "xaml_files": len(usage["xaml"]), "code_files": len(usage["code"]),
                     "csharp_member_accesses_requiring_semantic_binding": sum(len(x["member_accesses"]) for x in usage["code"]),
                     "xaml_parse_diagnostics": [d for x in usage["xaml"] for d in x["diagnostics"]],
@@ -878,7 +906,32 @@ def report(summary: dict, page_mapping: dict, lock: dict) -> str:
                   f"| Types | {public['type_candidates'].get('source-candidate', 0)} | {public['type_candidates'].get('missing-source-candidate', 0)} |",
                   f"| Members | {public['member_candidates'].get('source-candidate', 0)} | {public['member_candidates'].get('missing-source-candidate', 0)} |",
                   "", "Candidates use namespace-scoped declarations and base-class lookup. A same-name method can still differ in type, lifetime, defaults, scheduling, errors, or rendering.", "",
-                  "## Gallery port state", "", "| Page | Category | State | Catalog examples |", "|---|---|---|---:|"])
+                  "## Behavioral contract evidence", "",
+                  "Only explicit evidence changes these states. Public-source declarations are counted; private types and private members are excluded. A declaration candidate remains unverified until its own contract evidence is supplied.", "",
+                  "| Public-source scope | Verified | Partial | Unverified |", "|---|---:|---:|---:|"])
+    for label, key in [("Type contracts", "types_behavior"), ("All member contracts", "members_behavior"),
+                       ("Enum values only", "enum_values_behavior"), ("Members excluding enum values", "non_enum_members_behavior")]:
+        counts = public[key]
+        lines.append(f"| {label} | {counts['verified']} | {counts['partial']} | {counts['unverified']} |")
+    lines.extend(["", "Enum values are also included in the all-member total; they are shown separately so numeric enum coverage cannot be mistaken for control, XAML or Gallery behavior.", ""])
+    if public["verified_enum_values_by_type"]:
+        lines.extend(["Verified enum-value scope:", ""])
+        lines.extend(f"- `{item['type']}`: {item['count']} exact public values."
+                     for item in public["verified_enum_values_by_type"])
+        lines.append("")
+    if public["verified_types"]:
+        lines.extend(["Types with complete recorded evidence for their public source declarations:", ""])
+        lines.extend(f"- `{item['id']}` ({item['kind']}; {item['public_members']} public member declarations)."
+                     for item in public["verified_types"])
+        lines.append("")
+    else:
+        lines.extend(["No complete type contract has been verified.", ""])
+    lines.extend(["A verified enum does not verify its consuming controls, installed fonts, inherited platform APIs or rendered appearance. Partial controls retain the boundaries documented in `CONTROL-CONTRACTS.md` and their per-signature evidence.", "",
+                  "## Gallery port state", "", "| Page state | Count |", "|---|---:|"])
+    for state in ("pending", "partial", "ported", "verified"):
+        lines.append(f"| {state} | {gallery['page_statuses'][state]} |")
+    lines.extend(["", "Partial pages exercise reviewed native subsets. Ported pages still require execution evidence; only verified pages satisfy the completeness gate.", "",
+                  "| Page | Category | State | Catalog examples |", "|---|---|---|---:|"])
     for page in page_mapping["pages"]:
         lines.append(f"| {page['id']} | {page['category']} | {page['status']} | {page['examples_total']} |")
     lines.extend(["", "## Platform and external dependencies", "", "These imported namespaces require separate adapters or ports; an import is not an implemented feature.", ""])

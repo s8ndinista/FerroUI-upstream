@@ -14,6 +14,7 @@ python3 -m unittest discover -s scripts/winui-gallery -p 'test_*.py'
 python3 scripts/winui-gallery/scan.py --check
 python3 scripts/winui-gallery/event_targets.py --check
 python3 scripts/winui-gallery/symbol_map.py --check
+python3 scripts/winui-gallery/existing_api.py --check
 
 # Deliberately fails while API contracts or Gallery pages lack execution evidence.
 python3 scripts/winui-gallery/scan.py --check --require-complete
@@ -42,6 +43,7 @@ All generated outputs live in `docs/porting/winui-gallery/data/`.
 | File | Meaning |
 |---|---|
 | `sources.lock.json` | Upstream commit pins and immutable snapshot hashes |
+| `ferroui-api-baseline.json` / `ferroui-api-baseline.lock.json` | Independently pinned pre-WinUI FerroUI declaration surface; protects existing namespaced types, bases, member names and source registrations |
 | `source-files.json` | SHA-256, byte count and repository for every selected API/Gallery input |
 | `upstream-api.json` | Namespaced MIDL 3 and C# API-model types, bases, members, signatures and source locations |
 | `gallery-pages.json` | Every upstream catalog page, code-behind, example and page-directory snippet |
@@ -79,6 +81,39 @@ from the pinned public API snapshot. It follows WinUI inheritance and requires a
 unambiguous namespace/type identity. A custom property with the same spelling as
 a WinUI event does not become an event by name alone. The table prepares strict
 target diagnostics; it does not establish that an event-binding contract is implemented.
+
+## Preserving the existing FerroUI API
+
+`existing_api.py --check` compares current declarations with FerroUI commit
+`86b6b4ab41669bf830fba681504a4ee94752a4e6`, the baseline before this WinUI work.
+Its lock is separate from the Microsoft source locks. The baseline uses the same
+namespace-table/member collector as the parity scanner, retaining explicit public
+type declarations, generated virtual traits and source-registered markup types.
+Private unregistered helper types are excluded.
+
+The guard rejects a removed or renamed identity, a namespace move, a changed
+declared base, a removed member name, reduced public visibility, removed source
+registration, or an additional declaration origin colliding with an existing
+namespace identity. New types in `FerroUI.Controls.WinUI` and additive members are
+allowed. Pre-existing conditional declaration origins remain recorded for review.
+
+This is **source-declaration compatibility only**. It does not prove signatures,
+generic bounds, defaults, public module re-exports, ABI, layout, event behavior,
+or Avalonia compatibility as a whole. Conditional compilation is not evaluated.
+Moving a declared member into a base class is reported conservatively for review.
+Reviewed adaptation maps and exact-source behavioral evidence remain independent.
+
+The normal gate requires no Git history or upstream checkout. To reproduce the
+baseline when the pinned local Git object is available, run:
+
+```sh
+python3 scripts/winui-gallery/existing_api.py --verify-reference
+```
+
+`--refresh-baseline` rebuilds from that same fixed commit; it never advances the
+baseline to current sources. Extraction reads Git objects into a temporary
+directory without changing any checkout or index. Changing the baseline commit
+requires an explicit reviewed script/lock/snapshot change.
 
 The exported catalog is an index, not the original snippet text. Its exporter
 may remove substitution tokens from the displayed XAML. Every example retains
@@ -121,6 +156,17 @@ scanner rejects failed, empty, unrelated or stale records. API evidence uses the
 exact `id` from `api-map.json`, including member kind and signature, so overloads
 cannot accidentally share one completion flag. A type requires separate evidence
 for construction/inheritance and every public member before it can be verified.
+Partial API entries can record reviewed implementation without a test execution;
+when they do supply an execution record, its hashes and passed tests are checked
+as strictly as verified entries. A successful subset run still remains partial.
+
+`summary.json` and `REPORT.md` show separate verified/partial/unverified counts
+for public type contracts and public member contracts. Private declarations are
+excluded. Enum values are shown separately from other members, and verified
+types/enum scopes are named explicitly: verifying all 197 `Symbol` values does
+not verify the controls or fonts that consume them. Gallery pending/partial/
+ported/verified totals appear above the page-by-page table. Candidate counts
+remain a separate source-comparison measure and never promote behavior status.
 
 ## Deliberate scanner limits
 
