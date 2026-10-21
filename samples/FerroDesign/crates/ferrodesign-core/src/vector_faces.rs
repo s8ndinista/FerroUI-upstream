@@ -15,6 +15,9 @@ const MAX_SUBDIVISION: u8 = 40;
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum NetworkFaceError {
     InvalidNetwork(String),
+    InvalidRegionFills(String),
+    MissingRegion(VectorRegionId),
+    AmbiguousRegionReset(VectorRegionId),
     NotEditable,
     DegenerateEdge(VectorEdgeId),
     AmbiguousJunction(VectorVertexId),
@@ -28,6 +31,9 @@ impl fmt::Display for NetworkFaceError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::InvalidNetwork(reason) => write!(f, "Invalid vector network: {reason}"),
+            Self::InvalidRegionFills(reason) => write!(f, "Invalid region paints: {reason}"),
+            Self::MissingRegion(region) => write!(f, "Vector region {region} no longer exists."),
+            Self::AmbiguousRegionReset(region) => write!(f, "Region {region} only partly overlaps earlier fill geometry. Resetting its paint would change that coverage; keep an explicit paint stack for this composite region."),
             Self::NotEditable => f.write_str("Select an unlocked vector network."),
             Self::DegenerateEdge(edge) => write!(f, "Edge {edge} has degenerate or singular geometry; remove or split it before finding faces."),
             Self::AmbiguousJunction(vertex) => write!(f, "Vertex {vertex} has coincident outgoing tangents; separate or split those edges before finding faces."),
@@ -65,7 +71,119 @@ struct Boundary {
     bounds: Rect,
 }
 
+fn winding_is_filled(rule: FillRule, winding: i64) -> bool {
+    match rule {
+        FillRule::NonZero => winding != 0,
+        FillRule::EvenOdd => winding % 2 != 0,
+    }
+}
+
+fn fills_have_paint(fills: &[crate::Fill]) -> bool {
+    fills.iter().any(|fill| fill.visible && fill.opacity > 0.0 && match &fill.paint {
+        crate::Paint::Solid(color) => color.a != 0,
+        crate::Paint::LinearGradient { stops, .. }
+        | crate::Paint::RadialGradient { stops, .. }
+        | crate::Paint::AngularGradient { stops, .. } => stops.iter().any(|stop| stop.color.a != 0),
+        crate::Paint::Image { .. } => true,
+    })
+}
+
+/// The dual graph gives exact integer winding values inside every elementary
+/// face. No point samples, flattening tolerance or tiny inward offsets are
+/// required, including for narrow curved annuli and disconnected components.
+struct FaceTopology {
+    adjacency: Vec<Vec<(usize, VectorEdgeId, i64)>>,
+    edges: BTreeSet<VectorEdgeId>,
+    exterior: usize,
+}
+
+impl FaceTopology {
+    fn new(faces: &[NetworkRegion], work: &mut Work) -> Result<Self, NetworkFaceError> {
+        let mut sides = BTreeMap::<VectorEdgeId, [Option<usize>; 2]>::new();
+        for (face, region) in faces.iter().enumerate() {
+            for reference in region.contours.iter().flatten() {
+                work.take()?;
+                let side = &mut sides.entry(reference.edge).or_default()[usize::from(reference.reversed)];
+                if side.replace(face).is_some() { return Err(NetworkFaceError::IndeterminateBoundary); }
+            }
+        }
+        let exterior = faces.len();
+        let mut adjacency = vec![Vec::new(); exterior + 1];
+        let edges = sides.keys().copied().collect();
+        for (edge, [left, right]) in sides {
+            let left = left.unwrap_or(exterior);
+            let right = right.unwrap_or(exterior);
+            if left == right { return Err(NetworkFaceError::IndeterminateBoundary); }
+            // A forward oriented boundary adds one to the winding on its left.
+            adjacency[right].push((left, edge, 1));
+            adjacency[left].push((right, edge, -1));
+        }
+        Ok(Self { adjacency, edges, exterior })
+    }
+
+    fn windings<'a>(
+        &self,
+        regions: impl IntoIterator<Item = &'a NetworkRegion>,
+        work: &mut Work,
+    ) -> Result<Vec<i64>, NetworkFaceError> {
+        let mut weights = BTreeMap::<VectorEdgeId, i64>::new();
+        for region in regions {
+            for reference in region.contours.iter().flatten() {
+                work.take()?;
+                if !self.edges.contains(&reference.edge) { return Err(NetworkFaceError::IndeterminateBoundary); }
+                let weight = weights.entry(reference.edge).or_default();
+                *weight = weight.checked_add(if reference.reversed { -1 } else { 1 })
+                    .ok_or(NetworkFaceError::ComplexityLimit)?;
+            }
+        }
+        let mut windings = vec![None; self.adjacency.len()];
+        windings[self.exterior] = Some(0i64);
+        let mut pending = std::collections::VecDeque::from([self.exterior]);
+        while let Some(face) = pending.pop_front() {
+            for &(neighbor, edge, direction) in &self.adjacency[face] {
+                work.take()?;
+                let value = windings[face].unwrap().checked_add(direction * weights.get(&edge).copied().unwrap_or(0))
+                    .ok_or(NetworkFaceError::ComplexityLimit)?;
+                if let Some(previous) = windings[neighbor] {
+                    if previous != value { return Err(NetworkFaceError::IndeterminateBoundary); }
+                } else {
+                    windings[neighbor] = Some(value);
+                    pending.push_back(neighbor);
+                }
+            }
+        }
+        windings.truncate(self.exterior);
+        windings.into_iter().collect::<Option<Vec<_>>>().ok_or(NetworkFaceError::IndeterminateBoundary)
+    }
+}
+
 impl VectorNetwork {
+    fn region_reset_removes_overlay(&self, id: VectorRegionId) -> Result<bool, NetworkFaceError> {
+        let faces = self.detect_faces()?;
+        let mut work = Work(MAX_GEOMETRY_WORK);
+        let topology = FaceTopology::new(&faces, &mut work)?;
+        let target = topology.windings(std::iter::once(&self.regions[&id]), &mut work)?;
+        let inherited = topology.windings(self.regions.values().filter(|region| region.fills.is_none()), &mut work)?;
+        let mut covered: Vec<_> = inherited.into_iter().map(|winding| winding_is_filled(self.fill_rule, winding)).collect();
+        for (_, region) in self.regions.range(..id).filter(|(_, region)| region.fills.is_some()) {
+            let windings = topology.windings(std::iter::once(region), &mut work)?;
+            for (covered, winding) in covered.iter_mut().zip(windings) { *covered |= winding_is_filled(self.fill_rule, winding); }
+        }
+        let mut covered_count = 0;
+        let mut uncovered_count = 0;
+        for (winding, covered) in target.into_iter().zip(covered) {
+            if winding_is_filled(self.fill_rule, winding) {
+                if covered { covered_count += 1; } else { uncovered_count += 1; }
+            }
+        }
+        match (covered_count > 0, uncovered_count > 0) {
+            (true, false) => Ok(true),
+            (false, true) => Ok(false),
+            (true, true) => Err(NetworkFaceError::AmbiguousRegionReset(id)),
+            (false, false) => Err(NetworkFaceError::IndeterminateBoundary),
+        }
+    }
+
     /// Finds every bounded face of a checked planar line/cubic embedding.
     /// Open branches are excluded from boundaries. Nested disconnected cycles
     /// become an outer face with oriented holes and separate inner faces.
@@ -180,7 +298,7 @@ impl VectorNetwork {
             let boundary = Boundary { contour, area, bounds };
             if area > 0.0 { positive.push(boundary); } else { negative.push(boundary); }
         }
-        let mut faces: Vec<_> = positive.iter().map(|boundary| NetworkRegion { contours: vec![boundary.contour.clone()] }).collect();
+        let mut faces: Vec<_> = positive.iter().map(|boundary| NetworkRegion { contours: vec![boundary.contour.clone()], fills: None }).collect();
         let mut containers = crate::SpatialIndex::new(scale / (positive.len().max(1) as f64).sqrt());
         for (index, boundary) in positive.iter().enumerate() { containers.insert(index as u64, boundary.bounds); }
         for hole in negative {
@@ -214,10 +332,119 @@ impl VectorNetwork {
             .map(|contour| contour_winding(self, contour, point)).sum::<i32>() != 0))
     }
 
-    /// Replaces the selected fill regions with all bounded elementary faces.
-    /// Matching regions keep IDs and serialized contour order; vertex/edge IDs,
-    /// geometry, fill rule and stroke ownership never change. Preflight errors,
-    /// exhausted IDs and repeated invocations leave the entire graph untouched.
+    /// Exact containment of one stored region, independent of paint visibility.
+    /// This is also the replacement footprint of an explicitly empty stack.
+    pub fn region_contains(&self, id: VectorRegionId, point: Point) -> bool {
+        finite(point) && self.regions.get(&id).is_some_and(|region| {
+            self.region_is_valid(region) && winding_is_filled(self.fill_rule, region.contours.iter()
+                .map(|contour| i64::from(contour_winding(self, contour, point))).sum())
+        })
+    }
+
+    /// The last explicit region owns the point, even if its paint stack is
+    /// empty or invisible. Its footprint suppresses every earlier paint.
+    pub fn explicit_region_at(&self, point: Point) -> Option<VectorRegionId> {
+        if !finite(point) { return None; }
+        self.regions.iter().rev().find_map(|(&id, region)| {
+            (region.fills.is_some() && self.region_contains(id, point)).then_some(id)
+        })
+    }
+
+    /// Select the replacement owner first, including a transparent override.
+    /// Otherwise select a containing inherited region only when the combined
+    /// inherited geometry fills this point under the network's fill rule.
+    pub fn region_at(&self, point: Point) -> Option<VectorRegionId> {
+        if !finite(point) { return None; }
+        if let Some(id) = self.explicit_region_at(point) { return Some(id); }
+        let winding = self.regions.values().filter(|region| region.fills.is_none() && self.region_is_valid(region))
+            .flat_map(|region| &region.contours)
+            .map(|contour| i64::from(contour_winding(self, contour, point))).sum();
+        if !winding_is_filled(self.fill_rule, winding) { return None; }
+        self.regions.iter().rev().find_map(|(&id, region)| {
+            (region.fills.is_none() && self.region_contains(id, point)).then_some(id)
+        })
+    }
+
+    /// Paint-aware network picking with the same sparse replacement order as
+    /// the renderer. Inherited contours retain their *combined* fill rule.
+    /// Image alpha and the local alpha of gradient stops remain raster concerns.
+    pub fn contains_fill_with_paints(&self, point: Point, inherited: &[crate::Fill]) -> bool {
+        if !finite(point) { return false; }
+        if let Some(id) = self.explicit_region_at(point) {
+            return fills_have_paint(self.regions[&id].fills.as_deref().unwrap());
+        }
+        fills_have_paint(inherited) && winding_is_filled(self.fill_rule,
+            self.regions.values().filter(|region| region.fills.is_none() && self.region_is_valid(region))
+                .flat_map(|region| &region.contours)
+                .map(|contour| i64::from(contour_winding(self, contour, point))).sum())
+    }
+
+    pub fn hit_test_with_fills(&self, point: Point, stroke_tolerance: f64, inherited: &[crate::Fill]) -> bool {
+        self.contains_fill_with_paints(point, inherited)
+            || (stroke_tolerance.is_finite() && stroke_tolerance >= 0.0
+                && self.nearest_stroke(point).is_some_and(|hit| hit.distance <= stroke_tolerance))
+    }
+
+    /// Set a complete region stack. An explicit empty stack is a transparent
+    /// replacement, not a request to remove its topological region.
+    ///
+    /// Resetting to None removes a redundant overlay where earlier geometry
+    /// already supplies the entire region, or restores inheritance when no
+    /// earlier region covers it. Mixed composite coverage is rejected instead
+    /// of changing an EvenOdd hole or duplicating inherited alpha.
+    pub fn set_region_fills(
+        &mut self,
+        id: VectorRegionId,
+        fills: Option<Vec<crate::Fill>>,
+    ) -> Result<bool, NetworkFaceError> {
+        if let Some(fills) = &fills { validate_region_fills(fills).map_err(NetworkFaceError::InvalidRegionFills)?; }
+        self.validate().map_err(NetworkFaceError::InvalidNetwork)?;
+        let previous = &self.regions.get(&id).ok_or(NetworkFaceError::MissingRegion(id))?.fills;
+        if previous == &fills { return Ok(false); }
+        if fills.is_none() && self.region_reset_removes_overlay(id)? {
+            self.regions.remove(&id);
+        } else {
+            self.regions.get_mut(&id).unwrap().fills = fills;
+        }
+        Ok(true)
+    }
+
+    /// Paint one checked elementary face without rewriting unrelated regions.
+    /// A face over a legacy larger inherited region becomes a sparse override;
+    /// replacement rendering prevents a second alpha application underneath it.
+    /// Existing topmost matching regions keep their identity and contour order.
+    /// Outside hits, repeated values and failed preflight preserve the allocator.
+    pub fn paint_face_at(
+        &mut self,
+        point: Point,
+        fills: Option<Vec<crate::Fill>>,
+    ) -> Result<bool, NetworkFaceError> {
+        if let Some(fills) = &fills { validate_region_fills(fills).map_err(NetworkFaceError::InvalidRegionFills)?; }
+        let Some(mut face) = self.face_at(point)? else { return Ok(false); };
+        let key = face_key(&face);
+        let explicit = self.explicit_region_at(point);
+        let existing = if let Some(id) = explicit {
+            (face_key(&self.regions[&id]) == key).then_some(id)
+        } else {
+            self.regions.iter().rev().find_map(|(&id, region)| (face_key(region) == key).then_some(id))
+        };
+        if let Some(id) = existing { return self.set_region_fills(id, fills); }
+        // There is no elementary override to reset. Creating an inherited face
+        // here could cancel an existing EvenOdd region or sit below an explicit
+        // larger replacement; it would not reset that replacement.
+        if fills.is_none() { return Ok(false); }
+        let (id, next) = self.reserve_ids(1).ok_or(NetworkFaceError::IdExhausted)?;
+        face.fills = fills;
+        self.regions.insert(id, face);
+        self.next_id = next;
+        Ok(true)
+    }
+
+    /// Replaces inherited fill regions with all bounded elementary faces while
+    /// retaining explicit region replacements, including composite footprints.
+    /// Matching regions keep IDs, paint and serialized contour order; vertex/
+    /// edge IDs, geometry, fill rule and stroke ownership never change. Preflight
+    /// errors, exhausted IDs and repeated calls leave the entire graph untouched.
     pub fn fill_all_faces(&mut self) -> Result<bool, NetworkFaceError> {
         let faces = self.detect_faces()?;
         let mut existing: BTreeMap<_, Vec<_>> = BTreeMap::new();
@@ -232,6 +459,12 @@ impl VectorNetwork {
             } else {
                 pending.push(face);
             }
+        }
+        // A sparse override may span several elementary faces. Filling the
+        // underlying topology must not discard its explicit paint, transparent
+        // cutout or priority relative to other existing overrides.
+        for (&id, region) in self.regions.iter().filter(|(_, region)| region.fills.is_some()) {
+            regions.entry(id).or_insert_with(|| region.clone());
         }
         let (first, next) = self.reserve_ids(pending.len() as u64).ok_or(NetworkFaceError::IdExhausted)?;
         for (index, face) in pending.into_iter().enumerate() { regions.insert(first + index as u64, face); }
@@ -251,12 +484,51 @@ impl Editor {
         if node.kind != NodeKind::Vector { return Err(NetworkFaceError::NotEditable); }
         let network = node.vector_network.as_mut().ok_or(NetworkFaceError::NotEditable)?;
         let changed = network.fill_all_faces()?;
-        let needs_fill = node.fills.is_empty() && !network.regions.is_empty();
+        let needs_fill = node.fills.is_empty() && network.regions.values().any(|region| region.fills.is_none());
         if !changed && !needs_fill { return Ok(false); }
         if needs_fill { node.fills.push(crate::Fill::solid(crate::Color::rgb(217, 217, 217))); }
         // The ordinary property update boundary detaches a conflicting empty
         // fill style when authoring the default fill, within the same history.
         self.update_node(id, "Fill network faces", |existing| *existing = node);
+        Ok(true)
+    }
+
+    /// Point is in the node's local coordinate space, so callers can preserve
+    /// their native affine picking and camera behavior. No bounds normalization
+    /// is needed for a paint-only edit.
+    pub fn paint_network_face(
+        &mut self,
+        id: NodeId,
+        point: Point,
+        fills: Option<Vec<crate::Fill>>,
+    ) -> Result<bool, NetworkFaceError> {
+        self.edit_network_region_paints(id, "Paint vector region", |network| network.paint_face_at(point, fills))
+    }
+
+    pub fn set_network_region_fills(
+        &mut self,
+        id: NodeId,
+        region: VectorRegionId,
+        fills: Option<Vec<crate::Fill>>,
+    ) -> Result<bool, NetworkFaceError> {
+        self.edit_network_region_paints(id, "Edit vector region paints", |network| network.set_region_fills(region, fills))
+    }
+
+    fn edit_network_region_paints(
+        &mut self,
+        id: NodeId,
+        label: &str,
+        operation: impl FnOnce(&mut VectorNetwork) -> Result<bool, NetworkFaceError>,
+    ) -> Result<bool, NetworkFaceError> {
+        if self.document.effective_locked(id) { return Err(NetworkFaceError::NotEditable); }
+        let mut node = self.document.nodes.get(&id).cloned().ok_or(NetworkFaceError::NotEditable)?;
+        if node.kind != NodeKind::Vector { return Err(NetworkFaceError::NotEditable); }
+        if !operation(node.vector_network.as_mut().ok_or(NetworkFaceError::NotEditable)?)? { return Ok(false); }
+        // Component reconciliation already preserves the authoritative network
+        // under the path override. The layer's local fill style/variables remain
+        // linked: only this region's explicit value has been authored.
+        if node.component_source.is_some() { node.overridden_properties.insert("path".into()); }
+        self.update_node(id, label, |existing| *existing = node);
         Ok(true)
     }
 }
@@ -325,7 +597,7 @@ fn face_key(region: &NetworkRegion) -> Vec<Vec<NetworkEdgeRef>> {
     let forward = region_key(region);
     let reverse = region_key(&NetworkRegion { contours: region.contours.iter().map(|contour| {
         contour.iter().rev().map(|reference| NetworkEdgeRef { edge: reference.edge, reversed: !reference.reversed }).collect()
-    }).collect() });
+    }).collect(), fills: None });
     forward.min(reverse)
 }
 

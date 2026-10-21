@@ -73,6 +73,18 @@ pub struct NetworkRegion {
     /// Every boundary is an oriented, continuous, closed walk. Multiple walks
     /// describe holes or disconnected pieces according to the network fill rule.
     pub contours: Vec<Vec<NetworkEdgeRef>>,
+    /// None participates in the legacy compound layer-fill geometry. An
+    /// explicit stack replaces inherited paint inside this region, including
+    /// an empty stack which cuts a transparent hole. Later stable region IDs
+    /// replace earlier explicit regions where their interiors overlap.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub fills: Option<Vec<crate::Fill>>,
+}
+
+impl NetworkRegion {
+    pub fn effective_fills<'a>(&'a self, inherited: &'a [crate::Fill]) -> &'a [crate::Fill] {
+        self.fills.as_deref().unwrap_or(inherited)
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -183,7 +195,7 @@ impl VectorNetwork {
     }
 
     pub fn add_region(&mut self, contours: Vec<Vec<NetworkEdgeRef>>) -> Option<VectorRegionId> {
-        let region = NetworkRegion { contours };
+        let region = NetworkRegion { contours, fills: None };
         if !self.region_is_valid(&region) {
             return None;
         }
@@ -329,6 +341,9 @@ impl VectorNetwork {
         }
         if self.regions.values().any(|region| !self.region_is_valid(region)) {
             return Err("Network fill boundaries must be continuous closed walks of existing edges".into());
+        }
+        for region in self.regions.values() {
+            if let Some(fills) = &region.fills { validate_region_fills(fills)?; }
         }
         Ok(())
     }
@@ -794,8 +809,25 @@ impl VectorNetwork {
     /// rule, so opposite winding or EvenOdd contours can describe holes. Open
     /// branches which do not belong to a region never acquire an implicit fill.
     pub fn fill_path(&self) -> VectorPath {
+        self.regions_path(self.regions.values())
+    }
+
+    /// Legacy compound fill geometry before explicit region replacement. Keep
+    /// the common fill rule across all inherited contours, including EvenOdd
+    /// cancellation; drawing every inherited region independently changes it.
+    pub fn inherited_fill_path(&self) -> VectorPath {
+        self.regions_path(self.regions.values().filter(|region| region.fills.is_none()))
+    }
+
+    /// One region's exact authored commands, without the rest of the network.
+    pub fn region_fill_path(&self, id: VectorRegionId) -> Option<VectorPath> {
+        let region = self.regions.get(&id)?;
+        self.region_is_valid(region).then(|| self.regions_path(std::iter::once(region)))
+    }
+
+    fn regions_path<'a>(&self, regions: impl IntoIterator<Item = &'a NetworkRegion>) -> VectorPath {
         let mut result = VectorPath { fill_rule: self.fill_rule, ..VectorPath::default() };
-        for region in self.regions.values() {
+        for region in regions {
             if !self.region_is_valid(region) {
                 continue;
             }
@@ -1263,6 +1295,38 @@ fn curve_is_finite(curve: &NetworkCurve) -> bool {
     }
 }
 
+/// Validate borrowed payloads: explicit face authoring and network import share
+/// this boundary without copying potentially large embedded-image strings.
+fn validate_region_fills(fills: &[crate::Fill]) -> Result<(), String> {
+    let stops_valid = |stops: &[crate::GradientStop]| {
+        !stops.is_empty()
+            && stops.iter().all(|stop| stop.offset.is_finite() && (0.0..=1.0).contains(&stop.offset))
+            && stops.windows(2).all(|pair| pair[0].offset <= pair[1].offset)
+    };
+    for fill in fills {
+        if !fill.opacity.is_finite() || !(0.0..=1.0).contains(&fill.opacity) {
+            return Err("Region paint opacity must be a finite value from 0 to 1.".into());
+        }
+        let valid = match &fill.paint {
+            crate::Paint::Solid(_) => true,
+            crate::Paint::LinearGradient { start, end, stops } => {
+                finite(*start) && finite(*end) && stops_valid(stops)
+            }
+            crate::Paint::RadialGradient { center, radius, stops } => {
+                finite(*center) && radius.is_finite() && *radius > 0.0 && stops_valid(stops)
+            }
+            crate::Paint::AngularGradient { center, angle, stops } => {
+                finite(*center) && angle.is_finite() && stops_valid(stops)
+            }
+            crate::Paint::Image { href, crop, .. } => {
+                !href.trim().is_empty() && crop.is_none_or(crate::valid_image_crop)
+            }
+        };
+        if !valid { return Err("Region paint has invalid gradient coordinates, stops or image source.".into()); }
+    }
+    Ok(())
+}
+
 fn reverse_curve(curve: &NetworkCurve) -> NetworkCurve {
     match *curve {
         NetworkCurve::Line => NetworkCurve::Line,
@@ -1311,3 +1375,7 @@ fn network_tangents_match(a: Point, b: Point, anchor: Point, mode: AnchorMode) -
 #[cfg(test)]
 #[path = "vector_network_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "vector_region_paints_tests.rs"]
+mod region_paints_tests;
