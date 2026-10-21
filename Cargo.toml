@@ -123,6 +123,7 @@ members = [
     "samples/PlatformSanityChecks",
     "samples/SingleProjectSandbox",
     "samples/GpuInterop",
+    "samples/Ember.Core",
 ]
 
 [workspace.package]
