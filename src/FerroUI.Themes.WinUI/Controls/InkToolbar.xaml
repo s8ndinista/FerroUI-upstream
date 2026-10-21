@@ -4,6 +4,8 @@
   Copyright (c) Microsoft Corporation. MIT license; see NOTICE.md.
   Visual states become FerroUI pseudo-class styles. Tool geometry replaces Windows-only
   symbol glyphs, and palette/layout/preview use the shared FerroUI control implementation.
+  Built-in icon grids are genuine PART_ContentPresenter content: their bindings and scoped
+  styles use the logical button ancestor instead of crossing a control-template boundary.
   The complete source brush dictionaries are Resources/InkToolbar.xaml.
 -->
 <ResourceDictionary xmlns="https://github.com/ferroui"
@@ -68,7 +70,7 @@
       <Setter Property="BorderBrush" Value="{DynamicResource InkToolbarButtonSelectedBorderBrushDisabled}" />
     </Style>
     <Style Selector="^ /template/ Path#ExtensionGlyph">
-      <Setter Property="Data" Value="{StaticResource InkToolbarArrowDown}" />
+      <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
       <Setter Property="HorizontalAlignment" Value="Center" />
       <Setter Property="VerticalAlignment" Value="Bottom" />
       <Setter Property="Width" Value="8" />
@@ -78,29 +80,32 @@
     <Style Selector="^:checked /template/ Path#ExtensionGlyph">
       <Setter Property="Opacity" Value="1" />
     </Style>
+    <Style Selector="^:flyout-open /template/ Path#ExtensionGlyph">
+      <Setter Property="Opacity" Value="0" />
+    </Style>
     <Style Selector="^:flyout-top /template/ Path#ExtensionGlyph">
-      <Setter Property="Data" Value="{StaticResource InkToolbarArrowUp}" />
+      <Setter Property="Data" Value="{DynamicResource InkToolbarArrowUp}" />
       <Setter Property="HorizontalAlignment" Value="Center" />
       <Setter Property="VerticalAlignment" Value="Top" />
       <Setter Property="Width" Value="8" />
       <Setter Property="Height" Value="5" />
     </Style>
     <Style Selector="^:flyout-bottom /template/ Path#ExtensionGlyph">
-      <Setter Property="Data" Value="{StaticResource InkToolbarArrowDown}" />
+      <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
       <Setter Property="HorizontalAlignment" Value="Center" />
       <Setter Property="VerticalAlignment" Value="Bottom" />
       <Setter Property="Width" Value="8" />
       <Setter Property="Height" Value="5" />
     </Style>
     <Style Selector="^:flyout-left /template/ Path#ExtensionGlyph">
-      <Setter Property="Data" Value="{StaticResource InkToolbarArrowLeft}" />
+      <Setter Property="Data" Value="{DynamicResource InkToolbarArrowLeft}" />
       <Setter Property="HorizontalAlignment" Value="Left" />
       <Setter Property="VerticalAlignment" Value="Center" />
       <Setter Property="Width" Value="5" />
       <Setter Property="Height" Value="8" />
     </Style>
     <Style Selector="^:flyout-right /template/ Path#ExtensionGlyph">
-      <Setter Property="Data" Value="{StaticResource InkToolbarArrowRight}" />
+      <Setter Property="Data" Value="{DynamicResource InkToolbarArrowRight}" />
       <Setter Property="HorizontalAlignment" Value="Right" />
       <Setter Property="VerticalAlignment" Value="Center" />
       <Setter Property="Width" Value="5" />
@@ -160,15 +165,59 @@
           <ContentPresenter x:Name="PART_ContentPresenter"
                             HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
+            <Grid.Styles>
+              <Style Selector=":is(ToggleButton) Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):checked Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="1" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-open Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-top Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowUp}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-bottom Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-left Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowLeft}" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-right Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowRight}" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+            </Grid.Styles>
             <Path x:Name="ContentFillGlyph" Width="16" Height="16" Stretch="Uniform"
-                  Data="{StaticResource InkToolbarBallpointFill}" Fill="{TemplateBinding SelectedBrush}"
+                  Data="{StaticResource InkToolbarBallpointFill}" Fill="{Binding $parent[InkToolbarBallpointPenButton].SelectedBrush}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             <Path x:Name="ContentGlyph" Width="16" Height="16" Stretch="Uniform"
-                  Data="{StaticResource InkToolbarBallpointOutline}" Fill="{TemplateBinding Foreground}"
+                  Data="{StaticResource InkToolbarBallpointOutline}" Fill="{Binding $parent[InkToolbarBallpointPenButton].Foreground}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             <Path x:Name="ExtensionGlyph" Stretch="Uniform"
                   Fill="{DynamicResource InkToolbarAccentColorForegroundThemeBrush}"
-                  IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
+                  IsVisible="{Binding $parent[InkToolbarBallpointPenButton].IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
           </ContentPresenter>
         </Border>
@@ -188,15 +237,59 @@
           <ContentPresenter x:Name="PART_ContentPresenter"
                             HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
+            <Grid.Styles>
+              <Style Selector=":is(ToggleButton) Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):checked Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="1" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-open Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-top Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowUp}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-bottom Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-left Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowLeft}" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-right Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowRight}" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+            </Grid.Styles>
             <Path x:Name="ContentFillGlyph" Width="16" Height="16" Stretch="Uniform"
-                  Data="{StaticResource InkToolbarPencilFill}" Fill="{TemplateBinding SelectedBrush}"
+                  Data="{StaticResource InkToolbarPencilFill}" Fill="{Binding $parent[InkToolbarPencilButton].SelectedBrush}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             <Path x:Name="ContentGlyph" Width="16" Height="16" Stretch="Uniform"
-                  Data="{StaticResource InkToolbarPencilOutline}" Fill="{TemplateBinding Foreground}"
+                  Data="{StaticResource InkToolbarPencilOutline}" Fill="{Binding $parent[InkToolbarPencilButton].Foreground}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             <Path x:Name="ExtensionGlyph" Stretch="Uniform"
                   Fill="{DynamicResource InkToolbarAccentColorForegroundThemeBrush}"
-                  IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
+                  IsVisible="{Binding $parent[InkToolbarPencilButton].IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
           </ContentPresenter>
         </Border>
@@ -216,15 +309,59 @@
           <ContentPresenter x:Name="PART_ContentPresenter"
                             HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
+            <Grid.Styles>
+              <Style Selector=":is(ToggleButton) Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):checked Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="1" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-open Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-top Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowUp}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-bottom Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-left Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowLeft}" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-right Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowRight}" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+            </Grid.Styles>
             <Path x:Name="ContentFillGlyph" Width="16" Height="16" Stretch="Uniform"
-                  Data="{StaticResource InkToolbarHighlighterFill}" Fill="{TemplateBinding SelectedBrush}"
+                  Data="{StaticResource InkToolbarHighlighterFill}" Fill="{Binding $parent[InkToolbarHighlighterButton].SelectedBrush}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             <Path x:Name="ContentGlyph" Width="16" Height="16" Stretch="Uniform"
-                  Data="{StaticResource InkToolbarHighlighterOutline}" Fill="{TemplateBinding Foreground}"
+                  Data="{StaticResource InkToolbarHighlighterOutline}" Fill="{Binding $parent[InkToolbarHighlighterButton].Foreground}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             <Path x:Name="ExtensionGlyph" Stretch="Uniform"
                   Fill="{DynamicResource InkToolbarAccentColorForegroundThemeBrush}"
-                  IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
+                  IsVisible="{Binding $parent[InkToolbarHighlighterButton].IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
           </ContentPresenter>
         </Border>
@@ -264,12 +401,56 @@
           <ContentPresenter x:Name="PART_ContentPresenter"
                             HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
+            <Grid.Styles>
+              <Style Selector=":is(ToggleButton) Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):checked Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="1" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-open Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-top Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowUp}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-bottom Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-left Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowLeft}" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-right Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowRight}" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+            </Grid.Styles>
             <Path x:Name="ContentGlyph" Width="16" Height="16" Stretch="Uniform"
-                  Data="{StaticResource InkToolbarEraserOutline}" Fill="{TemplateBinding Foreground}"
+                  Data="{StaticResource InkToolbarEraserOutline}" Fill="{Binding $parent[InkToolbarEraserButton].Foreground}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             <Path x:Name="ExtensionGlyph" Stretch="Uniform"
                   Fill="{DynamicResource InkToolbarAccentColorForegroundThemeBrush}"
-                  IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
+                  IsVisible="{Binding $parent[InkToolbarEraserButton].IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
           </ContentPresenter>
         </Border>
@@ -381,7 +562,7 @@
                             HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
             <Path x:Name="ContentGlyph" Width="16" Height="16" Stretch="Uniform"
-                  Data="{StaticResource InkToolbarRulerOutline}" Fill="{TemplateBinding Foreground}"
+                  Data="{StaticResource InkToolbarRulerOutline}" Fill="{Binding $parent[InkToolbarRulerButton].Foreground}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
           </Grid>
           </ContentPresenter>
@@ -439,23 +620,67 @@
           <ContentPresenter x:Name="PART_ContentPresenter"
                             HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
+            <Grid.Styles>
+              <Style Selector=":is(ToggleButton) Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):checked Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="1" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-open Path#ExtensionGlyph">
+                <Setter Property="Opacity" Value="0" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-top Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowUp}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Top" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-bottom Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowDown}" />
+                <Setter Property="HorizontalAlignment" Value="Center" />
+                <Setter Property="VerticalAlignment" Value="Bottom" />
+                <Setter Property="Width" Value="8" />
+                <Setter Property="Height" Value="5" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-left Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowLeft}" />
+                <Setter Property="HorizontalAlignment" Value="Left" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+              <Style Selector=":is(ToggleButton):flyout-right Path#ExtensionGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarArrowRight}" />
+                <Setter Property="HorizontalAlignment" Value="Right" />
+                <Setter Property="VerticalAlignment" Value="Center" />
+                <Setter Property="Width" Value="5" />
+                <Setter Property="Height" Value="8" />
+              </Style>
+              <Style Selector="Path#ContentGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarRulerOutline}" />
+              </Style>
+              <Style Selector=":is(InkToolbarStencilButton)[SelectedStencil=Protractor] Path#ContentGlyph">
+                <Setter Property="Data" Value="{DynamicResource InkToolbarProtractorOutline}" />
+              </Style>
+            </Grid.Styles>
             <Path x:Name="ContentGlyph" Width="16" Height="16" Stretch="Uniform"
-                  Fill="{TemplateBinding Foreground}"
+                  Fill="{Binding $parent[InkToolbarStencilButton].Foreground}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
             <Path x:Name="ExtensionGlyph" Stretch="Uniform"
                   Fill="{DynamicResource InkToolbarAccentColorForegroundThemeBrush}"
-                  IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
+                  IsVisible="{Binding $parent[InkToolbarStencilButton].IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
           </ContentPresenter>
         </Border>
       </ControlTemplate>
     </Setter>
-    <Style Selector="^ /template/ Path#ContentGlyph">
-      <Setter Property="Data" Value="{StaticResource InkToolbarRulerOutline}" />
-    </Style>
-    <Style Selector="^[SelectedStencil=Protractor] /template/ Path#ContentGlyph">
-      <Setter Property="Data" Value="{StaticResource InkToolbarProtractorOutline}" />
-    </Style>
   </ControlTheme>
 
   <ControlTheme x:Key="{x:Type InkToolbarFlyoutItem}" TargetType="InkToolbarFlyoutItem">

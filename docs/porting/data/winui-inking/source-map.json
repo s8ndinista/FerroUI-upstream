@@ -63,7 +63,7 @@
       "sha": "bf2ace84c1fe90352b9b4daca91bcfa1d275b7b0",
       "size": 8119,
       "category": "api-contract",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_presenter.rs",
         "src/FerroUI.Controls/inking/ink_stroke_container.rs",
@@ -71,7 +71,7 @@
         "src/FerroUI.Controls/inking/ink_synchronizer.rs",
         "src/FerroUI.Controls/inking/ink_canvas.rs"
       ],
-      "notes": "All declared types/members have exact snapshots and individual Rust mappings. Three native clipboard members remain pending final Windows conformance evidence; all native persistence methods have passed real OS fixtures. Framework ownership/signatures are intentional adaptations."
+      "notes": "Every declared public type/member is mapped using exact snapshots, original enum/property names and idiomatic Rust/FerroUI ownership. Native persistence and all three native clipboard operations have passed real Windows fixtures. The container intentionally normalizes pasted selection to the published contract while the native adapter retains observed OS state; the difference is explicit in member records."
     },
     {
       "path": "controls/dev/InkCanvas/InkCanvas.vcxitems",
@@ -243,35 +243,37 @@
       "sha": "507a09671db4d5ba6bc1314965c48cc607adbdb9",
       "size": 74505,
       "category": "api-tests",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
-        "src/FerroUI.Controls/inking/ink_toolbar_tests.rs"
+        "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+        "src/FerroUI.Themes.WinUI/tests/control_templates.rs",
+        "src/FerroUI.Controls/inking/ink_parity_tests.rs"
       ],
-      "notes": "All 53 source methods are retained and mapped to exact behavior assertions. 52 are covered by passed controls tests at dd8abb5 (154 tests passed); the populated stencil icon/layout scenario found a real template precedence defect and remains partial pending its corrected theme test. Windows harness plumbing is adapted to real FerroUI controls/providers."
+      "notes": "Every one of the 53 exact source API test methods maps to passed Rust assertions, including the populated stencil blank-icon regression in the real themed toolbar. Source control assertions use existing FerroUI mock-window/dispatcher, real controls and automation providers; all 65 combined canvas/toolbar scenarios are covered."
     },
     {
       "path": "controls/dev/InkToolbar/ButtonManager.cpp",
       "sha": "7bbec749a08809d47ad84aae928db313f6e139c9",
       "size": 34550,
       "category": "support",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar.rs",
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
       ],
-      "notes": "Toolbar orchestration, default/custom controls, target precedence, independent palettes, contrast/resources and erase-all behavior use FerroUI. Source singleton/kind/identity registration rules now preserve public Children while only accepted controls join the panel; ignored entries retain app state and are not implicitly promoted. Four registration regressions await execution before this source group is promoted."
+      "notes": "Toolbar orchestration, targets, palettes/resources and erase-all behavior use FerroUI. Public Children retains every application addition while only accepted unique builtin kinds/custom identities join the visual panel and service wiring. Unsupported/duplicate entries retain app state and are not automatically promoted. All four exact registration regressions pass in the full controls run at 7fbffd0; framework diagnostics log rejected additions."
     },
     {
       "path": "controls/dev/InkToolbar/ButtonManager.h",
       "sha": "acdf7e2919c09c7b310627649b8e8fa19e043d7f",
       "size": 7620,
       "category": "support",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar.rs",
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
       ],
-      "notes": "Toolbar orchestration, default/custom controls, target precedence, independent palettes, contrast/resources and erase-all behavior use FerroUI. Source singleton/kind/identity registration rules now preserve public Children while only accepted controls join the panel; ignored entries retain app state and are not implicitly promoted. Four registration regressions await execution before this source group is promoted."
+      "notes": "Toolbar orchestration, targets, palettes/resources and erase-all behavior use FerroUI. Public Children retains every application addition while only accepted unique builtin kinds/custom identities join the visual panel and service wiring. Unsupported/duplicate entries retain app state and are not automatically promoted. All four exact registration regressions pass in the full controls run at 7fbffd0; framework diagnostics log rejected additions."
     },
     {
       "path": "controls/dev/InkToolbar/ColorNames.h",
@@ -302,38 +304,38 @@
       "sha": "c6b80cd271431f6f8611b51e6a024c3566c1acf1",
       "size": 68616,
       "category": "control",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar.rs",
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
       ],
-      "notes": "Toolbar orchestration, default/custom controls, target precedence, independent palettes, contrast/resources and erase-all behavior use FerroUI. Source singleton/kind/identity registration rules now preserve public Children while only accepted controls join the panel; ignored entries retain app state and are not implicitly promoted. Four registration regressions await execution before this source group is promoted."
+      "notes": "Toolbar orchestration, targets, palettes/resources and erase-all behavior use FerroUI. Public Children retains every application addition while only accepted unique builtin kinds/custom identities join the visual panel and service wiring. Unsupported/duplicate entries retain app state and are not automatically promoted. All four exact registration regressions pass in the full controls run at 7fbffd0; framework diagnostics log rejected additions."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbar.h",
       "sha": "e11fcc63f00f5a004c8a3478d33ac413f10df908",
       "size": 11075,
       "category": "control",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar.rs",
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
       ],
-      "notes": "Toolbar orchestration, default/custom controls, target precedence, independent palettes, contrast/resources and erase-all behavior use FerroUI. Source singleton/kind/identity registration rules now preserve public Children while only accepted controls join the panel; ignored entries retain app state and are not implicitly promoted. Four registration regressions await execution before this source group is promoted."
+      "notes": "Toolbar orchestration, targets, palettes/resources and erase-all behavior use FerroUI. Public Children retains every application addition while only accepted unique builtin kinds/custom identities join the visual panel and service wiring. Unsupported/duplicate entries retain app state and are not automatically promoted. All four exact registration regressions pass in the full controls run at 7fbffd0; framework diagnostics log rejected additions."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbar.idl",
       "sha": "40d610303b67f970dd49d3cb9af8c1d15b114e55",
       "size": 11741,
       "category": "api-contract",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_types.rs",
         "src/FerroUI.Controls/inking/ink_toolbar.rs",
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
         "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
       ],
-      "notes": "All declared types/members have exact snapshots and individual Rust mappings, with original enum discriminants and registered property names. Final registration and portable entrance-animation tests are pending; renderer/platform differences are separately documented adaptations."
+      "notes": "All declared public types/members have exact snapshots and individual Rust mappings, preserving enum discriminants and XAML property names. Source registration and configuration entrance semantics are implemented and their dedicated regressions pass at 7fbffd0. Native rasterization is replaced by the documented FerroUI rendering adaptation."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbar.vcxitems",
@@ -349,14 +351,15 @@
       "sha": "93364515ba97fcb1c17758c507533d4698e8edfa",
       "size": 130900,
       "category": "theme",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Themes.WinUI/Controls/InkToolbar.xaml",
         "src/FerroUI.Themes.WinUI/Resources/InkToolbar.xaml",
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs",
-        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs",
+        "src/FerroUI.Themes.WinUI/tests/control_templates.rs"
       ],
-      "notes": "Seventeen typed FerroUI themes and a shared base provide source brush roles, template parts, pseudo states, vector glyphs and real flyouts/palette/slider/preview. The source EntranceThemeTransition now has a portable staggered animation; new clock/lifetime tests and the exact populated stencil geometry assertion await execution. Windows symbol-font glyphs and pixels are documented vector/render adaptations."
+      "notes": "Seventeen typed FerroUI themes plus shared base retain resource roles, template parts, state styles, real configuration controls and a tested portable entrance. Presenter-hosted builtin glyph content uses scoped ordinary descendants and typed button-ancestor bindings; direct-template controls retain template selectors. All 22 theme/resource tests pass, including populated ruler/protractor geometry, live foreground/selected brushes and routed keyboard flyout/arrow states. Symbol-font glyphs and rasterization are documented vector/render adaptations."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarAutomationPeer.cpp",
@@ -647,22 +650,22 @@
       "sha": "3c0b0916c50751e95d8f92ce3ab05179dda0b762",
       "size": 36160,
       "category": "control",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
       ],
-      "notes": "Actual FerroUI palette, slider, localized headings and all 103 source preview points implement configuration. A portable clock-driven staggered opacity/translation entrance is now implemented with cancellation/restoration/weak-owner handling; its new progression/lifetime tests await execution. Animation timing and vector/template rasterization are deliberate framework choices."
+      "notes": "Actual FerroUI palette, slider, localized headings and all 103 source preview samples implement configuration. The source entrance transition maps to framework-clock staggered opacity/translation with existing-transform restoration and weak-owner lifetime cleanup. Progression, cancellation/detach/reattach/completion, drop and pen-flyout release regressions pass at 7fbffd0. Timing and rasterization are documented framework choices."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarPenConfigurationControl.h",
       "sha": "e61cf3acd80f6a3ed922c6967e8232531b9f34f0",
       "size": 6439,
       "category": "control",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
       ],
-      "notes": "Actual FerroUI palette, slider, localized headings and all 103 source preview points implement configuration. A portable clock-driven staggered opacity/translation entrance is now implemented with cancellation/restoration/weak-owner handling; its new progression/lifetime tests await execution. Animation timing and vector/template rasterization are deliberate framework choices."
+      "notes": "Actual FerroUI palette, slider, localized headings and all 103 source preview samples implement configuration. The source entrance transition maps to framework-clock staggered opacity/translation with existing-transform restoration and weak-owner lifetime cleanup. Progression, cancellation/detach/reattach/completion, drop and pen-flyout release regressions pass at 7fbffd0. Timing and rasterization are documented framework choices."
     },
     {
       "path": "controls/dev/InkToolbar/InkToolbarRulerButton.h",

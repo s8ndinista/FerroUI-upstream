@@ -1215,7 +1215,7 @@
       "type": "InkStrokeContainer",
       "name": "CopySelectedToClipboard",
       "projection_signature": "pub fn CopySelectedToClipboard(&self) -> windows_core::Result<()>",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_stroke_container.rs",
         "src/Windows/FerroUI.WinUI/inking.rs"
@@ -1223,7 +1223,7 @@
       "symbols": [
         "copy_selected_to_clipboard"
       ],
-      "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA.",
+      "notes": "Real Windows CI run 39605086703/job119239093640 at 7fbffd0 passes the dedicated STA copy/can-paste/paste fixture, comparing native getter state, attributes, transformed samples and fresh IDs. The adapter preserves OS selection. The public FerroUI container deliberately selects newly pasted clones and clears the old selection, matching the published Learn contract and portable paste; the installed native reference instead retains old=true and returns new=false. STA is required and checked explicitly.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"
@@ -1234,7 +1234,7 @@
       "type": "InkStrokeContainer",
       "name": "PasteFromClipboard",
       "projection_signature": "pub fn PasteFromClipboard(&self, position: super::super::super::Foundation::Point) -> windows_core::Result<super::super::super::Foundation::Rect>",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_stroke_container.rs",
         "src/Windows/FerroUI.WinUI/inking.rs"
@@ -1242,7 +1242,7 @@
       "symbols": [
         "paste_from_clipboard"
       ],
-      "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA.",
+      "notes": "Real Windows CI run 39605086703/job119239093640 at 7fbffd0 passes the dedicated STA copy/can-paste/paste fixture, comparing native getter state, attributes, transformed samples and fresh IDs. The adapter preserves OS selection. The public FerroUI container deliberately selects newly pasted clones and clears the old selection, matching the published Learn contract and portable paste; the installed native reference instead retains old=true and returns new=false. STA is required and checked explicitly.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"
@@ -1253,7 +1253,7 @@
       "type": "InkStrokeContainer",
       "name": "CanPasteFromClipboard",
       "projection_signature": "pub fn CanPasteFromClipboard(&self) -> windows_core::Result<bool>",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_stroke_container.rs",
         "src/Windows/FerroUI.WinUI/inking.rs"
@@ -1261,7 +1261,7 @@
       "symbols": [
         "can_paste_from_clipboard"
       ],
-      "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA.",
+      "notes": "Real Windows CI run 39605086703/job119239093640 at 7fbffd0 passes the dedicated STA copy/can-paste/paste fixture, comparing native getter state, attributes, transformed samples and fresh IDs. The adapter preserves OS selection. The public FerroUI container deliberately selects newly pasted clones and clears the old selection, matching the published Learn contract and portable paste; the installed native reference instead retains old=true and returns new=false. STA is required and checked explicitly.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"

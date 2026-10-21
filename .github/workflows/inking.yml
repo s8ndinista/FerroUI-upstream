@@ -44,7 +44,7 @@ jobs:
           toolchain: '1.89.0'
           targets: wasm32-unknown-unknown
       - name: Pinned source, member and test accounting
-        run: python3 scripts/inking/check_port.py
+        run: python3 scripts/inking/check_port.py --require-control-complete
       - name: Generated markup paths and Rust builders
         run: |
           python3 scripts/generate_markup_types.py --target rust-paths --check

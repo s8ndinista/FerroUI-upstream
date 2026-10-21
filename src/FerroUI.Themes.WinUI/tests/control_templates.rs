@@ -761,6 +761,7 @@ fn ink_toolbar_populated_stencil_has_laid_out_ruler_and_protractor_geometry() {
 /// Template-local defaults must not mask the selected/placement styles.
 #[test]
 fn ink_toolbar_extension_glyph_tracks_selection_and_every_flyout_edge() {
+    use ferroui_base::input::{InputElement, Key, KeyEventArgs};
     use ferroui_base::layout::{HorizontalAlignment, VerticalAlignment};
     use ferroui_base::media::Geometry;
     use ferroui_base::Visual;
@@ -777,6 +778,36 @@ fn ink_toolbar_extension_glyph_tracks_selection_and_every_flyout_edge() {
     let glyph = visual.get_visual_descendants().filter_map(|child| child.cast::<Path>())
         .find(|path| path.name().as_deref() == Some("ExtensionGlyph"))
         .expect("the pen's configuration glyph");
+    assert_eq!(glyph.opacity(), 1.0);
+    assert!(glyph.data().is_some(), "the selected pen has a real configuration arrow");
+    assert!(glyph.bounds().width > 0.0 && glyph.bounds().height > 0.0);
+    let outline = visual.get_visual_descendants().filter_map(|child| child.cast::<Path>())
+        .find(|path| path.name().as_deref() == Some("ContentGlyph"))
+        .expect("the pen outline");
+    let fill = visual.get_visual_descendants().filter_map(|child| child.cast::<Path>())
+        .find(|path| path.name().as_deref() == Some("ContentFillGlyph"))
+        .expect("the selected ink color glyph");
+    assert!(outline.fill().is_some(), "presenter content resolves the button foreground");
+    let selected_brush = pen.cast::<ferroui_controls::InkToolbarPenButton>().unwrap()
+        .selected_brush().expect("the selected ink brush");
+    assert!(fill.fill().is_some_and(|brush| Rc::ptr_eq(&brush, &selected_brush)),
+        "presenter content resolves the selected ink color");
+    let flyout = pen.flyout().unwrap();
+    let activate = || {
+        let mut key = KeyEventArgs::new();
+        key.key = Key::Enter;
+        key.set_routed_event(Some(InputElement::key_down_event()));
+        pen.raise_event(&key);
+        assert!(key.handled());
+    };
+    activate();
+    ferroui_base::threading::Dispatcher::ui_thread().run_jobs(None);
+    assert!(flyout.is_open());
+    assert!(pen.classes().contains(":flyout-open"));
+    assert_eq!(glyph.opacity(), 0.0);
+    activate();
+    assert!(!flyout.is_open());
+    assert!(!pen.classes().contains(":flyout-open"));
     assert_eq!(glyph.opacity(), 1.0);
     for (placement, resource, horizontal, vertical, width, height) in [
         (Placement::Top, "InkToolbarArrowUp", HorizontalAlignment::Center, VerticalAlignment::Top, 8.0, 5.0),

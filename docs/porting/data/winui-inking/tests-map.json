@@ -737,14 +737,18 @@
       "id": "InkToolbar.InkToolbarStencilRendersWithIconTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarStencilRendersWithIconTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
           "name": "toolbar_in_visual_tree_drives_canvas_and_legacy_ruler_toggle"
+        },
+        {
+          "file": "src/FerroUI.Themes.WinUI/tests/control_templates.rs",
+          "name": "ink_toolbar_populated_stencil_has_laid_out_ruler_and_protractor_geometry"
         }
       ],
-      "notes": "The real loaded theme test checks nonempty laid-out stencil geometry. Its first CI execution found a local Data value overriding the protractor conditional style; the template fix is awaiting rerun. This scenario remains partial until that rendered-control assertion passes."
+      "notes": "The populated real toolbar contains its pens and stencil, whose content Path has nonzero laid-out bounds and nonempty ruler/protractor geometry. Changing SelectedStencil replaces the geometry. The final theme run passes all 22 tests, including this source blank-icon regression, foreground/selected-brush ancestor bindings and routed Enter/extension glyph state on every flyout edge."
     },
     {
       "id": "InkToolbar.InkToolbarToolButtonAutomationPeerExpandCollapseTest",
@@ -1022,19 +1026,18 @@
     }
   ],
   "validation": {
-    "platform": "Linux (GitHub-hosted Ubuntu)",
-    "revision": "dd8abb5",
-    "run_url": "https://github.com/wieslawsoltes/FerroUI/actions/runs/39603593237",
-    "job_id": 119233997583,
-    "command": "cargo test --locked -p ferroui-controls --lib inking::",
+    "revision": "7fbffd0",
+    "platform": "Linux",
+    "command": "cargo test --locked -p ferroui-controls --lib",
     "result": {
-      "passed": 154,
+      "passed": 4587,
       "failed": 0,
       "ignored": 0,
-      "filtered_out": 4426,
-      "seconds": 1.43
+      "seconds": 8.03,
+      "inking_passed": 161,
+      "inking_failed": 0
     },
-    "notes": "All control-test mappings marked adapted passed, including the corrected menu selection/active-input gate and complete palette description matrix. View tests also passed 2/2. The distinct theme step passed 19 and failed 2; its pending populated stencil geometry source scenario is not counted complete."
+    "notes": "Full controls library suite passed with localhost permitted for existing remote-control tests. All 161 inking tests pass, including source registration, menu/provider activation, palette descriptions and entrance/lifetime regressions. Exact source stencil geometry remains in the separate pending theme test."
   },
   "validation_history": [
     {
@@ -1047,6 +1050,45 @@
         "ignored": 0
       },
       "notes": "Mapped adapted tests passed in this run. Two suite failures were the menu peer implicit-selection regression and palette keyboard test focus setup; both remain pending rerun. Later tests are not counted as executed."
+    },
+    {
+      "platform": "Linux (GitHub-hosted Ubuntu)",
+      "revision": "dd8abb5",
+      "run_url": "https://github.com/wieslawsoltes/FerroUI/actions/runs/39603593237",
+      "job_id": 119233997583,
+      "command": "cargo test --locked -p ferroui-controls --lib inking::",
+      "result": {
+        "passed": 154,
+        "failed": 0,
+        "ignored": 0,
+        "filtered_out": 4426,
+        "seconds": 1.43
+      },
+      "notes": "All control-test mappings marked adapted passed, including the corrected menu selection/active-input gate and complete palette description matrix. View tests also passed 2/2. The distinct theme step passed 19 and failed 2; its pending populated stencil geometry source scenario is not counted complete."
     }
-  ]
+  ],
+  "theme_validation": {
+    "platform": "Linux",
+    "revision_base": "7fbffd0",
+    "revision_scope": "Subsequent theme content-tree selector, ancestor-binding and dynamic-resource corrections in the next review checkpoint.",
+    "command": "cargo test --locked -p ferroui-themes-winui --lib ink_toolbar",
+    "result": {
+      "passed": 22,
+      "failed": 0,
+      "ignored": 0,
+      "filtered_out": 290,
+      "seconds": 0.77
+    },
+    "notes": "Actual loaded template tests verify both stencil vectors and layout, foreground and selected-brush bindings, routed Enter opening/closing and extension glyph state/placement. Full dedicated theme/resource compilation is included."
+  },
+  "catalog_validation": {
+    "platform": "Linux",
+    "command": "cargo check --locked -p control-catalog",
+    "result": {
+      "exit_code": 0,
+      "elapsed_seconds": 403,
+      "existing_sample_warnings": 3
+    },
+    "notes": "The default ControlCatalog feature set includes compiled XAML; the inking sample and event/service wiring compile with the rest of the application."
+  }
 }

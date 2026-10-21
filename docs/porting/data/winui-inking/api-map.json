@@ -95,11 +95,11 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_stroke_container.rs"
       ],
-      "notes": "Portable collection operations and bounded FERROINK persistence, plus a Windows service that passes real OS ISF/GIF round-trip and malformed-load fixtures. Native clipboard execution remains a separate pending fixture; conversion adaptations are explicit.",
+      "notes": "Portable collection/selection operations and bounded FERROINK persistence use FerroUI values and atomic mutations. Real Windows ISF/GIF, malformed-load and STA clipboard fixtures pass. Native import coordinates/IDs/twist policy and the public container selected-new/clear-old paste normalization are explicit adaptations.",
       "members": [
         {
           "name": "Clear",
@@ -297,7 +297,7 @@
           "kind": "method",
           "declaration": "void CopySelectedToClipboard();",
           "id": "InkStrokeContainer.CopySelectedToClipboard",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_stroke_container.rs",
             "src/FerroUI.Controls/inking/ink_platform_services.rs",
@@ -307,14 +307,14 @@
           "symbols": [
             "copy_selected_to_clipboard"
           ],
-          "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA."
+          "notes": "Real Windows CI run 39605086703/job119239093640 at 7fbffd0 passes the dedicated STA copy/can-paste/paste fixture, comparing native getter state, attributes, transformed samples and fresh IDs. The adapter preserves OS selection. The public FerroUI container deliberately selects newly pasted clones and clears the old selection, matching the published Learn contract and portable paste; the installed native reference instead retains old=true and returns new=false. STA is required and checked explicitly."
         },
         {
           "name": "PasteFromClipboard",
           "kind": "method",
           "declaration": "Windows.Foundation.Rect PasteFromClipboard(Windows.Foundation.Point position);",
           "id": "InkStrokeContainer.PasteFromClipboard",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_stroke_container.rs",
             "src/FerroUI.Controls/inking/ink_platform_services.rs",
@@ -324,14 +324,14 @@
           "symbols": [
             "paste_from_clipboard"
           ],
-          "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA."
+          "notes": "Real Windows CI run 39605086703/job119239093640 at 7fbffd0 passes the dedicated STA copy/can-paste/paste fixture, comparing native getter state, attributes, transformed samples and fresh IDs. The adapter preserves OS selection. The public FerroUI container deliberately selects newly pasted clones and clears the old selection, matching the published Learn contract and portable paste; the installed native reference instead retains old=true and returns new=false. STA is required and checked explicitly."
         },
         {
           "name": "CanPasteFromClipboard",
           "kind": "method",
           "declaration": "Boolean CanPasteFromClipboard();",
           "id": "InkStrokeContainer.CanPasteFromClipboard",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_stroke_container.rs",
             "src/FerroUI.Controls/inking/ink_platform_services.rs",
@@ -341,7 +341,7 @@
           "symbols": [
             "can_paste_from_clipboard"
           ],
-          "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA."
+          "notes": "Real Windows CI run 39605086703/job119239093640 at 7fbffd0 passes the dedicated STA copy/can-paste/paste fixture, comparing native getter state, attributes, transformed samples and fresh IDs. The adapter preserves OS selection. The public FerroUI container deliberately selects newly pasted clones and clears the old selection, matching the published Learn contract and portable paste; the installed native reference instead retains old=true and returns new=false. STA is required and checked explicitly."
         }
       ]
     },
@@ -1666,11 +1666,11 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.Control",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar.rs"
       ],
-      "notes": "Functional FerroUI toolbar and complete public properties/events are mapped. Source singleton/identity/illegal-child registration has been implemented with separate public and accepted visual collections; four new regressions await execution. Dedicated themes, localized resources and contrast-aware palettes are present.",
+      "notes": "The complete public toolbar surface maps to FerroUI classes/properties/events, actual flyouts, localized resources and contrast-aware palettes. Source singleton/identity/unsupported-child rules retain public Children separately from accepted visuals; all four new registration regressions pass at 7fbffd0.",
       "members": [
         {
           "name": "InkToolbar",
@@ -2072,11 +2072,11 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.Control",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
       ],
-      "notes": "Actual palette, slider, localized headings and all 103 preview points use FerroUI controls. The source entrance transition now has a clock-driven staggered opacity/translation adaptation with cancellation and transform restoration; its new progression/lifetime tests await execution.",
+      "notes": "Actual palette, slider, localized headings and all 103 preview points use FerroUI controls. The source entrance transition maps to framework-clock staggered opacity/translation with safe cancellation, base-transform restoration and weak-owner lifetime cleanup; dedicated progression/lifetime regressions pass at 7fbffd0.",
       "members": [
         {
           "name": "InkToolbarPenConfigurationControl",
