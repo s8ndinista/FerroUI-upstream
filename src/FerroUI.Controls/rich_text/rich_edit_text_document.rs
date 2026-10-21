@@ -22,6 +22,9 @@ pub use case::LetterCase;
 #[path = "rich_edit_text_range_operations.rs"]
 mod range_operations;
 
+#[path = "rich_edit_text_clipboard.rs"]
+mod clipboard;
+
 #[path = "rich_edit_text_selection_navigation.rs"]
 mod selection_navigation;
 
@@ -430,6 +433,9 @@ struct RangeData {
     start: TextPointer,
     end: TextPointer,
     typing_format: CharacterFormat,
+    // Explicit range/format ownership changes are distinct from the document's
+    // mutation identity, including an asynchronous target moved away and back.
+    generation: u64,
 }
 
 /// A live, independent range. Its endpoints follow document edits using explicit gravity.
@@ -454,6 +460,7 @@ impl RichEditTextRange {
                 start: document.create_pointer(range.start, start_gravity)?,
                 end: document.create_pointer(range.end, TextGravity::Forward)?,
                 typing_format: CharacterFormat::default(),
+                generation: 0,
             })),
             editor,
         })
@@ -548,6 +555,14 @@ impl RichEditTextRange {
         Ok(result)
     }
 
+    fn set_range_typing_format(&self, format: CharacterFormat) {
+        let mut data = self.data.borrow_mut();
+        if data.typing_format != format {
+            data.typing_format = format;
+            data.generation = data.generation.wrapping_add(1);
+        }
+    }
+
     pub fn formatted_text(&self) -> Result<Self, EditError> {
         self.get_clone()
     }
@@ -583,6 +598,7 @@ impl RichEditTextRange {
                 .document()
                 .create_pointer(range.end, TextGravity::Forward)?,
             typing_format: CharacterFormat::default(),
+            generation: self.data.borrow().generation.wrapping_add(1),
         };
         let old = self.data.replace(replacement);
         drop(old);
@@ -802,7 +818,7 @@ impl RichEditTextRange {
             // A degenerate independent range owns its insertion defaults; it
             // must not apply those character properties to the user's selection
             // or to unrelated content in a nonempty paragraph.
-            self.data.borrow_mut().typing_format = paragraph.format.character.clone();
+            self.set_range_typing_format(paragraph.format.character.clone());
         }
         Ok(())
     }
@@ -830,7 +846,7 @@ impl RichEditTextRange {
         if self.is_degenerate() {
             self.editor.prepare_edit()?;
             let updated = self.data.borrow().typing_format.overlay(format).clone();
-            self.data.borrow_mut().typing_format = updated;
+            self.set_range_typing_format(updated);
             return Ok(());
         }
         self.apply_to_selection(|editor| editor.apply_format(format))

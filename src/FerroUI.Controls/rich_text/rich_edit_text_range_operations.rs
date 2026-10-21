@@ -105,12 +105,12 @@ impl RichEditTextRange {
                 range.end - previous.len_utf16() + value.len_utf16()
             };
             self.set_range(range.start, end)?;
-            self.data.borrow_mut().typing_format = own_typing_format.clone();
+            self.set_range_typing_format(own_typing_format.clone());
             Ok(true)
         });
         if result.is_err() && self.editor.external_change_generation() == external_generation {
             self.set_range(range.start, range.end)?;
-            self.data.borrow_mut().typing_format = own_typing_format;
+            self.set_range_typing_format(own_typing_format);
         }
         result
     }
@@ -168,14 +168,14 @@ impl RichEditTextRange {
                 }
             }
             self.set_range(position, position)?;
-            self.data.borrow_mut().typing_format = own_typing_format.clone();
+            self.set_range_typing_format(own_typing_format.clone());
             Ok(removed)
         });
         if result.is_err() && self.editor.external_change_generation() == external_generation {
             // The shared editor restores model/history/selection. This service
             // also restores the independent range's explicitly changed endpoints.
             self.set_range(original.start, original.end)?;
-            self.data.borrow_mut().typing_format = own_typing_format;
+            self.set_range_typing_format(own_typing_format);
         }
         result
     }
@@ -329,7 +329,7 @@ fn ensure_character_length(
     }
 }
 
-fn delete_span(
+pub(super) fn delete_span(
     editor: &RichTextEditor,
     mut range: Range<usize>,
     selected: bool,

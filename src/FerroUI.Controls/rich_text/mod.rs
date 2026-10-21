@@ -13,5 +13,5 @@ pub(crate) use rich_text_editor::utf16_prefix;
 pub use rich_text_editor::{
     EditError, EditKind, EditorSelection, RichTextCompositionChange, RichTextEditor,
 };
-pub use rich_text_transfer::{RichEditClipboardFormat, RichTextTransfer};
+pub use rich_text_transfer::{RichEditClipboardFormat, RichTextPasteFormat, RichTextTransfer};
 pub use rtf::{RtfError, RtfLimits, RtfReader, RtfWriter};

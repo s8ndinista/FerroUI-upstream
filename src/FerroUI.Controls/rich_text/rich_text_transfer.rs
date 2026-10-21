@@ -17,6 +17,36 @@ pub enum RichEditClipboardFormat {
 }
 ferroui_base::ferro_markup_enum!(RichEditClipboardFormat { AllFormats, PlainText }, { namespace: "FerroUI.Controls" });
 
+/// Chooses the clipboard representation used by a TOM paste operation.
+///
+/// Native TOM accepts zero for the best format or a platform clipboard format
+/// identifier. Registered RTF identifiers vary by platform and session; this
+/// typed policy uses FerroUI's named data formats instead of inventing a number.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
+pub enum RichTextPasteFormat {
+    /// Exact in-process document content, then RTF, then Unicode plain text.
+    #[default]
+    BestAvailable,
+    /// Unicode plain text only, even when a richer representation is present.
+    PlainText,
+    /// RTF only. Missing or malformed RTF never falls back to plain text.
+    Rtf,
+}
+
+pub(super) enum RichTextTransferContent {
+    PlainText(String),
+    RichText(DocumentSnapshot),
+}
+
+impl RichTextTransferContent {
+    fn into_snapshot(self) -> DocumentSnapshot {
+        match self {
+            Self::PlainText(text) => DocumentSnapshot::from_text(&text),
+            Self::RichText(snapshot) => snapshot,
+        }
+    }
+}
+
 /// Framework-native clipboard exchange. In-process transfers retain the exact immutable
 /// document fragment, including inline controls; external applications receive text and RTF.
 pub struct RichTextTransfer;
@@ -88,7 +118,15 @@ impl RichTextTransfer {
         data: &dyn IAsyncDataTransfer,
         plain_text_only: bool,
     ) -> Result<Option<DocumentSnapshot>, ClipboardError> {
-        Self::read_with_tab_context(data, plain_text_only, None).await
+        Self::read_with_format(
+            data,
+            if plain_text_only {
+                RichTextPasteFormat::PlainText
+            } else {
+                RichTextPasteFormat::BestAvailable
+            },
+        )
+        .await
     }
 
     /// Imports external RTF for insertion into an existing editor. Its document
@@ -99,23 +137,77 @@ impl RichTextTransfer {
         plain_text_only: bool,
         default_tab_stop: f64,
     ) -> Result<Option<DocumentSnapshot>, ClipboardError> {
-        if !default_tab_stop.is_finite() || default_tab_stop <= 0.0 {
+        Self::read_with_format_for_insertion(
+            data,
+            if plain_text_only {
+                RichTextPasteFormat::PlainText
+            } else {
+                RichTextPasteFormat::BestAvailable
+            },
+            default_tab_stop,
+        )
+        .await
+    }
+
+    /// Checks advertised formats without requesting or decoding their payloads.
+    /// A true result does not promise that a later platform read will succeed or
+    /// that an advertised RTF payload is well formed.
+    pub fn can_read(
+        data: &dyn IAsyncDataTransfer,
+        format: RichTextPasteFormat,
+    ) -> Result<bool, ClipboardError> {
+        let offered = data.try_formats()?;
+        let has = |format: &DataFormat| offered.iter().any(|candidate| candidate == format);
+        Ok(match format {
+            RichTextPasteFormat::BestAvailable => {
+                has(&Self::document_format())
+                    || Self::rtf_formats().iter().any(|format| has(format))
+                    || has(&DataFormat::text())
+            }
+            RichTextPasteFormat::PlainText => has(&DataFormat::text()),
+            RichTextPasteFormat::Rtf => Self::rtf_formats().iter().any(|format| has(format)),
+        })
+    }
+
+    /// Reads exactly the requested representation policy. The caller retains
+    /// ownership of `data` and is responsible for disposing a retrieved transfer.
+    pub async fn read_with_format(
+        data: &dyn IAsyncDataTransfer,
+        format: RichTextPasteFormat,
+    ) -> Result<Option<DocumentSnapshot>, ClipboardError> {
+        Ok(Self::read_content(data, format, None)
+            .await?
+            .map(RichTextTransferContent::into_snapshot))
+    }
+
+    /// Reads a chosen format for an existing editor, applying its default tab
+    /// interval to external RTF while retaining explicit paragraph tab stops.
+    pub async fn read_with_format_for_insertion(
+        data: &dyn IAsyncDataTransfer,
+        format: RichTextPasteFormat,
+        default_tab_stop: f64,
+    ) -> Result<Option<DocumentSnapshot>, ClipboardError> {
+        Ok(Self::read_content(data, format, Some(default_tab_stop))
+            .await?
+            .map(RichTextTransferContent::into_snapshot))
+    }
+
+    pub(super) async fn read_content(
+        data: &dyn IAsyncDataTransfer,
+        format: RichTextPasteFormat,
+        default_tab_stop: Option<f64>,
+    ) -> Result<Option<RichTextTransferContent>, ClipboardError> {
+        if default_tab_stop.is_some_and(|interval| !interval.is_finite() || interval <= 0.0) {
             return Err(ClipboardError::other(
                 "Invalid destination default tab spacing",
             ));
         }
-        Self::read_with_tab_context(data, plain_text_only, Some(default_tab_stop)).await
-    }
-
-    async fn read_with_tab_context(
-        data: &dyn IAsyncDataTransfer,
-        plain_text_only: bool,
-        default_tab_stop: Option<f64>,
-    ) -> Result<Option<DocumentSnapshot>, ClipboardError> {
-        if !plain_text_only {
+        if format == RichTextPasteFormat::BestAvailable {
             if let Some(snapshot) = data.try_get_value_async(&Self::document_format()).await? {
-                return Ok(Some(snapshot));
+                return Ok(Some(RichTextTransferContent::RichText(snapshot)));
             }
+        }
+        if format != RichTextPasteFormat::PlainText {
             for format in Self::rtf_formats() {
                 if let Some(bytes) = data.try_get_value_async(&format).await? {
                     let bytes = bytes.strip_suffix(&[0]).unwrap_or(&bytes);
@@ -126,13 +218,16 @@ impl RichTextTransfer {
                             paragraph.format.default_tab_stop = Some(interval);
                         }
                     }
-                    return Ok(Some(snapshot));
+                    return Ok(Some(RichTextTransferContent::RichText(snapshot)));
                 }
             }
+        }
+        if format == RichTextPasteFormat::Rtf {
+            return Ok(None);
         }
         Ok(data
             .try_get_text_async()
             .await?
-            .map(|text| DocumentSnapshot::from_text(&text)))
+            .map(RichTextTransferContent::PlainText))
     }
 }
