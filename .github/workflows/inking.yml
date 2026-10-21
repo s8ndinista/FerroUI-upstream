@@ -50,7 +50,7 @@ jobs:
           python3 scripts/generate_markup_types.py --target rust-paths --check
           python3 scripts/generate_view_builders.py --check
       - name: Portable engine, routed input, rendering and toolbar tests
-        run: cargo test --locked -p ferroui-controls --lib inking::
+        run: 'cargo test --locked -p ferroui-controls --lib inking::'
       - name: Declarative Rust and runtime XAML integration
         run: cargo test --locked -p ferroui-view --lib inking_tests
       - name: Compiled toolbar themes and resource dictionaries
@@ -68,4 +68,4 @@ jobs:
         with:
           toolchain: '1.89.0'
       - name: Native ISF, GIF, conversion and failure-atomicity fixtures
-        run: cargo test --locked -p ferroui-winui --lib inking::
+        run: 'cargo test --locked -p ferroui-winui --lib inking::'
