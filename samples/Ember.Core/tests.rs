@@ -30,6 +30,7 @@ impl HttpClient for FakeHttp {
         Box::pin(async move {
             self.calls.set(self.calls.get() + 1);
             self.active.set(self.active.get() + 1);
+            let _active = ActiveRequest(&self.active);
             self.peak.set(self.peak.get().max(self.active.get()));
             let mut yielded = false;
             futures_util::future::poll_fn(|cx| {
@@ -42,7 +43,6 @@ impl HttpClient for FakeHttp {
                 }
             })
             .await;
-            self.active.set(self.active.get() - 1);
             self.responses
                 .borrow()
                 .get(url)
@@ -50,6 +50,51 @@ impl HttpClient for FakeHttp {
                 .unwrap_or_else(|| Err(ReaderError::Network("offline".into())))
         })
     }
+}
+
+struct ActiveRequest<'a>(&'a Cell<usize>);
+impl Drop for ActiveRequest<'_> {
+    fn drop(&mut self) {
+        self.0.set(self.0.get() - 1);
+    }
+}
+
+#[test]
+fn concurrency_is_bounded_across_simultaneous_repository_operations() {
+    block_on(async {
+        let (repo, http, _) = repository();
+        let repo = repo.with_policy(CachePolicy {
+            concurrency: 2,
+            ..CachePolicy::default()
+        });
+        for id in 1..=6 {
+            http.item(id, &format!(r#"{{"id":{id}}}"#));
+        }
+        let (a, b) = futures_util::join!(
+            repo.load_items(&[1, 2, 3], 1, FetchMode::Refresh),
+            repo.load_items(&[4, 5, 6], 1, FetchMode::Refresh)
+        );
+        assert_eq!(a.items.len() + b.items.len(), 6);
+        assert!(http.peak.get() <= 2);
+    });
+}
+
+#[test]
+fn canceled_shared_requests_release_their_future_and_permit() {
+    let (repo, http, _) = repository();
+    let repo = repo.with_policy(CachePolicy {
+        concurrency: 1,
+        ..CachePolicy::default()
+    });
+    http.item(1, r#"{"id":1}"#);
+    let mut first = Box::pin(repo.load_item(1, 1, FetchMode::Refresh));
+    let mut context = std::task::Context::from_waker(futures_util::task::noop_waker_ref());
+    assert!(std::future::Future::poll(first.as_mut(), &mut context).is_pending());
+    assert_eq!(http.active.get(), 1);
+    drop(first);
+    assert_eq!(http.active.get(), 0);
+    assert!(block_on(repo.load_item(1, 1, FetchMode::Refresh)).is_ok());
+    assert_eq!(http.calls.get(), 2);
 }
 
 fn repository() -> (Repository, Rc<FakeHttp>, Rc<MemoryStore>) {

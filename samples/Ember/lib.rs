@@ -1,0 +1,22 @@
+//! Ember's shared retained-mode UI. Every platform hosts the same control tree.
+extern crate self as ember;
+mod app;
+pub mod controls;
+pub mod markup;
+mod reader_view;
+mod register_types;
+mod services;
+mod theme;
+mod widgets;
+mod icons;
+mod settings;
+mod search_panel;
+mod thread_view;
+ferroui_markup_xaml::include_compiled_xaml!();
+pub use app::App;
+pub use markup::SAMPLE;
+pub use reader_view::ReaderView;
+pub use register_types::{register_types, ASSEMBLY};
+pub use services::{set_database_path, set_initial_location, set_repository_factory};
+pub use reader_view::{navigate_location, set_location_changed};
+#[cfg(test)] mod tests;

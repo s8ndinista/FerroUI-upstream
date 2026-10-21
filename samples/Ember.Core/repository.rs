@@ -186,7 +186,8 @@ struct RequestPermit(Rc<RequestLimiter>);
 impl Drop for RequestPermit {
     fn drop(&mut self) {
         self.0.active.set(self.0.active.get().saturating_sub(1));
-        for waker in self.0.waiters.borrow_mut().drain(..) {
+        let waiters = std::mem::take(&mut *self.0.waiters.borrow_mut());
+        for waker in waiters {
             waker.wake();
         }
     }
