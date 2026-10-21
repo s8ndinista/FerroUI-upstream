@@ -21,7 +21,7 @@ directory contents, not every transitive dependency in the WinUI repository.
 
 The working review is [FerroUI PR #269](https://github.com/wieslawsoltes/FerroUI/pull/269),
 on `feat/winui-repeater-port`. The journal and validation record distinguish
-published implementation checkpoints from source mapping and pending checks.
+published implementation checkpoints from source mapping and executed evidence.
 
 ## Reading the record
 

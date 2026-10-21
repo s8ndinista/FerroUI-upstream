@@ -142,8 +142,8 @@ leftovers at arrange. This is a recorded source correction, WR-29.
 
 Commit `8fd6b892` follows a trace dependency audit that found diagnostic item
 selectors had no runtime consumer even though the mapping advertised logging
-replacements. Selected
-lifecycle and arranged-bound snapshots now use the existing native Logger.
+replacements. Selected lifecycle and arranged-bound snapshots now use the
+existing native Logger.
 Filtering and delivery are deferred through the dispatcher with weak references
 so application sinks can inspect layout state or change the source after the
 host operation. Windows ETW/debugger trace details and runtime-profiler class
@@ -169,3 +169,57 @@ The checked-in generated output matched. Separate local runs passed 4,380 Base,
 passed locally in full after enabling the existing remote-transport tests to
 bind loopback sockets; no known failing test was filtered out. Rendered browser
 and compiled catalog results are recorded separately from these unit counts.
+
+## 2026-10-21 — completed catalog and platform execution
+
+Documentation checkpoint `812de219` closes the source/dependency mapping and
+records the lifecycle corrections and initial native execution evidence. The
+runtime checkpoint remains `9039d2a5`; later documentation changes do not alter
+that tested code.
+
+The macOS workspace completed with no failed tests. ControlCatalog passed 971
+tests, retaining 20 ignored tests; all five Repeater page scenarios and all nine
+catalog view-model scenarios passed. The page scenarios exercise all four
+layouts over the large source, scrolling/recycling, collection edits,
+LinedFlow viewport constraints after resizing and edits, and weak page lifetime.
+The workspace also passed 4,847 Controls tests, 4,380 Base tests, 627 XAML tests
+(17 ignored), 103 XamlX, 44 scanner and 51 native View tests. Android, framebuffer,
+Wayland, X11, iOS and the required Windows suites supplied separate platform
+integration evidence, with exact job links and scope in VALIDATION.md.
+
+Reading the Windows subprocess logs exposed a masked informational automation
+failure despite the green job badge: 49 passed, 136 failed and 39 ignored.
+An independent comparison with main revision `5e6d8392` found identical outcomes
+for all 224 named tests and identical missing-element errors following the same
+native child-window creation panic. This is retained as an existing automation
+baseline limitation, not reported as a passing suite or a new Repeater failure.
+
+The rebuilt nonthreaded and threaded browser gates passed both WebGL2 and
+Software2D, with 12 recorded stages per host/backend and no panics. Each
+10,000-item initial source realized
+24 Stack, 162 UniformGrid, 162 Flow and 161 LinedFlow controls. Current screenshots
+show seven complete LinedFlow columns without the earlier clipped-edge labels,
+and show the inserted item after Item 09999 following move-to-end. The reports and
+artifact digests are recorded separately from the earlier diagnostic artifact.
+
+Screenshot review also exposed an imprecise browser assertion: exported `hit`
+flags include buffered rows clipped above the scroller, so the first reported
+label after scrolling could overlap the toolbar. The browser test now restricts
+visible labels to the sample's scroller viewport and requires each glyph probe's
+full text rectangle to fit inside it. The host does not export ScrollViewer
+bounds: an initial test-only attempt to read that missing export timed out.
+The corrected test derives the viewport from the measured RealizationStatus
+row and the sample's declared row spacing, border and padding, with the page
+filling the fixed-height browser view. The report records that derivation,
+viewport, probe rectangle and colour count. Horizontal clipping and
+consecutive-label assertions remain enabled. This changes the test harness
+only; runtime and catalog sources remain at `9039d2a5`.
+
+The corrected harness is published as `db118fb5`. It passed against the exact
+nonthreaded and threaded `9039d2a5` compiled catalog artifacts, in WebGL2 and
+Software2D: 12 stages each, 48 PNGs total, zero panics. Every glyph probe fit
+inside the derived viewport. All four scrolled reports contain Item 00100
+through Item 00111, with 37 realized controls. The threaded reports confirm
+render work on the render thread. VALIDATION.md preserves artifact identities,
+archive/report hashes, commands, browser version and the separation between
+the original CI runs and these corrected local replays.

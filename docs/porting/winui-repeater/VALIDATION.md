@@ -71,9 +71,15 @@ was killed by the shared environment's memory limit before tests executed.
 |---|---|---|
 | [`9039d2a5`, focused CI job 119200628970](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601866/job/119200628970) | Complete Controls library with `ferroui-base/testing,ferroui-base/compiler-metadata,ferroui-base/markup-functions` | **4,847 passed, 0 failed, 0 ignored**, including **415 Repeater tests**; the animated aligned-bring identity assertion and all new lifecycle regressions execute |
 | Same focused CI job | Regenerate both compiler snapshots, rebuild and execute runtime/compiled XAML, verify checked-in snapshot diff | **627 passed, 0 failed, 17 ignored** in the main suite; both explicitly invoked snapshot generators separately passed; generated Rust, source map and Rust-path check were current |
+| [`9039d2a5`, macOS workspace CI job 119200802257](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802257) | Full native workspace, including compiled ControlCatalog and view-model suites | **971 catalog tests passed, 0 failed, 20 ignored**; all five Repeater page tests and all nine catalog view-model tests passed |
+| Same macOS workspace job | Controls, Base, runtime/compiled XAML, XamlX, scanner and native View | **4,847 Controls (415 Repeater), 4,380 Base, 627 XAML, 103 XamlX, 44 scanner and 51 View tests passed**; no failures; XAML retains 17 ignored tests; View uses the workspace feature set |
 | [`9039d2a5`, Android CI job 119200802343](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802343) | Android host suite, Base with `--cfg ferro_tls_table`, Android catalog compilation and smoke-APK packaging | **159 Android and 4,380 Base tests passed, 0 failed, 0 ignored**; arm64 catalog compilation and packaging succeeded; not an on-device run |
 | [`9039d2a5`, Linux framebuffer CI job 119200802262](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802262) | Framebuffer unit suite, native catalog build and virtual framebuffer/card smoke checks | **70 passed, 0 failed**; one separate documentation test ignored; catalog build and smoke checks succeeded; these are platform integration checks, not Repeater-specific captures |
 | [`9039d2a5`, iOS simulator CI job 119200802432](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802432) | iOS unit and dispatcher integration suites, simulator build/install, device-target and catalog checks | **104 unit and 10 dispatcher tests passed, 0 failed**; simulator installation and target checks succeeded; not a Repeater-specific rendered or physical-device run |
+| [`9039d2a5`, Wayland CI job 119200802354](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802354) | Wayland library suite, native catalog build and compositor interaction smoke checks | **116 passed, 0 failed, 0 ignored**; catalog and compositor checks succeeded; not a Repeater-specific capture |
+| [`9039d2a5`, X11 CI job 119200802177](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802177) | X11/Vulkan/FreeDesktop/Desktop suites and native catalog/control/GPU-interoperation smoke checks | **255 X11, 78 Vulkan, 1 Skia Vulkan-frame, 118 FreeDesktop and 1 Desktop test passed**; 59 D-Bus-filtered re-runs also passed; no failures; catalog and compositor/window checks succeeded |
+| [`9039d2a5`, Windows ARM64 informative CI job 119200802344](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802344) | Win32 unit suite and software/WGL, accessibility, ANGLE, DirectComposition and repeated-exit smoke checks | **289 passed, 0 failed, 0 ignored**; platform smoke checks succeeded; these do not establish Repeater-specific screen-reader behavior |
+| [`9039d2a5`, Windows x64 CI job 119200802768](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802768) | Required Win32, Desktop, native-window and WinUI integration suites | **289 Win32, 1 Desktop, 127 native-window and 23 WinUI tests passed**; six repeated modal checks passed; the separate informational automation invocation fails with the established baseline described below |
 | Local `91675d5b` | `ferroui-build-scan` library suite and View-builder generator consistency | **44 passed**; direct bitflag expressions and generated native Repeater/layout builders are covered |
 | Local `9039d2a5` | `cargo test --offline --locked -p ferroui-view --lib -- --test-threads=2` | **49 passed, 0 failed, 0 ignored**; the generated Repeater/layout builders compile with the complete native View library and its XAML/reconciliation tests |
 | Local 2026-10-21, Base/XamlX sources from `aaab8857` | `cargo test --offline --locked -p ferroui-base -p xamlx --lib -- --test-threads=2` | **4,380 Base and 103 XamlX tests passed**, with no failures or ignored tests; native Linux host, Rust 1.99.0 |
@@ -100,6 +106,39 @@ the same single failure**, plus **627 passing XAML tests and 17 ignored**.
 The continuation read the completed logs instead of retaining the older
 handoff's list of three outstanding Controls failures.
 
+#### Windows informational automation baseline
+
+The Windows x64 job reports success overall, but its informational
+`IntegrationTestApp` automation invocation exits **1**. The workflow explicitly
+allows that failure; a green job badge is not evidence that this suite passed.
+
+```sh
+cargo build --locked -p integration-test-app
+FERROUI_AUTOMATION_TESTS=1 cargo test --locked \
+  -p ferroui-integration-tests-appium --test automation
+```
+
+| Revision | Job | Actual automation result |
+|---|---|---|
+| Current implementation `9039d2a5ddc100c56f645a0140c20597a3b122ce` | [119200802768](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802768) | **49 passed, 136 failed, 39 ignored** |
+| Recent successful main run, `5e6d8392b2321bceddeee3ba626d1448aec6d27f` | [118757933597](https://github.com/wieslawsoltes/FerroUI/actions/runs/39460361831/job/118757933597) | **49 passed, 136 failed, 39 ignored** |
+
+Independent comparison of the decoded logs found that **all 224 test names and
+outcomes match exactly**, including all 136 failures. Both logs first report the
+same child-window creation panic in `win32_native_control_host.rs:164`, then
+the same missing UI Automation elements. The most frequent missing element is
+`ShowWindowSize` (87 failures in each run); the remaining 49 missing-element
+failures have matching names and frequencies as well. The panic's suggestion
+about a supported-OS application manifest is diagnostic text, not a confirmed
+root cause.
+
+This establishes the existing failure baseline for that invocation. It does not
+make those failing cases available as passing accessibility/input acceptance
+evidence. The required native Windows suites and the Repeater-specific native
+and browser scenarios are recorded separately.
+
+#### Browser acceptance and the earlier diagnostic run
+
 The new browser regression was first executed against the exact `3facaa20`
 nonthreaded `browser-sites` artifact from
 [CI run 39496708534](https://github.com/wieslawsoltes/FerroUI/actions/runs/39496708534).
@@ -124,6 +163,114 @@ The test runs both rendering modes by default. The same script accepts the
 threaded site directory and supplies cross-origin isolation automatically.
 Generated reports identify the supplied site and backend, layout counters and
 visible item geometry. The browser CI screenshot artifact upload retains them.
+
+The rebuilt `9039d2a5` nonthreaded browser gate completed successfully in
+[CI job 119200802408](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802408).
+Its [screenshot/report artifact 12344448432](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/artifacts/12344448432)
+has verified SHA-256
+`2122ca2469e5445dae3ce75b5d7bd7134362f3e8a43f3ecb47e6f9dff8c2b332`.
+The report records **WebGL2 and Software2D passed**, 12 stages per backend,
+24 PNGs, Chrome 155.0.8059.39 with Skia, a 1280 × 1000 surface and zero panics.
+
+Both backends reported the same initial counts over the 10,000-item source:
+
+| Layout | Realized controls |
+|---|---:|
+| Stack | 24 |
+| UniformGrid | 162 |
+| Flow | 162 |
+| LinedFlow | 161 |
+
+After the 7,200-DIP Stack wheel scroll, 37 controls were realized. The original
+report's `visible` array includes buffered Item 00098 and Item 00099 above the
+scroller because the state export's `hit` flag does not account for that ancestor
+clip. Screenshot inspection shows the drawn viewport begins with Item 00100.
+The original glyph probe could therefore sample toolbar pixels; the tightened
+replay below records visibility and glyph evidence using the scroller's bounds.
+Insert, move to the actual end, remove and reset all passed. The original report
+contains no gaps in its consecutive item labels or horizontal overflow at any
+recorded stage. Visual inspection confirmed seven complete LinedFlow columns and
+the moved inserted item following Item 09999 at the source's end. These
+observations apply to this workload; they are not universal allocation or
+throughput bounds.
+
+The threaded browser gate also completed successfully in
+[CI job 119200802253](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/job/119200802253).
+Its [screenshot/report artifact 12344787579](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/artifacts/12344787579)
+has verified SHA-256
+`7638a5d2ff40812ee127f6126d31b108e6d2332eb070b8818f1b65ad92faddaf`.
+Both renderers passed all 12 stages, producing 24 PNGs with the same initial and
+scrolled realization counts and zero panics. The report identifies Skia and
+Chrome 155.0.8059.39 and confirms frame/render work on a different thread from
+the page. LinedFlow and move-to-end screenshots were inspected independently.
+This CI report uses the original visibility filter described above; it is kept
+separate from the corrected replay.
+
+#### Corrected viewport and pixel-probe replay
+
+Browser test checkpoint
+[`db118fb5`](https://github.com/wieslawsoltes/FerroUI/commit/db118fb5e47648265b88a3539d400b55ba2f9a5e)
+restricts visible-item centres to the scroller and selects a glyph probe whose
+entire text rectangle fits inside it. The existing horizontal-overflow and
+consecutive-label assertions remain enabled. Each stage records the viewport,
+selected text, probe rectangle and distinct pixel-colour count.
+
+The browser host exports text blocks, text boxes, buttons and images; it does
+not export ScrollViewer bounds. An initial test-only candidate attempted to
+read the named scroller and timed out before recording acceptance stages. The
+corrected test derives this fixed sample's viewport from the measured
+`RealizationStatus` bounds and `ItemsRepeaterPage.xaml`: row spacing 12, border
+thickness 1 and padding 12, with the page filling the browser view and no bottom
+command bar. The report records this derivation explicitly. It is a
+sample-specific test calculation, not a new framework inspection API.
+
+The replay uses the compiled `9039d2a5` catalog from the following CI site
+artifacts, with each downloaded archive's SHA-256 verified before extraction:
+
+| Host | Compiled site artifact | Verified SHA-256 |
+|---|---|---|
+| Nonthreaded | [12344558014](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/artifacts/12344558014) | `b9a154704b978f5e493b956fd7135d5d8513cc76380b2d9e277b65417ea392ec` |
+| Threaded | [12344672842](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593601938/artifacts/12344672842) | `d31b4d42f26ce74a6ffdb0fa653250a85e57a3aff2786825812714538a7a22f0` |
+
+Only the ControlCatalog directories were extracted. The corrected script runs
+against those bytes without changing or rebuilding Rust or catalog sources:
+
+```sh
+CHROME=/tmp/ferrodesign-chrome/chrome-linux64/chrome \
+node scripts/browser/tests/repeater.test.mjs \
+  /tmp/repeater-9039-nonthreaded-site/control-catalog-browser \
+  --screenshot-dir /tmp/repeater-9039-tightened-nonthreaded
+
+CHROME=/tmp/ferrodesign-chrome/chrome-linux64/chrome \
+node scripts/browser/tests/repeater.test.mjs \
+  /tmp/repeater-9039-threaded-site/control-catalog-browser \
+  --screenshot-dir /tmp/repeater-9039-tightened-threaded
+```
+
+Both commands exited zero. The nonthreaded and threaded replays passed both
+WebGL2 and Software2D on Chrome 156.0.8078.4 with Skia at 1280 × 1000: **12 stages
+and 12 PNGs per host/renderer, 48 total**, zero panics, and every glyph probe
+fully inside the derived viewport. The threaded reports confirm
+`on_render_thread=true`, with frame/render thread 14865072 distinct from page
+thread 5806508. Initial realization counts remain 24/162/162/161 in all four
+combinations. After the 7,200-DIP wheel scroll,
+37 controls are realized and the report contains exactly 12 centre-visible
+labels, Item 00100 through Item 00111. The viewport is
+`{left: 274, top: 162, right: 1267, bottom: 987}`. The scrolled glyph probe is
+Item 00100 at `{x: 291, y: 186, width: 959, height: 17}`, with 126 distinct
+colours in WebGL2 and 120 in Software2D. Those are also the minimum probe
+colour counts across their respective 12 stages, exceeding the unchanged
+assertion threshold of four, in both hosts. Every reported item centre is
+inside the derived viewport, and there are no consecutive-index gaps. Current
+scrolled and LinedFlow captures were also inspected visually. These local
+corrected reports are separate from the original CI screenshot artifacts above.
+
+The script's SHA-256 is
+`e9569cf4cde8caf0481c885914e14e5f0959a9ef74eda29e2440d8d90f64f806`.
+The nonthreaded report's SHA-256 is
+`ae3c67580ca944c7f48fbf95709378d318044f944a23a322ab9a0635cb5aef99`;
+the threaded report's is
+`58928a4222d2bda639b39c02fe6e605abf06b61e97f8cfd01177428782f69bc1`.
 
 ### Earlier recorded evidence
 
