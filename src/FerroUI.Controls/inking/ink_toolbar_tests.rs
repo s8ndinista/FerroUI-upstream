@@ -580,7 +580,7 @@ fn panel_adaptation_includes_native_border_and_padding_in_measure_and_arrange() 
     let _scope = test_scope();
     let toolbar = InkToolbar::new();
     toolbar.set_initial_controls(InkToolbarInitialControls::None);
-    let child = Control::new();
+    let child = InkToolbarCustomToolButton::new();
     child.set_width(20.0);
     child.set_height(10.0);
     toolbar.children().add(&child);
@@ -640,6 +640,182 @@ fn changing_initial_controls_preserves_application_children() {
     toolbar.set_initial_controls(InkToolbarInitialControls::None);
     assert_eq!(toolbar.children().count(), 1);
     assert_eq!(toolbar.children().get(0), custom.upcast::<Control>());
+}
+#[test]
+fn registration_ignores_duplicate_system_kinds_and_illegal_content_without_removing_it() {
+    let _scope = test_scope();
+    let toolbar = InkToolbar::new();
+    toolbar.set_initial_controls(InkToolbarInitialControls::None);
+    let first: Vec<Ref<Control>> = vec![
+        InkToolbarBallpointPenButton::new().upcast(),
+        InkToolbarPencilButton::new().upcast(),
+        InkToolbarHighlighterButton::new().upcast(),
+        InkToolbarEraserButton::new().upcast(),
+        InkToolbarRulerButton::new().upcast(),
+        InkToolbarStencilButton::new().upcast(),
+    ];
+    let duplicate: Vec<Ref<Control>> = vec![
+        InkToolbarBallpointPenButton::new().upcast(),
+        InkToolbarPencilButton::new().upcast(),
+        InkToolbarHighlighterButton::new().upcast(),
+        InkToolbarEraserButton::new().upcast(),
+        InkToolbarRulerButton::new().upcast(),
+        InkToolbarStencilButton::new().upcast(),
+        Control::new(),
+        Button::new().upcast(),
+        InkToolbarFlyoutItem::new().upcast(),
+    ];
+    toolbar.children().add_range(first.iter().cloned());
+    toolbar.children().add_range(duplicate.iter().cloned());
+    assert_eq!(toolbar.children().count(), 15);
+    assert_eq!(toolbar.visual_children().count(), 6);
+    assert_eq!(
+        toolbar.get_direct_value(InkToolbar::children_property()),
+        toolbar.children()
+    );
+    for child in &duplicate {
+        assert!(
+            child.is_visible(),
+            "Ignoring registration must preserve caller visibility"
+        );
+        assert!(child.visual_parent().is_none());
+        assert!(child.parent().is_none());
+    }
+    for (index, kind) in [
+        InkToolbarTool::BallpointPen,
+        InkToolbarTool::Pencil,
+        InkToolbarTool::Highlighter,
+        InkToolbarTool::Eraser,
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        assert_eq!(
+            toolbar.get_tool_button(kind).unwrap().upcast::<Control>(),
+            first[index]
+        );
+    }
+    assert_eq!(
+        toolbar
+            .get_toggle_button(InkToolbarToggle::Ruler)
+            .unwrap()
+            .upcast::<Control>(),
+        first[4]
+    );
+    assert_eq!(
+        toolbar
+            .get_menu_button(InkToolbarMenuKind::Stencil)
+            .unwrap()
+            .upcast::<Control>(),
+        first[5]
+    );
+}
+
+#[test]
+fn registration_accepts_distinct_custom_buttons_once_per_identity() {
+    let _scope = test_scope();
+    let toolbar = InkToolbar::new();
+    toolbar.set_initial_controls(InkToolbarInitialControls::None);
+    let buttons: Vec<Ref<Control>> = vec![
+        InkToolbarCustomPenButton::new().upcast(),
+        InkToolbarCustomPenButton::new().upcast(),
+        InkToolbarCustomToolButton::new().upcast(),
+        InkToolbarCustomToolButton::new().upcast(),
+        InkToolbarCustomToggleButton::new().upcast(),
+        InkToolbarCustomToggleButton::new().upcast(),
+    ];
+    toolbar.children().add_range(buttons.iter().cloned());
+    toolbar
+        .children()
+        .add_range([buttons[0].clone(), buttons[2].clone(), buttons[4].clone()]);
+    assert_eq!(toolbar.children().count(), 9);
+    assert_eq!(toolbar.visual_children().count(), 6);
+    assert!(buttons
+        .iter()
+        .all(|button| button.visual_parent().is_some()));
+    assert_eq!(
+        toolbar
+            .get_tool_button(InkToolbarTool::CustomPen)
+            .unwrap()
+            .upcast::<Control>(),
+        buttons[0]
+    );
+    assert_eq!(
+        toolbar
+            .get_tool_button(InkToolbarTool::CustomTool)
+            .unwrap()
+            .upcast::<Control>(),
+        buttons[2]
+    );
+    assert_eq!(
+        toolbar
+            .get_toggle_button(InkToolbarToggle::Custom)
+            .unwrap()
+            .upcast::<Control>(),
+        buttons[4]
+    );
+}
+
+#[test]
+fn ignored_stencil_is_not_wired_or_promoted_when_the_registered_stencil_is_removed() {
+    let _scope = test_scope();
+    let toolbar = InkToolbar::new();
+    toolbar.set_initial_controls(InkToolbarInitialControls::None);
+    let presenter = InkPresenter::new();
+    toolbar.set_target_ink_presenter(Some(presenter.clone()));
+    let first = InkToolbarStencilButton::new();
+    let ignored = InkToolbarStencilButton::new();
+    toolbar.children().add(&first);
+    toolbar.children().add(&ignored);
+    first.set_is_checked(Some(true));
+    assert!(presenter.ruler_visible());
+    assert!(first.ruler().is_some());
+    assert!(ignored.ruler().is_none());
+    ignored.set_selected_stencil(InkToolbarStencilKind::Protractor);
+    ignored.set_is_checked(Some(true));
+    assert!(presenter.ruler_visible());
+    assert!(!presenter.protractor_visible());
+    toolbar.children().remove(&first);
+    assert!(toolbar
+        .get_menu_button(InkToolbarMenuKind::Stencil)
+        .is_none());
+    assert_eq!(toolbar.children().count(), 1);
+    assert!(ignored.visual_parent().is_none());
+    // Source AddButton rejects the second registration; removal does not
+    // retroactively admit it. An explicit re-add can now claim the slot.
+    toolbar.children().remove(&ignored);
+    toolbar.children().add(&ignored);
+    assert_eq!(
+        toolbar.get_menu_button(InkToolbarMenuKind::Stencil),
+        Some(ignored.clone().upcast())
+    );
+    assert!(ignored.ruler().is_some());
+}
+
+#[test]
+fn moving_registered_children_keeps_selection_flyouts_and_handlers() {
+    let _scope = test_scope();
+    let toolbar = InkToolbar::new();
+    toolbar.set_initial_controls(InkToolbarInitialControls::None);
+    let first = InkToolbarCustomToolButton::new();
+    let second = InkToolbarCustomToolButton::new();
+    toolbar.children().add(&first);
+    toolbar.children().add(&second);
+    toolbar.set_active_tool(Some(first.clone().upcast()));
+    let flyout = first.flyout().unwrap();
+    toolbar.children().move_item(0, 1);
+    assert_eq!(
+        toolbar.visual_children().get(1),
+        first.clone().upcast::<Visual>()
+    );
+    assert_eq!(first.flyout(), Some(flyout));
+    assert_eq!(toolbar.active_tool(), Some(first.clone().upcast()));
+    second.set_is_checked(Some(true));
+    assert_eq!(toolbar.active_tool(), Some(second.clone().upcast()));
+    toolbar.children().clear();
+    assert!(toolbar.visual_children().is_empty());
+    first.set_is_checked(Some(true));
+    assert!(toolbar.active_tool().is_none());
 }
 #[test]
 fn presenter_target_wins_then_falls_back_to_canvas() {

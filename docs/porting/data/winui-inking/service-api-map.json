@@ -729,7 +729,7 @@
       "status": "not_ported",
       "rust_files": [],
       "symbols": [],
-      "notes": "Portable rendering_points/outlines are not a port of Windows InkStrokeRenderingSegment/Bézier control-point semantics.",
+      "notes": "Portable rendering_points/outlines are not a port of Windows InkStrokeRenderingSegment/B\u00e9zier control-point semantics.",
       "control_role": "returned_service_api",
       "upstream_references": []
     },
@@ -1162,12 +1162,13 @@
       "projection_signature": "pub fn MoveSelected(&self, translation: super::super::super::Foundation::Point) -> windows_core::Result<super::super::super::Foundation::Rect>",
       "status": "adapted",
       "rust_files": [
-        "src/FerroUI.Controls/inking/ink_stroke_container.rs"
+        "src/FerroUI.Controls/inking/ink_stroke_container.rs",
+        "src/Windows/FerroUI.WinUI/inking.rs"
       ],
       "symbols": [
         "move_selected"
       ],
-      "notes": "Windows Runtime member is represented by the mapped portable Rust value/property/method; OS renderer conformance is separately recorded.",
+      "notes": "Selected stroke transforms are translated by a relative delta; unselected strokes remain unchanged. The Windows fixture native_move_selected_uses_relative_translation_like_portable_container confirms this contract in run 39602608194, resolving ambiguous Microsoft Learn destination wording.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"
@@ -1222,7 +1223,7 @@
       "symbols": [
         "copy_selected_to_clipboard"
       ],
-      "notes": "Portable format/payload support and actual Windows OS service bridge are implemented. Windows runtime fixtures and exact conversion boundaries remain tracked separately; save_async defaults to Portable.",
+      "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"
@@ -1241,7 +1242,7 @@
       "symbols": [
         "paste_from_clipboard"
       ],
-      "notes": "Portable format/payload support and actual Windows OS service bridge are implemented. Windows runtime fixtures and exact conversion boundaries remain tracked separately; save_async defaults to Portable.",
+      "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"
@@ -1260,7 +1261,7 @@
       "symbols": [
         "can_paste_from_clipboard"
       ],
-      "notes": "Portable format/payload support and actual Windows OS service bridge are implemented. Windows runtime fixtures and exact conversion boundaries remain tracked separately; save_async defaults to Portable.",
+      "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"

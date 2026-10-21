@@ -703,6 +703,7 @@ fn ink_toolbar_border_and_padding_offset_themed_children() {
     toolbar.set_border_thickness(Thickness::new(1.0, 2.0, 3.0, 4.0));
     toolbar.set_corner_radius(CornerRadius::uniform(7.0));
     let tool = InkToolbarCustomToolButton::new();
+    tool.set_vertical_alignment(ferroui_base::layout::VerticalAlignment::Top);
     toolbar.children().add(&tool);
     host.children().add(&toolbar);
     let configuration = InkToolbarPenConfigurationControl::new();
@@ -754,5 +755,47 @@ fn ink_toolbar_populated_stencil_has_laid_out_ruler_and_protractor_geometry() {
     let protractor = glyph.data().expect("the protractor geometry");
     assert_ne!(ruler, protractor);
     assert!(protractor.bounds().width > 0.0 && protractor.bounds().height > 0.0);
+    window.close();
+}
+
+/// Template-local defaults must not mask the selected/placement styles.
+#[test]
+fn ink_toolbar_extension_glyph_tracks_selection_and_every_flyout_edge() {
+    use ferroui_base::layout::{HorizontalAlignment, VerticalAlignment};
+    use ferroui_base::media::Geometry;
+    use ferroui_base::Visual;
+    use ferroui_controls::shapes::Path;
+    use ferroui_controls::{InkToolbar, InkToolbarButtonFlyoutPlacement as Placement, InkToolbarTool};
+    let _app = start_themed_application();
+    let toolbar = InkToolbar::new();
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(&toolbar)));
+    window.show();
+    window.update_layout();
+    let pen = toolbar.get_tool_button(InkToolbarTool::BallpointPen).unwrap();
+    let visual: &Visual = &pen;
+    let glyph = visual.get_visual_descendants().filter_map(|child| child.cast::<Path>())
+        .find(|path| path.name().as_deref() == Some("ExtensionGlyph"))
+        .expect("the pen's configuration glyph");
+    assert_eq!(glyph.opacity(), 1.0);
+    for (placement, resource, horizontal, vertical, width, height) in [
+        (Placement::Top, "InkToolbarArrowUp", HorizontalAlignment::Center, VerticalAlignment::Top, 8.0, 5.0),
+        (Placement::Left, "InkToolbarArrowLeft", HorizontalAlignment::Left, VerticalAlignment::Center, 5.0, 8.0),
+        (Placement::Right, "InkToolbarArrowRight", HorizontalAlignment::Right, VerticalAlignment::Center, 5.0, 8.0),
+        (Placement::Bottom, "InkToolbarArrowDown", HorizontalAlignment::Center, VerticalAlignment::Bottom, 8.0, 5.0),
+        (Placement::Auto, "InkToolbarArrowDown", HorizontalAlignment::Center, VerticalAlignment::Bottom, 8.0, 5.0),
+    ] {
+        toolbar.set_button_flyout_placement(placement);
+        window.update_layout();
+        let value = Application::current().unwrap().try_get_resource(&ResourceKey::from(resource), None).flatten();
+        let expected = from_markup_value::<Ref<Geometry>>(&value).expect("the arrow resource");
+        assert_eq!(glyph.data(), Some(expected));
+        assert_eq!(glyph.horizontal_alignment(), horizontal);
+        assert_eq!(glyph.vertical_alignment(), vertical);
+        assert_eq!(glyph.width(), width);
+        assert_eq!(glyph.height(), height);
+    }
+    toolbar.set_active_tool(toolbar.get_tool_button(InkToolbarTool::Pencil));
+    assert_eq!(glyph.opacity(), 0.0);
     window.close();
 }

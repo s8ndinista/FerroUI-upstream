@@ -248,7 +248,7 @@
           "symbols": [
             "move_selected"
           ],
-          "notes": "Mapped to the Rust symbol using FerroUI values, property metadata and disposable event subscriptions where applicable."
+          "notes": "Moves selected ink by a relative delta and returns its new bounds. The real Windows contract fixture at c65 in CI run 39602608194 confirms relative translation, despite ambiguous destination wording in Microsoft Learn. Unselected strokes remain fixed."
         },
         {
           "name": "SelectWithLine",
@@ -307,7 +307,7 @@
           "symbols": [
             "copy_selected_to_clipboard"
           ],
-          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
+          "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA."
         },
         {
           "name": "PasteFromClipboard",
@@ -324,7 +324,7 @@
           "symbols": [
             "paste_from_clipboard"
           ],
-          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
+          "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA."
         },
         {
           "name": "CanPasteFromClipboard",
@@ -341,7 +341,7 @@
           "symbols": [
             "can_paste_from_clipboard"
           ],
-          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
+          "notes": "Existing FerroUI IClipboard portable transport and actual Windows native copy/can-paste/paste are implemented. The STA clipboard fixture executed all three operations in run 39603593237 but failed a selection assumption: the installed OS returned unselected strokes. A direct-native comparison fixture now records exact selection/sample/transform behavior and existing-selection handling; final validation is pending. Production explicitly requires the existing Windows UI STA."
         }
       ]
     },
@@ -1670,7 +1670,7 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar.rs"
       ],
-      "notes": "Functional toolbar, target orchestration, public properties/events, actual flyouts, localized resources and contrast-aware palettes use FerroUI. Dedicated templates exist; the source configuration entrance transition and rendered comparisons remain open.",
+      "notes": "Functional FerroUI toolbar and complete public properties/events are mapped. Source singleton/identity/illegal-child registration has been implemented with separate public and accepted visual collections; four new regressions await execution. Dedicated themes, localized resources and contrast-aware palettes are present.",
       "members": [
         {
           "name": "InkToolbar",
@@ -2076,7 +2076,7 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
       ],
-      "notes": "Actual palette, slider, localized headings and the 103-point stroke preview use FerroUI controls. Windows animation/template pixel comparison remains at the visual-resource boundary.",
+      "notes": "Actual palette, slider, localized headings and all 103 preview points use FerroUI controls. The source entrance transition now has a clock-driven staggered opacity/translation adaptation with cancellation and transform restoration; its new progression/lifetime tests await execution.",
       "members": [
         {
           "name": "InkToolbarPenConfigurationControl",
@@ -2295,11 +2295,11 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarMenuButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
       ],
-      "notes": "Stable portable ruler/protractor services, exclusive visibility, touch/mouse translation and rotation, protractor resize and annotations are connected. Exact Windows stencil rasterization and appearance still require visual comparison.",
+      "notes": "The complete public menu/guide contract maps to stable FerroUI ruler/protractor services, selected and visible item state, target synchronization and real flyouts. Portable guide drawing/manipulation is a deliberate renderer/input adaptation; native pixel comparisons are not a missing property implementation.",
       "members": [
         {
           "name": "InkToolbarStencilButton",
@@ -2575,11 +2575,11 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarToggleButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
       ],
-      "notes": "Legacy ruler toggle controls the portable ruler, including touch/mouse manipulation and annotations. Native rasterization and visual fidelity require separate comparison.",
+      "notes": "The legacy checked-state toggle controls the stable FerroUI ruler with target synchronization, source defaults and framework provider behavior. Native guide rasterization is replaced by the documented portable renderer.",
       "members": [
         {
           "name": "InkToolbarRulerButton",
@@ -3030,11 +3030,11 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.Controls.InkToolbarPenButton",
       "source": "controls/dev/InkToolbar/InkToolbar.idl",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_buttons.rs"
       ],
-      "notes": "Pencil attributes, width, palette and opacity are mapped; portable rendering approximates tilt shading and does not reproduce native pencil grain.",
+      "notes": "Pencil tool kind, palette, width, opacity, localized metadata and configuration are implemented with passed source constructor/state assertions. Portable opacity and tilt response deliberately approximate the proprietary native pencil renderer and do not reproduce its grain.",
       "members": [
         {
           "name": "InkToolbarPencilButton",

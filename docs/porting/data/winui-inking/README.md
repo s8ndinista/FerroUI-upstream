@@ -8,7 +8,8 @@ Baseline: Microsoft WinUI
 | `source-map.json` | Every file under `controls/dev/InkCanvas` and `controls/dev/InkToolbar`: path, immutable Git blob SHA, byte size, category, disposition and Rust mapping. The pinned inventory contains 164 files. |
 | `upstream/*.idl` | Byte-for-byte copies of all six IDLs in those directories. Their Git blob hashes are checked against the source inventory. |
 | `api-map.json` | Every public type and declared member in those IDLs, including enum values and dependency-property registrations: 45 types and 181 members. Each member has its own disposition. |
-| `tests-map.json` | The 65 methods in the two upstream API-test suites, with explicit local test mappings where they exist. Interaction suites and test UIs remain separate entries in the source map. |
+| `tests-map.json` | The 65 methods in the two upstream API-test suites and eight methods in the interaction suites, with explicit local test mappings. Source UI harness adaptations are explained separately from the original behavioral assertions. |
+| `upstream/*.cs` | Exact snapshots of those four test suites, checked against their original Git blobs and used to detect omitted scenario mappings. |
 | `dependencies.json` | OS services used by the source, portable replacements, compatibility boundaries and adjacent Windows Ink services. These are not presented as source files in WinUI. |
 | `service-api-map.json` | 136 methods/getters/setters across 12 selected Windows Ink dependency classes, pinned to the `windows` 0.62.2 projection. Each records whether WinUI actually invokes it, exposes the containing service, or does not require the optional API. |
 | `upstream/windows-0.62.2-inking-services.txt` | Immutable declaration extract for those external classes, with the original projection revision and source digest. This is separate from the six WinUI IDLs. |
@@ -40,9 +41,9 @@ python scripts/inking/check_port.py --require-control-complete
 python scripts/inking/check_port.py --require-complete
 ```
 
-The normal check validates ledger structure, immutable IDL hashes, exhaustive
-type/member accounting, the external service declaration extract and local
-evidence paths/symbols. It deliberately does not infer behavior from symbol
+The normal check validates ledger structure, immutable IDL/test-suite hashes,
+exhaustive type/member/test accounting, the external service declaration extract
+and local evidence paths/symbols. It deliberately does not infer behavior from symbol
 names. `--require-control-complete` rejects gaps in the pinned control sources,
 IDLs, tests, required dependencies and directly invoked external methods.
 `--require-complete` additionally includes the broader dependency API and optional
@@ -90,7 +91,7 @@ disappear. A new upstream baseline needs a deliberate inventory/API comparison.
 
 ## License
 
-The IDL snapshots and WinUI-derived declarations are Copyright (c) Microsoft
+The IDL/test snapshots and WinUI-derived declarations are Copyright (c) Microsoft
 Corporation. All rights reserved, under the MIT License. The Windows dependency
 declaration extract is from Microsoft Rust for Windows, MIT OR Apache-2.0; its
 MIT notice is retained with the other Microsoft attribution. The full notice is in

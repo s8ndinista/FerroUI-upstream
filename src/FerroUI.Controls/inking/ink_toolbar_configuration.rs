@@ -11,7 +11,10 @@ use crate::{
     Border, ButtonImpl, Canvas, ContentControlImpl, Control, ControlImpl, Decorator, PanelImpl,
     Slider, SliderImpl, StackPanel, StackPanelImpl, TextBlock, WrapPanel,
 };
+use ferroui_base::animation::easings::CubicEaseOut;
+use ferroui_base::animation::{Animation, Cue, FillMode, IClock, IGlobalClock, KeyFrame, TimeSpan};
 use ferroui_base::collections::FerroList;
+use ferroui_base::data::BindingPriority;
 use ferroui_base::input::{
     InputElementImpl, InputElementImplExt, Key, KeyEventArgs, KeyboardNavigation,
     KeyboardNavigationMode, NavigationMethod,
@@ -20,16 +23,18 @@ use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::{Layoutable, LayoutableImpl, LayoutableImplExt, Orientation};
 use ferroui_base::media::immutable::ImmutableSolidColorBrush;
 use ferroui_base::media::{
-    BackgroundSizing, BoxShadows, DrawingContext, FontWeight, IBrush, PenLineCap, PenLineJoin,
-    PolylineGeometry,
+    BackgroundSizing, BoxShadows, DrawingContext, FontWeight, IBrush, ITransform, MatrixTransform,
+    PenLineCap, PenLineJoin, PolylineGeometry, TransformGroup, TranslateTransform,
 };
-use ferroui_base::reactive::{Disposable, IDisposable};
+use ferroui_base::reactive::{CompositeDisposable, Disposable, IDisposable, Observable};
+use ferroui_base::styling::Setter;
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
     ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate, CornerRadius,
-    DirectProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, Point, Rect, Ref, Size, StyledElementImpl, StyledProperty,
-    Thickness, TypeInfo, Visual, VisualImpl,
+    DirectProperty, FerroLocator, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
+    FerroPropertyChangedEventArgs, LocatorExtensions, Point, Rect, Ref, Size, StyledElementImpl,
+    StyledProperty, Thickness, TypeInfo, Visual, VisualImpl, VisualImplExt,
+    VisualTreeAttachmentEventArgs, WeakRef,
 };
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -76,7 +81,8 @@ impl InkToolbarStrokeWidthSlider {
 #[repr(C)]
 pub struct InkToolbarPenConfigurationControl {
     base: StackPanel,
-    pen: RefCell<Option<Ref<InkToolbarPenButton>>>,
+    // The pen's flyout owns its configuration. Keep the reverse owner link weak.
+    pen: RefCell<Option<WeakRef<InkToolbarPenButton>>>,
     pen_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     palette_subscription: RefCell<Option<(FerroList<Rc<dyn IBrush>>, u64)>>,
     palette_panel: RefCell<Option<Ref<WrapPanel>>>,
@@ -85,6 +91,8 @@ pub struct InkToolbarPenConfigurationControl {
     displayed_palette: RefCell<Vec<Rc<dyn IBrush>>>,
     preview: RefCell<Option<(Ref<Canvas>, Ref<Path>)>>,
     border_renderer: RefCell<BorderRenderHelper>,
+    entrance: RefCell<Option<Rc<CompositeDisposable>>>,
+    entrance_epoch: Cell<u64>,
 }
 ferro_class!(InkToolbarPenConfigurationControl:StackPanel);
 ferro_class_info!(InkToolbarPenConfigurationControl {
@@ -117,6 +125,14 @@ impl StackPanelImpl for InkToolbarPenConfigurationControl {
     }
 }
 impl VisualImpl for InkToolbarPenConfigurationControl {
+    fn on_attached_to_visual_tree(this: &Self, event: &VisualTreeAttachmentEventArgs) {
+        Self::parent_on_attached_to_visual_tree(this, event);
+        this.start_entrance();
+    }
+    fn on_detached_from_visual_tree(this: &Self, event: &VisualTreeAttachmentEventArgs) {
+        this.stop_entrance();
+        Self::parent_on_detached_from_visual_tree(this, event);
+    }
     fn render(this: &Self, context: &mut DrawingContext) {
         this.border_renderer.borrow_mut().render(
             context,
@@ -273,6 +289,8 @@ impl InkToolbarPenConfigurationControl {
             displayed_palette: RefCell::new(Vec::new()),
             preview: RefCell::new(None),
             border_renderer: RefCell::new(BorderRenderHelper::new()),
+            entrance: RefCell::new(None),
+            entrance_epoch: Cell::new(0),
         }
     }
     pub fn new() -> Ref<Self> {
@@ -280,11 +298,16 @@ impl InkToolbarPenConfigurationControl {
     }
     pub fn for_pen(pen: &InkToolbarPenButton) -> Ref<Self> {
         let result = Self::new();
-        result.set_and_raise(Self::pen_button_property(), &result.pen, Some(pen.to_ref()));
+        *result.pen.borrow_mut() = Some(pen.to_ref().downgrade());
+        result.raise_direct_property_changed(
+            Self::pen_button_property(),
+            &None,
+            &Some(pen.to_ref()),
+        );
         result
     }
     pub fn pen_button(&self) -> Option<Ref<InkToolbarPenButton>> {
-        self.pen.borrow().clone()
+        self.pen.borrow().as_ref().and_then(WeakRef::upgrade)
     }
     pub fn border_brush(&self) -> Option<Rc<dyn IBrush>> {
         self.get_value(Self::border_brush_property())
@@ -322,6 +345,103 @@ impl InkToolbarPenConfigurationControl {
     }
     pub fn stroke_width_slider(&self) -> Option<Ref<InkToolbarStrokeWidthSlider>> {
         self.slider.borrow().clone()
+    }
+    /// Portable adaptation of InkToolbar.xaml's Grid.ChildrenTransitions / EntranceThemeTransition.
+    /// Each visible section enters from 40 DIPs to the right over 200 ms, staggered by 30 ms.
+    /// The framework clock, key-frame animation and property priorities own interpolation;
+    /// no local opacity or render-transform value is replaced by the transition.
+    fn start_entrance(&self) {
+        self.stop_entrance();
+        let clock = self.clock().or_else(|| {
+            FerroLocator::current()
+                .get_service::<dyn IGlobalClock>()
+                .map(|clock| clock as Rc<dyn IClock>)
+        });
+        let Some(clock) = clock else {
+            // A host without an animation clock still has a fully visible configuration.
+            return;
+        };
+        let children: Vec<_> = self
+            .children()
+            .snapshot()
+            .iter()
+            .filter(|child| child.is_visible())
+            .cloned()
+            .collect();
+        if children.is_empty() {
+            return;
+        }
+        let subscriptions = Rc::new(CompositeDisposable::new());
+        *self.entrance.borrow_mut() = Some(subscriptions.clone());
+        let epoch = self.entrance_epoch.get();
+        let remaining = Rc::new(Cell::new(children.len()));
+        for (index, child) in children.iter().enumerate() {
+            let transform = TransformGroup::new();
+            if let Some(original) = child.render_transform() {
+                transform
+                    .children()
+                    .add(MatrixTransform::with_matrix(original.value()).upcast());
+            }
+            transform.children().add(TranslateTransform::new().upcast());
+            let transform: Rc<dyn ITransform> = transform.into();
+            if let Some(overlay) = child.set_value_with_priority(
+                Visual::render_transform_property(),
+                Some(transform),
+                BindingPriority::Animation,
+            ) {
+                subscriptions.add(overlay);
+            }
+            let animation = Animation::new();
+            animation.set_duration(TimeSpan::from_milliseconds(200.0));
+            animation.set_delay(TimeSpan::from_milliseconds(index as f64 * 30.0));
+            animation.set_fill_mode(FillMode::Backward);
+            animation.set_easing(CubicEaseOut::new());
+            animation.children().add(KeyFrame::with_cue(
+                Cue::new(0.0),
+                [
+                    Setter::new(Visual::opacity_property(), 0.0) as _,
+                    Setter::new(TranslateTransform::x_property(), 40.0) as _,
+                ],
+            ));
+            // A valueless key-frame setter uses the current base value as its endpoint,
+            // including a new application opacity written while the entrance is running.
+            let final_opacity = Setter::empty();
+            final_opacity.set_property(Some(Visual::opacity_property().as_property()));
+            animation.children().add(KeyFrame::with_cue(
+                Cue::new(1.0),
+                [
+                    final_opacity as _,
+                    Setter::new(TranslateTransform::x_property(), 0.0) as _,
+                ],
+            ));
+            let weak = self.to_ref().downgrade();
+            let remaining = remaining.clone();
+            let completed = Rc::new(move || {
+                remaining.set(remaining.get().saturating_sub(1));
+                if remaining.get() == 0 {
+                    if let Some(configuration) = weak.upgrade() {
+                        if configuration.entrance_epoch.get() == epoch {
+                            configuration.stop_entrance();
+                        }
+                    }
+                }
+            });
+            subscriptions.add(animation.apply(
+                child,
+                Some(clock.clone()),
+                Observable::return_(true),
+                Some(completed),
+                true,
+            ));
+        }
+    }
+    fn stop_entrance(&self) {
+        self.entrance_epoch
+            .set(self.entrance_epoch.get().wrapping_add(1));
+        let subscriptions = self.entrance.borrow_mut().take();
+        if let Some(subscriptions) = subscriptions {
+            subscriptions.dispose();
+        }
     }
     fn bind_pen(&self) {
         if let Some(subscription) = self.pen_subscription.borrow_mut().take() {
@@ -470,6 +590,17 @@ impl InkToolbarPenConfigurationControl {
         let height = max_y - min_y + pen.max_stroke_width().max(path.stroke_thickness()) + 10.0;
         canvas.set_height(height);
         Canvas::set_top(&path, height / 2.0 - (min_y + max_y) / 2.0);
+    }
+}
+impl Drop for InkToolbarPenConfigurationControl {
+    fn drop(&mut self) {
+        self.stop_entrance();
+        if let Some(subscription) = self.pen_subscription.get_mut().take() {
+            subscription.dispose();
+        }
+        if let Some((palette, token)) = self.palette_subscription.get_mut().take() {
+            palette.remove_collection_changed(token);
+        }
     }
 }
 fn pen_palette(config: &InkToolbarPenConfigurationControl) -> Vec<Rc<dyn IBrush>> {
@@ -679,3 +810,7 @@ const PREVIEW_POINTS: [Point; 103] = [
     Point::new(270.68842, 8.4900108),
     Point::new(272.0, 7.3),
 ];
+
+#[cfg(test)]
+#[path = "ink_toolbar_configuration_tests.rs"]
+mod tests;

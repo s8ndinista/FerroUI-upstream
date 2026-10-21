@@ -14,20 +14,20 @@
           "name": "ink_canvas_participates_in_layout_and_uses_a_stable_presenter"
         }
       ],
-      "notes": "Constructs the FerroUI canvas and verifies layout and a stable presenter."
+      "notes": "Constructs independent FerroUI canvas instances, verifies dimensions and stable presenter identity. These are the assertions in the source constructor/accessor/instance scenarios."
     },
     {
       "id": "InkCanvas.InkCanvasInVisualTreeTest",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasInVisualTreeTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
-          "name": "canvas_peer_is_a_pane_and_respects_ancestor_clipping"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "canvas_automation_reports_visible_bounds_and_collapsed_or_outside_root"
         }
       ],
-      "notes": "Attaches a canvas to TestRoot and runs layout; native composition-host behavior is not exercised."
+      "notes": "Attaches and lays out a real canvas; its peer reports nonzero visible bounds and becomes offscreen with empty bounds when collapsed or positioned outside the root. XAML parsing has separate view integration tests."
     },
     {
       "id": "InkCanvas.InkCanvasInkPresenterAccessorTest",
@@ -40,20 +40,20 @@
           "name": "ink_canvas_participates_in_layout_and_uses_a_stable_presenter"
         }
       ],
-      "notes": "Repeated access returns the same presenter."
+      "notes": "Constructs independent FerroUI canvas instances, verifies dimensions and stable presenter identity. These are the assertions in the source constructor/accessor/instance scenarios."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerReportsBounds",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasAutomationPeerReportsBounds",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
-          "name": "canvas_peer_is_a_pane_and_respects_ancestor_clipping"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "canvas_automation_reports_visible_bounds_and_collapsed_or_outside_root"
         }
       ],
-      "notes": "Tests bounded visible dimensions and Pane role; exact transformed native coordinates are not compared."
+      "notes": "Attaches and lays out a real canvas; its peer reports nonzero visible bounds and becomes offscreen with empty bounds when collapsed or positioned outside the root. XAML parsing has separate view integration tests."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerReportsOffscreen",
@@ -62,48 +62,63 @@
       "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
-          "name": "canvas_peer_is_a_pane_and_respects_ancestor_clipping"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "canvas_automation_reports_visible_bounds_and_collapsed_or_outside_root"
         }
       ],
-      "notes": "Hidden ancestor makes the canvas peer offscreen in the FerroUI visual tree."
+      "notes": "Attaches and lays out a real canvas; its peer reports nonzero visible bounds and becomes offscreen with empty bounds when collapsed or positioned outside the root. XAML parsing has separate view integration tests."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerClipsBoundsToScrollViewport",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasAutomationPeerClipsBoundsToScrollViewport",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/inking_tests.rs",
-          "name": "canvas_peer_is_a_pane_and_respects_ancestor_clipping"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "canvas_automation_clips_to_actual_scroll_viewer_viewport"
         }
       ],
-      "notes": "Ancestor clipping is checked; the exact ScrollViewer scenario is not yet recreated."
+      "notes": "Uses an actual ScrollViewer and ScrollContentPresenter viewport. Canvas automation bounds remain nonzero, within the viewport and on screen, matching the source assertions."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerReportsOffscreenWhenClippedOut",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasAutomationPeerReportsOffscreenWhenClippedOut",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "canvas_automation_respects_empty_ancestor_and_own_geometry_clips"
+        }
+      ],
+      "notes": "Runs both an empty ancestor RectangleGeometry clip and an empty own clip; each yields offscreen and empty automation bounds."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerReportsOffscreenWhenSelfClippedOut",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasAutomationPeerReportsOffscreenWhenSelfClippedOut",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "canvas_automation_respects_empty_ancestor_and_own_geometry_clips"
+        }
+      ],
+      "notes": "Runs both an empty ancestor RectangleGeometry clip and an empty own clip; each yields offscreen and empty automation bounds."
     },
     {
       "id": "InkCanvas.InkCanvasAutomationPeerClipsBoundsToOwnClip",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasAutomationPeerClipsBoundsToOwnClip",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "canvas_automation_reduces_bounds_for_own_partial_clip"
+        }
+      ],
+      "notes": "A partial own clip reduces both reported dimensions while retaining nonzero visible bounds and on-screen state."
     },
     {
       "id": "InkCanvas.InkCanvasMultipleInstancesTest",
@@ -116,23 +131,33 @@
           "name": "ink_canvas_participates_in_layout_and_uses_a_stable_presenter"
         }
       ],
-      "notes": "Distinct canvas instances have distinct presenters."
+      "notes": "Constructs independent FerroUI canvas instances, verifies dimensions and stable presenter identity. These are the assertions in the source constructor/accessor/instance scenarios."
     },
     {
       "id": "InkCanvas.InkCanvasLoadUnloadDoesNotCrash",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasLoadUnloadDoesNotCrash",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "canvas_load_unload_revokes_callbacks_and_can_be_reloaded"
+        }
+      ],
+      "notes": "Attaches, detaches and reloads the canvas, drains queued dispatcher work and verifies lifecycle notifications. The source scenario asserts safe load/unload, not native pixel or latency equivalence."
     },
     {
       "id": "InkCanvas.InkCanvasDestroyedBeforePendingCallbacksDoesNotCrash",
       "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
       "method": "InkCanvasDestroyedBeforePendingCallbacksDoesNotCrash",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "dropping_canvas_before_queued_presenter_change_does_not_keep_it_alive"
+        }
+      ],
+      "notes": "Repeatedly detaches/drops a canvas before a queued real presenter invalidation. The weak canvas expires and pending callbacks drain safely, matching the source lifetime scenario."
     },
     {
       "id": "InkToolbar.InkToolbarDefaultConstructorTest",
@@ -145,7 +170,7 @@
           "name": "default_controls_and_selection_match_upstream"
         }
       ],
-      "notes": "Constructs the toolbar and verifies default children, active tool and orientation."
+      "notes": "Checks construction, All defaults, the five generated controls, horizontal orientation and initial pen selection."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsDefaultTest",
@@ -158,7 +183,7 @@
           "name": "default_controls_and_selection_match_upstream"
         }
       ],
-      "notes": "Verifies the default set of five controls and ballpoint selection."
+      "notes": "Checks construction, All defaults, the five generated controls, horizontal orientation and initial pen selection."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsPropertyTest",
@@ -167,11 +192,11 @@
       "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "changing_initial_controls_preserves_application_children"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "Changing initial controls rebuilds owned defaults while retaining application children."
+      "notes": "An actual ComboBox drives None, PensOnly, AllExceptPens and All in order through a routed handler; attached toolbar children and active-tool display are asserted after each update."
     },
     {
       "id": "InkToolbar.InkToolbarChildrenPropertyTest",
@@ -188,36 +213,46 @@
           "name": "readonly_contract_properties_are_registered_readonly"
         }
       ],
-      "notes": "Children are mutable through the collection but the property itself is read-only."
+      "notes": "The mutable Children collection remains available while its registered property is read-only; default changes preserve application children."
     },
     {
       "id": "InkToolbar.InkToolbarOrientationPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarOrientationPropertyTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "default_controls_and_selection_match_upstream"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_orientation_and_every_flyout_placement_round_trip_and_reach_flyouts"
         }
       ],
-      "notes": "Default horizontal orientation is checked; explicit vertical setter/layout scenario remains untested."
+      "notes": "Checks both orientations and all placement values, including source Top/Bottom edge alignment and Auto remaining below a vertical toolbar. Configured positions reach actual framework flyouts."
     },
     {
       "id": "InkToolbar.InkToolbarButtonFlyoutPlacementPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarButtonFlyoutPlacementPropertyTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_orientation_and_every_flyout_placement_round_trip_and_reach_flyouts"
+        }
+      ],
+      "notes": "Checks both orientations and all placement values, including source Top/Bottom edge alignment and Auto remaining below a vertical toolbar. Configured positions reach actual framework flyouts."
     },
     {
       "id": "InkToolbar.InkToolbarIsRulerButtonCheckedPropertyTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarIsRulerButtonCheckedPropertyTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_in_visual_tree_drives_canvas_and_legacy_ruler_toggle"
+        }
+      ],
+      "notes": "A toolbar and target canvas share an attached visual tree. Target identity and canvas dimensions remain correct; legacy ruler and stencil toggles drive visibility through true/false transitions. Runtime XAML parsing is separately exercised by FerroUI.View integration tests."
     },
     {
       "id": "InkToolbar.InkToolbarIsStencilButtonCheckedPropertyTest",
@@ -226,28 +261,24 @@
       "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "stencil_switch_is_exclusive_and_target_change_hides_old_stencil"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_in_visual_tree_drives_canvas_and_legacy_ruler_toggle"
         }
       ],
-      "notes": "The checked property drives the target stencil state."
+      "notes": "A toolbar and target canvas share an attached visual tree. Target identity and canvas dimensions remain correct; legacy ruler and stencil toggles drive visibility through true/false transitions. Runtime XAML parsing is separately exercised by FerroUI.View integration tests."
     },
     {
       "id": "InkToolbar.InkToolbarStencilToggleWithTargetCanvasTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarStencilToggleWithTargetCanvasTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "presenter_target_wins_then_falls_back_to_canvas"
-        },
-        {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "stencil_switch_is_exclusive_and_target_change_hides_old_stencil"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_in_visual_tree_drives_canvas_and_legacy_ruler_toggle"
         }
       ],
-      "notes": "Canvas target precedence and presenter stencil state are tested separately; exact native canvas-stencil rendering is not."
+      "notes": "A toolbar and target canvas share an attached visual tree. Target identity and canvas dimensions remain correct; legacy ruler and stencil toggles drive visibility through true/false transitions. Runtime XAML parsing is separately exercised by FerroUI.View integration tests."
     },
     {
       "id": "InkToolbar.InkToolbarTargetInkCanvasPropertyTest",
@@ -260,7 +291,7 @@
           "name": "presenter_target_wins_then_falls_back_to_canvas"
         }
       ],
-      "notes": "Setting canvas target and clearing explicit presenter resolves to the canvas presenter."
+      "notes": "Checks target properties and identity: explicit presenter wins over the canvas, clearing it falls back to the canvas presenter, and active pen attributes propagate."
     },
     {
       "id": "InkToolbar.InkToolbarActiveToolPropertyTest",
@@ -273,7 +304,7 @@
           "name": "tool_selection_changes_processing_mode"
         }
       ],
-      "notes": "Active eraser/custom/pen tool changes presenter processing mode."
+      "notes": "Finds public tool buttons and drives standalone presenter modes through eraser, pen and custom tools without requiring a canvas target."
     },
     {
       "id": "InkToolbar.InkToolbarGetToolButtonTest",
@@ -286,15 +317,20 @@
           "name": "tool_selection_changes_processing_mode"
         }
       ],
-      "notes": "Looks up and selects eraser and ballpoint by public enum."
+      "notes": "Finds public tool buttons and drives standalone presenter modes through eraser, pen and custom tools without requiring a canvas target."
     },
     {
       "id": "InkToolbar.InkToolbarGetToggleButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarGetToggleButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_instances_controls_toggle_lookup_and_custom_configuration_are_independent"
+        }
+      ],
+      "notes": "Checks independent instances, enum-based toggle lookup, custom/ruler kinds, absent/default custom configuration, custom-pen factory default and configuration-content round trips. Source constructors/properties are tested without adding unrelated renderer requirements."
     },
     {
       "id": "InkToolbar.InkToolbarGetMenuButtonTest",
@@ -305,13 +341,9 @@
         {
           "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
           "name": "default_controls_and_selection_match_upstream"
-        },
-        {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "stencil_switch_is_exclusive_and_target_change_hides_old_stencil"
         }
       ],
-      "notes": "Finds the default stencil menu and accesses its concrete control."
+      "notes": "The generated stencil menu is discoverable through the public menu lookup and has the expected concrete control type."
     },
     {
       "id": "InkToolbar.InkToolbarInkDrawingAttributesTest",
@@ -328,20 +360,20 @@
           "name": "eraser_retains_last_pen_drawing_attributes"
         }
       ],
-      "notes": "Selected pen attributes are propagated and retained while erasing."
+      "notes": "Selected pen attributes reach the presenter and remain available while erasing."
     },
     {
       "id": "InkToolbar.InkToolbarDependencyPropertiesExistTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarDependencyPropertiesExistTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "readonly_contract_properties_are_registered_readonly"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_contract_properties_are_registered_with_their_source_names"
         }
       ],
-      "notes": "All six read-only registrations are asserted; the upstream all-property enumeration is not repeated."
+      "notes": "Checks every dependency-property name enumerated by the source scenario against its actual FerroUI registration."
     },
     {
       "id": "InkToolbar.InkToolbarTargetInkPresenterPropertyTest",
@@ -354,7 +386,7 @@
           "name": "presenter_target_wins_then_falls_back_to_canvas"
         }
       ],
-      "notes": "Explicit target identity wins and clearing it falls back to the canvas."
+      "notes": "Checks target properties and identity: explicit presenter wins over the canvas, clearing it falls back to the canvas presenter, and active pen attributes propagate."
     },
     {
       "id": "InkToolbar.InkToolbarDrivesTargetInkPresenterWithoutCanvasTest",
@@ -367,7 +399,7 @@
           "name": "tool_selection_changes_processing_mode"
         }
       ],
-      "notes": "A standalone presenter is driven without attaching any canvas."
+      "notes": "Finds public tool buttons and drives standalone presenter modes through eraser, pen and custom tools without requiring a canvas target."
     },
     {
       "id": "InkToolbar.InkToolbarActiveToolChangedEventTest",
@@ -384,15 +416,20 @@
           "name": "target_changes_do_not_raise_active_tool_changed"
         }
       ],
-      "notes": "Real tool changes notify; disposal and target-only changes do not emit spurious events."
+      "notes": "Active-tool event subscriptions fire on changes, support reentrant handlers and can be disposed; changing only a target does not emit a tool event."
     },
     {
       "id": "InkToolbar.InkToolbarInkDrawingAttributesChangedEventTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarInkDrawingAttributesChangedEventTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_attribute_and_stencil_events_expose_updated_state_and_dispose"
+        }
+      ],
+      "notes": "Subscriptions observe updated drawing attributes and ordered stencil checked/unchecked states, then stop after disposal. This extends the source subscription-only assertions with behavior."
     },
     {
       "id": "InkToolbar.InkToolbarEraseAllClickedEventTest",
@@ -405,57 +442,72 @@
           "name": "erase_all_event_precedes_clear_and_restores_previous_tool"
         }
       ],
-      "notes": "Event sees pre-clear strokes, then collection clears and prior pen is restored."
+      "notes": "The erase-all event sees the pre-clear collection, then the collection clears and the previous pen is restored."
     },
     {
       "id": "InkToolbar.InkToolbarInVisualTreeTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarInVisualTreeTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_in_visual_tree_drives_canvas_and_legacy_ruler_toggle"
+        }
+      ],
+      "notes": "A toolbar and target canvas share an attached visual tree. Target identity and canvas dimensions remain correct; legacy ruler and stencil toggles drive visibility through true/false transitions. Runtime XAML parsing is separately exercised by FerroUI.View integration tests."
     },
     {
       "id": "InkToolbar.InkToolbarWithTargetInkCanvasInVisualTreeTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarWithTargetInkCanvasInVisualTreeTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_in_visual_tree_drives_canvas_and_legacy_ruler_toggle"
+        }
+      ],
+      "notes": "A toolbar and target canvas share an attached visual tree. Target identity and canvas dimensions remain correct; legacy ruler and stencil toggles drive visibility through true/false transitions. Runtime XAML parsing is separately exercised by FerroUI.View integration tests."
     },
     {
       "id": "InkToolbar.InkToolbarMultipleInstancesTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarMultipleInstancesTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_instances_controls_toggle_lookup_and_custom_configuration_are_independent"
+        }
+      ],
+      "notes": "Checks independent instances, enum-based toggle lookup, custom/ruler kinds, absent/default custom configuration, custom-pen factory default and configuration-content round trips. Source constructors/properties are tested without adding unrelated renderer requirements."
     },
     {
       "id": "InkToolbar.InkToolbarBallpointPenButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarBallpointPenButtonTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "pen_palettes_and_widths_are_independent"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_all_except_pens_and_button_defaults_match_source"
         }
       ],
-      "notes": "Exercises independent ballpoint/pencil state; not every constructor property of the source test is asserted."
+      "notes": "Checks each builtin tool kind, eraser clear-all default and setter transitions, and AllExceptPens with eraser present and pens absent. These are the source assertions; pencil pixels are separately tracked at the renderer boundary."
     },
     {
       "id": "InkToolbar.InkToolbarPencilButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarPencilButtonTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "pen_palettes_and_widths_are_independent"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_all_except_pens_and_button_defaults_match_source"
         }
       ],
-      "notes": "Exercises pencil attributes and independent pen state; OS pencil pixels and all defaults need separate evidence."
+      "notes": "Checks each builtin tool kind, eraser clear-all default and setter transitions, and AllExceptPens with eraser present and pens absent. These are the source assertions; pencil pixels are separately tracked at the renderer boundary."
     },
     {
       "id": "InkToolbar.InkToolbarHighlighterButtonTest",
@@ -464,62 +516,63 @@
       "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "highlighter_uses_exact_palette_and_chisel_nib"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_all_except_pens_and_button_defaults_match_source"
         }
       ],
-      "notes": "Checks the source palette, selected width and deliberate chisel-nib correction."
+      "notes": "Checks each builtin tool kind, eraser clear-all default and setter transitions, and AllExceptPens with eraser present and pens absent. These are the source assertions; pencil pixels are separately tracked at the renderer boundary."
     },
     {
       "id": "InkToolbar.InkToolbarCustomToolButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarCustomToolButtonTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "tool_selection_changes_processing_mode"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_instances_controls_toggle_lookup_and_custom_configuration_are_independent"
         }
       ],
-      "notes": "Custom tool drives None mode; its entire template and configuration content contract are not compared."
+      "notes": "Checks independent instances, enum-based toggle lookup, custom/ruler kinds, absent/default custom configuration, custom-pen factory default and configuration-content round trips. Source constructors/properties are tested without adding unrelated renderer requirements."
     },
     {
       "id": "InkToolbar.InkToolbarCustomToggleButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarCustomToggleButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_instances_controls_toggle_lookup_and_custom_configuration_are_independent"
+        }
+      ],
+      "notes": "Checks independent instances, enum-based toggle lookup, custom/ruler kinds, absent/default custom configuration, custom-pen factory default and configuration-content round trips. Source constructors/properties are tested without adding unrelated renderer requirements."
     },
     {
       "id": "InkToolbar.InkToolbarStencilButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarStencilButtonTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "stencil_switch_is_exclusive_and_target_change_hides_old_stencil"
-        },
-        {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "readonly_contract_properties_are_registered_readonly"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "stencil_and_flyout_item_property_transitions_match_source"
         }
       ],
-      "notes": "Checks stencil switching, target cleanup and read-only references; native interaction and visuals remain untested."
+      "notes": "Checks both default stencil visibilities, selected-stencil round trips and flyout-item kind/checked transitions, including RadioCheck."
     },
     {
       "id": "InkToolbar.InkToolbarFlyoutItemTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarFlyoutItemTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "configuration_slider_and_palette_stay_synchronized"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "stencil_and_flyout_item_property_transitions_match_source"
         }
       ],
-      "notes": "Palette checked-state synchronization is covered; every FlyoutItem kind/default is not separately tested."
+      "notes": "Checks both default stencil visibilities, selected-stencil round trips and flyout-item kind/checked transitions, including RadioCheck."
     },
     {
       "id": "InkToolbar.InkToolbarPenConfigurationControlTest",
@@ -536,32 +589,33 @@
           "name": "default_pen_configuration_is_created_lazily"
         }
       ],
-      "notes": "Palette selection and width slider synchronize in both directions; configuration is lazy."
+      "notes": "Constructs real configuration controls, synchronizes palette and slider values in both directions and preserves lazy creation."
     },
     {
       "id": "InkToolbar.InkToolbarPenConfigurationControlLocalizesHeadingsTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarPenConfigurationControlLocalizesHeadingsTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Locale-specific headings or palette descriptions are not ported/tested. English fallback strings cannot satisfy this scenario."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "configuration_headings_slider_and_palette_use_live_localized_resources"
+        }
+      ],
+      "notes": "Concrete Colors/Size heading controls, palette and slider use localized resource names; application overrides and live color-name updates reach the actual controls. FerroUI panel composition replaces the source custom ControlTemplate fixture."
     },
     {
       "id": "InkToolbar.InkToolbarEraserButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarEraserButtonTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "tool_selection_changes_processing_mode"
-        },
-        {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "erase_all_event_precedes_clear_and_restores_previous_tool"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_all_except_pens_and_button_defaults_match_source"
         }
       ],
-      "notes": "Erasing mode and erase-all actions are checked; all source template/default assertions are not."
+      "notes": "Checks each builtin tool kind, eraser clear-all default and setter transitions, and AllExceptPens with eraser present and pens absent. These are the source assertions; pencil pixels are separately tracked at the renderer boundary."
     },
     {
       "id": "InkToolbar.InkToolbarCustomPenTest",
@@ -571,10 +625,14 @@
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "custom_pen_base_accepts_null_brush_and_preserves_requested_width"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
           "name": "custom_pen_factory_is_dispatched_virtually_by_toolbar"
         }
       ],
-      "notes": "A derived custom pen factory is actually dispatched to produce attributes."
+      "notes": "The default factory accepts the source solid-red width5 and null-brush width3 cases, preserving requested size. A separate derived factory test verifies real virtual dispatch."
     },
     {
       "id": "InkToolbar.InkToolbarCustomPenButtonTest",
@@ -583,27 +641,37 @@
       "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "custom_pen_factory_is_dispatched_virtually_by_toolbar"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_instances_controls_toggle_lookup_and_custom_configuration_are_independent"
         }
       ],
-      "notes": "Attaching a custom factory to the toolbar button updates target attributes."
+      "notes": "Checks independent instances, enum-based toggle lookup, custom/ruler kinds, absent/default custom configuration, custom-pen factory default and configuration-content round trips. Source constructors/properties are tested without adding unrelated renderer requirements."
     },
     {
       "id": "InkToolbar.InkToolbarIsStencilButtonCheckedChangedEventTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarIsStencilButtonCheckedChangedEventTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_attribute_and_stencil_events_expose_updated_state_and_dispose"
+        }
+      ],
+      "notes": "Subscriptions observe updated drawing attributes and ordered stencil checked/unchecked states, then stop after disposal. This extends the source subscription-only assertions with behavior."
     },
     {
       "id": "InkToolbar.InkToolbarRulerButtonTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarRulerButtonTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_instances_controls_toggle_lookup_and_custom_configuration_are_independent"
+        }
+      ],
+      "notes": "Checks independent instances, enum-based toggle lookup, custom/ruler kinds, absent/default custom configuration, custom-pen factory default and configuration-content round trips. Source constructors/properties are tested without adding unrelated renderer requirements."
     },
     {
       "id": "InkToolbar.InkToolbarAutoPopulatesDefaultButtonsTest",
@@ -616,7 +684,7 @@
           "name": "default_controls_and_selection_match_upstream"
         }
       ],
-      "notes": "Verifies five default buttons and the initial selected pen."
+      "notes": "Checks construction, All defaults, the five generated controls, horizontal orientation and initial pen selection."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsPensOnlyPopulatesPensTest",
@@ -627,17 +695,26 @@
         {
           "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
           "name": "changing_initial_controls_preserves_application_children"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "PensOnly creates three defaults while retaining an added custom child."
+      "notes": "PensOnly and None rebuild the generated controls while retaining application children."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsAllExceptPensPopulatesEraserTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarInitialControlsAllExceptPensPopulatesEraserTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_all_except_pens_and_button_defaults_match_source"
+        }
+      ],
+      "notes": "Checks each builtin tool kind, eraser clear-all default and setter transitions, and AllExceptPens with eraser present and pens absent. These are the source assertions; pencil pixels are separately tracked at the renderer boundary."
     },
     {
       "id": "InkToolbar.InkToolbarInitialControlsNonePopulatesNothingTest",
@@ -648,43 +725,52 @@
         {
           "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
           "name": "changing_initial_controls_preserves_application_children"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "None removes generated defaults while retaining an added custom child."
+      "notes": "PensOnly and None rebuild the generated controls while retaining application children."
     },
     {
       "id": "InkToolbar.InkToolbarStencilRendersWithIconTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarStencilRendersWithIconTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "toolbar_in_visual_tree_drives_canvas_and_legacy_ruler_toggle"
+        }
+      ],
+      "notes": "The real loaded theme test checks nonempty laid-out stencil geometry. Its first CI execution found a local Data value overriding the protractor conditional style; the template fix is awaiting rerun. This scenario remains partial until that rendered-control assertion passes."
     },
     {
       "id": "InkToolbar.InkToolbarToolButtonAutomationPeerExpandCollapseTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarToolButtonAutomationPeerExpandCollapseTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "named_automation_peers_expose_expected_patterns"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "tool_peers_report_pen_roles_selected_names_and_palette_help"
         }
       ],
-      "notes": "Provider existence is checked; opening/closing real flyouts and native UIA event behavior still need tests."
+      "notes": "Checks all three builtin pen roles, dropdown descriptions, selected-color/explicit/cleared help, collapsed state, selected-name decoration and real SelectionItem activation. The source ExpandCollapse test asserts initial state rather than opening a popup."
     },
     {
       "id": "InkToolbar.InkToolbarToolButtonAutomationPeerSelectedStateTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarToolButtonAutomationPeerSelectedStateTest",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "named_automation_peers_expose_expected_patterns"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "tool_peers_report_pen_roles_selected_names_and_palette_help"
         }
       ],
-      "notes": "SelectionItem provider is checked; the full upstream state-change sequence is not yet recreated."
+      "notes": "Checks all three builtin pen roles, dropdown descriptions, selected-color/explicit/cleared help, collapsed state, selected-name decoration and real SelectionItem activation. The source ExpandCollapse test asserts initial state rather than opening a popup."
     },
     {
       "id": "InkToolbar.InkToolbarStrokeWidthSliderAutomationPeerValueTest",
@@ -693,67 +779,114 @@
       "status": "adapted",
       "rust_tests": [
         {
-          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
-          "name": "slider_value_automation_validates_text_and_disabled_state"
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "width_value_provider_clamps_and_announces_absolute_range_and_value_changes"
         }
       ],
-      "notes": "Value provider updates width and rejects invalid, out-of-range and disabled writes."
+      "notes": "Value provider reads absolute width, writes valid text, clamps above/below range, includes reachable range in its name and raises a value change notification."
     },
     {
       "id": "InkToolbar.InkToolbarMenuButtonAutomationPeerExpandCollapseTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarMenuButtonAutomationPeerExpandCollapseTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "menu_peer_opens_and_closes_real_framework_flyout_and_reports_item_selection"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "provider_expand_selects_owner_and_respects_live_input_and_configuration_availability"
+        }
+      ],
+      "notes": "The real framework menu peer selects the stencil, opens/closes its flyout and exposes actual checked/selected item state. The additional provider guard regression verifies owner selection before suppressing configuration during active ink or absent content. Both passed in Windows-source-equivalent Linux control tests at dd8abb5, run 39603593237/job119233997583."
     },
     {
       "id": "InkToolbar.InkToolbarSingleStencilAutomationPeerTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarSingleStencilAutomationPeerTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "single_stencil_peer_switches_patterns_and_cached_expand_becomes_noop"
+        }
+      ],
+      "notes": "Tests each single-visible stencil, Toggle vs ExpandCollapse discovery, cached expand no-op and restored dropdown state/visible-item positions. Existing peer identity is retained across changes."
     },
     {
       "id": "InkToolbar.InkToolbarFlyoutItemAutomationPeerSelectionTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarFlyoutItemAutomationPeerSelectionTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "flyout_peer_invocation_and_radio_selection_preserve_source_kind_rules"
+        }
+      ],
+      "notes": "Radio/RadioCheck expose MenuItem plus Invoke/SelectionItem; repeated Select is idempotent while Invoke preserves Radio and toggles RadioCheck. Simple/Check do not expose radio selection and retain their invoke rules."
     },
     {
       "id": "InkToolbar.InkToolbarEraserAndCustomToolAutomationPeerTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarEraserAndCustomToolAutomationPeerTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "eraser_and_custom_tool_peers_keep_their_non_palette_roles_and_help"
+        }
+      ],
+      "notes": "Checks eraser/custom Custom role, localized button type, unmodified explicit help and preserved collapsed expand/collapse provider."
     },
     {
       "id": "InkToolbar.InkToolbarToolButtonTooltipAndNameTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarToolButtonTooltipAndNameTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "This exact upstream API scenario is not yet covered by a local equivalent test; related implementation does not count as test evidence."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "builtin_tool_names_and_tooltips_are_available_after_loading"
+        }
+      ],
+      "notes": "After actual attachment/loading, all four builtin tool buttons expose the source English names and matching tooltips. Separate resource/culture tests verify localization and application overrides."
     },
     {
       "id": "InkToolbar.InkToolbarPenConfigurationLocalizesHeadingsTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarPenConfigurationLocalizesHeadingsTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Locale-specific headings or palette descriptions are not ported/tested. English fallback strings cannot satisfy this scenario."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "configuration_headings_slider_and_palette_use_live_localized_resources"
+        }
+      ],
+      "notes": "Concrete Colors/Size heading controls, palette and slider use localized resource names; application overrides and live color-name updates reach the actual controls. FerroUI panel composition replaces the source custom ControlTemplate fixture."
     },
     {
       "id": "InkToolbar.InkToolbarPaletteLocalizesDescriptionsTest",
       "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
       "method": "InkToolbarPaletteLocalizesDescriptionsTest",
-      "status": "not_ported",
-      "rust_tests": [],
-      "notes": "Locale-specific headings or palette descriptions are not ported/tested. English fallback strings cannot satisfy this scenario."
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "configuration_headings_slider_and_palette_use_live_localized_resources"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "color_names_quantize_known_families_and_format_unknown_rgb"
+        },
+        {
+          "file": "src/FerroUI.Controls/inking/ink_toolbar_tests.rs",
+          "name": "palette_descriptions_cover_known_nearby_rgb_and_gradient_brushes"
+        }
+      ],
+      "notes": "The loaded pen configuration asserts all seven source known/nearby/RGB/gradient descriptions through actual palette item names/tooltips, then clears stale selected help. Live localization/resource assertions also pass. Verified in the 154-pass controls step at dd8abb5, run 39603593237/job119233997583."
     }
   ],
   "snapshots": [
@@ -787,105 +920,133 @@
       "id": "InkCanvas.Interaction.InkCanvasRendersInVisualTree",
       "source": "controls/dev/InkCanvas/InteractionTests/InkCanvasTests.cs",
       "method": "InkCanvasRendersInVisualTree",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
           "name": "canvas_automation_reports_visible_bounds_and_collapsed_or_outside_root"
         }
       ],
-      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+      "notes": "An attached FerroUI canvas exposes nonzero automation bounds. This is the complete source assertion; its out-of-process Windows UIA query is adapted to the framework peer test services."
     },
     {
       "id": "InkToolbar.Interaction.InkToolbarRendersInVisualTree",
       "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
       "method": "InkToolbarRendersInVisualTree",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
           "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+      "notes": "Actual FerroUI ComboBox selectors, checkbox Toggle providers and routed handlers drive the live attached toolbar and canvas. The fixture checks initial-control sets, orientation, flyout placement, ruler/stencil toggles and active-tool text. Windows out-of-process UIA transport is adapted to framework test services; the source tests do not assert physical pen or pixel behavior."
     },
     {
       "id": "InkToolbar.Interaction.InkToolbarInitialControlsSelection",
       "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
       "method": "InkToolbarInitialControlsSelection",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
           "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+      "notes": "Actual FerroUI ComboBox selectors, checkbox Toggle providers and routed handlers drive the live attached toolbar and canvas. The fixture checks initial-control sets, orientation, flyout placement, ruler/stencil toggles and active-tool text. Windows out-of-process UIA transport is adapted to framework test services; the source tests do not assert physical pen or pixel behavior."
     },
     {
       "id": "InkToolbar.Interaction.InkToolbarOrientationSwitching",
       "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
       "method": "InkToolbarOrientationSwitching",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
           "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+      "notes": "Actual FerroUI ComboBox selectors, checkbox Toggle providers and routed handlers drive the live attached toolbar and canvas. The fixture checks initial-control sets, orientation, flyout placement, ruler/stencil toggles and active-tool text. Windows out-of-process UIA transport is adapted to framework test services; the source tests do not assert physical pen or pixel behavior."
     },
     {
       "id": "InkToolbar.Interaction.InkToolbarFlyoutPlacementSwitching",
       "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
       "method": "InkToolbarFlyoutPlacementSwitching",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
           "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+      "notes": "Actual FerroUI ComboBox selectors, checkbox Toggle providers and routed handlers drive the live attached toolbar and canvas. The fixture checks initial-control sets, orientation, flyout placement, ruler/stencil toggles and active-tool text. Windows out-of-process UIA transport is adapted to framework test services; the source tests do not assert physical pen or pixel behavior."
     },
     {
       "id": "InkToolbar.Interaction.InkToolbarRulerToggle",
       "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
       "method": "InkToolbarRulerToggle",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
           "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+      "notes": "Actual FerroUI ComboBox selectors, checkbox Toggle providers and routed handlers drive the live attached toolbar and canvas. The fixture checks initial-control sets, orientation, flyout placement, ruler/stencil toggles and active-tool text. Windows out-of-process UIA transport is adapted to framework test services; the source tests do not assert physical pen or pixel behavior."
     },
     {
       "id": "InkToolbar.Interaction.InkToolbarStencilToggle",
       "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
       "method": "InkToolbarStencilToggle",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
           "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+      "notes": "Actual FerroUI ComboBox selectors, checkbox Toggle providers and routed handlers drive the live attached toolbar and canvas. The fixture checks initial-control sets, orientation, flyout placement, ruler/stencil toggles and active-tool text. Windows out-of-process UIA transport is adapted to framework test services; the source tests do not assert physical pen or pixel behavior."
     },
     {
       "id": "InkToolbar.Interaction.InkToolbarActiveToolDisplay",
       "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
       "method": "InkToolbarActiveToolDisplay",
-      "status": "partial",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
           "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
         }
       ],
-      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+      "notes": "Actual FerroUI ComboBox selectors, checkbox Toggle providers and routed handlers drive the live attached toolbar and canvas. The fixture checks initial-control sets, orientation, flyout placement, ruler/stencil toggles and active-tool text. Windows out-of-process UIA transport is adapted to framework test services; the source tests do not assert physical pen or pixel behavior."
+    }
+  ],
+  "validation": {
+    "platform": "Linux (GitHub-hosted Ubuntu)",
+    "revision": "dd8abb5",
+    "run_url": "https://github.com/wieslawsoltes/FerroUI/actions/runs/39603593237",
+    "job_id": 119233997583,
+    "command": "cargo test --locked -p ferroui-controls --lib inking::",
+    "result": {
+      "passed": 154,
+      "failed": 0,
+      "ignored": 0,
+      "filtered_out": 4426,
+      "seconds": 1.43
+    },
+    "notes": "All control-test mappings marked adapted passed, including the corrected menu selection/active-input gate and complete palette description matrix. View tests also passed 2/2. The distinct theme step passed 19 and failed 2; its pending populated stencil geometry source scenario is not counted complete."
+  },
+  "validation_history": [
+    {
+      "platform": "Linux",
+      "command": "cargo test --locked -p ferroui-controls --lib inking::",
+      "run": "focused run11",
+      "result": {
+        "passed": 148,
+        "failed": 2,
+        "ignored": 0
+      },
+      "notes": "Mapped adapted tests passed in this run. Two suite failures were the menu peer implicit-selection regression and palette keyboard test focus setup; both remain pending rerun. Later tests are not counted as executed."
     }
   ]
 }

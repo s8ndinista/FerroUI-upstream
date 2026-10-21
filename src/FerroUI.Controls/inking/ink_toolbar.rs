@@ -9,7 +9,7 @@ use crate::{
     Border, Button, Control, ControlImpl, Controls, Decorator, Flyout, PanelImpl, PanelImplExt,
     PlacementMode, StackPanel, StackPanelImpl,
 };
-use ferroui_base::collections::NotifyCollectionChangedEventArgs;
+use ferroui_base::collections::{NotifyCollectionChangedAction, NotifyCollectionChangedEventArgs};
 use ferroui_base::input::{
     InputElement, InputElementImpl, InputElementImplExt, Key, KeyEventArgs, KeyboardNavigation,
     KeyboardNavigationMode, NavigationMethod,
@@ -18,6 +18,7 @@ use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::{
     LayoutHelper, Layoutable, LayoutableImpl, LayoutableImplExt, Orientation,
 };
+use ferroui_base::logging::{LogArea, LogEventLevel, Logger};
 use ferroui_base::media::{BackgroundSizing, BoxShadows, DrawingContext, IBrush};
 use ferroui_base::metadata::{into_markup_value, MarkupDelegate};
 use ferroui_base::reactive::{Disposable, IDisposable};
@@ -44,6 +45,7 @@ pub struct InkToolbarIsStencilButtonCheckedChangedEventArgs {
 #[repr(C)]
 pub struct InkToolbar {
     base: StackPanel,
+    children: Controls,
     defaults: RefCell<Vec<Ref<Control>>>,
     subscriptions: RefCell<Vec<(WeakRef<Control>, Rc<dyn IDisposable>)>>,
     selection_sync: Cell<bool>,
@@ -89,7 +91,7 @@ impl LayoutableImpl for InkToolbar {
     fn measure_override(this: &Self, available_size: Size) -> Size {
         if this.active_tool().is_none() {
             let first_pen = this
-                .children()
+                .registered_children()
                 .snapshot()
                 .iter()
                 .find_map(|child| child.cast::<InkToolbarPenButton>())
@@ -149,7 +151,7 @@ impl InputElementImpl for InkToolbar {
             Key::Right | Key::Down => false,
             _ => return,
         };
-        let children = this.children().snapshot();
+        let children = this.registered_children().snapshot();
         if children.len() <= 1 {
             return;
         }
@@ -195,6 +197,12 @@ impl FerroObjectImpl for InkToolbar {
             AutomationProperties::control_type_override_property(),
             Some(AutomationControlType::ToolBar),
         );
+        let weak = this.to_ref().downgrade();
+        this.children.add_collection_changed(Rc::new(move |event| {
+            if let Some(toolbar) = weak.upgrade() {
+                toolbar.public_children_changed(event);
+            }
+        }));
         this.rebuild_default_buttons();
     }
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
@@ -222,6 +230,10 @@ impl FerroObjectImpl for InkToolbar {
 impl PanelImpl for InkToolbar {
     fn children_changed(this: &Self, e: &NotifyCollectionChangedEventArgs<'_, Ref<Control>>) {
         Self::parent_children_changed(this, e);
+        // A visual reorder retains registration, subscriptions and flyouts.
+        if e.action == NotifyCollectionChangedAction::Move {
+            return;
+        }
         let removed: Vec<_> = {
             let mut slots = this.subscriptions.borrow_mut();
             let mut removed = Vec::new();
@@ -245,7 +257,10 @@ impl PanelImpl for InkToolbar {
         if let Some(active) = this.active_tool() {
             let active_control: Ref<Control> = active.clone().upcast();
             if e.old_items.contains(&active_control)
-                && !this.children().snapshot().contains(&active_control)
+                && !this
+                    .registered_children()
+                    .snapshot()
+                    .contains(&active_control)
             {
                 this.set_active_tool(None);
             }
@@ -289,6 +304,7 @@ impl InkToolbar {
     pub fn construct() -> Self {
         Self {
             base: StackPanel::construct(),
+            children: Controls::new(),
             defaults: RefCell::new(Vec::new()),
             subscriptions: RefCell::new(Vec::new()),
             selection_sync: Cell::new(false),
@@ -306,8 +322,91 @@ impl InkToolbar {
     pub fn new() -> Ref<Self> {
         instantiate(Self::construct())
     }
+    /// Public content, including entries ignored by toolbar registration.
+    /// Only supported, nonduplicate registrations enter the visual panel.
     pub fn children(&self) -> Controls {
+        self.children.clone()
+    }
+    fn registered_children(&self) -> Controls {
         self.base.children()
+    }
+    fn public_children_changed(&self, event: &NotifyCollectionChangedEventArgs<'_, Ref<Control>>) {
+        let registered = self.registered_children();
+        if event.action != NotifyCollectionChangedAction::Move {
+            for old in event.old_items {
+                registered.remove(old);
+            }
+            for child in event.new_items {
+                // A prior removal can notify application code and reenter the
+                // public collection. Never register an entry since removed.
+                if !self.children.contains(child) {
+                    continue;
+                }
+                if !self.can_register_child(child) {
+                    if let Some(logger) = Logger::try_get(LogEventLevel::Warning, LogArea::CONTROL)
+                    {
+                        logger.log(
+                            None,
+                            "InkToolbar ignored a duplicate or unsupported child registration.",
+                        );
+                    }
+                    continue;
+                }
+                let index = self
+                    .children
+                    .snapshot()
+                    .iter()
+                    .take_while(|item| *item != child)
+                    .filter_map(|item| registered.index_of(item))
+                    .last()
+                    .map_or(0, |index| index + 1)
+                    .min(registered.count());
+                registered.insert(index, child);
+            }
+        } else {
+            let mut ordered = Vec::new();
+            for child in self.children.snapshot().iter() {
+                if registered.contains(child) && !ordered.contains(child) {
+                    ordered.push(child.clone());
+                }
+            }
+            for (index, child) in ordered.iter().enumerate() {
+                if let Some(previous) = registered.index_of(child) {
+                    if previous != index && index < registered.count() {
+                        registered.move_item(previous, index);
+                    }
+                }
+            }
+        }
+    }
+    fn can_register_child(&self, child: &Ref<Control>) -> bool {
+        let registered = self.registered_children().snapshot();
+        if registered.contains(child) {
+            return false;
+        }
+        if let Some(tool) = child.cast::<InkToolbarToolButton>() {
+            return matches!(
+                tool.tool_kind(),
+                InkToolbarTool::CustomPen | InkToolbarTool::CustomTool
+            ) || !registered
+                .iter()
+                .filter_map(|item| item.cast::<InkToolbarToolButton>())
+                .any(|item| item.tool_kind() == tool.tool_kind());
+        }
+        if let Some(toggle) = child.cast::<InkToolbarToggleButton>() {
+            return toggle.toggle_kind() == InkToolbarToggle::Custom
+                || !registered
+                    .iter()
+                    .filter_map(|item| item.cast::<InkToolbarToggleButton>())
+                    .any(|item| item.toggle_kind() == toggle.toggle_kind());
+        }
+        if let Some(menu) = child.cast::<InkToolbarMenuButton>() {
+            return !registered
+                .iter()
+                .filter_map(|item| item.cast::<InkToolbarMenuButton>())
+                .any(|item| item.menu_kind() == menu.menu_kind());
+        }
+        false
     }
     pub fn border_brush(&self) -> Option<Rc<dyn IBrush>> {
         self.get_value(Self::border_brush_property())
@@ -395,21 +494,21 @@ impl InkToolbar {
         })
     }
     pub fn get_tool_button(&self, tool: InkToolbarTool) -> Option<Ref<InkToolbarToolButton>> {
-        self.children()
+        self.registered_children()
             .snapshot()
             .iter()
             .filter_map(|c| c.cast::<InkToolbarToolButton>())
             .find(|b| b.tool_kind() == tool)
     }
     pub fn get_toggle_button(&self, kind: InkToolbarToggle) -> Option<Ref<InkToolbarToggleButton>> {
-        self.children()
+        self.registered_children()
             .snapshot()
             .iter()
             .filter_map(|c| c.cast::<InkToolbarToggleButton>())
             .find(|b| b.toggle_kind() == kind)
     }
     pub fn get_menu_button(&self, kind: InkToolbarMenuKind) -> Option<Ref<InkToolbarMenuButton>> {
-        self.children()
+        self.registered_children()
             .snapshot()
             .iter()
             .filter_map(|c| c.cast::<InkToolbarMenuButton>())
@@ -459,7 +558,7 @@ impl InkToolbar {
             .borrow()
             .as_ref()
             .and_then(WeakRef::upgrade);
-        let children = self.children().snapshot();
+        let children = self.registered_children().snapshot();
         let restore = recent
             .filter(|tool| children.contains(&tool.clone().upcast::<Control>()))
             .or_else(|| {
@@ -499,7 +598,7 @@ impl InkToolbar {
         }
         if self.active_tool().is_none() {
             let first = self
-                .children()
+                .registered_children()
                 .snapshot()
                 .iter()
                 .filter_map(|c| c.cast::<InkToolbarToolButton>())
@@ -616,7 +715,7 @@ impl InkToolbar {
         let active = self.active_tool();
         if notify {
             for button in self
-                .children()
+                .registered_children()
                 .snapshot()
                 .iter()
                 .filter_map(|c| c.cast::<Button>())
@@ -627,7 +726,7 @@ impl InkToolbar {
             }
         }
         for tool in self
-            .children()
+            .registered_children()
             .snapshot()
             .iter()
             .filter_map(|c| c.cast::<InkToolbarToolButton>())
@@ -716,7 +815,7 @@ impl InkToolbar {
         }
         self.refresh_pen_palettes();
         for stencil in self
-            .children()
+            .registered_children()
             .snapshot()
             .iter()
             .filter_map(|c| c.cast::<InkToolbarStencilButton>())
@@ -728,7 +827,7 @@ impl InkToolbar {
     }
     fn refresh_pen_palettes(&self) {
         for pen in self
-            .children()
+            .registered_children()
             .snapshot()
             .iter()
             .filter_map(|child| child.cast::<InkToolbarPenButton>())
@@ -740,7 +839,7 @@ impl InkToolbar {
         let enabled = self.is_stencil_button_checked();
         let ruler = self.is_ruler_button_checked();
         let stencils: Vec<_> = self
-            .children()
+            .registered_children()
             .snapshot()
             .iter()
             .filter_map(|c| c.cast::<InkToolbarStencilButton>())
@@ -754,7 +853,7 @@ impl InkToolbar {
             stencil.set_current_value(ToggleButton::is_checked_property(), Some(enabled));
         }
         for toggle in self
-            .children()
+            .registered_children()
             .snapshot()
             .iter()
             .filter_map(|c| c.cast::<InkToolbarToggleButton>())
@@ -790,7 +889,7 @@ impl InkToolbar {
             InkToolbarButtonFlyoutPlacement::Right => PlacementMode::Right,
         };
         for button in self
-            .children()
+            .registered_children()
             .snapshot()
             .iter()
             .filter_map(|c| c.cast::<Button>())

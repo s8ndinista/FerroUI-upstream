@@ -991,14 +991,108 @@ mod tests {
             let source = fixture_strokes();
             services.copy_to_clipboard(&source).unwrap();
             assert!(services.can_paste().unwrap());
+            let position = NativePoint { X: 300.0, Y: 200.0 };
+            let reference = NativeContainer::new().unwrap();
+            let native_paste_bounds = reference.PasteFromClipboard(position).unwrap();
+            let expected = reference.GetStrokes().unwrap();
+            assert_eq!(expected.Size().unwrap() as usize, source.len());
+            println!(
+                "Native paste bounds at (300, 200): {native_paste_bounds:?}; collection: {:?}",
+                reference.BoundingRect().unwrap()
+            );
             let pasted = services.paste(Point::new(300.0, 200.0)).unwrap();
             assert_eq!(pasted.len(), source.len());
-            assert!(pasted.iter().all(|stroke| stroke.selected()));
-            let container = InkStrokeContainer::new();
-            container.add_strokes(pasted).unwrap();
-            let bounds = container.bounding_rect();
-            near(bounds.x, 300.0, 1.0);
-            near(bounds.y, 200.0, 1.0);
+            for (index, actual) in pasted.iter().enumerate() {
+                // Compare with actual native getters, including Selected. The
+                // installed OS can return unselected pasted ink despite the
+                // Learn remark promising a selected result.
+                let native = expected.GetAt(index as u32).unwrap();
+                assert_eq!(actual.selected(), native.Selected().unwrap());
+                assert_eq!(
+                    actual.drawing_attributes(),
+                    from_native_attributes(&native.DrawingAttributes().unwrap()).unwrap()
+                );
+                let transform = native.PointTransform().unwrap();
+                let native_points = native.GetInkPoints().unwrap();
+                assert_eq!(
+                    actual.ink_points().len(),
+                    native_points.Size().unwrap() as usize
+                );
+                for (point_index, point) in actual.ink_points().iter().enumerate() {
+                    let native_point = native_points.GetAt(point_index as u32).unwrap();
+                    let position = native_point.Position().unwrap();
+                    let actual_position = actual.point_transform().transform(point.position);
+                    // Apply the native matrix directly rather than running it
+                    // through the same conversion that the adapter uses.
+                    near(
+                        actual_position.x,
+                        position.X as f64 * transform.M11 as f64
+                            + position.Y as f64 * transform.M21 as f64
+                            + transform.M31 as f64,
+                        0.001,
+                    );
+                    near(
+                        actual_position.y,
+                        position.X as f64 * transform.M12 as f64
+                            + position.Y as f64 * transform.M22 as f64
+                            + transform.M32 as f64,
+                        0.001,
+                    );
+                    near(
+                        point.pressure as f64,
+                        native_point.Pressure().unwrap() as f64,
+                        0.00001,
+                    );
+                    near(
+                        point.tilt_x as f64,
+                        native_point.TiltX().unwrap() as f64,
+                        0.001,
+                    );
+                    near(
+                        point.tilt_y as f64,
+                        native_point.TiltY().unwrap() as f64,
+                        0.001,
+                    );
+                    assert_eq!(point.twist, 0.0);
+                }
+                assert!(source.iter().all(|original| original.id() != actual.id()));
+            }
+            // Native placement uses native rendered bounds. The portable
+            // outline is intentionally independent, so verify the requested
+            // translation rather than requiring identical nib coverage.
+            let origin = services.paste(Point::default()).unwrap();
+            for (at_position, at_origin) in pasted.iter().zip(&origin) {
+                let position = at_position.bounding_rect();
+                let origin = at_origin.bounding_rect();
+                near(position.x - origin.x, 300.0, 0.001);
+                near(position.y - origin.y, 200.0, 0.001);
+                near(position.width, origin.width, 0.001);
+                near(position.height, origin.height, 0.001);
+            }
+
+            // Pin a separate populated-container reference as well. Its
+            // selection behavior must be observed before adapting the public
+            // wrapper; an empty-container result alone does not establish
+            // whether an earlier selection survives a native paste.
+            let populated = services.native_container(&source[..1]).unwrap();
+            let sentinel = populated.GetStrokes().unwrap().GetAt(0).unwrap();
+            let sentinel_id = sentinel.Id().unwrap();
+            sentinel.SetSelected(true).unwrap();
+            populated.PasteFromClipboard(position).unwrap();
+            let after = populated.GetStrokes().unwrap();
+            assert_eq!(after.Size().unwrap() as usize, source.len() + 1);
+            let mut pasted_selection = Vec::new();
+            for index in 0..after.Size().unwrap() {
+                let stroke = after.GetAt(index).unwrap();
+                if stroke.Id().unwrap() != sentinel_id {
+                    pasted_selection.push(stroke.Selected().unwrap());
+                }
+            }
+            assert_eq!(pasted_selection.len(), source.len());
+            println!(
+                "Native populated paste selection: old={}, new={pasted_selection:?}",
+                sentinel.Selected().unwrap()
+            );
         });
     }
 }

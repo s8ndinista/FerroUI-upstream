@@ -70,4 +70,4 @@ jobs:
       - name: Native ISF, GIF, conversion and failure-atomicity fixtures
         run: 'cargo test --locked -p ferroui-winui --lib inking::'
       - name: Native clipboard exchange on the isolated Windows runner
-        run: cargo test --locked -p ferroui-winui --lib inking::tests::native_clipboard_round_trip -- --ignored --exact --test-threads=1
+        run: cargo test --locked -p ferroui-winui --lib inking::tests::native_clipboard_round_trip -- --ignored --exact --test-threads=1 --nocapture

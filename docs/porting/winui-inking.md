@@ -53,7 +53,8 @@ The data is under [`data/winui-inking`](data/winui-inking/README.md):
   disposition.
 - `api-map.json` retains every declared type/member, enum value, target file,
   symbol and behavioral note.
-- `tests-map.json` keeps the upstream test scenarios and local evidence.
+- `tests-map.json` keeps all 65 API and eight interaction scenarios and their
+  local evidence. Four exact C# snapshots preserve the original assertions.
 - `dependencies.json` distinguishes required OS dependencies from adjacent
   recognition/analysis services.
 - `service-api-map.json` audits 136 methods/getters/setters on 12 selected
@@ -294,8 +295,9 @@ on the UI thread. No new `unsafe` code or blocking async wait is introduced.
 | Native copy/paste/availability | OS `CopySelectedToClipboard`, `PasteFromClipboard`, `CanPasteFromClipboard` |
 | Optional handwriting recognition | Installed recognizer enumeration and OS `RecognizeAsync`, returning candidates, bounds and original FerroUI stroke IDs |
 
-These are genuine Windows engine calls, but cross-compilation alone does not
-validate their results. Native errors are returned as `InkError::Platform`,
+These are genuine Windows engine calls. Native conversion, ISF/GIF round trips,
+malformed-load atomicity and twist policy have passed the Windows CI fixtures
+listed in section 6. Native errors are returned as `InkError::Platform`,
 including missing classes, unsupported attributes or unavailable recognizers.
 All asynchronous stream/ink operations use `.await` on the application's local
 executor. The native decoder owns its internal allocations: byte limits apply
@@ -330,8 +332,9 @@ metadata, custom native extended properties, recognized state and stroke-start
 wall-clock values do not have a complete two-way mapping. Pencil supports a
 restricted set of native attributes; unsupported requested changes return the
 OS error rather than silently becoming another tool. Use FERROINK when exact
-portable round trips are required. The Windows formats and clipboard paths
-remain `partial` until real Windows fixtures exercise these boundaries.
+portable round trips are required. Format operations are recorded as verified
+adaptations. Native clipboard execution and installed-language recognition are
+tracked separately from the passed save/load fixtures.
 
 References: the official [format enum](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkpersistenceformat),
 [save overloads](https://learn.microsoft.com/en-us/uwp/api/windows.ui.input.inking.inkstrokecontainer.saveasync),
@@ -448,9 +451,10 @@ python scripts/inking/check_port.py --require-control-complete
 python scripts/inking/check_port.py --require-complete
 ```
 
-It verifies all 164 source identities are retained, the six IDL snapshots retain
-their Git blob hashes, every IDL type/member is represented, and mapped files,
-symbols and tests exist. A successful ordinary check means the record is
+It verifies all 164 source identities are retained, the six IDL and four C# test
+snapshots retain their Git blob hashes, every IDL type/member and every API or
+interaction method is represented, and mapped files, symbols and tests exist.
+A successful ordinary check means the record is
 internally consistent. `--require-control-complete` rejects gaps in control
 sources, IDLs, tests and required/direct services. `--require-complete` also
 includes additional dependency API and optional extension gaps. The JSON report
@@ -496,9 +500,12 @@ The checked source snapshot has passed this verification for all 86 blobs and
 5,074 entries.
 
 The Windows target cross-check also succeeds, including the native test code.
-The adapter has three conversion/guard tests and five non-ignored Windows
-fixtures covering real native conversion, ISF/GIF save/load, malformed-load
-atomicity, twist-loss opt-in and optional recognizer enumeration. The conversion
+At checkpoint `353c692`, [Windows CI run 39600257242](https://github.com/wieslawsoltes/FerroUI/actions/runs/39600257242),
+job `119222654079`, executed nine adapter tests: **eight passed, zero failed and
+one clipboard fixture was ignored**, in 2.40 seconds. The passed tests comprise
+three conversion/guard checks and five Windows fixtures covering real native
+conversion, ISF/GIF save/load, malformed-load atomicity, twist-loss opt-in and
+optional recognizer enumeration. The conversion
 fixture asserts native Windows getters directly so inverse conversion mistakes
 cannot pass only by canceling each other. Serialized coordinate/pressure tests
 allow bounded native quantization, and compare visible points even if Windows
@@ -513,8 +520,10 @@ test session or disposable CI runner, explicitly invoked with:
 cargo test --locked -p ferroui-winui --lib inking::tests::native_clipboard_round_trip -- --ignored --exact --test-threads=1
 ```
 
-Cross-checking these fixtures is not a Windows execution result. Native records
-remain `partial` until the Windows CI run and clipboard fixture report success.
+The subsequent isolated clipboard CI step and additional `MoveSelected`
+translation-contract fixture are pending at this checkpoint. They are not
+included in the eight passing results above. Recognizer enumeration does not
+establish handwriting candidate accuracy or installed-language coverage.
 
 The reconciled ledger currently contains:
 
@@ -522,17 +531,18 @@ The reconciled ledger currently contains:
 |---|---:|---:|---:|---:|---:|---:|
 | 164 source files | 93 | 0 | 54 | 3 | 14 | 0 |
 | 45 IDL types | 29 | 10 | 6 | 0 | 0 | 0 |
-| 181 IDL members | 143 | 32 | 6 | 0 | 0 | 0 |
+| 181 IDL members | 146 | 32 | 3 | 0 | 0 | 0 |
 | 65 upstream API tests | 26 | 0 | 14 | 25 | 0 | 0 |
-| 12 dependency records | 2 | 0 | 7 | 0 | 0 | 3 |
-| 136 external service members | 98 | 0 | 15 | 23 | 0 | 0 |
+| 8 upstream interaction tests | 0 | 0 | 8 | 0 | 0 | 0 |
+| 12 dependency records | 4 | 0 | 5 | 0 | 0 | 3 |
+| 136 external service members | 101 | 0 | 12 | 23 | 0 | 0 |
 
 The ordinary ledger check passes. The strict completion gate still reports
 156 partial/missing/external records: 122 in required control scope and 34 in
 additional dependency/optional scope. These counts intentionally overlap by
 scope (a source file, its type and a member may each record the same boundary);
 they are not a percentage of implemented functionality. All declared public
-member names have mappings, while 6 retain a native-runtime validation boundary.
+member names have mappings, while 3 retain a native clipboard validation boundary.
 The three unported source files remain visible: two interaction suites and the
 diagnostics header. Source-scenario tests added after the last complete run are
 not promoted to verified mappings before their assertions pass.
@@ -546,7 +556,7 @@ not promoted to verified mappings before their assertions pass.
 | High contrast | Compare real platform themes and accessibility clients, including changes while a palette is open; ratio-based filtering, platform-color policy and live resource handling are implemented. |
 | Stencils | Compare native stencil appearance and nib/pixel coverage at masking boundaries; portable manipulation, annotations and measured arc text are implemented. |
 | Toolbar edge cases | Compare automatic flyout placement and custom configuration presentation; reconcile source duplicate/illegal button registration. Multiple custom stencil children are currently accepted. |
-| Native interoperability | Run ISF/GIF fixtures, pencil/transform conversion, malformed files and cross-application clipboard on Windows; execute installed-language recognition cases. |
+| Native interoperability | Complete the isolated clipboard and MoveSelected contract runs; execute installed-language candidate recognition cases. Native conversion, ISF/GIF round trips and malformed-load atomicity have passed Windows CI. |
 | Runtime input/rendering | Exercise pointer capture, coalesced physical-pen telemetry and both renderer backends; compare smoothing, highlighter overlap and pencil appearance against Windows. |
 | Accessibility | Complete all remaining clipping, flyout transition, selected-state, localized name and native accessibility scenarios in the test ledger. |
 | OS independent input | Decide whether a separate Windows native presentation path is required for DirectInk latency. The portable renderer intentionally runs through FerroUI's existing pipeline. |
@@ -596,3 +606,6 @@ The following evidence is needed before a full compatibility claim:
 10. Added a separate 136-member dependency audit, genuine native ISF/GIF and
     clipboard fixtures, source-scenario accessibility/lifecycle tests and focused
     Linux, WebAssembly and Windows CI jobs.
+11. Verified the eight non-clipboard native tests on a Windows runner, retained
+    the exact four upstream test suites, and made the checker reject omissions
+    from all 65 API and eight interaction methods.
