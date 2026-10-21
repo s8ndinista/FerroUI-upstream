@@ -18,6 +18,10 @@ use std::rc::Rc;
 mod encoding;
 use encoding::{font_code_page, validate_code_page, EncodedText};
 
+#[path = "rtf_styles.rs"]
+mod styles;
+use styles::{StyleKind, StyleTable};
+
 #[cfg(test)]
 #[path = "rtf_encoding_tests.rs"]
 mod encoding_tests;
@@ -26,9 +30,19 @@ mod encoding_tests;
 #[path = "rtf_formatting_tests.rs"]
 mod formatting_tests;
 
+#[cfg(test)]
+#[path = "rtf_styles_tests.rs"]
+mod styles_tests;
+
+#[cfg(test)]
+#[path = "rtf_field_tests.rs"]
+mod field_tests;
+
 /// Explicit bounds for untrusted clipboard and file input.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct RtfLimits {
+    /// Input bytes and, independently, cumulative materialized hyperlink
+    /// URI/target bytes after projecting fields across paragraph boundaries.
     pub max_bytes: usize,
     pub max_depth: usize,
     pub max_tokens: usize,
@@ -291,6 +305,9 @@ struct Decoder {
     default_font: Option<i32>,
     default_language: Option<CultureInfo>,
     default_tab_stop: Option<f64>,
+    styles: StyleTable,
+    style_work: usize,
+    field_metadata_bytes: usize,
     document: DocumentSnapshot,
     pending: Vec<u16>,
     pending_format: CharacterFormat,
@@ -343,6 +360,9 @@ impl RtfReader {
             default_font: None,
             default_language: None,
             default_tab_stop: Some(48.0),
+            styles: StyleTable::default(),
+            style_work: 0,
+            field_metadata_bytes: 0,
             document: DocumentSnapshot {
                 paragraphs: vec![ParagraphSnapshot {
                     format: ParagraphFormat {
@@ -501,6 +521,7 @@ impl Decoder {
                             }
                         }
                         Some(("colortbl", _)) => self.read_colors(children)?,
+                        Some(("stylesheet", _)) => self.styles = StyleTable::read(children)?,
                         Some(("field", _)) => self.read_field(children, state)?,
                         Some(("upr", _)) => {
                             let unicode = unicode_alternative(children)?;
@@ -510,7 +531,7 @@ impl Decoder {
                             return Err(RtfError::UnsupportedFeature("images or embedded objects"));
                         }
                         Some((
-                            "stylesheet" | "info" | "generator" | "themedata"
+                            "info" | "generator" | "themedata"
                             | "colorschememapping" | "xmlnstbl" | "datastore" | "latentstyles"
                             | "header" | "footer" | "headerl" | "headerr" | "footerl" | "footerr",
                             _,
@@ -531,6 +552,11 @@ impl Decoder {
                     let number = *number;
                     let enabled = number != Some(0);
                     match *word {
+                        "s" | "cs" | "ds" | "ts" => {
+                            let kind = StyleKind::from_word(word).expect("matched style control");
+                            let id = styles::style_handle(number)?;
+                            self.apply_style(kind, id, state)?;
+                        }
                         "rtf" | "viewkind" | "viewscale" | "deflangfe" | "nouicompat" | "fet" => {}
                         "deflang" => {
                             let language = rtf_language(number)?;
@@ -861,6 +887,39 @@ impl Decoder {
         }
         self.finish_bytes(state)
     }
+
+    /// Expand a selected style through the same property decoder as direct RTF
+    /// formatting. Definitions never run as document content, and each expansion
+    /// consumes a separate bounded work budget to prevent a small stylesheet from
+    /// amplifying the parser's token budget through repeated references.
+    fn apply_style(&mut self, kind: StyleKind, id: i32, state: &mut State) -> Result<(), RtfError> {
+        let chain = self.styles.resolve(kind, id, self.limits.max_depth.min(512))?;
+        let Some(selected) = chain.last() else {
+            // An undeclared Normal style is the RTF default, rather than a
+            // reference to a nonexistent document formatting definition.
+            return Ok(());
+        };
+        let work = chain.iter().try_fold(0_usize, |work, style| {
+            work.checked_add(style.controls.len() + 1)
+                .ok_or(RtfError::LimitExceeded("style expansion"))
+        })?;
+        self.style_work = self.style_work.checked_add(work)
+            .filter(|work| *work <= self.limits.max_tokens)
+            .ok_or(RtfError::LimitExceeded("style expansion"))?;
+
+        if kind == StyleKind::Paragraph {
+            self.decode(&[Node::Control("pard", None), Node::Control("plain", None)], state)?;
+        } else if !selected.additive {
+            self.decode(&[Node::Control("plain", None)], state)?;
+        }
+        for definition in chain {
+            let controls: Vec<_> = definition.controls.iter()
+                .map(|control| Node::Control(control.word.as_str(), control.number))
+                .collect();
+            self.decode(&controls, state)?;
+        }
+        Ok(())
+    }
     fn character(&mut self, unit: u16, state: &mut State) -> Result<(), RtfError> {
         if state.skip > 0 {
             state.skip -= 1;
@@ -1085,23 +1144,48 @@ impl Decoder {
             self.decode(nodes, &mut state.clone())?;
             self.flush()?;
             if let Some(target) = target {
-                if self.document.paragraphs.len() - 1 != paragraph_index {
-                    return Err(RtfError::UnsupportedFeature("hyperlinks across paragraphs"));
+                // Every paragraph-owned segment stores its own strings. Bound
+                // that expansion before cloning: a long URI and many short
+                // paragraphs must not multiply a bounded input into huge output.
+                let segments = self.document.paragraphs[paragraph_index..]
+                    .iter().enumerate()
+                    .filter(|(index, paragraph)| {
+                        paragraph.inlines.len() > if *index == 0 { inline_index } else { 0 }
+                    })
+                    .count();
+                let metadata_bytes = target.uri.len()
+                    .checked_add(target.name.as_ref().map_or(0, String::len))
+                    .and_then(|bytes| bytes.checked_mul(segments))
+                    .and_then(|bytes| self.field_metadata_bytes.checked_add(bytes))
+                    .filter(|bytes| *bytes <= self.limits.max_bytes)
+                    .ok_or(RtfError::LimitExceeded("field metadata expansion"))?;
+                self.field_metadata_bytes = metadata_bytes;
+                // An RTF field result may contain paragraph boundaries. The
+                // framework inline tree gives every paragraph its own hyperlink
+                // while retaining the field's URI/target and all result metrics.
+                // Empty paragraphs have no navigable text; do not manufacture an
+                // invisible focus/automation target for their paragraph marks.
+                for (index, paragraph) in self.document.paragraphs[paragraph_index..]
+                    .iter_mut().enumerate()
+                {
+                    let inlines = paragraph.inlines.split_off(if index == 0 { inline_index } else { 0 });
+                    if inlines.is_empty() {
+                        continue;
+                    }
+                    paragraph.inlines.push(InlineSnapshot {
+                        format: CharacterFormat::default(),
+                        kind: InlineSnapshotKind::Hyperlink {
+                            inlines,
+                            navigate_uri: Some(target.uri.clone()),
+                            target_name: target.name.clone(),
+                            is_enabled: true,
+                            is_tab_stop: true,
+                            tab_index: 0,
+                            is_visited: false,
+                            underline_style: crate::documents::UnderlineStyle::Single,
+                        },
+                    });
                 }
-                let inlines = self.paragraph().inlines.split_off(inline_index);
-                self.paragraph().inlines.push(InlineSnapshot {
-                    format: CharacterFormat::default(),
-                    kind: InlineSnapshotKind::Hyperlink {
-                        inlines,
-                        navigate_uri: Some(target.uri),
-                        target_name: target.name,
-                        is_enabled: true,
-                        is_tab_stop: true,
-                        tab_index: 0,
-                        is_visited: false,
-                        underline_style: crate::documents::UnderlineStyle::Single,
-                    },
-                });
             }
         }
         Ok(())
