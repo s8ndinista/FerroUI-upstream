@@ -124,6 +124,7 @@ members = [
     "samples/SingleProjectSandbox",
     "samples/GpuInterop",
     "samples/Ember.Core",
+    "samples/Ember.Content",
 ]
 
 [workspace.package]
