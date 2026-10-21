@@ -128,6 +128,8 @@ pub fn register_types() {
 
 const TYPES: &[&TypeInfo] = types![
     // Opt-in WinUI contracts. These are not part of the default XML namespace.
+    crate::winui::AutoSuggestBox,
+    crate::winui::AutoSuggestBoxAutomationPeer,
     crate::winui::Page,
     crate::winui::Frame,
     crate::winui::PageStackEntry,
@@ -137,6 +139,14 @@ const TYPES: &[&TypeInfo] = types![
     crate::winui::SymbolIcon,
     crate::winui::RadioButtons,
     crate::winui::RadioButtonsAutomationPeer,
+    crate::winui::IconSource,
+    crate::winui::FontIconSource,
+    crate::winui::SymbolIconSource,
+    crate::winui::PathIconSource,
+    crate::winui::InfoBar,
+    crate::winui::InfoBarPanel,
+    crate::winui::InfoBarTemplateSettings,
+    crate::winui::InfoBarAutomationPeer,
     // FerroUI
     crate::application::Application,
     // FerroUI.Animation

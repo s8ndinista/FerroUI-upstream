@@ -1713,6 +1713,19 @@ pub fn visual_layer_manager() -> El<ferroui_controls::primitives::VisualLayerMan
     El::new()
 }
 
+pub use ferroui_controls::winui::AutoSuggestBox as WinUIAutoSuggestBox;
+
+impl ViewClass for ferroui_controls::winui::AutoSuggestBox {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::AutoSuggestBox>::new()
+    }
+}
+
+/// Starts an element of [`WinUIAutoSuggestBox`](ferroui_controls::winui::AutoSuggestBox).
+pub fn win_ui_auto_suggest_box() -> El<ferroui_controls::winui::AutoSuggestBox> {
+    El::new()
+}
+
 pub use ferroui_controls::winui::FontIcon as WinUIFontIcon;
 
 impl ViewClass for ferroui_controls::winui::FontIcon {
@@ -1736,6 +1749,32 @@ impl ViewClass for ferroui_controls::winui::Frame {
 
 /// Starts an element of [`WinUIFrame`](ferroui_controls::winui::Frame).
 pub fn win_ui_frame() -> El<ferroui_controls::winui::Frame> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::InfoBar as WinUIInfoBar;
+
+impl ViewClass for ferroui_controls::winui::InfoBar {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::InfoBar>::new()
+    }
+}
+
+/// Starts an element of [`WinUIInfoBar`](ferroui_controls::winui::InfoBar).
+pub fn win_ui_info_bar() -> El<ferroui_controls::winui::InfoBar> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::InfoBarPanel as WinUIInfoBarPanel;
+
+impl ViewClass for ferroui_controls::winui::InfoBarPanel {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::InfoBarPanel>::new()
+    }
+}
+
+/// Starts an element of [`WinUIInfoBarPanel`](ferroui_controls::winui::InfoBarPanel).
+pub fn win_ui_info_bar_panel() -> El<ferroui_controls::winui::InfoBarPanel> {
     El::new()
 }
 
@@ -7623,6 +7662,50 @@ pub trait VisualBrushProps: ElementBuilder {
 }
 impl<T: ObjectType + Upcast<ferroui_base::media::VisualBrush>> VisualBrushProps for El<T> {}
 
+/// The properties and routed events of [`WinUIAutoSuggestBox`](ferroui_controls::winui::AutoSuggestBox).
+pub trait WinUIAutoSuggestBoxProps: ElementBuilder {
+    /// Sets [`WinUIAutoSuggestBox::text_property`](ferroui_controls::winui::AutoSuggestBox::text_property).
+    fn text<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::AutoSuggestBox>::text_property(), value)
+    }
+
+    /// Sets [`WinUIAutoSuggestBox::text_member_path_property`](ferroui_controls::winui::AutoSuggestBox::text_member_path_property).
+    fn text_member_path<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::AutoSuggestBox>::text_member_path_property(), value)
+    }
+
+    /// Sets [`WinUIAutoSuggestBox::placeholder_text_property`](ferroui_controls::winui::AutoSuggestBox::placeholder_text_property).
+    fn placeholder_text<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::AutoSuggestBox>::placeholder_text_property(), value)
+    }
+
+    /// Sets [`WinUIAutoSuggestBox::update_text_on_select_property`](ferroui_controls::winui::AutoSuggestBox::update_text_on_select_property).
+    fn update_text_on_select<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::AutoSuggestBox>::update_text_on_select_property(), value)
+    }
+
+    /// Sets [`WinUIAutoSuggestBox::is_suggestion_list_open_property`](ferroui_controls::winui::AutoSuggestBox::is_suggestion_list_open_property).
+    fn is_suggestion_list_open<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::AutoSuggestBox>::is_suggestion_list_open_property(), value)
+    }
+
+    /// Sets [`WinUIAutoSuggestBox::max_suggestion_list_height_property`](ferroui_controls::winui::AutoSuggestBox::max_suggestion_list_height_property).
+    fn max_suggestion_list_height<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::AutoSuggestBox>::max_suggestion_list_height_property(), value)
+    }
+
+    /// Sets [`WinUIAutoSuggestBox::query_icon_property`](ferroui_controls::winui::AutoSuggestBox::query_icon_property).
+    fn query_icon<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::IconElement>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::AutoSuggestBox>::query_icon_property(), value)
+    }
+
+    /// Sets [`WinUIAutoSuggestBox::description_property`](ferroui_controls::winui::AutoSuggestBox::description_property).
+    fn description<M>(self, value: impl IntoProp<Option<ferroui_base::BoxedValue>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::AutoSuggestBox>::description_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::AutoSuggestBox>> WinUIAutoSuggestBoxProps for El<T> {}
+
 /// The properties and routed events of [`WinUIFontIcon`](ferroui_controls::winui::FontIcon).
 pub trait WinUIFontIconProps: ElementBuilder {
     /// Sets [`WinUIFontIcon::glyph_property`](ferroui_controls::winui::FontIcon::glyph_property).
@@ -7637,6 +7720,40 @@ pub trait WinUIFontIconProps: ElementBuilder {
 }
 impl<T: ObjectType + Upcast<ferroui_controls::winui::FontIcon>> WinUIFontIconProps for El<T> {}
 
+/// The properties and routed events of [`WinUIFontIconSource`](ferroui_controls::winui::FontIconSource).
+pub trait WinUIFontIconSourceProps: ElementBuilder {
+    /// Sets [`WinUIFontIconSource::glyph_property`](ferroui_controls::winui::FontIconSource::glyph_property).
+    fn glyph<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::FontIconSource>::glyph_property(), value)
+    }
+
+    /// Sets [`WinUIFontIconSource::font_family_property`](ferroui_controls::winui::FontIconSource::font_family_property).
+    fn font_family<M>(self, value: impl IntoProp<ferroui_base::media::FontFamily, M>) -> Self {
+        self.prop(<ferroui_controls::winui::FontIconSource>::font_family_property(), value)
+    }
+
+    /// Sets [`WinUIFontIconSource::font_size_property`](ferroui_controls::winui::FontIconSource::font_size_property).
+    fn font_size<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::FontIconSource>::font_size_property(), value)
+    }
+
+    /// Sets [`WinUIFontIconSource::font_style_property`](ferroui_controls::winui::FontIconSource::font_style_property).
+    fn font_style<M>(self, value: impl IntoProp<ferroui_base::media::FontStyle, M>) -> Self {
+        self.prop(<ferroui_controls::winui::FontIconSource>::font_style_property(), value)
+    }
+
+    /// Sets [`WinUIFontIconSource::font_weight_property`](ferroui_controls::winui::FontIconSource::font_weight_property).
+    fn font_weight<M>(self, value: impl IntoProp<ferroui_base::media::FontWeight, M>) -> Self {
+        self.prop(<ferroui_controls::winui::FontIconSource>::font_weight_property(), value)
+    }
+
+    /// Sets [`WinUIFontIconSource::mirrored_when_right_to_left_property`](ferroui_controls::winui::FontIconSource::mirrored_when_right_to_left_property).
+    fn mirrored_when_right_to_left<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::FontIconSource>::mirrored_when_right_to_left_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::FontIconSource>> WinUIFontIconSourceProps for El<T> {}
+
 /// The properties and routed events of [`WinUIFrame`](ferroui_controls::winui::Frame).
 pub trait WinUIFrameProps: ElementBuilder {
     /// Sets [`WinUIFrame::cache_size_property`](ferroui_controls::winui::Frame::cache_size_property).
@@ -7650,6 +7767,107 @@ pub trait WinUIFrameProps: ElementBuilder {
     }
 }
 impl<T: ObjectType + Upcast<ferroui_controls::winui::Frame>> WinUIFrameProps for El<T> {}
+
+/// The properties and routed events of [`WinUIIconSource`](ferroui_controls::winui::IconSource).
+pub trait WinUIIconSourceProps: ElementBuilder {
+    /// Sets [`WinUIIconSource::foreground_property`](ferroui_controls::winui::IconSource::foreground_property).
+    fn foreground<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::media::IBrush>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::IconSource>::foreground_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::IconSource>> WinUIIconSourceProps for El<T> {}
+
+/// The properties and routed events of [`WinUIInfoBar`](ferroui_controls::winui::InfoBar).
+pub trait WinUIInfoBarProps: ElementBuilder {
+    /// Sets [`WinUIInfoBar::is_open_property`](ferroui_controls::winui::InfoBar::is_open_property).
+    fn is_open<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::is_open_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::title_property`](ferroui_controls::winui::InfoBar::title_property).
+    fn title<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::title_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::message_property`](ferroui_controls::winui::InfoBar::message_property).
+    fn message<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::message_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::severity_property`](ferroui_controls::winui::InfoBar::severity_property).
+    fn severity<M>(self, value: impl IntoProp<ferroui_controls::winui::InfoBarSeverity, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::severity_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::icon_source_property`](ferroui_controls::winui::InfoBar::icon_source_property).
+    fn icon_source<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::winui::IconSource>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::icon_source_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::is_icon_visible_property`](ferroui_controls::winui::InfoBar::is_icon_visible_property).
+    fn is_icon_visible<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::is_icon_visible_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::is_closable_property`](ferroui_controls::winui::InfoBar::is_closable_property).
+    fn is_closable<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::is_closable_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::close_button_style_property`](ferroui_controls::winui::InfoBar::close_button_style_property).
+    fn close_button_style<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_base::styling::ControlTheme>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::close_button_style_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::close_button_command_property`](ferroui_controls::winui::InfoBar::close_button_command_property).
+    fn close_button_command<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::input::ICommand>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::close_button_command_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::close_button_command_parameter_property`](ferroui_controls::winui::InfoBar::close_button_command_parameter_property).
+    fn close_button_command_parameter<M>(self, value: impl IntoProp<Option<ferroui_base::BoxedValue>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::close_button_command_parameter_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBar::action_button_property`](ferroui_controls::winui::InfoBar::action_button_property).
+    fn action_button<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::Button>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBar>::action_button_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::InfoBar>> WinUIInfoBarProps for El<T> {}
+
+/// The properties and routed events of [`WinUIInfoBarPanel`](ferroui_controls::winui::InfoBarPanel).
+pub trait WinUIInfoBarPanelProps: ElementBuilder {
+    /// Sets [`WinUIInfoBarPanel::horizontal_orientation_padding_property`](ferroui_controls::winui::InfoBarPanel::horizontal_orientation_padding_property).
+    fn horizontal_orientation_padding<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBarPanel>::horizontal_orientation_padding_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBarPanel::vertical_orientation_padding_property`](ferroui_controls::winui::InfoBarPanel::vertical_orientation_padding_property).
+    fn vertical_orientation_padding<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBarPanel>::vertical_orientation_padding_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBarPanel::horizontal_orientation_margin_property`](ferroui_controls::winui::InfoBarPanel::horizontal_orientation_margin_property).
+    fn horizontal_orientation_margin<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBarPanel>::horizontal_orientation_margin_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBarPanel::vertical_orientation_margin_property`](ferroui_controls::winui::InfoBarPanel::vertical_orientation_margin_property).
+    fn vertical_orientation_margin<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBarPanel>::vertical_orientation_margin_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::InfoBarPanel>> WinUIInfoBarPanelProps for El<T> {}
+
+/// The properties and routed events of [`WinUIInfoBarTemplateSettings`](ferroui_controls::winui::InfoBarTemplateSettings).
+pub trait WinUIInfoBarTemplateSettingsProps: ElementBuilder {
+    /// Sets [`WinUIInfoBarTemplateSettings::icon_element_property`](ferroui_controls::winui::InfoBarTemplateSettings::icon_element_property).
+    fn icon_element<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::IconElement>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBarTemplateSettings>::icon_element_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::InfoBarTemplateSettings>> WinUIInfoBarTemplateSettingsProps for El<T> {}
 
 /// The properties and routed events of [`WinUINumberBox`](ferroui_controls::winui::NumberBox).
 pub trait WinUINumberBoxProps: ElementBuilder {
@@ -7739,6 +7957,15 @@ pub trait WinUIPageProps: ElementBuilder {
 }
 impl<T: ObjectType + Upcast<ferroui_controls::winui::Page>> WinUIPageProps for El<T> {}
 
+/// The properties and routed events of [`WinUIPathIconSource`](ferroui_controls::winui::PathIconSource).
+pub trait WinUIPathIconSourceProps: ElementBuilder {
+    /// Sets [`WinUIPathIconSource::data_property`](ferroui_controls::winui::PathIconSource::data_property).
+    fn data<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_base::media::Geometry>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::PathIconSource>::data_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::PathIconSource>> WinUIPathIconSourceProps for El<T> {}
+
 /// The properties and routed events of [`WinUIRadioButtons`](ferroui_controls::winui::RadioButtons).
 pub trait WinUIRadioButtonsProps: ElementBuilder {
     /// Sets [`WinUIRadioButtons::max_columns_property`](ferroui_controls::winui::RadioButtons::max_columns_property).
@@ -7756,6 +7983,15 @@ pub trait WinUISymbolIconProps: ElementBuilder {
     }
 }
 impl<T: ObjectType + Upcast<ferroui_controls::winui::SymbolIcon>> WinUISymbolIconProps for El<T> {}
+
+/// The properties and routed events of [`WinUISymbolIconSource`](ferroui_controls::winui::SymbolIconSource).
+pub trait WinUISymbolIconSourceProps: ElementBuilder {
+    /// Sets [`WinUISymbolIconSource::symbol_property`](ferroui_controls::winui::SymbolIconSource::symbol_property).
+    fn symbol<M>(self, value: impl IntoProp<ferroui_controls::winui::Symbol, M>) -> Self {
+        self.prop(<ferroui_controls::winui::SymbolIconSource>::symbol_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::SymbolIconSource>> WinUISymbolIconSourceProps for El<T> {}
 
 /// The properties and routed events of [`Window`](ferroui_controls::Window).
 pub trait WindowProps: ElementBuilder {
@@ -8717,6 +8953,16 @@ pub trait AttachedProps: ElementBuilder {
     /// Sets the attached [`Win32Properties::window_corner_preference_property`](ferroui_controls::Win32Properties::window_corner_preference_property).
     fn win32_properties_window_corner_preference<M>(self, value: impl IntoProp<ferroui_controls::platform::WindowCornerPreference, M>) -> Self {
         self.prop(<ferroui_controls::Win32Properties>::window_corner_preference_property(), value)
+    }
+
+    /// Sets the attached [`WinUIInfoBarPanel::horizontal_orientation_margin_property`](ferroui_controls::winui::InfoBarPanel::horizontal_orientation_margin_property).
+    fn win_ui_info_bar_panel_horizontal_orientation_margin<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBarPanel>::horizontal_orientation_margin_property(), value)
+    }
+
+    /// Sets the attached [`WinUIInfoBarPanel::vertical_orientation_margin_property`](ferroui_controls::winui::InfoBarPanel::vertical_orientation_margin_property).
+    fn win_ui_info_bar_panel_vertical_orientation_margin<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBarPanel>::vertical_orientation_margin_property(), value)
     }
 
     /// Sets the attached [`WindowDecorationProperties::element_role_property`](ferroui_controls::chrome::WindowDecorationProperties::element_role_property).

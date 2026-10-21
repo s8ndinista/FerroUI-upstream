@@ -69,3 +69,18 @@ required-features = ["testing"]
 name = "winui_radio_buttons"
 path = "tests/winui_radio_buttons.rs"
 required-features = ["testing"]
+
+[[test]]
+name = "winui_icon_sources"
+path = "tests/winui_icon_sources.rs"
+required-features = ["testing"]
+
+[[test]]
+name = "winui_info_bar"
+path = "tests/winui_info_bar.rs"
+required-features = ["testing"]
+
+[[test]]
+name = "winui_auto_suggest_box"
+path = "tests/winui_auto_suggest_box.rs"
+required-features = ["testing"]

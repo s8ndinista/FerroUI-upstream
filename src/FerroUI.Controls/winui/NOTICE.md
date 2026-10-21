@@ -16,6 +16,9 @@ systems. They do not replace the existing Avalonia-compatible API. Source corres
 | `number_box.rs`, `number_box_expression.rs`, `number_box_automation_peer.rs` | `controls/dev/NumberBox/NumberBox.cpp`, `NumberBoxParser.cpp`, `NumberBox.idl`, `NumberBoxAutomationPeer.cpp` |
 | `radio_buttons.rs` | `controls/dev/RadioButtons/RadioButtons.cpp`, `RadioButtons.idl`, `RadioButtons.xaml`, `RadioButtons_themeresources.xaml`, `ColumnMajorUniformToLargestGridLayout.cpp` |
 | `font_icon.rs`, `symbol_icon.rs` | `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Controls.cs`; `dxaml/xcp/core/core/elements/icon.cpp` |
+| `auto_suggest_box.rs` | `dxaml/xcp/tools/XCPTypesAutoGen/Modules/AutoSuggestBox/AutoSuggestBox.cs`; `dxaml/xcp/dxaml/lib/AutoSuggestBox_Partial.cpp`, `AutoSuggestBoxTextChangedEventArgs_Partial.h`, `AutoSuggestBoxAutomationPeer_Partial.cpp`; `dxaml/xcp/components/DependencyObject/DependencyProperty.cpp` |
+| `info_bar.rs`, `info_bar_panel.rs` | `controls/dev/InfoBar/InfoBar.idl`, `InfoBar.cpp`, `InfoBarPanel.cpp`, `InfoBar.xaml`, `InfoBar_themeresources.xaml` |
+| IconSource projections | `dxaml/xcp/dxaml/lib/IconSource_Partial.cpp`, `FontIconSource_Partial.cpp`, `SymbolIconSource_Partial.cpp`, `PathIconSource_Partial.cpp`, `DependencyProperty.cpp`; light/dark resource fallbacks follow the existing WinUI theme and `Common_themeresources_any.xaml` |
 
 ## API and behavior boundaries
 
