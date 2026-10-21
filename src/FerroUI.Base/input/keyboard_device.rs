@@ -9,7 +9,7 @@ use crate::reactive::{Disposable, IDisposable};
 use crate::utilities::HandlerList;
 use crate::{FerroLocator, LocatorExtensions, Ref};
 use std::any::Any;
-use std::cell::RefCell;
+use std::cell::{Cell, RefCell};
 use std::rc::{Rc, Weak};
 
 /// Represents the keyboard: turns raw key and text input into routed
@@ -19,6 +19,7 @@ pub struct KeyboardDevice {
     this: Weak<KeyboardDevice>,
     focused_element: RefCell<Option<Ref<InputElement>>>,
     focused_root: RefCell<Option<Rc<dyn IInputRoot>>>,
+    focus_generation: Cell<u64>,
     text_input_manager: Rc<TextInputMethodManager>,
     property_changed: HandlerList<dyn Fn(&str)>,
 }
@@ -30,6 +31,7 @@ impl KeyboardDevice {
             this: this.clone(),
             focused_element: RefCell::new(None),
             focused_root: RefCell::new(None),
+            focus_generation: Cell::new(0),
             text_input_manager: TextInputMethodManager::new(),
             property_changed: HandlerList::new(),
         })
@@ -187,6 +189,7 @@ impl KeyboardDevice {
         if element == focused_element.as_ref() {
             return;
         }
+        let initial_generation = self.focus_generation.get();
 
         let mut element = element.cloned();
         let interactive = focused_element.clone();
@@ -201,6 +204,9 @@ impl KeyboardDevice {
 
         if let Some(interactive) = &interactive {
             interactive.raise_event(&losing_focus);
+        }
+        if self.focus_generation.get() != initial_generation {
+            return;
         }
 
         if losing_focus.canceled() {
@@ -218,6 +224,9 @@ impl KeyboardDevice {
                 getting_focus.can_cancel_or_redirect_focus = is_focus_change_cancellable;
 
                 new_focus.raise_event(&getting_focus);
+                if self.focus_generation.get() != initial_generation {
+                    return;
+                }
 
                 if getting_focus.canceled() {
                     change_focus = false;
@@ -231,12 +240,21 @@ impl KeyboardDevice {
             return;
         }
 
+        // Only an accepted focus change supersedes an enclosing request. A
+        // canceled nested request leaves the outer transition intact, while
+        // a committed round trip still invalidates its old event sequence.
+        let generation = initial_generation.wrapping_add(1);
+        self.focus_generation.set(generation);
+
         let old_element = self.focused_element();
         let focused_root = self.focused_root.borrow().clone();
+        let new_root = element.as_ref().and_then(|e| e.get_input_root());
+        if self.focus_generation.get() != generation {
+            return;
+        }
 
         // Clear keyboard focus from the currently focused element.
         if let (Some(old), Some(focused_root)) = (&old_element, &focused_root) {
-            let new_root = element.as_ref().and_then(|e| e.get_input_root());
             let same_root = new_root
                 .as_ref()
                 .is_some_and(|r| std::ptr::addr_eq(Rc::as_ptr(r), Rc::as_ptr(focused_root)));
@@ -245,13 +263,27 @@ impl KeyboardDevice {
                 Self::clear_children_focus_within(&focused_root.root_element(), true);
             }
         }
+        if self.focus_generation.get() != generation {
+            return;
+        }
 
         Self::set_is_focus_within(old_element.as_ref(), element.as_ref());
+        if self.focus_generation.get() != generation {
+            return;
+        }
         drop(self.focused_element.replace(element.clone()));
-        drop(
-            self.focused_root
-                .replace(element.as_ref().and_then(|e| e.get_input_root())),
-        );
+        drop(self.focused_root.replace(new_root));
+
+        // View/template changes during focus events may requery input. Give
+        // that query the accepted keyboard destination now, while retaining
+        // the usual post-event timing for an ordinary client installation.
+        self.text_input_manager
+            .prepare_focus_change(element.clone());
+        let current =
+            || self.focus_generation.get() == generation && self.focused_element() == element;
+        if !current() {
+            return;
+        }
 
         if let Some(interactive) = &interactive {
             let mut lost_focus = FocusChangedEventArgs::new(InputElement::lost_focus_event());
@@ -260,6 +292,9 @@ impl KeyboardDevice {
             lost_focus.navigation_method = method;
             lost_focus.key_modifiers = key_modifiers;
             interactive.raise_event(&lost_focus);
+        }
+        if !current() {
+            return;
         }
 
         if let Some(new_element) = &element {
@@ -270,8 +305,15 @@ impl KeyboardDevice {
             got_focus.key_modifiers = key_modifiers;
             new_element.raise_event(&got_focus);
         }
+        if !current() {
+            return;
+        }
 
-        self.text_input_manager.set_focused_element(element);
+        self.text_input_manager
+            .set_focused_element(self.focused_element());
+        if !current() {
+            return;
+        }
         self.raise_property_changed("FocusedElement");
     }
 

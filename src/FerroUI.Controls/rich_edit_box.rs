@@ -570,10 +570,9 @@ impl InputElementImpl for RichEditBox {
             return;
         }
         this.set_force_focused_visual_state(false);
-        // The persistent presenter has not changed identity. A view requery
-        // here would still see the manager's previous focus destination while
-        // KeyboardDevice is publishing GotFocus, retiring an owned-popup
-        // composition just before its semantic owner regains focus.
+        // Focus does not change the persistent presenter's identity. Actual
+        // template attachment changes publish their own view notification;
+        // this transition only needs to refresh the current caret geometry.
         this.im_client.raise_cursor_rectangle_changed();
         this.reset_caret_blink();
         this.ensure_caret_visible();

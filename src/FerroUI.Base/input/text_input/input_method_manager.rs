@@ -59,6 +59,7 @@ pub(crate) struct TextInputMethodManager {
     client: RefCell<Option<Rc<dyn TextInputMethodClient>>>,
     connection: RefCell<Option<Rc<TextInputMethodConnection>>>,
     generation: Cell<u64>,
+    focus_generation: Cell<u64>,
     cursor_generation: Cell<u64>,
     client_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
     transform_tracker: Rc<TransformTrackingHelper>,
@@ -77,6 +78,7 @@ impl TextInputMethodManager {
             client: RefCell::new(None),
             connection: RefCell::new(None),
             generation: Cell::new(0),
+            focus_generation: Cell::new(0),
             cursor_generation: Cell::new(0),
             client_subscriptions: RefCell::new(Vec::new()),
             transform_tracker: TransformTrackingHelper::new(true),
@@ -355,8 +357,16 @@ impl TextInputMethodManager {
 
     fn on_text_view_visual_changed(&self) {
         self.try_find_and_apply_client();
-        let visual = self.client().and_then(|client| client.text_view_visual());
-        self.transform_tracker.set_visual(visual.as_ref());
+        let generation = self.generation.get();
+        let focus_generation = self.focus_generation.get();
+        let client = self.client();
+        let visual = client.as_ref().and_then(|client| client.text_view_visual());
+        if self.current(generation)
+            && self.focus_generation.get() == focus_generation
+            && same_client(self.client().as_ref(), client.as_ref())
+        {
+            self.transform_tracker.set_visual(visual.as_ref());
+        }
     }
 
     fn update_cursor_rect(&self) {
@@ -400,10 +410,15 @@ impl TextInputMethodManager {
         }
     }
 
-    pub(crate) fn set_focused_element(&self, element: Option<Ref<InputElement>>) {
+    /// Records the keyboard's accepted destination before LostFocus/GotFocus.
+    /// A view change in those callbacks must not requery the previous popup
+    /// child. Resolving the binding normally remains a post-event operation.
+    pub(crate) fn prepare_focus_change(&self, element: Option<Ref<InputElement>>) {
         if self.disposed.get() || *self.focused_element.borrow() == element {
             return;
         }
+        self.focus_generation
+            .set(self.focus_generation.get().wrapping_add(1));
         let previous = self.visual_root.take();
         if let Some((root, token)) = previous {
             InputMethod::remove_text_input_method_client_requery_requested_handler(&root, token);
@@ -424,6 +439,10 @@ impl TextInputMethodManager {
             );
             *self.visual_root.borrow_mut() = Some((root, token));
         }
+    }
+
+    pub(crate) fn set_focused_element(&self, element: Option<Ref<InputElement>>) {
+        self.prepare_focus_change(element);
         self.try_find_and_apply_client();
     }
 
@@ -432,18 +451,20 @@ impl TextInputMethodManager {
             return;
         }
         let generation = self.generation.get();
+        let focus_generation = self.focus_generation.get();
+        let current =
+            || self.current(generation) && self.focus_generation.get() == focus_generation;
         let Some(focused) = self.focused_element() else {
             self.set_binding(None, None, None);
             return;
         };
         if !InputMethod::get_is_input_method_enabled(&focused) {
-            self.set_binding(
-                None,
-                None,
-                focused
-                    .get_input_root()
-                    .and_then(|root| root.input_method()),
-            );
+            let im = focused
+                .get_input_root()
+                .and_then(|root| root.input_method());
+            if current() {
+                self.set_binding(None, None, im);
+            }
             return;
         }
         let query = TextInputMethodClientRequestedEventArgs::new();
@@ -451,7 +472,7 @@ impl TextInputMethodManager {
             InputElement::text_input_method_client_requested_event(),
         ));
         focused.raise_event(&query);
-        if !self.current(generation) || self.focused_element().as_ref() != Some(&focused) {
+        if !current() {
             return;
         }
         let mut client = query.client();
@@ -460,6 +481,9 @@ impl TextInputMethodManager {
                 .input_method_owner()
                 .unwrap_or_else(|| focused.clone())
         });
+        if !current() {
+            return;
+        }
         if client.is_none() {
             if let (Some(current), Some(current_owner)) = (self.client(), self.owner()) {
                 if current.retains_input_method_focus(&focused) {
@@ -468,7 +492,7 @@ impl TextInputMethodManager {
                 }
             }
         }
-        if !self.current(generation) {
+        if !current() {
             return;
         }
         let owner = owner.filter(|owner| {
@@ -480,6 +504,9 @@ impl TextInputMethodManager {
             .as_ref()
             .and_then(|owner| owner.get_input_root())
             .and_then(|root| root.input_method());
+        if !current() {
+            return;
+        }
         if owner.is_some() && im.is_some() {
             self.set_binding(owner, client, im);
         } else {
@@ -488,7 +515,9 @@ impl TextInputMethodManager {
             let im = focused
                 .get_input_root()
                 .and_then(|root| root.input_method());
-            self.set_binding(None, None, im);
+            if current() {
+                self.set_binding(None, None, im);
+            }
         }
     }
 

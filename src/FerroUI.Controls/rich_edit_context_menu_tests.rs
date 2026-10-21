@@ -32,6 +32,9 @@ use ferroui_base::{FerroLocator, Point, Rect, Ref, Thickness};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
+#[path = "rich_edit_input_focus_tests.rs"]
+mod input_focus_tests;
+
 #[derive(Default)]
 struct RecordingInputMethod {
     client: RefCell<Option<Rc<dyn TextInputMethodClient>>>,
