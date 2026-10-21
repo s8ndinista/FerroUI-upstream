@@ -7,6 +7,7 @@ use ferroui_base::media::text_formatting::testing::TextTestScope;
 use ferroui_base::media::{Brushes, FontWeight, IBrush};
 use ferroui_base::metadata::from_markup_value;
 use ferroui_base::styling::{ControlTheme, ThemeVariant};
+use ferroui_base::threading::Dispatcher;
 use ferroui_base::{ObjectType, Ref, Visual};
 use ferroui_controls::documents::CharacterFormat;
 use ferroui_controls::primitives::FlyoutBaseImplExt;
@@ -135,7 +136,14 @@ fn rich_edit_theme_scrolls_the_complete_story_and_reveals_the_end_caret() {
     let end = editor.document().text_length();
     editor.select(end, end);
     window.update_layout();
-    assert!(presenter.offset().y > 0.0);
+    // Selection can invalidate text layout; the control then reveals the caret
+    // at Loaded priority after that layout has completed.
+    Dispatcher::ui_thread().run_jobs(None);
+    assert!(
+        presenter.offset().y > 0.0,
+        "offset {:?}, viewport {:?}, extent {:?}",
+        presenter.offset(), presenter.viewport(), presenter.extent()
+    );
     let caret = presenter.cursor_rectangle();
     assert!(caret.y >= -1e-6, "caret {caret:?}");
     assert!(

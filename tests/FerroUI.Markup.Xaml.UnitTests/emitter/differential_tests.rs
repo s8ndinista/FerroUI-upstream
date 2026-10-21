@@ -426,6 +426,9 @@ fn collection_items(value: &BoxedValue) -> Option<Result<Vec<Option<BoxedValue>>
     if let Some(list) = any.downcast_ref::<TextRangeCollection>() {
         return Some(Ok(list.to_vec().into_iter().map(|range| Some(Rc::new(range) as BoxedValue)).collect()));
     }
+    if let Some(list) = any.downcast_ref::<ferroui_base::media::TextDecorationCollection>() {
+        return Some(Ok(objects(list.to_vec())));
+    }
     if let Some(list) = any.downcast_ref::<FerroList<Ref<Inline>>>() {
         return Some(Ok(objects(list.to_vec())));
     }
