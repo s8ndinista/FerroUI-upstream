@@ -12,6 +12,7 @@ pub mod markup_extensions;
 pub mod parsers;
 pub mod styling;
 pub mod templates;
+pub mod winui;
 pub mod xaml_il;
 pub mod xamlx_runtime;
 

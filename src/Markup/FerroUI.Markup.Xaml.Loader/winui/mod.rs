@@ -6,14 +6,15 @@
 //! run-time loader consume the same migrated document. The normal compiler still validates
 //! every type, member, event handler, value and binding against real framework metadata.
 
+mod event_targets;
 mod migration;
 mod options;
 mod report;
 
 pub use migration::migrate_winui_xaml;
 pub use options::{
-    WinUIThemeResourcePolicy, WinUIXamlMemberMapping, WinUIXamlNamespaceMapping, WinUIXamlOptions,
-    WinUIXamlTypeMapping, WINUI_PRESENTATION_NAMESPACE,
+    WinUIThemeResourcePolicy, WinUIXBindPolicy, WinUIXamlMemberMapping, WinUIXamlNamespaceMapping,
+    WinUIXamlOptions, WinUIXamlTypeMapping, WINUI_PRESENTATION_NAMESPACE,
 };
 pub use report::{
     WinUIXamlDiagnostic, WinUIXamlDiagnosticSeverity, WinUIXamlEdit, WinUIXamlMigration,

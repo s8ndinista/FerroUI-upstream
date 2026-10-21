@@ -1,5 +1,5 @@
-use ferroui_markup_xaml_loader::winui::*;
 use ferroui_base::metadata::FERRO_XML_NAMESPACE;
+use ferroui_markup_xaml_loader::winui::*;
 use roxmltree::{Document, Node};
 
 const XAML_NAMESPACE: &str = "http://schemas.microsoft.com/winfx/2006/xaml";
@@ -57,13 +57,30 @@ fn page_and_frame_use_separate_namespace_with_balanced_property_elements() {
 #[test]
 fn behaviorally_distinct_new_controls_use_the_compatibility_namespace() {
     let result = migrate(
-        "<NumberBox Value='12'/><RadioButtons/><FontIcon Glyph='A'/><SymbolIcon Symbol='Accept'/>",
+        "<NumberBox Value='12'/><RadioButtons/><FontIcon Glyph='A'/><SymbolIcon Symbol='Accept'/><InfoBar/><FontIconSource/><SymbolIconSource/><PathIconSource/><AutoSuggestBox/>",
     );
     assert!(!result.has_errors());
     let doc = Document::parse(&result.xaml).unwrap();
     for element in doc.descendants().filter(Node::is_element).skip(1) {
         assert_eq!(element.tag_name().namespace(), Some(COMPAT_NAMESPACE));
     }
+}
+
+#[test]
+fn info_bar_primitives_and_close_button_theme_require_explicit_mappings() {
+    let input = format!("<Grid xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:p='using:Microsoft.UI.Xaml.Controls.Primitives'><p:InfoBarPanel/><InfoBar CloseButtonStyle='{{StaticResource Custom}}'/></Grid>");
+    let rejected = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    assert!(rejected.has_errors());
+    let mut options = WinUIXamlOptions::default();
+    options.style_resources.push("Custom".into());
+    let result = migrate_winui_xaml(&input, &options).unwrap();
+    assert!(!result.has_errors());
+    let doc = Document::parse(&result.xaml).unwrap();
+    let panel = doc
+        .descendants()
+        .find(|node| node.tag_name().name() == "InfoBarPanel")
+        .unwrap();
+    assert_eq!(panel.tag_name().namespace(), Some(COMPAT_NAMESPACE));
 }
 
 #[test]
@@ -408,8 +425,8 @@ fn long_attribute_whitespace_uses_true_source_ranges() {
 #[cfg(feature = "runtime")]
 #[test]
 fn opt_in_runtime_loader_creates_real_controls_and_preserves_normal_loader_dialect() {
-    use ferroui_markup_xaml_loader::FerroRuntimeXamlLoader;
     use ferroui_base::data::core::ValueTypes;
+    use ferroui_markup_xaml_loader::FerroRuntimeXamlLoader;
     let source = format!(
         "<Button xmlns='{WINUI_PRESENTATION_NAMESPACE}' Visibility='Collapsed' Content='Live'/>"
     );
@@ -429,10 +446,13 @@ fn opt_in_runtime_loader_creates_real_controls_and_preserves_normal_loader_diale
 #[test]
 fn runtime_rejects_semantic_diagnostics_before_instantiating_unknown_controls() {
     let input = source("<Unknown Text='{x:Bind Name}'/>");
-    let error =
-        ferroui_markup_xaml_loader::FerroRuntimeXamlLoader::parse_winui(&input, None, &WinUIXamlOptions::default())
-            .err()
-            .unwrap();
+    let error = ferroui_markup_xaml_loader::FerroRuntimeXamlLoader::parse_winui(
+        &input,
+        None,
+        &WinUIXamlOptions::default(),
+    )
+    .err()
+    .unwrap();
     assert!(error.message().contains("WXAML1007"));
 }
 
@@ -455,4 +475,207 @@ fn fresh_root_deferred_resource_error_is_returned_and_default_loader_still_throw
         )))
         .is_err()
     );
+}
+
+fn xbind_options() -> WinUIXamlOptions {
+    WinUIXamlOptions {
+        x_bind: WinUIXBindPolicy::PropertyPathsWithExplicitLifecycle,
+        ..Default::default()
+    }
+}
+
+#[test]
+fn property_path_xbind_is_a_separate_extension_with_original_location_and_explicit_scope() {
+    let input = source("\n<TextBox Text='{x:Bind ViewModel.Name, Mode=TwoWay}'/>");
+    let result = migrate_winui_xaml(&input, &xbind_options()).unwrap();
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    let doc = Document::parse(&result.xaml).unwrap();
+    let value = doc
+        .descendants()
+        .find(|n| n.has_tag_name("TextBox"))
+        .unwrap()
+        .attribute("Text")
+        .unwrap();
+    assert!(value.contains(":WinUIBind Path=ViewModel.Name, Mode=TwoWay, Scope=Root"));
+    assert!(value.contains("SourceLine=2"));
+    assert!(!value.contains("UpdateSourceTrigger="));
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|d| d.code == "WXAML2004" && d.span.line == 2));
+    assert!(result.xaml.contains("using:FerroUI.Markup.Xaml.WinUI"));
+    let twice = migrate_winui_xaml(&result.xaml, &xbind_options()).unwrap();
+    assert_eq!(twice.xaml, result.xaml);
+    assert!(twice.edits.is_empty());
+}
+
+#[test]
+fn property_path_policy_still_rejects_functions_events_casts_indexers_and_unknown_parameters() {
+    for body in [
+        "<TextBlock Text='{x:Bind Format(Name)}'/>",
+        "<TextBlock Text='{x:Bind Items[0].Name}'/>",
+        "<TextBlock Text='{x:Bind ((Model)Data).Name}'/>",
+        "<Button Click='{x:Bind OnClick}'/>",
+        "<TextBox Loaded='{x:Bind OnLoaded}'/>",
+        "<TextBlock Text='{x:Bind Name, Converter={StaticResource Converter}}'/>",
+        "<TextBox Text='{x:Bind Name, Mode=Default}'/>",
+        "<TextBox Text='{x:Bind Name, UpdateSourceTrigger=PropertyChanged}'/>",
+        "<TextBox Text='{x:Bind Name, Mode=TwoWay, UpdateSourceTrigger=Explicit}'/>",
+        "<TextBlock Text='{x:Bind Name, Mode=OneTime, Mode=OneWay}'/>",
+        "<TextBlock Text='{Binding Name, FallbackValue={x:Bind Other}}'/>",
+    ] {
+        let input = source(body);
+        let result = migrate_winui_xaml(&input, &xbind_options()).unwrap();
+        let diagnostic = result
+            .diagnostics
+            .iter()
+            .find(|d| d.code == "WXAML1007")
+            .expect(body);
+        assert!(input[diagnostic.span.bytes.clone()].contains("{x:Bind"));
+        assert!(result.into_xaml().is_err(), "{body}");
+    }
+}
+
+#[test]
+fn event_rejection_resolves_the_declaring_namespace_and_inherited_members() {
+    let input = format!("<Grid xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:x='{XAML_NAMESPACE}' xmlns:ui='using:Microsoft.UI.Xaml.Controls' xmlns:custom='using:MyControls'><ui:Button Click='{{x:Bind ClickHandler}}'/><custom:Button Click='{{x:Bind Label}}'/></Grid>");
+    let mut options = xbind_options();
+    options.namespaces.push(WinUIXamlNamespaceMapping::new(
+        "using:MyControls",
+        "using:PortedControls",
+    ));
+    let result = migrate_winui_xaml(&input, &options).unwrap();
+    assert_eq!(
+        result
+            .diagnostics
+            .iter()
+            .filter(|d| d.code == "WXAML1007")
+            .count(),
+        1
+    );
+    assert!(result.xaml.contains("Click='{fui"));
+}
+
+#[test]
+fn typed_template_scope_captures_its_type_namespace_even_when_the_prefix_is_shadowed() {
+    let input = format!("<DataTemplate xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:x='{XAML_NAMESPACE}' xmlns:item='using:OriginalModels' x:DataType='item:Person'><TextBlock xmlns:item='using:OtherModels' Text='{{x:Bind Name}}'/></DataTemplate>");
+    let mut options = xbind_options();
+    options.namespaces.push(WinUIXamlNamespaceMapping::new(
+        "using:OriginalModels",
+        "using:PortedModels",
+    ));
+    let result = migrate_winui_xaml(&input, &options).unwrap();
+    assert!(!result.has_errors());
+    let doc = Document::parse(&result.xaml).unwrap();
+    let text = doc
+        .descendants()
+        .find(|node| node.has_tag_name("TextBlock"))
+        .unwrap();
+    let binding = text.attribute("Text").unwrap();
+    assert!(binding.contains("Scope=Template"));
+    assert!(binding.contains("Mode=OneTime"));
+    let type_ = binding
+        .split("Type ")
+        .nth(1)
+        .unwrap()
+        .split('}')
+        .next()
+        .unwrap();
+    let (prefix, name) = type_.split_once(':').unwrap();
+    assert_eq!(name, "Person");
+    assert_eq!(
+        text.lookup_namespace_uri(Some(prefix)),
+        Some("using:PortedModels")
+    );
+    for body in [
+        "<DataTemplate><TextBlock Text='{x:Bind Name}'/></DataTemplate>",
+        "<ControlTemplate><TextBlock Text='{x:Bind Name}'/></ControlTemplate>",
+    ] {
+        assert!(migrate_winui_xaml(&source(body), &xbind_options())
+            .unwrap()
+            .has_errors());
+    }
+}
+
+#[cfg(feature = "runtime")]
+#[test]
+fn migrated_xbind_stays_dormant_until_the_host_initializes_the_document() {
+    use ferroui_base::data::core::ValueTypes;
+    use ferroui_base::data::BindingPriority;
+    use ferroui_base::{BoxedValue, FerroPropertyRegistry};
+    use ferroui_markup_xaml::winui::WinUIBindings;
+    use ferroui_markup_xaml_loader::FerroRuntimeXamlLoader;
+    use std::rc::Rc;
+    let input = format!("<TextBlock xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:x='{XAML_NAMESPACE}' Tag='initial' Text='{{x:Bind Tag}}'/>");
+    let value = FerroRuntimeXamlLoader::parse_winui(&input, None, &xbind_options()).unwrap();
+    let root = ValueTypes::as_object(&*value).unwrap();
+    let text = FerroPropertyRegistry::instance()
+        .find_registered_for(&root, "Text")
+        .unwrap();
+    let tag = FerroPropertyRegistry::instance()
+        .find_registered_for(&root, "Tag")
+        .unwrap();
+    assert!(ValueTypes::normalize(root.get_value_untyped(text)).is_none());
+    let late: Option<BoxedValue> = Some(Rc::new("after code-behind".to_string()));
+    root.set_value_untyped(tag, &late, BindingPriority::LocalValue);
+    let group = WinUIBindings::get_for_root(&root).unwrap();
+    assert!(!group.is_initialized());
+    group.initialize().unwrap();
+    let text_value = ValueTypes::normalize(root.get_value_untyped(text)).unwrap();
+    assert_eq!(
+        text_value.downcast_ref::<String>().map(String::as_str),
+        Some("after code-behind")
+    );
+}
+
+#[cfg(feature = "runtime")]
+#[test]
+fn migrated_template_xbind_uses_each_deferred_instance_and_typed_item() {
+    use ferroui_base::data::core::ValueTypes;
+    use ferroui_base::FerroPropertyRegistry;
+    use ferroui_markup_xaml::templates::DataTemplate;
+    use ferroui_markup_xaml::winui::WinUIBindings;
+    use ferroui_markup_xaml_loader::FerroRuntimeXamlLoader;
+    use std::rc::Rc;
+    let input = format!("<DataTemplate xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:x='{XAML_NAMESPACE}' x:DataType='Button'><TextBlock Text='{{x:Bind Content}}'/></DataTemplate>");
+    let template: Rc<DataTemplate> =
+        FerroRuntimeXamlLoader::parse_winui_as(&input, None, &xbind_options()).unwrap();
+    let first = template.build(None).unwrap();
+    let second = template.build(None).unwrap();
+    let first_item = FerroRuntimeXamlLoader::parse(
+        "<Button xmlns='https://github.com/ferroui' Content='first'/>",
+        None,
+    )
+    .unwrap();
+    let second_item = FerroRuntimeXamlLoader::parse(
+        "<Button xmlns='https://github.com/ferroui' Content='second'/>",
+        None,
+    )
+    .unwrap();
+    first.set_data_context(Some(first_item));
+    second.set_data_context(Some(second_item));
+    WinUIBindings::get_for_root(&first)
+        .unwrap()
+        .initialize()
+        .unwrap();
+    WinUIBindings::get_for_root(&second)
+        .unwrap()
+        .initialize()
+        .unwrap();
+    let text = FerroPropertyRegistry::instance()
+        .find_registered_for(&first, "Text")
+        .unwrap();
+    let read = |value: ferroui_base::BoxedValue| {
+        ValueTypes::normalize(value)
+            .unwrap()
+            .downcast_ref::<String>()
+            .unwrap()
+            .clone()
+    };
+    assert_eq!(read(first.get_value_untyped(text)), "first");
+    assert_eq!(read(second.get_value_untyped(text)), "second");
+    assert!(!Rc::ptr_eq(
+        &WinUIBindings::get_for_root(&first).unwrap(),
+        &WinUIBindings::get_for_root(&second).unwrap()
+    ));
 }

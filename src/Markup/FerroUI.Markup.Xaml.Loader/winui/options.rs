@@ -15,6 +15,18 @@ pub enum WinUIThemeResourcePolicy {
     DynamicResource,
 }
 
+/// x:Bind is a different source and lifecycle contract from an ordinary Binding.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum WinUIXBindPolicy {
+    #[default]
+    Reject,
+    /// Emit the dedicated WinUIBind extension for dotted property paths. The host must
+    /// initialize each document/template root's WinUIBindings after construction and fields
+    /// are assigned, and choose unload stopping explicitly. No parse-time initialization is
+    /// implied. Functions, events, casts, indexers and unsupported parameters remain errors.
+    PropertyPathsWithExplicitLifecycle,
+}
+
 /// Maps one XML namespace URI, including an application `using:` namespace.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct WinUIXamlNamespaceMapping {
@@ -90,6 +102,7 @@ pub struct WinUIXamlOptions {
     pub types: Vec<WinUIXamlTypeMapping>,
     pub members: Vec<WinUIXamlMemberMapping>,
     pub theme_resources: WinUIThemeResourcePolicy,
+    pub x_bind: WinUIXBindPolicy,
     /// WinUI `Style` resource keys explicitly known to be ported `ControlTheme` resources.
     pub style_resources: Vec<String>,
     /// Replaces `ms-appx:///` in resource-bearing URI attributes. For example,

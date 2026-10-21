@@ -7,9 +7,9 @@ use ferroui_base::metadata::FERRO_XML_NAMESPACE;
 use roxmltree::{Document, Node};
 
 use super::{
-    WinUIThemeResourcePolicy, WinUIXamlDiagnostic, WinUIXamlDiagnosticSeverity, WinUIXamlEdit,
-    WinUIXamlMigration, WinUIXamlMigrationError, WinUIXamlOptions, WinUIXamlSourceSpan,
-    WINUI_PRESENTATION_NAMESPACE,
+    WinUIThemeResourcePolicy, WinUIXBindPolicy, WinUIXamlDiagnostic, WinUIXamlDiagnosticSeverity,
+    WinUIXamlEdit, WinUIXamlMigration, WinUIXamlMigrationError, WinUIXamlOptions,
+    WinUIXamlSourceSpan, WINUI_PRESENTATION_NAMESPACE,
 };
 
 const XAML_NAMESPACE: &str = "http://schemas.microsoft.com/winfx/2006/xaml";
@@ -227,8 +227,30 @@ impl Migration<'_, '_> {
                             | "NavigationFailedEventArgs"
                             | "PageStackEntry"
                             | "FrameNavigationOptions"
+                            | "InfoBar"
+                            | "InfoBarPanel"
+                            | "InfoBarTemplateSettings"
+                            | "InfoBarSeverity"
+                            | "InfoBarCloseReason"
+                            | "InfoBarClosingEventArgs"
+                            | "InfoBarClosedEventArgs"
+                            | "InfoBarOpenedEventArgs"
+                            | "IconSource"
+                            | "FontIconSource"
+                            | "SymbolIconSource"
+                            | "PathIconSource"
+                            | "AutoSuggestBox"
+                            | "AutoSuggestionBoxTextChangeReason"
+                            | "AutoSuggestBoxTextChangedEventArgs"
+                            | "AutoSuggestBoxSuggestionChosenEventArgs"
+                            | "AutoSuggestBoxQuerySubmittedEventArgs"
                     ))
                 .then(|| (COMPAT_NAMESPACE.to_string(), name.to_string()))
+            })
+            .or_else(|| {
+                (namespace == "using:Microsoft.UI.Xaml.Controls.Primitives"
+                    && name == "InfoBarPanel")
+                    .then(|| (COMPAT_NAMESPACE.to_string(), name.to_string()))
             });
         match mapping {
             Some((namespace, name)) => format!("{}:{name}", self.prefix(&namespace)),
@@ -467,6 +489,16 @@ impl Migration<'_, '_> {
                                 "A WinUI Style value requires an audited ControlTheme mapping");
                         }
                     },
+                    "CloseButtonStyle" if owner == "InfoBar" && is_control_namespace(namespace) => {
+                        if simple_resource(value, "StaticResource").is_some_and(|key|
+                            self.options.style_resources.iter().any(|known| known == key)) {
+                            self.diagnostic("WXAML2002", false, attribute.value.clone(),
+                                "InfoBar.CloseButtonStyle uses an explicitly audited native ControlTheme resource");
+                        } else {
+                            self.diagnostic("WXAML1005", true, attribute.value.clone(),
+                                "InfoBar.CloseButtonStyle requires an audited ControlTheme resource key");
+                        }
+                    },
                     _ => {},
                 }
             }
@@ -474,7 +506,7 @@ impl Migration<'_, '_> {
         if context && value.starts_with('{') && !value.starts_with("{}") {
             // Semantic conversions above own their value. Otherwise rewrite the markup syntax.
             if result == value {
-                result = self.extension(node, value, attribute.value.clone(), 0);
+                result = self.extension(node, value, attribute.value.clone(), 0, Some(local));
             }
         }
         if context && matches!(local, "Source" | "UriSource" | "NavigateUri") {
@@ -516,6 +548,7 @@ impl Migration<'_, '_> {
         value: &str,
         span: Range<usize>,
         depth: usize,
+        target_member: Option<&str>,
     ) -> String {
         if value.starts_with("{}") {
             return value.to_string();
@@ -538,18 +571,18 @@ impl Migration<'_, '_> {
             .split_once(':')
             .map_or((None, name), |(prefix, name)| (Some(prefix), name));
         let namespace = node.lookup_namespace_uri(prefix).unwrap_or("");
+        if namespace == XAML_NAMESPACE && local == "Bind" {
+            return self.x_bind(node, value, &parts, span, depth, target_member);
+        }
         let mut edits: Vec<(Range<usize>, String)> = Vec::new();
         for nested_range in nested {
             let nested_value = &value[nested_range.clone()];
-            let replacement = self.extension(node, nested_value, span.clone(), depth + 1);
+            let replacement = self.extension(node, nested_value, span.clone(), depth + 1, None);
             if nested_value != replacement {
                 edits.push((nested_range, replacement));
             }
         }
-        if namespace == XAML_NAMESPACE && local == "Bind" {
-            self.diagnostic("WXAML1007", true, span.clone(),
-                "x:Bind has a typed root source, OneTime default, functions and lifecycle; it cannot be renamed to Binding");
-        } else if namespace == XAML_NAMESPACE && local == "Type" {
+        if namespace == XAML_NAMESPACE && local == "Type" {
             let argument = value[name_range.end..value.len() - 1].trim();
             if !argument.contains([' ', ',', '=']) {
                 let mapped = self.qualified_type(node, argument);
@@ -596,6 +629,198 @@ impl Migration<'_, '_> {
         }
         output
     }
+
+    fn x_bind(
+        &mut self,
+        node: Node<'_, '_>,
+        value: &str,
+        parts: &[Range<usize>],
+        span: Range<usize>,
+        depth: usize,
+        target_member: Option<&str>,
+    ) -> String {
+        if self.options.x_bind == WinUIXBindPolicy::Reject {
+            self.diagnostic("WXAML1007", true, span,
+                "x:Bind has a typed root source, OneTime default, functions and lifecycle; it cannot be renamed to Binding. The explicit property-path policy requires a WinUIBindings host lifecycle");
+            return value.into();
+        }
+        let unsupported = |this: &mut Self, reason: String| {
+            this.diagnostic("WXAML1007", true, span.clone(), reason);
+            value.to_string()
+        };
+        if depth != 0 || target_member.is_none() {
+            return unsupported(
+                self,
+                "Nested x:Bind is outside the implemented property-target contract".into(),
+            );
+        }
+        let member = target_member.unwrap_or_default();
+        if super::event_targets::is_event(
+            node.tag_name().namespace().unwrap_or(""),
+            node.tag_name().name(),
+            member,
+        ) {
+            return unsupported(self, format!("x:Bind on event '{member}' requires generated event-handler dispatch; only property paths are implemented"));
+        }
+        let parsed = match parse_x_bind(value, parts) {
+            Ok(parsed) => parsed,
+            Err(message) => return unsupported(self, message),
+        };
+        let mut template = None;
+        for ancestor in node.ancestors().skip(1).filter(Node::is_element) {
+            if !ancestor
+                .tag_name()
+                .namespace()
+                .is_some_and(is_winui_namespace)
+            {
+                continue;
+            }
+            match ancestor.tag_name().name() {
+                "DataTemplate" => { template = Some(ancestor); break; },
+                "ControlTemplate" | "ItemsPanelTemplate" => return unsupported(self,
+                    "x:Bind inside this template requires an explicit source contract; only typed DataTemplate scopes are implemented".into()),
+                _ => {},
+            }
+        }
+        let data_type = if let Some(template) = template {
+            let Some(type_name) = template.attribute((XAML_NAMESPACE, "DataType")) else {
+                return unsupported(
+                    self,
+                    "A DataTemplate x:Bind requires a declared x:DataType".into(),
+                );
+            };
+            if type_name.starts_with('{') || type_name.contains([' ', ',', '=']) {
+                return unsupported(
+                    self,
+                    "The DataTemplate x:DataType must be one qualified type name".into(),
+                );
+            }
+            let mapped = self.qualified_type(template, type_name);
+            let qualified = if mapped == type_name {
+                // The directive's prefix might be shadowed between the template and binding.
+                // Capture the declaration's namespace under a new collision-free prefix.
+                let (prefix, local) = type_name
+                    .split_once(':')
+                    .map_or((None, type_name), |(p, n)| (Some(p), n));
+                let Some(namespace) = template.lookup_namespace_uri(prefix) else {
+                    return unsupported(
+                        self,
+                        "The DataTemplate x:DataType prefix is not declared".into(),
+                    );
+                };
+                let namespace = self
+                    .namespace(namespace)
+                    .unwrap_or_else(|| namespace.into());
+                format!("{}:{local}", self.prefix(&namespace))
+            } else {
+                mapped
+            };
+            let xaml = self.prefix(XAML_NAMESPACE);
+            Some(format!("{{{xaml}:Type {qualified}}}"))
+        } else {
+            None
+        };
+        let prefix = self.prefix("using:FerroUI.Markup.Xaml.WinUI");
+        let location = self.span(span.clone());
+        let mut arguments = vec![
+            format!("Path={}", parsed.path),
+            format!("Mode={}", parsed.mode),
+            format!(
+                "Scope={}",
+                if template.is_some() {
+                    "Template"
+                } else {
+                    "Root"
+                }
+            ),
+            format!("SourceLine={}", location.line),
+            format!("SourceColumn={}", location.column),
+        ];
+        if let Some(data_type) = data_type {
+            arguments.push(format!("DataType={data_type}"));
+        }
+        if let Some(trigger) = parsed.trigger {
+            arguments.push(format!("UpdateSourceTrigger={trigger}"));
+        }
+        // Empty Path is best represented by the parameterless extension constructor: the XAML
+        // extension grammar does not accept a missing value after an equals sign.
+        if parsed.path.is_empty() {
+            arguments.remove(0);
+        }
+        self.diagnostic("WXAML2004", false, span,
+            "x:Bind uses registered property metadata and the root/template WinUIBindings lifecycle; the host must explicitly Initialize after construction, Update as needed and choose unload stopping");
+        format!("{{{prefix}:WinUIBind {}}}", arguments.join(", "))
+    }
+}
+
+struct XBindParts<'a> {
+    path: &'a str,
+    mode: &'a str,
+    trigger: Option<&'a str>,
+}
+
+fn parse_x_bind<'a>(value: &'a str, parts: &[Range<usize>]) -> Result<XBindParts<'a>, String> {
+    let mut result = XBindParts {
+        path: "",
+        mode: "OneTime",
+        trigger: None,
+    };
+    let mut seen = HashSet::new();
+    for (index, part) in parts.iter().enumerate() {
+        let text = value[part.clone()].trim();
+        if text.is_empty() && index == 0 {
+            continue;
+        }
+        let (name, value) = match text.split_once('=') {
+            Some((name, value)) => (name.trim(), value.trim()),
+            None if index == 0 => ("Path", text),
+            None => return Err("Malformed x:Bind parameter".into()),
+        };
+        if !seen.insert(name) {
+            return Err(format!("Duplicate x:Bind parameter '{name}'"));
+        }
+        let value = if value.len() >= 2
+            && ((value.starts_with('\'') && value.ends_with('\''))
+                || (value.starts_with('"') && value.ends_with('"')))
+        {
+            &value[1..value.len() - 1]
+        } else {
+            value
+        };
+        match name {
+            "Path" => result.path = value,
+            "Mode" => result.mode = value,
+            "UpdateSourceTrigger" => result.trigger = Some(value),
+            _ => {
+                return Err(format!(
+                    "x:Bind parameter '{name}' is not implemented by the property-path adapter"
+                ))
+            }
+        }
+    }
+    if !result.path.is_empty()
+        && !result.path.split('.').all(|part| {
+            let mut chars = part.chars();
+            chars.next().is_some_and(|c| c == '_' || c.is_alphabetic())
+                && chars.all(|c| c == '_' || c.is_alphanumeric())
+        })
+    {
+        return Err("Only dotted x:Bind property paths are implemented; functions, casts, indexers and operators require generated binding support".into());
+    }
+    if !matches!(result.mode, "OneTime" | "OneWay" | "TwoWay") {
+        return Err("x:Bind Mode must be OneTime, OneWay or TwoWay".into());
+    }
+    if result.mode == "TwoWay" && result.path.is_empty() {
+        return Err("A TwoWay x:Bind needs a writable property path".into());
+    }
+    if let Some(trigger) = result.trigger {
+        if result.mode != "TwoWay"
+            || !matches!(trigger, "Default" | "PropertyChanged" | "LostFocus")
+        {
+            return Err("x:Bind UpdateSourceTrigger accepts Default, PropertyChanged or LostFocus only with TwoWay".into());
+        }
+    }
+    Ok(result)
 }
 
 fn ignored_namespace(node: Node<'_, '_>, namespace: &str) -> bool {

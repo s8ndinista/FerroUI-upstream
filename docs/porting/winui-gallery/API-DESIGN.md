@@ -46,7 +46,7 @@ unchanged. Opt-in builders have explicit aliases such as `WinUIPage`,
 
 ### Page and Frame
 
-`Page` derives from native `ContentControl` and adds a weak `Frame` link,
+`Page` derives from native `UserControl` and adds a weak `Frame` link,
 `NavigationCacheMode` and virtual `OnNavigatingFrom`, `OnNavigatedFrom` and
 `OnNavigatedTo` callbacks. `Frame` is a native content host. A page type can be
 created through its registered constructor or an explicit `PageFactory`; the
@@ -121,6 +121,56 @@ rendered glyph values have separate, pinned maps; equating them is incorrect.
 See [CONTROL-CONTRACTS.md](CONTROL-CONTRACTS.md) for exact supported members,
 remaining differences, font requirements and test boundaries.
 
+`IconSource` adds a live, reusable source object that creates separate native icon
+elements. `FontIconSource`, `SymbolIconSource` and `PathIconSource` propagate source
+property changes through weak references to created elements; an icon does not keep the source or
+another icon alive. Local foreground values retain native precedence. This makes
+source objects usable in controls such as InfoBar without sharing a visual between
+two parents.
+
+### AutoSuggestBox
+
+The opt-in `AutoSuggestBox` uses native header/items services, TextBox, ListBox and
+Popup parts. Applications supply `Items` or `ItemsSource`; the control does not
+apply an implicit prefix filter. The existing `AutoCompleteBox` retains its own
+filtering and completion contracts.
+
+The text event preserves the pinned 150 ms coalescing interval and distinguishes
+`UserInput`, `ProgrammaticChange` and `SuggestionChosen`. A retained event's
+`CheckCurrent()` becomes false on a later text change or owner destruction. Event
+arguments and timers hold the owner weakly. Choosing a suggestion updates text
+through `TextMemberPath` when `UpdateTextOnSelect` is enabled, then raises
+`SuggestionChosen`. Enter submits the selected item; the query button and native
+automation invoke submit only the current query text. Closing clears selection.
+
+Keyboard navigation preserves the user's draft when moving beyond a list edge or
+pressing Escape/Tab, including the native single-item exception. Header, description,
+placeholder, icon, item template and maximum list height update actual native parts.
+Retemplating disconnects old part handlers. The automation peer follows the native
+Group/Invoke contract rather than the existing autocomplete peer's patterns.
+
+The initial implementation does not claim arbitrary WinUI `TextBoxStyle`,
+`HeaderPlacement`, `AutoMaximizeSuggestionArea`, input-pane maximization/occlusion,
+`LightDismissOverlayMode`, IME candidate coordination,
+gamepad navigation or the Windows above-popup reversed-list behavior. Those remain
+explicit API/host obligations, not ignored properties.
+
+### InfoBar
+
+The opt-in `InfoBar` is a native content control with live severity, title, message,
+action, content and icon-source presentation. Opening and closing have distinct
+events; programmatic closing and a close-button click preserve their separate
+reasons. Closing can be canceled. Commands use native command execution and enabled
+state, and closing collapses the template's content while retaining the control's
+own visibility setting.
+
+The panel follows the source's inline-versus-stacked layout policy. Existing WinUI
+theme resources provide severity colors, typography, spacing and the close-button
+theme. `CloseButtonStyle` accepts an explicitly audited native `ControlTheme`; it
+does not make arbitrary WinUI Style objects interchangeable. Accessibility uses
+native peer/property notifications and live-region metadata. OS screen-reader
+announcements and upstream pixel equivalence need separate host evidence.
+
 ## XAML API
 
 `migrate_winui_xaml(source, options)` returns a reviewable document, exact
@@ -152,6 +202,64 @@ the framework's own XAML exceptions. It preserves inner errors and resumes
 unrelated application panics. It does not promise rollback for an existing root
 and requires an unwinding Rust build. Ordinary loader behavior remains unchanged.
 
+### Explicit property-path x:Bind
+
+`WinUIXBindPolicy::PropertyPathsWithExplicitLifecycle` enables a separate
+`FerroUI.Markup.Xaml.WinUI.WinUIBindExtension`. The default policy continues to
+reject `x:Bind`. The migration pass records its original line and column in the
+extension, so a delayed initialization failure can identify the original use site.
+It does not rename the expression to an ordinary `Binding`.
+
+```rust,ignore
+let mut options = WinUIXamlOptions::for_winui_theme();
+options.x_bind = WinUIXBindPolicy::PropertyPathsWithExplicitLifecycle;
+let root = FerroRuntimeXamlLoader::parse_winui_as::<Ref<Control>>(
+    source, None, &options,
+)?;
+// Assign the document's Rust model/fields here, after loading its controls.
+let bindings = WinUIBindings::for_root(&root);
+bindings.set_stop_on_unload(true);
+bindings.initialize()?;
+// After an asynchronous operation, explicitly refresh OneTime paths if needed:
+bindings.update()?;
+```
+
+| Contract | Implemented property-path behavior |
+|---|---|
+| Root source | The declaring document object; its implicit DataContext is not the source. |
+| Named elements | Resolve after construction; document named fields take precedence over same-named root properties. |
+| Template source | Each `DataTemplate` instance uses its own root's DataContext, checked against the declared `x:DataType`. Item properties take precedence over same-named template elements. |
+| Default mode | OneTime: one read per Initialize/Update, without source-property subscriptions. |
+| OneWay | Follow registered native/model property notifications and intermediate source replacement. |
+| TwoWay | Require a declared writable source property. `TextBox.Text` defaults to LostFocus; other registered target properties default to PropertyChanged. Explicit triggers are retained. |
+| Initialize | The host calls it after constructing controls and assigning code-behind fields. Repeated successful calls do not reread OneTime paths. |
+| Update | Reread all paths; report source/type/conversion errors together. A user getter panic propagates. The operation is not transactional. |
+| StopTracking | Release source and template-item listeners, block writes, preserve target values and permit a later Initialize. |
+| Unload | The host can explicitly enable stopping. Loaded is not substituted for WinUI Loading. |
+| Template recycling | After initialization, replacing the typed item refreshes only that instance, including its OneTime paths. |
+| Ownership | Root disposal releases source listeners even if application code separately retains a target and its binding controller. |
+
+Application fields must expose registered Rust property/model metadata. This
+adapter uses that metadata at runtime in both interpreted and compiled XAML; it
+does not provide generated-code performance, WinMD ABI, or WinUI's complete
+expression language. Source-member renames still need an explicit application
+contract; a target-member alias does not prove an arbitrary model path equivalent.
+Converters, fallback/null-value parameters, functions, casts, indexers, event
+dispatch, `x:DefaultBindMode`, `x:Phase` and deferred loading remain diagnosed
+requirements. The generated event table follows the pinned owner and base chain
+so custom properties with event-like names are not rejected by name alone.
+
+StopTracking resets this explicit controller even for groups containing only
+OneTime bindings; WinUI can omit that reset when its generated group has no
+tracking. The native binding engine retains weak, dormant target adapters while
+stopped. They cannot read or write a source after source accessors are released.
+These boundaries are stated separately from the remaining generated binding
+compiler work. Public lifecycle tests live in
+`src/Markup/FerroUI.Markup.Xaml/tests/winui_bindings.rs`; migration and runtime
+loading tests live in the loader's `tests/winui_migration.rs`.
+Ordinary Binding and CompiledBinding keep their existing defaults and ownership
+semantics.
+
 ## Additional contracts required for complete Gallery portability
 
 The following are implementation obligations, not declarations of completed
@@ -159,13 +267,13 @@ features. A supported subset must retain diagnostics for the rest.
 
 | Area | Required native contract and acceptance boundary |
 |---|---|
-| `x:Bind` | Owner/named-element sources, item-root template scope, OneTime default, explicit OneWay/TwoWay, generated Initialize/Update/StopTracking lifetime and change tracking. Functions, casts, indexers and event bindings need actual compiled expressions. |
+| Complete `x:Bind` compiler | Extend the explicit property-path subset with generated source access, full lifecycle integration, converters, functions, casts, indexers, phased updates and event dispatch; keep diagnostics for every unsupported expression. |
 | Deferred markup | `x:Load` and deferred strategies must manage construction, name scopes, subscriptions, focus and disposal; visibility alone is insufficient. |
 | Visual states | State groups, triggers, setters and transitions must own temporary property values and restore prior bindings/styles without overwriting local state. |
 | Template selection and virtualization | DataTemplateSelector, element factories, recycling, ownership, index changes and layout algorithms must use the native item generator/layout services. |
 | NavigationView | Hierarchical item containers, selection/invocation distinctions, adaptive left/top modes, overflow, pane lifecycle, settings/footer items, back request, focus and automation. Existing drawer composition alone does not provide this API. |
-| AutoSuggestBox | Text-change reasons, suggestion choice, query submission, item/text mapping, popup lifetime, keyboard selection and asynchronous result ownership. Existing filtering alone is insufficient. |
-| InfoBar and icon sources | Cancellable close lifecycle and reasons, severity, live title/message/action/content, native accessibility notifications, and live IconSource-to-IconElement projections. |
+| AutoSuggestBox | Extend the implemented text/query/selection contract to input-pane maximization, overlay/IME coordination, styles, gamepad input and platform-specific popup behavior. |
+| InfoBar and icon sources | Complete the remaining source variants, style projection and native accessibility/visual comparisons beyond the implemented close lifecycle and live projections. |
 | ListView, GridView and TabView | Item-click semantics, selection, container lifecycle, drag/drop, tab closing/adding/tear-out, incremental loading and virtualization. Same-shaped basic lists/tabs remain partial adapters. |
 | Menus and command bars | Text/icon/accelerator mapping, command execution, radio/toggle state, submenus, flyout ownership, placement, overflow and accessible input. |
 | Rich text, ink, charts and specialized controls | Actual merged implementations and their platform/rendering contracts; another unmerged PR is a dependency rather than parity evidence. |
