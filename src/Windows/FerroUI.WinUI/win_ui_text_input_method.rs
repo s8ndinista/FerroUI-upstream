@@ -50,6 +50,7 @@ pub(crate) use imp::WinUITextInputMethod;
 mod imp {
     use super::{clamp, length, requested_units, splice, substring};
     use crate::core_text_input_options::CoreTextInputOptions;
+    use crate::core_text_layout::CoreTextLayoutBounds;
     use crate::core_text_synchronization::CoreTextSynchronization;
     use crate::ferro_swap_chain_panel::FerroSwapChainPanel;
     use crate::interop::event_handlers::*;
@@ -71,7 +72,7 @@ mod imp {
     };
     use ferroui_base::logging::{LogArea, LogEventLevel, Logger};
     use ferroui_base::reactive::IDisposable;
-    use ferroui_base::Rect as FerroRect;
+    use ferroui_base::{Matrix, Rect as FerroRect, Ref, Visual};
     use ferroui_microcom::{ComPtr, HResult};
     use ferroui_win32::win_rt::HStringInterop;
     use std::cell::{Cell, RefCell};
@@ -107,6 +108,7 @@ mod imp {
         exact_client: Cell<bool>,
         client_generation: Cell<u64>,
         composition_generation: Cell<u64>,
+        layout_generation: Cell<u64>,
         synchronization: RefCell<CoreTextSynchronization>,
         notifying: Cell<bool>,
     }
@@ -160,6 +162,7 @@ mod imp {
                 exact_client: Cell::new(false),
                 client_generation: Cell::new(0),
                 composition_generation: Cell::new(0),
+                layout_generation: Cell::new(0),
                 synchronization: RefCell::new(CoreTextSynchronization::default()),
                 notifying: Cell::new(false),
             })
@@ -281,6 +284,7 @@ mod imp {
 
         /// Called by the panel when it gains/loses focus.
         pub(crate) fn on_panel_focus_changed(&self, has_focus: bool) {
+            self.invalidate_layout_request();
             self.has_focus.set(has_focus);
             let Some(edit_context) = self.edit_context.borrow().clone() else {
                 return;
@@ -439,84 +443,6 @@ mod imp {
             if let Ok(Some(request)) = args.request() {
                 let _ = request.set_selection(self.ime_selection.get());
             }
-        }
-
-        fn on_layout_requested(
-            &self,
-            _sender: &ICoreTextEditContext,
-            args: &ICoreTextLayoutRequestedEventArgs,
-        ) {
-            match self.compute_screen_cursor_rect() {
-                Ok(screen_rect) => {
-                    let bounds = args
-                        .request()
-                        .ok()
-                        .flatten()
-                        .and_then(|request| request.layout_bounds().ok().flatten());
-                    if let Some(bounds) = bounds {
-                        let _ = bounds.set_text_bounds(screen_rect);
-                        let _ = bounds.set_control_bounds(screen_rect);
-                    }
-                }
-                Err(error) => {
-                    // Panel not in tree yet, or transform unavailable — leave bounds default.
-                    if let Some(logger) =
-                        Logger::try_get(LogEventLevel::Verbose, LogArea::WINUI_PLATFORM)
-                    {
-                        logger.log(
-                            Some(self),
-                            &format!("LayoutRequested couldn't compute screen rect: {error}"),
-                        );
-                    }
-                }
-            }
-        }
-
-        fn compute_screen_cursor_rect(&self) -> Result<Rect, HResult> {
-            let panel = self.panel.upgrade().ok_or(HResult::POINTER)?;
-            let element = panel.as_ui_element();
-            let transform = element.transform_to_visual(None)?.ok_or(HResult::POINTER)?;
-            let cursor_rect = self.cursor_rect.get();
-            let top_left = transform.transform_point(Point {
-                x: cursor_rect.x as f32,
-                y: cursor_rect.y as f32,
-            })?;
-            let width = cursor_rect.width.max(1.0);
-            let height = cursor_rect.height.max(16.0);
-
-            let xaml_root = element.xaml_root().ok().flatten();
-            let scale = xaml_root
-                .as_ref()
-                .and_then(|xaml_root| xaml_root.rasterization_scale().ok())
-                .unwrap_or(1.0);
-
-            let mut client_x = f64::from(top_left.x) * scale;
-            let mut client_y = f64::from(top_left.y) * scale;
-            let w = width * scale;
-            let h = height * scale;
-
-            let island = xaml_root
-                .and_then(|xaml_root| xaml_root.cast::<IXamlRoot2>().ok())
-                .and_then(|xaml_root| xaml_root.content_island_environment().ok().flatten());
-            if let Some(island) = island {
-                let hwnd = island
-                    .app_window_id()
-                    .map(get_window_from_window_id)
-                    .unwrap_or(0);
-                if hwnd != 0 {
-                    if let Some((x, y)) = client_origin_on_screen(hwnd) {
-                        client_x += f64::from(x);
-                        client_y += f64::from(y);
-                    }
-                }
-            }
-
-            Ok(Rect {
-                x: client_x as f32,
-                y: client_y as f32,
-                width: w as f32,
-                height: h as f32,
-            })
         }
 
         fn on_text_updating(
@@ -789,6 +715,7 @@ mod imp {
             sender: &ICoreTextEditContext,
             args: &ICoreTextCompositionStartedEventArgs,
         ) {
+            self.invalidate_layout_request();
             if !self.exact_client.get() {
                 self.on_legacy_composition_started(sender, args);
                 return;
@@ -861,6 +788,7 @@ mod imp {
             sender: &ICoreTextEditContext,
             args: &ICoreTextCompositionCompletedEventArgs,
         ) {
+            self.invalidate_layout_request();
             if !self.exact_client.get() {
                 self.on_legacy_composition_completed(sender, args);
                 return;
@@ -1049,6 +977,7 @@ mod imp {
         }
 
         fn set_cursor_rect(&self, rect: FerroRect) {
+            self.invalidate_layout_request();
             self.cursor_rect.set(rect);
             self.flush_notifications();
         }
@@ -1085,6 +1014,8 @@ mod imp {
             self.sync_from_client(true);
         }
     }
+
+    include!("win_ui_text_input_method_layout.rs");
 
     #[cfg(test)]
     include!("win_ui_text_input_method_reentrancy_tests.rs");

@@ -43,6 +43,8 @@ impl CoreTextInputOptions {
                 TextInputContentType::Number => CoreTextInputScope::Number,
                 TextInputContentType::Password => CoreTextInputScope::Password,
                 TextInputContentType::Digits => CoreTextInputScope::Digits,
+                TextInputContentType::Pin => CoreTextInputScope::PinNumeric,
+                TextInputContentType::Name => CoreTextInputScope::PersonalFullName,
                 TextInputContentType::Url => CoreTextInputScope::Url,
                 TextInputContentType::Search => CoreTextInputScope::Search,
                 _ => CoreTextInputScope::Text,
@@ -134,5 +136,42 @@ mod tests {
             })
             .unwrap();
         assert_eq!(native_scope.get(), CoreTextInputScope::Number);
+    }
+
+    #[test]
+    fn core_text_content_types_preserve_native_name_and_numeric_pin_semantics() {
+        // These are keyboard/input-processor hints; the adapter does not add
+        // text validation or impose the native scope's typical PIN length.
+        let cases = [
+            (TextInputContentType::Normal, CoreTextInputScope::Text),
+            (TextInputContentType::Alpha, CoreTextInputScope::Text),
+            (TextInputContentType::Digits, CoreTextInputScope::Digits),
+            (TextInputContentType::Pin, CoreTextInputScope::PinNumeric),
+            (TextInputContentType::Number, CoreTextInputScope::Number),
+            (
+                TextInputContentType::Email,
+                CoreTextInputScope::EmailAddress,
+            ),
+            (TextInputContentType::Url, CoreTextInputScope::Url),
+            (
+                TextInputContentType::Name,
+                CoreTextInputScope::PersonalFullName,
+            ),
+            (TextInputContentType::Password, CoreTextInputScope::Password),
+            (TextInputContentType::Social, CoreTextInputScope::Text),
+            (TextInputContentType::Search, CoreTextInputScope::Search),
+        ];
+        for (content_type, expected) in cases {
+            let pending = CoreTextInputOptions::default();
+            pending.update(&options(content_type));
+            let received = Cell::new(None);
+            pending
+                .apply(|scope| {
+                    received.set(Some(scope));
+                    Ok::<_, ()>(())
+                })
+                .unwrap();
+            assert_eq!(received.get(), Some(expected), "{content_type:?}");
+        }
     }
 }
