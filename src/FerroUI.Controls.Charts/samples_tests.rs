@@ -68,7 +68,7 @@ fn samples_items_source_dependency_property_updates_and_clears_value() {
 }
 
 #[test]
-fn non_collection_items_source_is_retained_without_set_validation() {
+fn unsupported_scalar_items_source_is_retained_and_does_not_prevent_layout() {
     let _scope = scope();
     let samples = Samples::new();
     let value: BoxedValue = Rc::new("Jan,Feb,Mar".to_owned());

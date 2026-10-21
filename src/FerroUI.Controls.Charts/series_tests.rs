@@ -811,10 +811,10 @@ fn raw_direct_axis_writes_validate_before_mutating() {
     let series = LineSeries::new();
     let x: Ref<Axis> = CategoryAxis::new().upcast();
     let y: Ref<Axis> = LinearAxis::new().upcast();
-    series.set_value(CartesianSeries::x_axis_property(), Some(x.clone()));
-    series.set_value(CartesianSeries::y_axis_property(), Some(y.clone()));
+    series.set_direct_value(CartesianSeries::x_axis_property(), Some(x.clone()));
+    series.set_direct_value(CartesianSeries::y_axis_property(), Some(y.clone()));
     assert!(catch_unwind(AssertUnwindSafe(|| {
-        series.set_value(CartesianSeries::x_axis_property(), Some(y.clone()));
+        series.set_direct_value(CartesianSeries::x_axis_property(), Some(y.clone()));
     }))
     .is_err());
     assert_eq!(series.x_axis(), Some(x.clone()));
@@ -830,7 +830,7 @@ fn raw_direct_axis_writes_validate_before_mutating() {
     );
     assert_eq!(series.y_axis(), Some(y.clone()));
     assert!(catch_unwind(AssertUnwindSafe(|| {
-        series.set_value(CartesianSeries::y_axis_property(), Some(outside));
+        series.set_direct_value(CartesianSeries::y_axis_property(), Some(outside));
     }))
     .is_err());
     assert_eq!(series.y_axis(), Some(y));

@@ -48,9 +48,11 @@ impl SampleValue {
 
 /// One dimension's values. The same instance can be shared by multiple series.
 ///
-/// `ItemsSource` accepts the existing FerroUI collection adapters, including live
-/// `Rc<FerroList<T>>`. Source changes invalidate a lazily decoded snapshot. No chart
-/// owns a Samples object, and change subscriptions capture only weak references.
+/// `ItemsSource` preserves arbitrary boxed values. Supported collections use the
+/// existing FerroUI adapters, including live `Rc<FerroList<T>>`; unsupported
+/// objects produce an empty view. Source changes invalidate a lazily decoded
+/// snapshot. No chart owns a Samples object, and change subscriptions capture
+/// only weak references.
 #[repr(C)]
 pub struct Samples {
     base: FerroObject,

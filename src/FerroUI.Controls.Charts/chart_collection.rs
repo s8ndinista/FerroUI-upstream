@@ -11,12 +11,14 @@ pub trait ChartCollectionItem: ObjectType {
     fn chart_owner(&self) -> Option<u64>;
     fn set_chart_owner(&self, owner: Option<u64>);
     fn validate_chart(&self, _owner: u64) -> Result<(), ChartError> { Ok(()) }
+    fn axis_reference(&self) -> Option<Ref<Axis>> { None }
 }
 
 impl ChartCollectionItem for Axis {
     const EXCLUSIVE: bool = true;
     fn chart_owner(&self) -> Option<u64> { self.owner_id() }
     fn set_chart_owner(&self, owner: Option<u64>) { self.set_owner_id(owner); }
+    fn axis_reference(&self) -> Option<Ref<Axis>> { Some(self.to_ref()) }
 }
 
 impl ChartCollectionItem for CartesianSeries {
@@ -40,11 +42,12 @@ impl ChartCollectionItem for Samples {
 pub(crate) struct CollectionOwner {
     pub(crate) id: Cell<Option<u64>>,
     pub(crate) changed: RefCell<Option<Rc<dyn Fn()>>>,
+    pub(crate) axis_in_use: RefCell<Option<Rc<dyn Fn(&Axis) -> bool>>>,
 }
 
 impl CollectionOwner {
     pub(crate) fn new(id: u64) -> Rc<Self> {
-        Rc::new(Self { id: Cell::new(Some(id)), changed: RefCell::new(None) })
+        Rc::new(Self { id: Cell::new(Some(id)), changed: RefCell::new(None), axis_in_use: RefCell::new(None) })
     }
     fn notify(&self) {
         let changed = self.changed.borrow().clone();
@@ -96,6 +99,20 @@ impl<T: ChartCollectionItem> ChartCollection<T> {
         if let Some(owner) = self.0.owner.id.get() { value.validate_chart(owner)?; }
         Ok(())
     }
+    fn validate_removal(&self, value: &Ref<T>) -> Result<(), ChartError> {
+        if self.0.owner.id.get().is_some() {
+            let check = self.0.owner.axis_in_use.borrow().clone();
+            if let (Some(axis), Some(check)) = (value.axis_reference(), check) {
+                if check(&axis) { return Err(ChartError::AxisInUse); }
+            }
+        }
+        Ok(())
+    }
+    fn release_item(&self, value: &Ref<T>) {
+        if let Some(owner) = self.0.owner.id.get() {
+            if value.chart_owner() == Some(owner) { value.set_chart_owner(None); }
+        }
+    }
     pub fn add(&self, value: impl IntoRef<T>) -> Result<(), ChartError> {
         self.insert(self.count(), value)
     }
@@ -114,14 +131,16 @@ impl<T: ChartCollectionItem> ChartCollection<T> {
         let value = value.into_ref();
         if old == value { return Ok(()); }
         self.validate(&value)?;
-        old.set_chart_owner(None);
+        self.validate_removal(&old)?;
+        self.release_item(&old);
         value.set_chart_owner(self.0.owner.id.get());
         self.0.items.set(index, value);
         Ok(())
     }
     pub fn remove_at(&self, index: usize) -> Result<Ref<T>, ChartError> {
         let old = self.get(index)?;
-        old.set_chart_owner(None);
+        self.validate_removal(&old)?;
+        self.release_item(&old);
         self.0.items.remove_at(index);
         Ok(old)
     }
@@ -130,10 +149,13 @@ impl<T: ChartCollectionItem> ChartCollection<T> {
         let Some(index) = self.snapshot().iter().position(|item| item == &value) else { return false; };
         self.remove_at(index).is_ok()
     }
-    pub fn clear(&self) {
-        if self.is_empty() { return; }
-        for item in self.snapshot().iter() { item.set_chart_owner(None); }
+    pub fn clear(&self) -> Result<(), ChartError> {
+        if self.is_empty() { return Ok(()); }
+        let snapshot = self.snapshot();
+        for item in snapshot.iter() { self.validate_removal(item)?; }
+        for item in snapshot.iter() { self.release_item(item); }
         self.0.items.clear();
+        Ok(())
     }
     pub fn add_collection_changed(&self, handler: Rc<CollectionChangedHandler<Ref<T>>>) -> u64 {
         self.0.items.add_collection_changed(handler)
@@ -142,7 +164,7 @@ impl<T: ChartCollectionItem> ChartCollection<T> {
         self.0.items.remove_collection_changed(token)
     }
     pub(crate) fn release_ownership(&self) {
-        for item in self.snapshot().iter() { item.set_chart_owner(None); }
+        for item in self.snapshot().iter() { self.release_item(item); }
     }
 }
 

@@ -221,8 +221,20 @@ impl NumericRange {
             }
         }
         let target = target_tick_count.clamp(2, Self::MAX_TICKS) as f64;
-        // Dividing first also handles a range from -MAX to MAX.
-        let raw_step = high / target - low / target;
+        let span = high - low;
+        let raw_step = if span.is_finite() {
+            // Preserve subnormal ranges whose division would underflow, and
+            // subtract before dividing to avoid cancellation near large bounds.
+            let divided = span / target;
+            if divided > 0.0 {
+                divided
+            } else {
+                span
+            }
+        } else {
+            // Dividing first handles a range from -MAX to MAX.
+            high / target - low / target
+        };
         let step = spacing.unwrap_or_else(|| nice_step(raw_step));
         if minimum.is_none() {
             let rounded = (low / step).floor() * step;
@@ -331,4 +343,3 @@ fn nice_step(raw: f64) -> f64 {
         raw
     }
 }
-

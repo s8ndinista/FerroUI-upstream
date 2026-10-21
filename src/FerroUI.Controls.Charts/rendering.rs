@@ -174,7 +174,15 @@ impl AxisGroup {
             if axis.as_ref().is_some_and(|axis| axis.sort_key() == CategorySortKey::Value) {
                 let descending = axis.as_ref().is_some_and(|axis| axis.sort_order() == SortOrder::Descending);
                 self.categories.sort_by(|a, b| {
-                    let order = match (a.numeric, b.numeric) { (Some(a), Some(b)) => a.total_cmp(&b), _ => a.label.cmp(&b.label) };
+                    // A single total order is required for mixed numeric/text
+                    // sources. Comparing mixed pairs lexically and numeric pairs
+                    // numerically would violate transitivity.
+                    let order = match (a.numeric, b.numeric) {
+                        (Some(a), Some(b)) => a.total_cmp(&b),
+                        (Some(_), None) => std::cmp::Ordering::Less,
+                        (None, Some(_)) => std::cmp::Ordering::Greater,
+                        _ => a.label.cmp(&b.label),
+                    };
                     if descending { order.reverse() } else { order }
                 });
             } else if axis.as_ref().is_some_and(|axis| axis.sort_order() == SortOrder::Descending) { self.categories.reverse(); }
@@ -210,7 +218,7 @@ fn date_position(value: DateTimeOffset, minimum: DateTimeOffset, maximum: DateTi
     if span == 0 { 0.5 } else { (value.utc_date_time().ticks() - low) as f64 / span as f64 }
 }
 
-fn resource(chart: &Chart, name: &str) -> Option<Rc<dyn IBrush>> {
+pub(crate) fn resource(chart: &Chart, name: &str) -> Option<Rc<dyn IBrush>> {
     let value = chart.try_find_resource(&ResourceKey::from(name), chart.actual_theme_variant().as_ref())??;
     let converted = ValueTypes::try_convert(Some(&value), ValueType::of::<Rc<dyn IBrush>>())??;
     converted.downcast_ref::<Rc<dyn IBrush>>().cloned()
@@ -224,11 +232,7 @@ fn text(chart: &Chart, value: &str, brush: Rc<dyn IBrush>) -> Rc<TextLayout> {
         }))
 }
 fn pen(brush: Rc<dyn IBrush>, thickness: f64, dash: StrokeDashStyle) -> Rc<dyn IPen> {
-    let dashes: Option<&[f64]> = match dash {
-        StrokeDashStyle::Solid => None, StrokeDashStyle::Dash => Some(&[4.0, 2.0]),
-        StrokeDashStyle::Dot => Some(&[1.0, 2.0]), StrokeDashStyle::DashDot => Some(&[4.0, 2.0, 1.0, 2.0]),
-        StrokeDashStyle::DashDotDot => Some(&[4.0, 2.0, 1.0, 2.0, 1.0, 2.0]),
-    };
+    let dashes = (!dash.dashes().is_empty()).then_some(dash.dashes());
     Rc::new(ImmutablePen::new(Some(BrushExtensions::to_immutable(&brush)), thickness,
         dashes.map(|values| Rc::new(ImmutableDashStyle::new(Some(values), 0.0))),
         PenLineCap::Flat, PenLineJoin::Round, 10.0))
@@ -241,7 +245,9 @@ impl ChartScene {
     pub(crate) fn build(chart: &Chart, size: Size) -> Self {
         let size = Size::new(finite_size(size.width), finite_size(size.height));
         let dark = chart.actual_theme_variant() == Some(ThemeVariant::dark());
-        let foreground = resource(chart, "ChartsControlForegroundBrush").or_else(|| chart.foreground())
+        let foreground = if chart.is_set(ferroui_controls::primitives::TemplatedControl::foreground_property().as_property()) {
+            chart.foreground()
+        } else { resource(chart, "ChartsControlForegroundBrush").or_else(|| chart.foreground()) }
             .unwrap_or_else(|| solid(if dark { 0xfff3f3f3 } else { 0xff242424 }));
         let mut scene = Self { layout: ChartLayout {
             size, plot_area: Rect::new(0.0, 0.0, size.width, size.height), points: Vec::new(),
@@ -289,6 +295,12 @@ impl ChartScene {
             let area = series.is::<AreaSeries>();
             if bar.is_some() || area { groups[y_group].numbers.push(0.0); }
             series_data.push(SeriesData { index, series: series.clone(), x, y, x_group, y_group, horizontal, bar: bar.is_some(), area });
+        }
+        for axis in chart.axes().snapshot().iter() {
+            if !groups.iter().any(|group| group.key.as_ref() == Some(axis)) {
+                let numeric = axis.is::<crate::LinearAxis>();
+                group_for(&mut groups, Some(axis.clone()), !numeric, numeric, axis.is::<DateTimeAxis>());
+            }
         }
         for group in &mut groups {
             group.resolve(if group.horizontal { (size.width / 90.0) as usize } else { (size.height / 55.0) as usize }.clamp(2, 100));
@@ -405,8 +417,8 @@ impl ChartScene {
         let plot = self.layout.plot_area;
         let palette = SERIES_COLORS[data.index % SERIES_COLORS.len()];
         let stroke = series.stroke().unwrap_or_else(|| solid(palette));
-        let thickness = series.stroke_thickness();
-        let series_pen = if thickness.is_finite() && thickness > 0.0 { Some(pen(stroke.clone(), thickness.min(1024.0), series.stroke_dash_style())) } else { None };
+        let thickness = series.effective_stroke_thickness();
+        let series_pen = if thickness > 0.0 { Some(pen(stroke.clone(), thickness, series.stroke_dash_style())) } else { None };
         let fill = if let Some(area) = series.cast::<AreaSeries>() { area.fill().unwrap_or_else(|| solid((palette & 0x00ff_ffff) | 0x5500_0000)) }
             else if let Some(bar) = series.cast::<BarSeries>() { bar.fill().unwrap_or_else(|| stroke.clone()) }
             else { stroke.clone() };
@@ -417,51 +429,68 @@ impl ChartScene {
         let bar_index = peers.iter().position(|d| d.index == data.index).unwrap_or(0);
         let count = if series.x_values().is_some() { data.x.len().min(data.y.len()) } else { data.y.len() };
         let category_count = match &x_group.scale { Scale::Category { count, .. } => *count, _ => count }.max(1);
-        let band = 0.8 / category_count as f64;
+        let band = if matches!(x_group.scale, Scale::Date(..)) {
+            let mut positions: Vec<_> = x_group.dates.iter().filter_map(|date| x_group.position(&SampleValue::DateTime(*date))).collect();
+            positions.sort_by(f64::total_cmp);
+            let gap = positions.windows(2).map(|p| p[1] - p[0]).filter(|gap| *gap > 0.0 && gap.is_finite()).fold(1.0, f64::min);
+            gap * 0.8
+        } else { 0.8 / category_count as f64 };
         let bar_width = band / peers.len().max(1) as f64;
         let labels = series.data_label_overrides();
         let markers = series.data_marker_overrides();
         let mut segment = Vec::new();
+        let mut annotations = Vec::new();
         let finish_segment = |scene: &mut Self, segment: &mut Vec<Point>| {
             if segment.is_empty() { return; }
-            let mut points = decimate(std::mem::take(segment), plot.width.max(1.0) as usize);
+            let points = std::mem::take(segment);
             if data.area {
                 let first = points[0]; let last = *points.last().expect("nonempty segment");
-                let y = plot.y + (1.0 - baseline) * plot.height;
                 let mut area = Vec::with_capacity(points.len() + 2);
-                area.push(Point::new(first.x, y)); area.extend_from_slice(&points); area.push(Point::new(last.x, y));
+                area.push(Point::new(first.x, baseline)); area.extend_from_slice(&points); area.push(Point::new(last.x, baseline));
+                let area: Vec<_> = clip_polygon(area).into_iter().map(|point| project(plot, point)).collect();
                 scene.layout.path_vertex_count += area.len();
                 scene.series.push(path(area, true, Some(fill.clone()), None));
             }
-            scene.layout.path_vertex_count += points.len();
-            if series_pen.is_some() { scene.series.push(path(std::mem::take(&mut points), false, None, series_pen.clone())); }
+            if series_pen.is_some() {
+                for points in clip_polyline(&points) {
+                    let points = decimate(points.into_iter().map(|p| project(plot, p)).collect(), plot.width.max(1.0) as usize);
+                    scene.layout.path_vertex_count += points.len();
+                    scene.series.push(path(points, false, None, series_pen.clone()));
+                }
+            }
         };
         for index in 0..count {
             let x = if series.x_values().is_none() { Some(SampleValue::Number(index as f64)) } else { data.x[index].clone() };
             let y = data.y[index].as_ref();
             let mapped = x.as_ref().and_then(|x| x_group.position(x)).zip(y.and_then(|y| y_group.position(y)));
             let Some((x, y)) = mapped.filter(|(x, y)| x.is_finite() && y.is_finite()) else { finish_segment(self, &mut segment); continue; };
-            let point = if data.horizontal { Point::new(plot.x + y * plot.width, plot.y + (1.0 - x) * plot.height) }
-                else { Point::new(plot.x + x * plot.width, plot.y + (1.0 - y) * plot.height) };
+            let normalized = if data.horizontal { Point::new(y, x) } else { Point::new(x, y) };
+            // Diagnostics remain finite for arbitrarily distant samples. The
+            // path itself is clipped in normalized space before projection.
+            let mut point = project(plot, Point::new(normalized.x.clamp(-1e6, 1e6), normalized.y.clamp(-1e6, 1e6)));
             let value = match data.y[index] { Some(SampleValue::Number(value)) => value, _ => continue };
             let bounds = if data.bar {
                 let start = x - band * 0.5 + bar_index as f64 * bar_width;
                 let rect = if data.horizontal {
                     let zero = plot.x + baseline * plot.width;
-                    Rect::new(zero.min(point.x), plot.y + (1.0 - start - bar_width) * plot.height,
-                        (point.x - zero).abs(), bar_width * plot.height * 0.92)
+                    let endpoint = plot.x + y.clamp(0.0, 1.0) * plot.width;
+                    Rect::new(zero.min(endpoint), plot.y + (1.0 - start - bar_width) * plot.height,
+                        (endpoint - zero).abs(), bar_width * plot.height * 0.92)
                 } else {
                     let zero = plot.y + (1.0 - baseline) * plot.height;
-                    Rect::new(plot.x + start * plot.width, zero.min(point.y), bar_width * plot.width * 0.92, (point.y - zero).abs())
+                    let endpoint = plot.y + (1.0 - y.clamp(0.0, 1.0)) * plot.height;
+                    Rect::new(plot.x + start * plot.width, zero.min(endpoint), bar_width * plot.width * 0.92, (endpoint - zero).abs())
                 };
+                if data.horizontal { point.y = rect.y + rect.height * 0.5; }
+                else { point.x = rect.x + rect.width * 0.5; }
                 self.series.push(Draw::Rectangle(rect, Some(fill.clone()), series_pen.clone())); Some(rect)
-            } else { segment.push(point); None };
+            } else { segment.push(normalized); None };
             self.layout.points.push(ChartPoint { series_index: data.index, sample_index: index, position: point, bar_bounds: bounds, value });
             if series.show_data_markers() {
                 let over = markers.try_get_value(&(index as u32));
                 let shape = over.as_ref().map(|o| o.shape()).unwrap_or_else(|| series.marker_shape());
                 let brush = over.and_then(|o| o.brush()).or_else(|| series.data_marker_brush()).unwrap_or_else(|| stroke.clone());
-                marker(&mut self.series, point, shape, brush);
+                if (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y) { marker(&mut annotations, point, shape, brush); }
             }
             if series.show_data_labels() {
                 let over = labels.try_get_value(&(index as u32));
@@ -469,14 +498,15 @@ impl ChartScene {
                 if !value_text.is_empty() {
                     let brush = over.and_then(|o| o.brush()).or_else(|| series.data_label_brush()).unwrap_or_else(|| foreground.clone());
                     let label = text(chart, &value_text, brush);
-                    let origin = if data.horizontal { Point::new(point.x + 6.0, point.y - label.height() * 0.5) }
-                        else { Point::new(point.x - label.width() * 0.5, point.y - label.height() - 5.0) };
-                    self.series.push(Draw::Text(label, origin, None));
+                    let origin = if data.horizontal { Point::new(point.x + if value < 0.0 { -label.width()-6.0 } else { 6.0 }, point.y - label.height() * 0.5) }
+                        else { Point::new(point.x - label.width() * 0.5, point.y + if value < 0.0 { 5.0 } else { -label.height()-5.0 }) };
+                    if (0.0..=1.0).contains(&x) && (0.0..=1.0).contains(&y) { annotations.push(Draw::Text(label, origin, None)); }
                     self.layout.data_labels.push((data.index, index, value_text));
                 }
             }
         }
         finish_segment(self, &mut segment);
+        self.series.extend(annotations);
     }
 
     pub(crate) fn draw(&self, context: &mut DrawingContext) {
@@ -492,7 +522,68 @@ impl ChartScene {
     }
 }
 
-fn finite_size(value: f64) -> f64 { if value.is_finite() { value.max(0.0) } else { 0.0 } }
+fn finite_size(value: f64) -> f64 { if value.is_finite() { value.clamp(0.0, 1e9) } else { 0.0 } }
+
+fn project(plot: Rect, point: Point) -> Point {
+    Point::new(plot.x + point.x * plot.width, plot.y + (1.0 - point.y) * plot.height)
+}
+
+fn interpolate(a: f64, b: f64, t: f64) -> f64 {
+    if a.is_sign_negative() == b.is_sign_negative() { a + (b - a) * t }
+    else { a * (1.0 - t) + b * t }
+}
+fn crossing(a: Point, b: Point, boundary: f64, vertical: bool) -> Point {
+    let (u, v) = if vertical { (a.x, b.x) } else { (a.y, b.y) };
+    let scale = u.abs().max(v.abs()).max(1.0);
+    let t = ((boundary / scale - u / scale) / (v / scale - u / scale)).clamp(0.0, 1.0);
+    if vertical { Point::new(boundary, interpolate(a.y, b.y, t)) }
+    else { Point::new(interpolate(a.x, b.x, t), boundary) }
+}
+fn outcode(p: Point) -> u8 {
+    (if p.x < 0.0 { 1 } else if p.x > 1.0 { 2 } else { 0 })
+        | (if p.y < 0.0 { 4 } else if p.y > 1.0 { 8 } else { 0 })
+}
+fn clip_segment(mut a: Point, mut b: Point) -> Option<(Point, Point)> {
+    for _ in 0..12 {
+        let ac = outcode(a); let bc = outcode(b);
+        if ac | bc == 0 { return Some((a, b)); }
+        if ac & bc != 0 { return None; }
+        let c = if ac != 0 { ac } else { bc };
+        let p = if c & 8 != 0 { crossing(a, b, 1.0, false) }
+            else if c & 4 != 0 { crossing(a, b, 0.0, false) }
+            else if c & 2 != 0 { crossing(a, b, 1.0, true) }
+            else { crossing(a, b, 0.0, true) };
+        if !p.x.is_finite() || !p.y.is_finite() { return None; }
+        if ac != 0 { a = p; } else { b = p; }
+    }
+    None
+}
+fn clip_polyline(points: &[Point]) -> Vec<Vec<Point>> {
+    let mut result: Vec<Vec<Point>> = Vec::new();
+    for pair in points.windows(2) {
+        if let Some((a, b)) = clip_segment(pair[0], pair[1]) {
+            if let Some(last) = result.last_mut().filter(|last| last.last() == Some(&a)) { last.push(b); }
+            else { result.push(vec![a, b]); }
+        }
+    }
+    result
+}
+fn clip_polygon(mut points: Vec<Point>) -> Vec<Point> {
+    for edge in 0..4 {
+        let vertical = edge < 2; let boundary = (edge % 2) as f64;
+        let inside = |p: Point| if edge % 2 == 0 { (if vertical { p.x } else { p.y }) >= boundary }
+            else { (if vertical { p.x } else { p.y }) <= boundary };
+        if points.is_empty() { break; }
+        let mut output = Vec::new(); let mut previous = *points.last().expect("nonempty polygon");
+        for current in points {
+            if inside(current) != inside(previous) { output.push(crossing(previous, current, boundary, vertical)); }
+            if inside(current) { output.push(current); }
+            previous = current;
+        }
+        points = output;
+    }
+    points.into_iter().filter(|p| p.x.is_finite() && p.y.is_finite()).collect()
+}
 
 fn legend_rows(chart: &Chart, series: &[SeriesData], width: f64, foreground: Rc<dyn IBrush>) -> Vec<(Rc<TextLayout>, Option<Rc<dyn IBrush>>, Point)> {
     let mut rows = Vec::new(); let mut x = 0.0; let mut y = 6.0;

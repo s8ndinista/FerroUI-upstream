@@ -4,7 +4,7 @@ use crate::{ChartAutomationPeer, ChartAxisCollection, ChartDataCollection, Chart
 use ferroui_base::input::InputElementImpl;
 use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::LayoutableImpl;
-use ferroui_base::media::DrawingContext;
+use ferroui_base::media::{DrawingContext, IBrush, subscribe_invalidated};
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::{
     ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate,
@@ -68,17 +68,27 @@ impl FerroObjectImpl for Chart {
             }
         }));
         let weak = this.to_ref().downgrade();
+        *this.owner.axis_in_use.borrow_mut() = Some(Rc::new(move |axis| {
+            weak.upgrade().is_some_and(|chart| chart.series.snapshot().iter().any(|series| {
+                [series.x_axis(), series.y_axis()].into_iter().flatten().any(|used| used == axis.to_ref())
+            }))
+        }));
+        let weak = this.to_ref().downgrade();
         let resources = this.resources_changed(move |_| {
-            if let Some(chart) = weak.upgrade() { chart.invalidate_scene(); }
+            if let Some(chart) = weak.upgrade() { chart.refresh_subscriptions(); chart.invalidate_scene(); }
         });
         let weak = this.to_ref().downgrade();
         let theme = this.actual_theme_variant_changed(move || {
-            if let Some(chart) = weak.upgrade() { chart.invalidate_scene(); }
+            if let Some(chart) = weak.upgrade() { chart.refresh_subscriptions(); chart.invalidate_scene(); }
         });
         this.resource_subscriptions.borrow_mut().extend([resources, theme]);
     }
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs) {
         Self::parent_on_property_changed(this, change);
+        if change.property() == TemplatedControl::foreground_property().as_property()
+            || change.property() == TemplatedControl::background_property().as_property() {
+            this.refresh_subscriptions();
+        }
         this.invalidate_scene();
     }
 }
@@ -152,9 +162,12 @@ impl Chart {
         if let Some(scene) = scene {
             if scene.layout.size == size { return scene; }
         }
+        let revision = self.revision.get();
         let scene = Rc::new(ChartScene::build(self, size));
         self.scene_build_count.set(self.scene_build_count.get().wrapping_add(1));
-        *self.scene.borrow_mut() = Some(scene.clone());
+        // Sources and resource providers may invoke application code while a
+        // snapshot is built. Never cache a scene invalidated by that code.
+        if self.revision.get() == revision { *self.scene.borrow_mut() = Some(scene.clone()); }
         scene
     }
 
@@ -163,12 +176,24 @@ impl Chart {
         let previous = std::mem::take(&mut *self.subscriptions.borrow_mut());
         for subscription in previous { subscription.dispose(); }
         let mut subscriptions = Vec::new();
-        let mut samples = self.data.snapshot().as_ref().clone();
+        let mut samples = Vec::new();
+        for sample in self.data.snapshot().iter() {
+            if !samples.contains(sample) { samples.push(sample.clone()); }
+        }
+        let mut brushes = vec![self.foreground(), self.background()];
+        for key in ["ChartsControlForegroundBrush", "ChartsControlBackgroundBrush", "ChartsGridLineMajorBrush",
+            "ChartsGridLineMinorBrush", "ChartsTickBrush", "ChartsTickLabelBrush", "ChartsAxisLineBrush"] {
+            brushes.push(crate::rendering::resource(self, key));
+        }
         for axis in self.axes.snapshot().iter() {
             let weak = self.to_ref().downgrade();
             subscriptions.push(axis.property_changed(move |_| {
-                if let Some(chart) = weak.upgrade() { chart.invalidate_scene(); }
+                if let Some(chart) = weak.upgrade() { chart.refresh_subscriptions(); chart.invalidate_scene(); }
             }));
+            if let Some(axis) = axis.cast::<crate::CartesianAxis>() {
+                brushes.extend([axis.axis_line_brush(), axis.grid_line_major_brush(), axis.grid_line_minor_brush(),
+                    axis.tick_brush(), axis.tick_label_brush()]);
+            }
         }
         for series in self.series.snapshot().iter() {
             let weak = self.to_ref().downgrade();
@@ -181,20 +206,34 @@ impl Chart {
             for sample in [series.x_values(), series.y_values()].into_iter().flatten() {
                 if !samples.contains(&sample) { samples.push(sample); }
             }
+            brushes.extend([series.stroke(), series.data_label_brush(), series.data_marker_brush()]);
+            if let Some(series) = series.cast::<crate::AreaSeries>() { brushes.push(series.fill()); }
+            if let Some(series) = series.cast::<crate::BarSeries>() { brushes.push(series.fill()); }
             let labels = series.data_label_overrides();
+            brushes.extend(labels.values().into_iter().map(|label| label.brush()));
             let weak = self.to_ref().downgrade();
             let token = labels.add_collection_changed(Rc::new(move |_| {
-                if let Some(chart) = weak.upgrade() { chart.invalidate_scene(); }
+                if let Some(chart) = weak.upgrade() { chart.refresh_subscriptions(); chart.invalidate_scene(); }
             }));
             subscriptions.push(Disposable::create(move || { labels.remove_collection_changed(token); }));
             let markers = series.data_marker_overrides();
+            brushes.extend(markers.values().into_iter().map(|marker| marker.brush()));
             let weak = self.to_ref().downgrade();
             let token = markers.add_collection_changed(Rc::new(move |_| {
-                if let Some(chart) = weak.upgrade() { chart.invalidate_scene(); }
+                if let Some(chart) = weak.upgrade() { chart.refresh_subscriptions(); chart.invalidate_scene(); }
             }));
             subscriptions.push(Disposable::create(move || { markers.remove_collection_changed(token); }));
         }
         for sample in samples { subscriptions.push(self.observe_samples(sample)); }
+        let mut watched: Vec<Rc<dyn IBrush>> = Vec::new();
+        for brush in brushes.into_iter().flatten() {
+            if watched.iter().any(|old| old == &brush) { continue; }
+            watched.push(brush.clone());
+            let weak = self.to_ref().downgrade();
+            if let Some(subscription) = subscribe_invalidated(&Some(brush), Rc::new(move || {
+                if let Some(chart) = weak.upgrade() { chart.invalidate_scene(); }
+            })) { subscriptions.push(subscription); }
+        }
         *self.subscriptions.borrow_mut() = subscriptions;
     }
 
@@ -210,9 +249,10 @@ impl Chart {
 impl Drop for Chart {
     fn drop(&mut self) {
         self.owner.changed.borrow_mut().take();
-        self.owner.id.set(None);
+        self.owner.axis_in_use.borrow_mut().take();
         self.series.release_ownership();
         self.axes.release_ownership();
+        self.owner.id.set(None);
         for subscription in self.subscriptions.get_mut().drain(..) { subscription.dispose(); }
         for subscription in self.resource_subscriptions.get_mut().drain(..) { subscription.dispose(); }
     }
