@@ -1,0 +1,454 @@
+use super::*;
+use crate::winui::{WinUIXamlMemberMapping, WinUIXamlNamespaceMapping, WinUIXamlTypeMapping};
+
+fn source(body: &str) -> String {
+    format!("<Grid xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:x='{XAML_NAMESPACE}'>{body}</Grid>")
+}
+
+fn migrate(body: &str) -> WinUIXamlMigration {
+    migrate_winui_xaml(&source(body), &WinUIXamlOptions::default()).unwrap()
+}
+
+#[test]
+fn namespaces_change_only_declarations_not_comments_literals_cdata_or_text() {
+    let body = format!("<!-- {WINUI_PRESENTATION_NAMESPACE} --><TextBlock Text='{WINUI_PRESENTATION_NAMESPACE}'/><TextBlock><![CDATA[{WINUI_PRESENTATION_NAMESPACE}]]></TextBlock>");
+    let original = source(&body);
+    let result = migrate_winui_xaml(&original, &WinUIXamlOptions::default()).unwrap();
+    assert!(!result.has_errors());
+    assert_eq!(result.xaml.matches(FERRO_XML_NAMESPACE).count(), 1);
+    assert_eq!(result.xaml.matches(WINUI_PRESENTATION_NAMESPACE).count(), 3);
+    assert_eq!(result.edits.len(), 1);
+    assert_eq!(
+        &original[result.edits[0].span.bytes.clone()],
+        WINUI_PRESENTATION_NAMESPACE
+    );
+}
+
+#[test]
+fn native_documents_are_identity_and_migration_is_idempotent() {
+    let original = "<TextBox xmlns='https://github.com/ferroui' Text='{Binding Name}'/>";
+    let result = migrate_winui_xaml(original, &WinUIXamlOptions::default()).unwrap();
+    assert_eq!(result.xaml, original);
+    assert!(result.edits.is_empty());
+    let once = migrate("<ToggleSwitch IsOn='True'/><Button Visibility='Collapsed'/>")
+        .into_xaml()
+        .unwrap();
+    let twice = migrate_winui_xaml(&once, &WinUIXamlOptions::default()).unwrap();
+    assert_eq!(twice.xaml, once);
+    assert!(twice.edits.is_empty());
+}
+
+#[test]
+fn page_and_frame_use_separate_namespace_with_balanced_property_elements() {
+    let result = migrate("<Page><Page.Content><Frame/></Page.Content></Page>");
+    assert!(!result.has_errors());
+    let document = Document::parse(&result.xaml).unwrap();
+    let elements: Vec<_> = document.descendants().filter(Node::is_element).collect();
+    for element in &elements[1..] {
+        assert_eq!(element.tag_name().namespace(), Some(COMPAT_NAMESPACE));
+    }
+    assert_eq!(elements[2].tag_name().name(), "Page.Content");
+}
+
+#[test]
+fn behaviorally_distinct_new_controls_use_the_compatibility_namespace() {
+    let result = migrate(
+        "<NumberBox Value='12'/><RadioButtons/><FontIcon Glyph='A'/><SymbolIcon Symbol='Accept'/>",
+    );
+    assert!(!result.has_errors());
+    let doc = Document::parse(&result.xaml).unwrap();
+    for element in doc.descendants().filter(Node::is_element).skip(1) {
+        assert_eq!(element.tag_name().namespace(), Some(COMPAT_NAMESPACE));
+    }
+}
+
+#[test]
+fn generated_prefix_never_collides_with_a_nested_shadowing_declaration() {
+    let result =
+        migrate("<Page xmlns:fui0='using:Custom'><Frame xmlns:fui1='using:Another'/></Page>");
+    let document = Document::parse(&result.xaml).unwrap();
+    assert!(result
+        .xaml
+        .contains("xmlns:fui2=\"using:FerroUI.Controls.WinUI\""));
+    for element in document.descendants().filter(Node::is_element).skip(1) {
+        assert_eq!(element.tag_name().namespace(), Some(COMPAT_NAMESPACE));
+    }
+}
+
+#[test]
+fn literal_visibility_and_toggle_state_map_but_binding_visibility_fails() {
+    let result = migrate("<ToggleSwitch IsOn='False'/><Button Visibility='Visible'/><Button Visibility='{Binding State}'/>");
+    assert!(result.xaml.contains("IsChecked='False'"));
+    assert!(result.xaml.contains("IsVisible='True'"));
+    assert!(result.diagnostics.iter().any(|d| d.code == "WXAML1003"));
+    assert!(result.into_xaml().is_err());
+}
+
+#[test]
+fn implicit_winui_binding_modes_are_one_way_even_for_two_way_target_properties() {
+    let result = migrate("<TextBox Text='{Binding Name}'/><TextBox Text='{Binding}'/><Slider Value='{Binding Level, Mode=TwoWay}'/>");
+    assert!(result.xaml.contains("{Binding Name, Mode=OneWay}"));
+    assert!(result.xaml.contains("{Binding Mode=OneWay}"));
+    assert!(result.xaml.contains("{Binding Level, Mode=TwoWay}"));
+    assert!(!result.has_errors());
+}
+
+#[test]
+fn binding_modes_inside_nested_extensions_or_quoted_values_do_not_count() {
+    let result = migrate("<TextBox Text=\"{Binding Name, FallbackValue='Mode=TwoWay,{text}', Converter={StaticResource Converter}}\"/>");
+    assert!(result
+        .xaml
+        .contains("Converter={StaticResource Converter}, Mode=OneWay}"));
+    assert!(!result.has_errors());
+}
+
+#[test]
+fn xbind_reports_root_source_semantics_even_with_an_alternative_xaml_prefix() {
+    let input = format!("<Grid xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:language='{XAML_NAMESPACE}'>\n  <TextBlock Text='{{language:Bind Name}}'/>\n</Grid>");
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    let error = result
+        .diagnostics
+        .iter()
+        .find(|d| d.code == "WXAML1007")
+        .unwrap();
+    assert_eq!(error.span.line, 2);
+    assert_eq!(&input[error.span.bytes.clone()], "{language:Bind Name}");
+    assert!(result
+        .into_xaml()
+        .unwrap_err()
+        .to_string()
+        .contains("WXAML1007 at 2:"));
+}
+
+#[test]
+fn escaped_markup_stays_literal() {
+    let result = migrate("<TextBlock Text='{}{x:Bind Name}'/>");
+    assert!(!result.has_errors());
+    assert!(result.xaml.contains("{}{x:Bind Name}"));
+}
+
+#[test]
+fn theme_resources_require_explicit_policy_and_nested_lookups_are_recorded() {
+    let input = source("<TextBlock Foreground='{ThemeResource TextFillColorPrimaryBrush}' Text='{Binding Name, FallbackValue={ThemeResource MissingName}}'/>");
+    let rejected = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    assert_eq!(
+        rejected
+            .diagnostics
+            .iter()
+            .filter(|d| d.code == "WXAML1008")
+            .count(),
+        2
+    );
+    let adapted = migrate_winui_xaml(&input, &WinUIXamlOptions::for_winui_theme()).unwrap();
+    assert!(!adapted.has_errors());
+    assert_eq!(adapted.xaml.matches("DynamicResource").count(), 2);
+    assert_eq!(
+        adapted
+            .diagnostics
+            .iter()
+            .filter(|d| d.code == "WXAML2001")
+            .count(),
+        2
+    );
+}
+
+#[test]
+fn only_audited_style_resources_are_control_themes() {
+    let input = source("<Button Style='{StaticResource AccentButtonStyle}'/><Button Style='{StaticResource AppStyle}'/>");
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::for_winui_theme()).unwrap();
+    assert!(result
+        .xaml
+        .contains("Theme='{StaticResource AccentButtonStyle}'"));
+    assert!(result.diagnostics.iter().any(|d| d.code == "WXAML1005"));
+    assert!(migrate("<Style TargetType='Button'/>").has_errors());
+}
+
+#[test]
+fn unknown_state_lifecycle_and_localization_contracts_are_not_discarded() {
+    let result = migrate("<Button x:Load='False' x:Uid='SaveButton'/><VisualStateManager.VisualStateGroups><VisualStateGroup/></VisualStateManager.VisualStateGroups>");
+    assert_eq!(
+        result
+            .diagnostics
+            .iter()
+            .filter(|d| d.code == "WXAML1002")
+            .count(),
+        2
+    );
+    assert!(result.diagnostics.iter().any(|d| d.code == "WXAML1001"));
+    assert!(result.xaml.contains("x:Uid='SaveButton'"));
+}
+
+#[test]
+fn custom_type_member_and_namespace_mappings_are_explicit_and_local() {
+    let input = source("<app:Thing xmlns:app='using:Original.Controls' Caption='Hello'><app:Thing.Content><TextBlock/></app:Thing.Content></app:Thing>");
+    let mut options = WinUIXamlOptions::default();
+    options.types.push(WinUIXamlTypeMapping::new(
+        "using:Original.Controls",
+        "Thing",
+        "using:Port.Controls",
+        "Widget",
+    ));
+    options.members.push(WinUIXamlMemberMapping::new(
+        "using:Original.Controls",
+        "Thing",
+        "Caption",
+        "Header",
+    ));
+    let result = migrate_winui_xaml(&input, &options).unwrap();
+    assert!(!result.has_errors());
+    let doc = Document::parse(&result.xaml).unwrap();
+    let widget = doc
+        .descendants()
+        .find(|n| n.has_tag_name(("using:Port.Controls", "Widget")))
+        .unwrap();
+    assert_eq!(widget.attribute("Header"), Some("Hello"));
+    assert!(doc
+        .descendants()
+        .any(|n| n.has_tag_name(("using:Port.Controls", "Widget.Content"))));
+    // Mapping application classes does not mutate the global type registry or the next call.
+    assert!(migrate_winui_xaml(&input, &WinUIXamlOptions::default())
+        .unwrap()
+        .xaml
+        .contains("app:Thing"));
+}
+
+#[test]
+fn custom_namespace_maps_update_class_identity_without_rewriting_user_text() {
+    let input = format!("<UserControl xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:x='{XAML_NAMESPACE}' xmlns:app='using:Original.Pages' x:Class='Original.Pages.Example'><TextBlock Text='Original.Pages.Example'/></UserControl>");
+    let mut options = WinUIXamlOptions::default();
+    options.namespaces.push(WinUIXamlNamespaceMapping::new(
+        "using:Original.Pages",
+        "using:Port.Pages",
+    ));
+    let result = migrate_winui_xaml(&input, &options).unwrap();
+    assert!(result.xaml.contains("x:Class='Port.Pages.Example'"));
+    assert!(result.xaml.contains("Text='Original.Pages.Example'"));
+}
+
+#[test]
+fn asset_uris_require_an_explicit_base_and_unrelated_strings_are_not_rewritten() {
+    let input = source(
+        "<Image Source='ms-appx:///Assets/a.png'/><TextBlock Text='ms-appx:///Assets/a.png'/>",
+    );
+    assert!(migrate_winui_xaml(&input, &WinUIXamlOptions::default())
+        .unwrap()
+        .has_errors());
+    let mut options = WinUIXamlOptions::default();
+    options.asset_base_uri = Some("ferres://Gallery/".into());
+    let result = migrate_winui_xaml(&input, &options).unwrap();
+    assert!(result
+        .xaml
+        .contains("Source='ferres://Gallery/Assets/a.png'"));
+    assert!(result.xaml.contains("Text='ms-appx:///Assets/a.png'"));
+}
+
+#[test]
+fn malformed_xml_duplicate_policy_and_invalid_names_are_errors_not_panics() {
+    assert!(migrate_winui_xaml("<Grid>", &WinUIXamlOptions::default()).is_err());
+    assert!(migrate_winui_xaml(
+        "<!DOCTYPE a [<!ENTITY x 'v'>]><a>&x;</a>",
+        &WinUIXamlOptions::default()
+    )
+    .is_err());
+    let mut options = WinUIXamlOptions::default();
+    options
+        .namespaces
+        .push(WinUIXamlNamespaceMapping::new("a", "b"));
+    options
+        .namespaces
+        .push(WinUIXamlNamespaceMapping::new("a", "c"));
+    assert!(migrate_winui_xaml("<a/>", &options).is_err());
+    options.namespaces.clear();
+    options
+        .types
+        .push(WinUIXamlTypeMapping::new("a", "A", "b", "x:Injected"));
+    assert!(migrate_winui_xaml("<a/>", &options).is_err());
+}
+
+#[test]
+fn all_edits_replay_exactly_and_refer_to_original_source() {
+    let input = source("\n<ToggleSwitch IsOn='True' Visibility='Collapsed'/><Page/>");
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    let mut replayed = input.clone();
+    for edit in result.edits.iter().rev() {
+        replayed.replace_range(edit.span.bytes.clone(), &edit.replacement);
+    }
+    assert_eq!(replayed, result.xaml);
+    assert!(result.edits.iter().any(|edit| edit.span.line == 2));
+}
+
+#[test]
+fn excessive_extension_nesting_is_a_diagnostic() {
+    let mut value = "{StaticResource End}".to_string();
+    for _ in 0..80 {
+        value = format!("{{Binding X, FallbackValue={value}}}");
+    }
+    let result = migrate(&format!("<TextBlock Text='{value}'/>"));
+    assert!(result.diagnostics.iter().any(|d| d.code == "WXAML0002"));
+}
+
+#[test]
+fn object_element_binding_defaults_and_explicit_modes_are_preserved() {
+    let result = migrate("<TextBox><TextBox.Text><Binding Path='Name'/></TextBox.Text></TextBox><Binding Mode='TwoWay'/>");
+    let doc = Document::parse(&result.xaml).unwrap();
+    let modes: Vec<_> = doc
+        .descendants()
+        .filter(|n| n.has_tag_name((FERRO_XML_NAMESPACE, "Binding")))
+        .map(|node| node.attribute("Mode").unwrap())
+        .collect();
+    assert_eq!(modes, vec!["OneWay", "TwoWay"]);
+}
+
+#[test]
+fn aliases_resolve_type_references_in_templates_directives_and_type_extensions() {
+    let result = migrate("<ControlTemplate TargetType='Page'><TextBlock x:DataType='Page' Tag='{x:Type Frame}'/></ControlTemplate>");
+    let doc = Document::parse(&result.xaml).unwrap();
+    let template = doc
+        .descendants()
+        .find(|n| n.tag_name().name() == "ControlTemplate")
+        .unwrap();
+    let target = template.attribute("TargetType").unwrap();
+    let (prefix, local) = target.split_once(':').unwrap();
+    assert_eq!(local, "Page");
+    assert_eq!(
+        template.lookup_namespace_uri(Some(prefix)),
+        Some(COMPAT_NAMESPACE)
+    );
+    assert!(result.xaml.contains(":Frame}"));
+}
+
+#[test]
+fn nested_default_namespaces_do_not_leak_mappings_into_other_dialects() {
+    let result = migrate("<Button Visibility='Collapsed'/><foreign xmlns='urn:Other' Visibility='Collapsed' Text='{Binding Name}'><Style/></foreign>");
+    assert!(!result.has_errors());
+    let doc = Document::parse(&result.xaml).unwrap();
+    let foreign = doc
+        .descendants()
+        .find(|n| n.has_tag_name(("urn:Other", "foreign")))
+        .unwrap();
+    assert_eq!(foreign.attribute("Visibility"), Some("Collapsed"));
+    assert_eq!(foreign.attribute("Text"), Some("{Binding Name}"));
+}
+
+#[test]
+fn explicit_framework_prefixes_are_resolved_in_attached_members_and_extensions() {
+    let input = source("<Button xmlns:ui='using:Microsoft.UI.Xaml.Controls' ui:Grid.Row='2' Foreground='{ui:ThemeResource Brush}'/>");
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::for_winui_theme()).unwrap();
+    assert!(!result.has_errors());
+    assert!(result.xaml.contains("ui:Grid.Row='2'"));
+    assert!(result.xaml.contains(":DynamicResource Brush}"));
+    Document::parse(&result.xaml).unwrap();
+}
+
+#[test]
+fn event_handlers_and_entity_spelling_stay_exactly_as_authored() {
+    let result = migrate("<Button Click='OnClick' Content='A &amp; B &quot;quoted&quot;'/>");
+    assert!(result.xaml.contains("Click='OnClick'"));
+    assert!(result
+        .xaml
+        .contains("Content='A &amp; B &quot;quoted&quot;'"));
+}
+
+#[test]
+fn ignored_design_attributes_and_subtrees_remain_verbatim() {
+    let input = source("<Grid xmlns:mc='http://schemas.openxmlformats.org/markup-compatibility/2006' xmlns:d='http://schemas.microsoft.com/expression/blend/2008' mc:Ignorable='d' d:Text='{x:Bind DesignerOnly}'><d:Sample><Button Content='{ThemeResource Ignored}'/></d:Sample><TextBox PlaceholderText='Keep the actual registered property'/></Grid>");
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    assert!(!result.has_errors());
+    assert!(result.xaml.contains("d:Text='{x:Bind DesignerOnly}'"));
+    assert!(result
+        .xaml
+        .contains("<Button Content='{ThemeResource Ignored}'/>"));
+    assert!(result
+        .xaml
+        .contains("PlaceholderText='Keep the actual registered property'"));
+}
+
+#[test]
+fn shadowing_an_ignorable_prefix_does_not_ignore_a_different_namespace() {
+    let input = source("<Grid xmlns:mc='http://schemas.openxmlformats.org/markup-compatibility/2006' xmlns:d='urn:Designer' mc:Ignorable='d'><Button xmlns:d='urn:Runtime' d:Unknown='{x:Bind StillRuntime}'/></Grid>");
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    assert!(result
+        .diagnostics
+        .iter()
+        .any(|diagnostic| diagnostic.code == "WXAML1007"));
+}
+
+#[test]
+fn unsupported_features_in_unused_resources_still_report_original_locations() {
+    let input = source("<Grid.Resources>\n<DataTemplate x:Key='Unused'><TextBlock Text='{x:Bind Name}'/></DataTemplate>\n</Grid.Resources>");
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    let diagnostic = result
+        .diagnostics
+        .iter()
+        .find(|diagnostic| diagnostic.code == "WXAML1007")
+        .unwrap();
+    assert_eq!(diagnostic.span.line, 2);
+    assert_eq!(&input[diagnostic.span.bytes.clone()], "{x:Bind Name}");
+}
+
+#[test]
+fn long_attribute_whitespace_uses_true_source_ranges() {
+    let input = source(&format!(
+        "<Button Visibility{}={} 'Collapsed'/>",
+        " ".repeat(500),
+        " ".repeat(500)
+    ));
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    assert!(!result.has_errors());
+    let doc = Document::parse(&result.xaml).unwrap();
+    assert!(doc
+        .descendants()
+        .any(|node| node.attribute("IsVisible") == Some("False")));
+}
+
+#[cfg(feature = "runtime")]
+#[test]
+fn opt_in_runtime_loader_creates_real_controls_and_preserves_normal_loader_dialect() {
+    use crate::FerroRuntimeXamlLoader;
+    use ferroui_base::data::core::ValueTypes;
+    let source = format!(
+        "<Button xmlns='{WINUI_PRESENTATION_NAMESPACE}' Visibility='Collapsed' Content='Live'/>"
+    );
+    assert!(FerroRuntimeXamlLoader::parse(&source, None).is_err());
+    let result =
+        FerroRuntimeXamlLoader::parse_winui(&source, None, &WinUIXamlOptions::default()).unwrap();
+    let object = ValueTypes::as_object(&*result).unwrap();
+    assert_eq!(object.get_type().full_name(), "FerroUI.Controls.Button");
+    assert!(!object.get_value(ferroui_base::Visual::is_visible_property()));
+    // The opt-in call does not register the source namespace as a global alias.
+    assert!(FerroRuntimeXamlLoader::parse(&source, None).is_err());
+    let native = "<Button xmlns='https://github.com/ferroui' IsVisible='True'/>";
+    assert!(FerroRuntimeXamlLoader::parse(native, None).is_ok());
+}
+
+#[cfg(feature = "runtime")]
+#[test]
+fn runtime_rejects_semantic_diagnostics_before_instantiating_unknown_controls() {
+    let input = source("<Unknown Text='{x:Bind Name}'/>");
+    let error =
+        crate::FerroRuntimeXamlLoader::parse_winui(&input, None, &WinUIXamlOptions::default())
+            .err()
+            .unwrap();
+    assert!(error.message().contains("WXAML1007"));
+}
+
+#[cfg(feature = "runtime")]
+#[test]
+fn fresh_root_deferred_resource_error_is_returned_and_default_loader_still_throws() {
+    use crate::FerroRuntimeXamlLoader;
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+    let input = source("<Grid.Resources><ControlTheme x:Key='Example' TargetType='Button' BasedOn='{StaticResource MissingTheme}'/></Grid.Resources><Button Theme='{StaticResource Example}'/>");
+    let error = FerroRuntimeXamlLoader::parse_winui(&input, None, &WinUIXamlOptions::default())
+        .unwrap_err();
+    assert!(error.to_string().contains("MissingTheme"));
+    let native = migrate_winui_xaml(&input, &WinUIXamlOptions::default())
+        .unwrap()
+        .into_xaml()
+        .unwrap();
+    assert!(
+        catch_unwind(AssertUnwindSafe(|| FerroRuntimeXamlLoader::parse(
+            &native, None
+        )))
+        .is_err()
+    );
+}

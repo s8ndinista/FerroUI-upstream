@@ -25,6 +25,8 @@ mod rust_paths;
 mod runtime_xaml_loader_configuration;
 mod runtime_xaml_loader_document;
 mod xaml_load_exception;
+#[doc(hidden)]
+pub mod xaml_error_scope;
 mod xaml_types;
 
 pub use eager_parent_stack_enumerator::EagerParentStackEnumerator;
@@ -72,7 +74,7 @@ pub(crate) use identity_eq;
 pub(crate) fn throw<T>(result: Result<T, XamlLoadException>) -> T {
     match result {
         Ok(value) => value,
-        Err(error) => panic!("{error}"),
+        Err(error) => xaml_error_scope::throw(error),
     }
 }
 

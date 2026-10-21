@@ -1218,6 +1218,7 @@ dependencies = [
  "ferroui-build-scan",
  "ferroui-markup",
  "ferroui-markup-xaml",
+ "roxmltree 0.20.0",
  "xamlx",
 ]
 

@@ -47,6 +47,8 @@ ferroui-markup-xaml = { workspace = true, optional = true }
 # writes and reads. The file and its model are owned by the crate the framework crates export their
 # type models with, which links nothing of the framework. Only with the `compiler` feature.
 ferroui-build-scan = { workspace = true, optional = true }
+# The opt-in WinUI migration pass validates XML and retains original source ranges.
+roxmltree = { workspace = true }
 
 [dev-dependencies]
 # The unit tests of the emitter of Rust source run with the crate's own tests (`rust_emitter` is built
