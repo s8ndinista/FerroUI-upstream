@@ -62,6 +62,7 @@ const RICH_TEXT_TYPES: &[&MarkupType] = &[
     <crate::rich_text::TextSetOptions as MarkupTyped>::MARKUP,
     <crate::rich_text::TextStreamEncoding as MarkupTyped>::MARKUP,
     <crate::rich_text::TextRangeUnit as MarkupTyped>::MARKUP,
+    <crate::rich_text::LetterCase as MarkupTyped>::MARKUP,
     <crate::automation::provider::TextEditChangeType as MarkupTyped>::MARKUP,
 ];
 
@@ -117,6 +118,7 @@ fn register_rich_text_value_types() {
     ValueTypes::register_nullable::<crate::rich_text::TextSetOptions>();
     ValueTypes::register_nullable::<crate::rich_text::TextStreamEncoding>();
     ValueTypes::register_nullable::<crate::rich_text::TextRangeUnit>();
+    ValueTypes::register_nullable::<crate::rich_text::LetterCase>();
     ValueTypes::register_nullable::<crate::automation::provider::TextEditChangeType>();
     ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditCompositionEventArgs>>();
     ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditBoxSelectionChangingEventArgs>>();

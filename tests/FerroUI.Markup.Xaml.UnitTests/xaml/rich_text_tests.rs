@@ -3,7 +3,7 @@
 //! crates execute their actual compiled templates in their own integration tests.
 
 use crate::support::app::{styled_window_application, xaml_test_base};
-use crate::support::loader::parse;
+use crate::support::loader::{parse, try_load};
 use ferroui_base::media::text_formatting::testing::TextTestScope;
 use ferroui_base::media::{FontStyle, FontWeight};
 use ferroui_base::metadata::from_markup_value;
@@ -53,6 +53,11 @@ fn rich_text_markup_preserves_nested_document_content_and_copied_highlight_value
         Some(FontStyle::Italic)
     );
     let highlighter = display.text_highlighters().get(0);
+    assert_eq!(highlighter.ranges().to_vec(), vec![
+        TextHighlightRange::new(0, 4),
+        TextHighlightRange::new(5, 6),
+        TextHighlightRange::new(12, 2),
+    ]);
     let copied = highlighter
         .ranges()
         .get(0)
@@ -68,6 +73,38 @@ fn rich_text_markup_preserves_nested_document_content_and_copied_highlight_value
             .length(),
         4
     );
+}
+
+#[test]
+fn rich_text_range_markup_initializes_a_value_and_preserves_signed_fields() {
+    let _scope = xaml_test_base();
+    let range = parse::<TextHighlightRange>(r#"<TextRange xmlns="https://github.com/ferroui" StartIndex="-2" Length="2147483647" />"#);
+    assert_eq!(range.start_index(), -2);
+    assert_eq!(range.length(), i32::MAX);
+    assert!(range.range().is_none());
+    let empty = parse::<TextHighlightRange>(r#"<TextRange xmlns="https://github.com/ferroui" />"#);
+    assert_eq!(empty, TextHighlightRange::new(0, 0));
+}
+
+#[test]
+fn rich_text_range_markup_rejects_invalid_fields_and_constructor_arguments() {
+    let _scope = xaml_test_base();
+    for document in [
+        r#"<TextRange xmlns="https://github.com/ferroui" StartIndex="2147483648" />"#,
+        r#"<TextRange xmlns="https://github.com/ferroui" Length="invalid" />"#,
+        r#"<TextRange xmlns="https://github.com/ferroui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><x:Arguments><x:Int32>1</x:Int32></x:Arguments></TextRange>"#,
+        r#"<TextRange xmlns="https://github.com/ferroui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><x:Arguments><x:String>invalid</x:String><x:Int32>1</x:Int32></x:Arguments></TextRange>"#,
+    ] {
+        assert!(try_load(document).is_err(), "the range must reject invalid input: {document}");
+    }
+}
+
+#[test]
+fn rich_text_range_initialization_keeps_the_normal_value_type_guard() {
+    let _scope = xaml_test_base();
+    let error = try_load(r#"<Thickness xmlns="https://github.com/ferroui" />"#)
+        .expect_err("unrelated value types still require their supported conversion syntax");
+    assert!(error.message().contains("Value types can only be loaded via converters"), "{}", error.message());
 }
 
 #[test]

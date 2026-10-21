@@ -3,14 +3,19 @@
   <StackPanel>
     <RichTextBlock x:Name="display" Language="pl-PL" TextWrapping="Wrap">
       <Paragraph FontSize="18">
-        <Bold><Run Text="Bold" /></Bold>
-        <Italic><Run Text=" italic" /></Italic>
-        <Underline><Run Text=" 😀" /></Underline>
+        <Bold><Run Text="Bold" /></Bold><Italic><Run Text=" italic" /></Italic><Underline><Run Text=" 😀" /></Underline>
       </Paragraph>
       <Paragraph TextAlignment="Right"><Run Text="Second" /></Paragraph>
       <RichTextBlock.TextHighlighters>
         <TextHighlighter Background="Yellow" Foreground="Black">
           <TextRange StartIndex="0" Length="4" />
+          <TextRange>
+            <TextRange.StartIndex>5</TextRange.StartIndex>
+            <TextRange.Length>6</TextRange.Length>
+          </TextRange>
+          <TextRange Length="2">
+            <x:Arguments><x:Int32>12</x:Int32><x:Int32>1</x:Int32></x:Arguments>
+          </TextRange>
         </TextHighlighter>
       </RichTextBlock.TextHighlighters>
     </RichTextBlock>

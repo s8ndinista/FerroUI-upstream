@@ -5493,6 +5493,220 @@ fn build_static_resource_element_xaml_untyped(
     ::core::result::Result::Ok(::std::rc::Rc::new(root) as ::ferroui_base::BoxedValue)
 }
 
+/// The base URI and the XML namespaces of `rich_text_document.xaml`.
+static BUILD_RICH_TEXT_DOCUMENT_XAML_DOCUMENT: rt::DocumentInfo = rt::DocumentInfo { base_uri: ::core::option::Option::Some("ferres://FerroUI.Markup.Xaml.UnitTests/Emitter/rich_text_document.xaml"), namespaces: XML_NAMESPACES_0 };
+
+/// Generated from `rich_text_document.xaml`.
+pub fn build_rich_text_document_xaml(
+    service_provider: ::core::option::Option<::std::rc::Rc<dyn ::ferroui_base::metadata::IServiceProvider>>,
+) -> ::core::result::Result<::ferroui_base::Ref<::ferroui_controls::UserControl>, ::ferroui_markup_xaml::XamlLoadException> {
+    // rich_text_document.xaml(1,2) UserControl
+    let user_control_0 = ::ferroui_controls::UserControl::new();
+    let context = rt::populate_context(service_provider, &BUILD_RICH_TEXT_DOCUMENT_XAML_DOCUMENT, rt::to_value(user_control_0.clone()));
+    let name_scope = context.name_scope_field();
+    user_control_0.begin_init();
+    context.push_parent(rt::to_value(user_control_0.clone()));
+    // rich_text_document.xaml(3,4) Content
+    // rich_text_document.xaml(3,4) StackPanel
+    let stack_panel_0 = ::ferroui_controls::StackPanel::new();
+    stack_panel_0.begin_init();
+    user_control_0.set_value(::ferroui_controls::ContentControl::content_property(), rt::to_object(::core::clone::Clone::clone(&stack_panel_0)));
+    context.push_parent(rt::to_value(stack_panel_0.clone()));
+    // rich_text_document.xaml(4,6) Children
+    let children_collection_0 = ::ferroui_controls::Panel::__markup_get_Children(stack_panel_0.upcast_ref::<::ferroui_controls::Panel>());
+    // rich_text_document.xaml(4,6) RichTextBlock
+    let rich_text_block_0 = ::ferroui_controls::RichTextBlock::new();
+    rich_text_block_0.begin_init();
+    ::ferroui_controls::Controls::__markup_Add_0(&children_collection_0, ::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_controls::Control>());
+    // rich_text_document.xaml(4,20) Name
+    rich_text_block_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("display")));
+    rt::register_name(name_scope.as_ref(), "display", ::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), 4, 20)?;
+    // rich_text_document.xaml(4,6) Language
+    let value_0 = rt::invoked(::ferroui_base::utilities::CultureInfo::__markup_parse(::std::string::String::from("pl-PL")), 4, 37)?;
+    rich_text_block_0.set_value(::ferroui_controls::RichTextBlock::language_property(), ::core::clone::Clone::clone(&value_0));
+    // rich_text_document.xaml(4,6) TextWrapping
+    rich_text_block_0.set_value(::ferroui_controls::RichTextBlock::text_wrapping_property(), ::ferroui_base::media::TextWrapping::Wrap);
+    // rich_text_document.xaml(10,10) TextHighlighters
+    let text_highlighters_collection_0 = ::ferroui_controls::RichTextBlock::__markup_get_TextHighlighters(&rich_text_block_0);
+    // rich_text_document.xaml(10,10) TextHighlighter
+    let text_highlighter_0 = ::ferroui_controls::documents::TextHighlighter::new();
+    // rich_text_document.xaml(10,10) Background
+    text_highlighter_0.set_value(::ferroui_controls::documents::TextHighlighter::background_property(), ::core::option::Option::Some(::ferroui_base::media::immutable::ImmutableSolidColorBrush::__markup_new_0(4294967040_u32) as ::std::rc::Rc<dyn ::ferroui_base::media::IBrush>));
+    // rich_text_document.xaml(10,10) Foreground
+    text_highlighter_0.set_value(::ferroui_controls::documents::TextHighlighter::foreground_property(), ::core::option::Option::Some(::ferroui_base::media::immutable::ImmutableSolidColorBrush::__markup_new_0(4278190080_u32) as ::std::rc::Rc<dyn ::ferroui_base::media::IBrush>));
+    // rich_text_document.xaml(11,12) Ranges
+    let ranges_collection_0 = ::ferroui_controls::documents::TextHighlighter::__markup_get_Ranges(&text_highlighter_0);
+    let text_range_0 = ::ferroui_controls::documents::TextHighlightRange::__markup_new_0();
+    // rich_text_document.xaml(11,12) StartIndex
+    ::ferroui_controls::documents::TextHighlightRange::__markup_set_StartIndex(&text_range_0, 0_i32);
+    // rich_text_document.xaml(11,12) Length
+    ::ferroui_controls::documents::TextHighlightRange::__markup_set_Length(&text_range_0, 4_i32);
+    ::ferroui_controls::documents::TextRangeCollection::__markup_Add_0(&ranges_collection_0, rt::cast(::core::clone::Clone::clone(&text_range_0), 11, 12)?);
+    // rich_text_document.xaml(12,12) Ranges
+    let ranges_collection_1 = ::ferroui_controls::documents::TextHighlighter::__markup_get_Ranges(&text_highlighter_0);
+    let text_range_1 = ::ferroui_controls::documents::TextHighlightRange::__markup_new_0();
+    // rich_text_document.xaml(12,12) StartIndex
+    ::ferroui_controls::documents::TextHighlightRange::__markup_set_StartIndex(&text_range_1, 5_i32);
+    // rich_text_document.xaml(12,12) Length
+    ::ferroui_controls::documents::TextHighlightRange::__markup_set_Length(&text_range_1, 6_i32);
+    ::ferroui_controls::documents::TextRangeCollection::__markup_Add_0(&ranges_collection_1, rt::cast(::core::clone::Clone::clone(&text_range_1), 12, 12)?);
+    // rich_text_document.xaml(16,12) Ranges
+    let ranges_collection_2 = ::ferroui_controls::documents::TextHighlighter::__markup_get_Ranges(&text_highlighter_0);
+    let text_range_2 = ::ferroui_controls::documents::TextHighlightRange::__markup_new_1(12_i32, 1_i32);
+    // rich_text_document.xaml(16,12) Length
+    ::ferroui_controls::documents::TextHighlightRange::__markup_set_Length(&text_range_2, 2_i32);
+    ::ferroui_controls::documents::TextRangeCollection::__markup_Add_0(&ranges_collection_2, rt::cast(::core::clone::Clone::clone(&text_range_2), 16, 12)?);
+    ::ferroui_controls::documents::TextHighlighterCollection::__markup_Add_0(&text_highlighters_collection_0, ::core::clone::Clone::clone(&text_highlighter_0));
+    // rich_text_document.xaml(5,8) Blocks
+    let blocks_collection_0 = ::ferroui_controls::RichTextBlock::__markup_get_Blocks(&rich_text_block_0);
+    // rich_text_document.xaml(5,8) Paragraph
+    let paragraph_0 = ::ferroui_controls::documents::Paragraph::new();
+    paragraph_0.begin_init();
+    // rich_text_document.xaml(5,8) FontSize
+    ::ferroui_controls::documents::TextElement::__markup_set_FontSize(paragraph_0.upcast_ref::<::ferroui_controls::documents::TextElement>(), 18.0_f64);
+    // rich_text_document.xaml(6,10) Inlines
+    let inlines_collection_0 = ::ferroui_controls::documents::Paragraph::__markup_get_Inlines(&paragraph_0);
+    // rich_text_document.xaml(6,10) Bold
+    let bold_0 = ::ferroui_controls::documents::Bold::new();
+    bold_0.begin_init();
+    // rich_text_document.xaml(6,16) Inlines
+    let inlines_collection_1 = bold_0.get_value(::ferroui_controls::documents::Span::inlines_property());
+    // rich_text_document.xaml(6,16) Run
+    let run_0 = ::ferroui_controls::documents::Run::new();
+    run_0.begin_init();
+    // rich_text_document.xaml(6,20) Text
+    run_0.set_value(::ferroui_controls::documents::Run::text_property(), ::core::option::Option::Some(::std::string::String::from("Bold")));
+    rt::invoked(run_0.try_end_init(), 6, 16)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(rt::instance(&inlines_collection_1, "FerroUI.Controls.Documents.InlineCollection.Add", 6, 16)?, ::core::clone::Clone::clone(&run_0).upcast::<::ferroui_controls::documents::Inline>());
+    rt::invoked(bold_0.try_end_init(), 6, 10)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(&inlines_collection_0, ::core::clone::Clone::clone(&bold_0).upcast::<::ferroui_controls::documents::Inline>());
+    // rich_text_document.xaml(6,42) Inlines
+    let inlines_collection_2 = ::ferroui_controls::documents::Paragraph::__markup_get_Inlines(&paragraph_0);
+    // rich_text_document.xaml(6,42) Italic
+    let italic_0 = ::ferroui_controls::documents::Italic::new();
+    italic_0.begin_init();
+    // rich_text_document.xaml(6,50) Inlines
+    let inlines_collection_3 = italic_0.get_value(::ferroui_controls::documents::Span::inlines_property());
+    // rich_text_document.xaml(6,50) Run
+    let run_1 = ::ferroui_controls::documents::Run::new();
+    run_1.begin_init();
+    // rich_text_document.xaml(6,54) Text
+    run_1.set_value(::ferroui_controls::documents::Run::text_property(), ::core::option::Option::Some(::std::string::String::from(" italic")));
+    rt::invoked(run_1.try_end_init(), 6, 50)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(rt::instance(&inlines_collection_3, "FerroUI.Controls.Documents.InlineCollection.Add", 6, 50)?, ::core::clone::Clone::clone(&run_1).upcast::<::ferroui_controls::documents::Inline>());
+    rt::invoked(italic_0.try_end_init(), 6, 42)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(&inlines_collection_2, ::core::clone::Clone::clone(&italic_0).upcast::<::ferroui_controls::documents::Inline>());
+    // rich_text_document.xaml(6,81) Inlines
+    let inlines_collection_4 = ::ferroui_controls::documents::Paragraph::__markup_get_Inlines(&paragraph_0);
+    // rich_text_document.xaml(6,81) Underline
+    let underline_0 = ::ferroui_controls::documents::Underline::new();
+    underline_0.begin_init();
+    // rich_text_document.xaml(6,92) Inlines
+    let inlines_collection_5 = underline_0.get_value(::ferroui_controls::documents::Span::inlines_property());
+    // rich_text_document.xaml(6,92) Run
+    let run_2 = ::ferroui_controls::documents::Run::new();
+    run_2.begin_init();
+    // rich_text_document.xaml(6,96) Text
+    run_2.set_value(::ferroui_controls::documents::Run::text_property(), ::core::option::Option::Some(::std::string::String::from(" \u{1f600}")));
+    rt::invoked(run_2.try_end_init(), 6, 92)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(rt::instance(&inlines_collection_5, "FerroUI.Controls.Documents.InlineCollection.Add", 6, 92)?, ::core::clone::Clone::clone(&run_2).upcast::<::ferroui_controls::documents::Inline>());
+    rt::invoked(underline_0.try_end_init(), 6, 81)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(&inlines_collection_4, ::core::clone::Clone::clone(&underline_0).upcast::<::ferroui_controls::documents::Inline>());
+    rt::invoked(paragraph_0.try_end_init(), 5, 8)?;
+    ::ferroui_controls::documents::BlockCollection::__markup_Add_0(&blocks_collection_0, ::core::clone::Clone::clone(&paragraph_0).upcast::<::ferroui_controls::documents::Block>());
+    // rich_text_document.xaml(8,8) Blocks
+    let blocks_collection_1 = ::ferroui_controls::RichTextBlock::__markup_get_Blocks(&rich_text_block_0);
+    // rich_text_document.xaml(8,8) Paragraph
+    let paragraph_1 = ::ferroui_controls::documents::Paragraph::new();
+    paragraph_1.begin_init();
+    // rich_text_document.xaml(8,8) TextAlignment
+    paragraph_1.set_value(::ferroui_controls::documents::Block::text_alignment_property(), ::ferroui_base::media::TextAlignment::Right);
+    // rich_text_document.xaml(8,41) Inlines
+    let inlines_collection_6 = ::ferroui_controls::documents::Paragraph::__markup_get_Inlines(&paragraph_1);
+    // rich_text_document.xaml(8,41) Run
+    let run_3 = ::ferroui_controls::documents::Run::new();
+    run_3.begin_init();
+    // rich_text_document.xaml(8,45) Text
+    run_3.set_value(::ferroui_controls::documents::Run::text_property(), ::core::option::Option::Some(::std::string::String::from("Second")));
+    rt::invoked(run_3.try_end_init(), 8, 41)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(&inlines_collection_6, ::core::clone::Clone::clone(&run_3).upcast::<::ferroui_controls::documents::Inline>());
+    rt::invoked(paragraph_1.try_end_init(), 8, 8)?;
+    ::ferroui_controls::documents::BlockCollection::__markup_Add_0(&blocks_collection_1, ::core::clone::Clone::clone(&paragraph_1).upcast::<::ferroui_controls::documents::Block>());
+    rt::invoked(rich_text_block_0.try_end_init(), 4, 6)?;
+    // rich_text_document.xaml(22,6) Children
+    let children_collection_1 = ::ferroui_controls::Panel::__markup_get_Children(stack_panel_0.upcast_ref::<::ferroui_controls::Panel>());
+    // rich_text_document.xaml(22,6) RichEditBox
+    let rich_edit_box_0 = ::ferroui_controls::RichEditBox::new();
+    rich_edit_box_0.begin_init();
+    ::ferroui_controls::Controls::__markup_Add_0(&children_collection_1, ::core::clone::Clone::clone(&rich_edit_box_0).upcast::<::ferroui_controls::Control>());
+    // rich_text_document.xaml(22,18) Name
+    rich_edit_box_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("editor")));
+    rt::register_name(name_scope.as_ref(), "editor", ::core::clone::Clone::clone(&rich_edit_box_0).upcast::<::ferroui_base::FerroObject>(), 22, 18)?;
+    // rich_text_document.xaml(22,34) Header
+    rich_edit_box_0.set_value(::ferroui_controls::RichEditBox::header_property(), rt::to_object(::std::string::String::from("Document")));
+    // rich_text_document.xaml(22,52) Description
+    rich_edit_box_0.set_value(::ferroui_controls::RichEditBox::description_property(), rt::to_object(::std::string::String::from("Rich editing")));
+    // rich_text_document.xaml(23,18) PlaceholderText
+    rich_edit_box_0.set_value(::ferroui_controls::RichEditBox::placeholder_text_property(), ::std::string::String::from("Write here"));
+    // rich_text_document.xaml(22,6) Language
+    let value_1 = rt::invoked(::ferroui_base::utilities::CultureInfo::__markup_parse(::std::string::String::from("pl-PL")), 23, 47)?;
+    rich_edit_box_0.set_value(::ferroui_controls::RichEditBox::language_property(), ::core::clone::Clone::clone(&value_1));
+    // rich_text_document.xaml(22,6) AcceptsTab
+    rich_edit_box_0.set_value(::ferroui_controls::RichEditBox::accepts_tab_property(), ::core::clone::Clone::clone(&true));
+    // rich_text_document.xaml(24,8) Blocks
+    let blocks_collection_2 = ::ferroui_controls::RichEditBox::__markup_get_Blocks(&rich_edit_box_0);
+    // rich_text_document.xaml(24,8) Paragraph
+    let paragraph_2 = ::ferroui_controls::documents::Paragraph::new();
+    paragraph_2.begin_init();
+    // rich_text_document.xaml(24,19) Inlines
+    let inlines_collection_7 = ::ferroui_controls::documents::Paragraph::__markup_get_Inlines(&paragraph_2);
+    // rich_text_document.xaml(24,19) Run
+    let run_4 = ::ferroui_controls::documents::Run::new();
+    run_4.begin_init();
+    // rich_text_document.xaml(24,23) Text
+    run_4.set_value(::ferroui_controls::documents::Run::text_property(), ::core::option::Option::Some(::std::string::String::from("Edit \u{1f600}")));
+    rt::invoked(run_4.try_end_init(), 24, 19)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(&inlines_collection_7, ::core::clone::Clone::clone(&run_4).upcast::<::ferroui_controls::documents::Inline>());
+    rt::invoked(paragraph_2.try_end_init(), 24, 8)?;
+    ::ferroui_controls::documents::BlockCollection::__markup_Add_0(&blocks_collection_2, ::core::clone::Clone::clone(&paragraph_2).upcast::<::ferroui_controls::documents::Block>());
+    rt::invoked(rich_edit_box_0.try_end_init(), 22, 6)?;
+    // rich_text_document.xaml(26,6) Children
+    let children_collection_2 = ::ferroui_controls::Panel::__markup_get_Children(stack_panel_0.upcast_ref::<::ferroui_controls::Panel>());
+    // rich_text_document.xaml(26,6) Button
+    let button_0 = ::ferroui_controls::Button::new();
+    button_0.begin_init();
+    ::ferroui_controls::Controls::__markup_Add_0(&children_collection_2, ::core::clone::Clone::clone(&button_0).upcast::<::ferroui_controls::Control>());
+    context.push_parent(rt::to_value(button_0.clone()));
+    // rich_text_document.xaml(26,13) Name
+    button_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("bold")));
+    rt::register_name(name_scope.as_ref(), "bold", ::core::clone::Clone::clone(&button_0).upcast::<::ferroui_base::FerroObject>(), 26, 13)?;
+    // rich_text_document.xaml(26,27) Command
+    let reflection_binding_extension_0 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("#editor.ToggleBold"));
+    let provided_0 = rt::provide_value(&context, rt::property_value(::ferroui_controls::Button::command_property()), &reflection_binding_extension_0, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
+    rt::bind(button_0.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_controls::Button::command_property(), provided_0, 26, 27)?;
+    // rich_text_document.xaml(26,66) IsEnabled
+    let reflection_binding_extension_1 = ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_new_1(::std::string::String::from("#editor.CanFormat"));
+    let provided_1 = rt::provide_value(&context, rt::property_value(::ferroui_base::input::InputElement::is_enabled_property()), &reflection_binding_extension_1, ::ferroui_markup_xaml::markup_extensions::ReflectionBindingExtension::__markup_ProvideValue_0);
+    rt::bind(button_0.upcast_ref::<::ferroui_base::FerroObject>(), ::ferroui_base::input::InputElement::is_enabled_property(), provided_1, 26, 66)?;
+    // rich_text_document.xaml(26,106) Content
+    button_0.set_value(::ferroui_controls::ContentControl::content_property(), rt::to_object(::std::string::String::from("Bold")));
+    context.pop_parent();
+    rt::invoked(button_0.try_end_init(), 26, 6)?;
+    context.pop_parent();
+    rt::invoked(stack_panel_0.try_end_init(), 3, 4)?;
+    context.pop_parent();
+    rt::invoked(user_control_0.try_end_init(), 1, 2)?;
+    rt::complete_root_name_scope(::core::option::Option::Some(&user_control_0), name_scope.as_ref(), 1, 2)?;
+    ::core::result::Result::Ok(user_control_0)
+}
+
+fn build_rich_text_document_xaml_untyped(
+    service_provider: ::core::option::Option<::std::rc::Rc<dyn ::ferroui_base::metadata::IServiceProvider>>,
+) -> ::core::result::Result<::ferroui_base::BoxedValue, ::ferroui_markup_xaml::XamlLoadException> {
+    let root = build_rich_text_document_xaml(service_provider)?;
+    ::core::result::Result::Ok(::std::rc::Rc::new(root) as ::ferroui_base::BoxedValue)
+}
+
 /// The build function of every eligible public document, by document name.
 pub const DOCUMENTS: &[(&str, BuildDocument)] = &[
     ("border_empty.xaml", build_border_empty_xaml_untyped as BuildDocument),
@@ -5621,6 +5835,7 @@ pub const DOCUMENTS: &[(&str, BuildDocument)] = &[
     ("method_command.xaml", build_method_command_xaml_untyped as BuildDocument),
     ("container_query.xaml", build_container_query_xaml_untyped as BuildDocument),
     ("static_resource_element.xaml", build_static_resource_element_xaml_untyped as BuildDocument),
+    ("rich_text_document.xaml", build_rich_text_document_xaml_untyped as BuildDocument),
 ];
 
 /// The loader of the compiled markup of the assembly: builds the document with the URI
