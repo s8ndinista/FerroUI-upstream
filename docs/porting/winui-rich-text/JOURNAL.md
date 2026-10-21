@@ -4,6 +4,106 @@ This journal records how the port is developed. [PROGRESS.md](PROGRESS.md) and
 the reviewed mapping remain the authority for implementation status; a checkpoint
 preserves work and does not establish complete parity.
 
+## Focus handoff, independent clipboard and isolated native evidence — 2026-10-21
+
+The documentation, native cancellation fix and fresh probe results were
+published as [17a84805](https://github.com/wieslawsoltes/FerroUI/commit/17a84805be35267ef580624d24f8657819038f88).
+Focus and clipboard source are separate subsequent checkpoints. The full port
+is still incomplete; the draft PR is not a claim of native conformance.
+
+### Completed integration CI and precise native failure
+
+[Run 39612123175](https://github.com/wieslawsoltes/FerroUI/actions/runs/39612123175)
+finished the full Linux job successfully at `92140e7c`: Base 4,413; Controls
+4,970; Win32 308; WinUI host 39; Fluent 210 passed/two ignored; Simple 213/three;
+WinUI theme 296/two; XAML 611/17, plus one ignored doctest. All five generators
+and exact checked-in reference comparisons passed.
+
+Its Windows adapter check and WinUI test compilation reported the same two
+E0308 errors. `LayoutRequest.IsCanceled` returns the ABI byte type; the new
+predicates had treated it as a Rust boolean. [e5f1cf8e](https://github.com/wieslawsoltes/FerroUI/commit/e5f1cf8e71d1a792eb67b068ec36d780323cd317)
+changes only those checks to explicit nonzero/zero comparisons. It still needs
+the subsequent Windows run. Independent later steps passed two exact HSTRING,
+two native probe and 529 rich Controls tests. Those passing steps do not make
+the failed job successful.
+
+### Third versioned native record
+
+[native-msftedit-navigation-isolated.json](native-msftedit-navigation-isolated.json)
+retains all 60 Home/End commands, 60 repeats and 282 vertical commands, including
+18 fresh-control/sequence observations. It records the exact source commit,
+probe blob, run/job and Windows/DLL identity. This runner used MSFTEDIT
+6.2.26100.33438, whereas the previous vertical record used 6.2.26100.33648.
+All original 264 vertical and all Home/End rows are identical across the two.
+
+The fresh rows resolve two different issues. Native extension really loses
+its earlier horizontal column after an intervening short line: collapsed
+Down2 from 5 reaches 15, while extension reaches 12. A four-command collapse
+sequence visits 5→8→14→8→5; extension visits 5→8→10→8→1 with anchor 5.
+By contrast, fresh final-empty-line Up1 and Down(-1) agree at 4; their earlier
+difference depended on reused native state. Five new off-tree Rust fixtures
+against the exact 235-case libraries produced three expected failures and two
+passes, establishing the next navigation correction. It remains pending in
+this documentation checkpoint.
+
+### Accepted focus before synchronous callbacks
+
+The [focus checkpoint](https://github.com/wieslawsoltes/FerroUI/commit/b16a5ce14a7bdebfed0752254f5b5d2eb9c3db42)
+fixes an actual template remount during popup focus return. Previously the
+keyboard had accepted the editor, but the input manager still saw the previous
+popup child during LostFocus/GotFocus. A legitimate view requery retired the
+owned composition.
+
+The keyboard now prepares the accepted destination and root subscription
+before those events, preserving ordinary post-event binding installation.
+Accepted generations fence nested focus transitions, including a round trip
+back to the same owner. Canceled nested requests do not invalidate the outer
+accepted transition. Client/view callbacks also check focus generation.
+Four public tests cover native/overlay remount, nested Lost/Got redirection and
+return, cancellation, and ordinary client-installation timing. Their old-library
+run produced two expected remount failures and two cancellation passes; all
+four pass with the repaired Base implementation.
+
+### Asynchronous independent-range clipboard
+
+The [clipboard checkpoint](https://github.com/wieslawsoltes/FerroUI/commit/132c7853a17553e475e842d8c7c3327a60a37e6e)
+maps ten exact pinned public identifiers: interface/runtime-class Copy, Cut,
+Paste and CanPaste, plus document CanCopy/CanPaste. The implementation injects
+FerroUI's clipboard and uses its local futures. BestAvailable, PlainText and
+Rtf are explicit supported policies; arbitrary native numeric format values
+are not invented. Availability checks read format metadata only.
+
+Immutable Copy capture is independent of later edits. Pending Cut/Paste track
+model mutation identity, shared range/format generation and an editor-change
+subscription; held batches and away-and-back changes cannot redirect an older
+request. Retrieved transfers are disposed once before final validation, also
+on errors or dropped payload futures. Outgoing data belongs to the clipboard.
+Successful edits preserve the directed editor selection and one undo unit.
+
+Cut ends the original preview before copying committed content. A write failure
+preserves the committed document/history but does not recreate that preview.
+Paste parses and limits data first, then cancels the original preview and reads
+live committed endpoints. Empty, invalid and fully rejected payloads preserve
+the target. The existing composition and edit-group fences preserve independent
+callback-owned edits.
+
+### Completed local gate and remaining scope
+
+The coordinated rebuild completed both ordinary Base variants and Controls in
+222.97 seconds, then stopped before unrelated downstream linking. All recorded
+source hashes stayed unchanged. The source-identical public harness passed
+**235 tests, zero failures/ignored**, in 2.88 seconds: the previous 203, four
+focus cases and 28 clipboard cases. The three private startup tests remain
+excluded whole only in the local harness and present in full repository CI.
+
+The reviewed map now contains 36 complete enum entries, 464 partial public
+entries and 817 pending, with 638 source/reference files, 938 additional
+framework dependencies and 827 include boundaries. No runtime source file is
+complete. Native copy/per-range protection, OLE formats, bounded RTF exclusions,
+terminal EOP and synchronous native ABI remain explicit under RT-I24.
+InputScope object/transport work and the new extended-column correction are
+the next source slices; no premature native or whole-port completion is recorded.
+
 ## Context menus, native-informed movement and geometry — 2026-10-21
 
 The next published checkpoint is

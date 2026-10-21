@@ -12055,6 +12055,18 @@
         {
           "path": "src/FerroUI.Controls/context_menu_event_args.rs",
           "symbol": "class ContextMenuEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -12077,6 +12089,22 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
           "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -12091,7 +12119,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A01",
         "RT-A04",
@@ -17248,6 +17276,18 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "pub(crate) fn update("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -17702,6 +17742,22 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "core_text_content_types_preserve_native_name_and_numeric_pin_semantics"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -17939,7 +17995,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. Name and Pin now map to the verified CoreText PersonalFullName and PinNumeric hints without imposing text validation or PIN length. The native InputScope object, Names collection and complete public enum family remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. Name and Pin now map to the verified CoreText PersonalFullName and PinNumeric hints without imposing text validation or PIN length. The native InputScope object, Names collection and complete public enum family remain pending. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-I04",
         "RT-I06",
@@ -18143,6 +18199,18 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "pub(crate) fn update("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -18521,6 +18589,22 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "core_text_content_types_preserve_native_name_and_numeric_pin_semantics"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -18535,7 +18619,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. Name and Pin now map to the verified CoreText PersonalFullName and PinNumeric hints without imposing text validation or PIN length. The native InputScope object, Names collection and complete public enum family remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. Name and Pin now map to the verified CoreText PersonalFullName and PinNumeric hints without imposing text validation or PIN length. The native InputScope object, Names collection and complete public enum family remain pending. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-I04",
         "RT-I06",
@@ -19790,6 +19874,18 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "pub(crate) fn update("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -20188,6 +20284,22 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "core_text_content_types_preserve_native_name_and_numeric_pin_semantics"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -21750,7 +21862,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. Name and Pin now map to the verified CoreText PersonalFullName and PinNumeric hints without imposing text validation or PIN length. The native InputScope object, Names collection and complete public enum family remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. Name and Pin now map to the verified CoreText PersonalFullName and PinNumeric hints without imposing text validation or PIN length. The native InputScope object, Names collection and complete public enum family remain pending. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A03",
         "RT-I06",
@@ -21921,6 +22033,18 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "pub(crate) fn update("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -22243,6 +22367,22 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "core_text_content_types_preserve_native_name_and_numeric_pin_semantics"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -22322,7 +22462,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. Name and Pin now map to the verified CoreText PersonalFullName and PinNumeric hints without imposing text validation or PIN length. The native InputScope object, Names collection and complete public enum family remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The existing seven native scope outcomes remain the supported subset; other native policies and real OS sessions need separate evidence. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. Name and Pin now map to the verified CoreText PersonalFullName and PinNumeric hints without imposing text validation or PIN length. The native InputScope object, Names collection and complete public enum family remain pending. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A03",
         "RT-I06",
@@ -24011,6 +24151,18 @@
         {
           "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
           "symbol": "fn update_cursor_rect("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -24205,6 +24357,22 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_input_geometry_tests.rs",
           "symbol": "rich_input_cursor_reset_focus_roundtrip_and_nested_geometry_keep_the_latest_caret"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -24736,7 +24904,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records.",
+      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A04",
         "RT-I06",
@@ -24829,6 +24997,18 @@
         {
           "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
           "symbol": "fn update_cursor_rect("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -25023,6 +25203,22 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_input_geometry_tests.rs",
           "symbol": "rich_input_cursor_reset_focus_roundtrip_and_nested_geometry_keep_the_latest_caret"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -25042,7 +25238,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records.",
+      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A04",
         "RT-I06",
@@ -52802,6 +52998,18 @@
         {
           "path": "src/FerroUI.Controls/context_menu_event_args.rs",
           "symbol": "class ContextMenuEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -52824,6 +53032,22 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
           "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -52872,7 +53096,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A01",
         "RT-A04",
@@ -52900,6 +53124,18 @@
         {
           "path": "src/FerroUI.Controls/context_menu_event_args.rs",
           "symbol": "class ContextMenuEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -52922,6 +53158,22 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
           "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -52936,7 +53188,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A01",
         "RT-A04",
@@ -54380,6 +54632,18 @@
         {
           "path": "src/FerroUI.Controls/primitives/popup_positioning/i_popup_positioner.rs",
           "symbol": "fn calculate_anchor_rect("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -54562,6 +54826,22 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
           "symbol": "rich_context_dismissal_focus_redirection_retires_the_original_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -54988,7 +55268,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-I04",
         "RT-I06",
@@ -55108,6 +55388,18 @@
         {
           "path": "src/FerroUI.Controls/primitives/popup_positioning/i_popup_positioner.rs",
           "symbol": "fn calculate_anchor_rect("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -55290,6 +55582,22 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
           "symbol": "rich_context_dismissal_focus_redirection_retires_the_original_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -55348,7 +55656,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-I04",
         "RT-I06",
@@ -58507,6 +58815,18 @@
         {
           "path": "src/FerroUI.Controls/primitives/popup_positioning/i_popup_positioner.rs",
           "symbol": "fn calculate_anchor_rect("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -58605,6 +58925,22 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
           "symbol": "rich_context_dismissal_focus_redirection_retires_the_original_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -58812,7 +59148,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "The current owned ContextFlyout target and actual popup-focused descendant retain editor selection/composition state. Close, replacement, focus return and real blur clear weak subscriptions. Native IME transport retention and remaining flyout helper behavior are not supplied by this control policy. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "reason": "The current owned ContextFlyout target and actual popup-focused descendant retain editor selection/composition state. Close, replacement, focus return and real blur clear weak subscriptions. Native IME transport retention and remaining flyout helper behavior are not supplied by this control policy. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A01",
         "RT-A04",
@@ -58872,6 +59208,18 @@
         {
           "path": "src/FerroUI.Controls/primitives/popup_positioning/i_popup_positioner.rs",
           "symbol": "fn calculate_anchor_rect("
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -58970,11 +59318,27 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_context_menu_tests.rs",
           "symbol": "rich_context_dismissal_focus_redirection_retires_the_original_composition"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [],
       "callable_candidates": [],
-      "reason": "The current owned ContextFlyout target and actual popup-focused descendant retain editor selection/composition state. Close, replacement, focus return and real blur clear weak subscriptions. Native IME transport retention and remaining flyout helper behavior are not supplied by this control policy. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "reason": "The current owned ContextFlyout target and actual popup-focused descendant retain editor selection/composition state. Close, replacement, focus return and real blur clear weak subscriptions. Native IME transport retention and remaining flyout helper behavior are not supplied by this control policy. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A01",
         "RT-A04",
@@ -60514,6 +60878,18 @@
         {
           "path": "src/FerroUI.Controls/context_menu_event_args.rs",
           "symbol": "class ContextMenuEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -60536,6 +60912,22 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
           "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -60660,7 +61052,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A01",
         "RT-A04",
@@ -60686,6 +61078,18 @@
         {
           "path": "src/FerroUI.Controls/context_menu_event_args.rs",
           "symbol": "class ContextMenuEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Base/input/keyboard_device.rs",
+          "symbol": "pub fn set_focused_element_with("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "pub(crate) fn prepare_focus_change("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
+          "symbol": "fn try_find_and_apply_client("
         }
       ],
       "tests": [
@@ -60708,6 +61112,22 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/event_handlers.rs",
           "symbol": "rich_context_menu_event_calls_the_method_with_live_arguments"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_template_replacement_during_focus_return_preserves_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_nested_focus_during_popup_dismissal_owns_the_final_binding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_focus_with_template_change_preserves_current_connection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
+          "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
         }
       ],
       "includes": [
@@ -60731,7 +61151,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately.",
+      "reason": "Native argument storage and projection map to one Rust routed argument with readonly root-DIP cursor fields, shared Handled and normal markup inheritance. Rust construction is a convenience, not a WinRT ABI or markup constructor. Native legacy PopupMenu command flags and peer/ABI implementation are not reproduced. RichEditBox now projects pointer, Apps/Shift+F10 and holding ContextRequested into one synchronous bubble ContextMenuOpening before default menu dispatch. Immutable f64 CursorLeft/Top use root DIPs and shared inherited Handled cancels the request. Keyboard anchors use the normalized LTR end/bottom or RTL start/bottom selected grapheme edge, independently of directed anchor, with shaped caret fallback and soft-wrap retention. The edge is selected in presenter coordinates before transforming the point, preserving the selected side under reflection/rotation. Weak per-request rectangles carry the actual anchor through existing ContextMenu/PopupFlyoutBase lifecycle, RTL gravity and constrained popup positioning; zero-size points remain valid. Handlers may install/replace/remove menus; nested requests, stale layout and detach/reattach are fenced, canceled openings are consumed once, and existing precedence/focus/IME retention remain shared. Ordinary popup dismissal retains composition and the semantic connection by avoiding a redundant unchanged-view requery during GotFocus; a real redirected focus retires that session. Routed metadata and named runtime/compiled handlers use the live base-argument handle. Native automatic selection floaties, legacy asynchronous command-gated PopupMenu, exact native edge metrics and close/reopen event order remain pending. An already open owned FerroUI popup is repositioned in place; this does not claim native WinUI flyout or platform event conformance. Test definitions and their actual completed execution records are tracked separately. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
       "deviations": [
         "RT-A01",
         "RT-A04",

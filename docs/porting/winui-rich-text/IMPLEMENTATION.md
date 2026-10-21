@@ -382,12 +382,16 @@ preserves composition and redo.
 Line extension beyond the first or last line can reach a real story edge as one
 additional unit. Accepted redirection counts the same unit, including an edge
 on the original line. The [264-command native record](native-msftedit-navigation.json)
-supplies collapse/count and edge observations. Some extended-column/EOL rows
-differ after repeated SetRange on a reused native control. Eighteen additional
-fresh-control and intentional-sequence observations are defined in the next
-282-command probe to distinguish that state. Their source definition is not an
-executed result. Synthetic terminal EOP and the remaining Gravity/Options/Type
-contracts remain explicit under RT-I23.
+supplies collapse/count and edge observations. The later [282-command record](native-msftedit-navigation-isolated.json)
+adds 18 fresh-control/sequence observations; all original rows match across the
+two recorded DLL versions. It confirms a remaining Rust difference: native
+extension clamps its physical column after crossing a short line, whereas
+ordinary caret movement retains the desired column. In the isolated sequence,
+collapse visits 5→8→14→8→5, while extension visits 5→8→10→8→1 with anchor 5.
+The current Rust extension still retains the original column and needs a
+further correction. Fresh final-empty-line Up1 and Down(-1) both reach 4,
+resolving the previous reused-state difference. Synthetic terminal EOP and the
+remaining Gravity/Options/Type contracts remain explicit under RT-I23.
 
 Validation also exposed an existing shared formatter prerequisite: structural
 EOL/EOP markers were entering RTL directional glyph groups, causing every caret
@@ -532,6 +536,62 @@ the captured document/revision/selection before applying a delayed result. Rich
 run formatting survives casing and single-line policy transformations. The
 control exposes edit/clipboard failures to callers for normal application status
 handling.
+
+### Independent TOM clipboard services
+
+[RichEditTextRange clipboard methods](../../../src/FerroUI.Controls/rich_text/rich_edit_text_clipboard.rs)
+accept an injected `Rc<dyn IClipboard>` and return the framework's
+`LocalBoxFuture<Result<_, ClipboardError>>`. This follows FerroUI's asynchronous
+platform service without synchronously blocking an application dispatcher.
+The ten exact pinned interface/runtime-class/document identifiers have
+individual partial mappings under RT-I24.
+
+`RichTextPasteFormat` has three supported policies:
+
+| Policy | Accepted representations |
+|---|---|
+| `BestAvailable` | Exact in-process document snapshot, then supported RTF aliases, then Unicode plain text. |
+| `PlainText` | Unicode plain text only. |
+| `Rtf` | Supported RTF aliases only; absence or invalid RTF does not flatten to plain text. |
+
+Native format zero requests the best representation. Rust uses named policies
+because registered RTF format identifiers depend on the platform/session.
+Arbitrary numeric formats, OLE cloning and unsupported rich content remain
+separate work. The [pinned public XML](https://github.com/microsoft/microsoft-ui-xaml/blob/fe244ca6ac4d482712b234a9de3cf771cc6481de/packaging/Intellisense/generated/Microsoft.UI.Text.xml)
+defines document `CanCopy` as permission; it is independent of a nonempty
+selection and of editing read-only state. The current document model permits
+copying and has no copy-protection mechanism. `CanPaste` probes fallible
+advertised formats without decoding a delayed payload, ending composition, or
+changing history; availability does not promise that a later platform read or
+RTF parse will succeed.
+
+Copy captures an immutable visible fragment before the platform await. Cut ends
+an original IME preview on its first poll, then captures the committed range and
+waits for the clipboard write before deleting. This ordering prevents copying a
+preview while deleting different committed text. A failed write preserves the
+committed document and undo/redo history but does not restart that ended preview.
+Empty Cut leaves composition and clipboard untouched.
+
+Paste validates and clips the payload before ending an original preview, then
+reads the live committed endpoints again. Invalid, unavailable, empty or fully
+length-rejected content cannot delete the target or end its preview. Plain text
+inherits the range's insertion context; rich content keeps its supported
+structure. Successful Cut/Paste preserve and rebase the editor's directed
+selection and form one undo group while updating the independent live range.
+
+Delayed edits retain document mutation identity, shared endpoint/format
+generation, and a disposable editor-change subscription. This detects changes
+inside held batches, endpoint/format/selection round trips and even empty IME
+sessions. `get_clone()` remains independent; ordinary Rust clones share range
+ownership. Retrieved transfer data is disposed on success, error and canceled
+payload futures, before the final ownership check. Clipboard-owned outgoing
+data is not disposed by the range. Callback edits keep their ownership through
+the existing composition and edit-group publication fences.
+
+The [28 public regressions](../../../src/FerroUI.Controls/rich_text/rich_edit_text_clipboard_tests.rs)
+use actually pending platform/payload futures, exact formatting/selection/history
+assertions, and disposal callbacks. The control's routed Copy/Cut/Paste events
+and character-casing policy remain a separate integration path.
 
 ### RTF byte encodings and font-scoped decoding
 
@@ -705,9 +765,17 @@ notification for the unchanged persistent presenter while the keyboard device
 is still publishing focus events. Cursor/layout notifications remain, and
 actual view/template changes still announce their new view. A separate
 regression verifies that an application redirecting focus outside the editor
-retires the old connection and cancels its preview. Synchronous application
-template replacement during focus return is a separately reproduced follow-up;
-the ordinary-dismissal fix does not establish that broader requery behavior.
+retires the old connection and cancels its preview. The shared keyboard manager
+now prepares its accepted focus destination before publishing LostFocus/GotFocus.
+A real template replacement during those events can therefore requery the
+accepted owner instead of the previous closed-popup child. Ordinary client
+installation still occurs after the events. Accepted focus generations fence
+nested changes and round trips; a canceled nested request leaves the outer
+transition active. Client and view-accessor callbacks also validate the focus
+generation. Four public regressions cover native/overlay template remount,
+nested Lost/Got redirection and return, cancellation, and post-event client
+installation. Their execution is recorded separately; this is synchronous
+framework ownership and does not establish arbitrary platform focus order.
 
 The markup review found a second integration issue in existing composition,
 selection-changing and text-changing arguments: typed metadata expected concrete
