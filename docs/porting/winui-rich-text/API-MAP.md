@@ -15,7 +15,7 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Text.HorizontalCharacterAlignment` | 4 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.ITextCharacterFormat` | 28 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
 | `Microsoft.UI.Text.ITextParagraphFormat` | 32 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
-| `Microsoft.UI.Text.ITextRange` | 44 | 32 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
+| `Microsoft.UI.Text.ITextRange` | 44 | 34 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.ITextSelection` | 10 | 2 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.LetterCase` | 3 | 0 / 3 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.LineSpacingRule` | 9 | 0 / 9 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
@@ -29,7 +29,7 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Text.RangeGravity` | 6 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.RichEditMathMode` | 3 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.RichEditTextDocument` | 28 | 21 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
-| `Microsoft.UI.Text.RichEditTextRange` | 44 | 29 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
+| `Microsoft.UI.Text.RichEditTextRange` | 44 | 34 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.SelectionOptions` | 6 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.SelectionType` | 6 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TabAlignment` | 6 | 0 / 6 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
@@ -69,7 +69,10 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Xaml.Automation.SupportedTextSelection` | 4 | 4 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Text.TextPatternRangeEndpoint` | 3 | 3 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
 | `Microsoft.UI.Xaml.Automation.Text.TextUnit` | 8 | 8 / 0 | R7 | `src/FerroUI.Controls/automation/`, `src/Windows/FerroUI.Win32/automation/` |
+| `Microsoft.UI.Xaml.Controls.CandidateWindowAlignment` | 3 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.CandidateWindowBoundsChangedEventArgs` | 2 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
+| `Microsoft.UI.Xaml.Controls.ContextMenuEventArgs` | 4 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
+| `Microsoft.UI.Xaml.Controls.ContextMenuOpeningEventHandler` | 1 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.RichEditBox` | 65 | 46 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.RichEditBoxSelectionChangingEventArgs` | 4 | 4 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.RichEditBoxTextChangingEventArgs` | 2 | 2 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
@@ -77,9 +80,9 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Xaml.Controls.RichTextBlock` | 74 | 57 / 0 | R2/R7 | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block_overflow.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
 | `Microsoft.UI.Xaml.Controls.RichTextBlockOverflow` | 18 | 18 / 0 | R2/R7 | `src/FerroUI.Controls/rich_text_block.rs`, `src/FerroUI.Controls/rich_text_block_overflow.rs`, `src/FerroUI.Controls/rich_text_layout.rs` |
 | `Microsoft.UI.Xaml.Controls.TextChangedEventArgs` | 1 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
-| `Microsoft.UI.Xaml.Controls.TextCompositionChangedEventArgs` | 3 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
-| `Microsoft.UI.Xaml.Controls.TextCompositionEndedEventArgs` | 3 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
-| `Microsoft.UI.Xaml.Controls.TextCompositionStartedEventArgs` | 3 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
+| `Microsoft.UI.Xaml.Controls.TextCompositionChangedEventArgs` | 3 | 3 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
+| `Microsoft.UI.Xaml.Controls.TextCompositionEndedEventArgs` | 3 | 3 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
+| `Microsoft.UI.Xaml.Controls.TextCompositionStartedEventArgs` | 3 | 3 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.TextControlCopyingToClipboardEventArgs` | 2 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.TextControlCuttingToClipboardEventArgs` | 2 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
 | `Microsoft.UI.Xaml.Controls.TextControlPasteEventArgs` | 2 | 0 / 0 | R5/R7 | `src/FerroUI.Controls/rich_edit_box.rs`, `src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs` |
@@ -106,6 +109,9 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Xaml.Documents.Typography` | 173 | 0 / 0 | R6 | `src/FerroUI.Controls/documents/text_element.rs`, `src/FerroUI.Base/media/text_formatting/text_shaper.rs` |
 | `Microsoft.UI.Xaml.Documents.Underline` | 2 | 2 / 0 | R1/R2 | `src/FerroUI.Controls/documents/underline.rs` |
 | `Microsoft.UI.Xaml.Documents.UnderlineStyle` | 3 | 3 / 0 | R1/R5 | `src/FerroUI.Controls/documents/hyperlink.rs` |
+| `Microsoft.UI.Xaml.Input.InputScope` | 3 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.Input.InputScopeName` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.Input.InputScopeNameValue` | 44 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
 | `Microsoft.UI.Xaml.LineStackingStrategy` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
 | `Microsoft.UI.Xaml.OpticalMarginAlignment` | 3 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
 | `Microsoft.UI.Xaml.TextAlignment` | 8 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
@@ -665,6 +671,39 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
+#### `M:Microsoft.UI.Text.ITextRange.Delete(Microsoft.UI.Text.TextRangeUnit,System.Int32)`
+
+State: **partial**. Delete removes a nonempty range first and counts it once, then resolves remaining signed logical units against the changed document. Count zero removes only the selected span; extreme counts do not overflow. Supported paragraph joins retain the surviving following paragraph format, preserve local/inherited character provenance, rebase independent selection and collapse the edited range in one undo unit. The selection facade recaptures after layout callbacks. Proven external model changes during layout or publication survive rejection without stale history/selection rollback; ordinary errors still roll back. The Rust result is a nonnegative usize removed-unit count. Only the eight mapped units and normalized model positions are supported; native structural markers, additional units and native engine conformance remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn delete(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn delete_by(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `pub(super) fn resolve(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_editor.rs](../../../src/FerroUI.Controls/rich_text/rich_text_editor.rs) — `pub fn edit_group<T>(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_zero_removes_selection_without_resolving_units`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_nonempty_span_counts_once_then_uses_direction`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_scalar_counts_preserve_utf16_and_extreme_requests`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_word_units_include_following_whitespace`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_noop_preserves_redo_revision_and_composition`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_unavailable_layout_and_readonly_preserve_preview`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_paragraph_mark_and_partial_paragraph_keep_native_boundaries`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_join_uses_surviving_following_paragraph_format`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_whole_paragraph_drops_its_assigned_character_defaults`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_character_count_includes_an_explicit_paragraph_mark`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_shaped_cluster_removes_ligatures_and_reflows_after_first_span`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_line_after_first_span_uses_new_wrapped_layout`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_keeps_nested_formatting_and_embedded_control_identity`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_selection_facade_collapses_directed_selection_and_undoes_once`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_selection_collapses_when_its_paragraph_mark_is_retained`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_selection_recaptures_directed_endpoints_after_layout_callbacks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_failed_outer_transaction_restores_structure_and_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_layout_callback_preserves_external_model_edits_in_nested_groups`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_deliberate_reentrant_error_still_rolls_back`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_layout_only_reentrancy_rolls_back_the_group`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_publication_callback_preserves_external_edits_and_live_range_rebasing`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_changed_operations_recapture_committed_content_after_preview_cancellation`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_editor_publication_in_an_outer_batch_discards_history_and_composition_causes`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I14](DEVIATIONS.md), [RT-A03](DEVIATIONS.md).
+
 #### `M:Microsoft.UI.Text.ITextRange.EndOf(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
 
 State: **partial**. end_of operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The eight implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending. Shaped Cluster uses the same movement/index operations and requires complete validated live layout.
@@ -901,7 +940,7 @@ State: **partial**. The range operation uses shared live text positions and type
 
 #### `M:Microsoft.UI.Text.ITextRange.SetText(Microsoft.UI.Text.TextSetOptions,System.String)`
 
-State: **partial**. Typed get_text/set_text_with_options implement the mapped plain/RTF projections, CR/CRLF/LF and terminal-paragraph handling, scalar-safe length policy, atomic parse/option validation and supported Unlink insertion. The native UseLfAndUseCrLf assertions are adapted directly. Object-text, numbering, hidden-text filtering/unhiding, UnicodeBidi insertion mode and ApplyRtfDocumentDefaults return explicit UnsupportedOptions; unknown/contradictory flags fail before editing. The model retains normalized UTF-16 text coordinates and the codec remains a bounded RTF subset. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed.
+State: **partial**. Typed get_text/set_text_with_options implement the mapped plain/RTF projections, CR/CRLF/LF and terminal-paragraph handling, scalar-safe length policy, atomic parse/option validation and supported Unlink insertion. The native UseLfAndUseCrLf assertions are adapted directly. Object-text, numbering, hidden-text filtering/unhiding, UnicodeBidi insertion mode and ApplyRtfDocumentDefaults return explicit UnsupportedOptions; unknown/contradictory flags fail before editing. The model retains normalized UTF-16 text coordinates and the codec remains a bounded RTF subset. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_text(`.
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn get_text(`.
@@ -911,6 +950,9 @@ State: **partial**. Typed get_text/set_text_with_options implement the mapped pl
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_fonts(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `struct DestinationText`.
 - Target: [src/FerroUI.Controls/rich_text/rtf_encoding.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding.rs) — `pub(super) struct EncodedText`.
+- Target: [src/FerroUI.Controls/rich_text/rtf_styles.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles.rs) — `pub(super) struct StyleTable`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn apply_style(`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_field(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_live_ranges_follow_edits_and_support_independent_clones`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `use_lf_and_use_cr_lf`.
@@ -937,11 +979,24 @@ State: **partial**. Typed get_text/set_text_with_options implement the mapped pl
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_code_page_limits_count_decoded_utf16_units`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_long_multibyte_runs_cross_decoder_output_buffers`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_ignored_destination_does_not_inject_hyperlink_target_text`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-A03](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I18](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_forward_bases_and_direct_overrides_resolve_in_order`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_additive_character_format_keeps_the_paragraph_font`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_nonadditive_character_format_resets_only_character_properties`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_font_charset_drives_scoped_body_decoding`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_names_and_keycodes_never_become_document_content`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_selected_invalid_graphs_fail_without_silent_format_loss`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_expansion_and_inheritance_have_independent_work_bounds`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_import_rejects_invalid_graph_before_mutation_and_undoes_once`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_across_paragraphs_retains_targets_metrics_and_surrounding_text`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_empty_edges_do_not_create_invisible_hyperlinks`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_separators_count_toward_the_text_limit`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_segments_round_trip_through_canonical_rtf`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_metadata_expansion_is_bounded_across_the_whole_document`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-A03](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I18](DEVIATIONS.md), [RT-I19](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.ITextRange.SetTextViaStream(Microsoft.UI.Text.TextSetOptions,Windows.Storage.Streams.IRandomAccessStream)`
 
-State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed.
+State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs) — `pub fn set_text_via_stream(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `pub struct RtfReader;`.
@@ -949,6 +1004,9 @@ State: **partial**. The native random-access stream ABI is translated to FerroUI
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_fonts(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `struct DestinationText`.
 - Target: [src/FerroUI.Controls/rich_text/rtf_encoding.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding.rs) — `pub(super) struct EncodedText`.
+- Target: [src/FerroUI.Controls/rich_text/rtf_styles.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles.rs) — `pub(super) struct StyleTable`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn apply_style(`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_field(`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_encodings_round_trip_scalars_and_matching_byte_order_marks`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `malformed_stream_encodings_preserve_composition_selection_and_history`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `invalid_stream_flags_and_rtf_encoding_policy_do_not_access_the_stream`.
@@ -972,7 +1030,20 @@ State: **partial**. The native random-access stream ABI is translated to FerroUI
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_code_page_limits_count_decoded_utf16_units`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_long_multibyte_runs_cross_decoder_output_buffers`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_ignored_destination_does_not_inject_hyperlink_target_text`.
-- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md), [RT-I18](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_forward_bases_and_direct_overrides_resolve_in_order`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_additive_character_format_keeps_the_paragraph_font`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_nonadditive_character_format_resets_only_character_properties`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_font_charset_drives_scoped_body_decoding`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_names_and_keycodes_never_become_document_content`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_selected_invalid_graphs_fail_without_silent_format_loss`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_expansion_and_inheritance_have_independent_work_bounds`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_import_rejects_invalid_graph_before_mutation_and_undoes_once`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_across_paragraphs_retains_targets_metrics_and_surrounding_text`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_empty_edges_do_not_create_invisible_hyperlinks`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_separators_count_toward_the_text_limit`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_segments_round_trip_through_canonical_rtf`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_metadata_expansion_is_bounded_across_the_whole_document`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md), [RT-I18](DEVIATIONS.md), [RT-I19](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.ITextRange.StartOf(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
 
@@ -988,6 +1059,28 @@ State: **partial**. start_of operates on live scalar-safe UTF-16 ranges. Start/e
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `tom_layout_navigation_rejects_reentrant_presentation_without_a_document_edit`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `cluster_units_preserve_zero_advance_soft_hyphens_and_joining_controls`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.ITextRange.Character`
+
+State: **partial**. Character reads the exact UTF-16 code unit at the range start, including a leading surrogate, and returns zero at the model end. The u16 setter rejects isolated surrogate input and replacement of half an existing pair; Rust scalar getter/setter extensions handle complete supplementary characters safely. Replacement retains assigned run/container/paragraph formatting and inheritance, the range start, independent directed selection, scalar-safe length policy and one undo unit. Preflight validation/no-op calls preserve composition and redo; changed calls cancel preview then recapture committed content, which can itself be unchanged. Detected external writes retain their model while stale history/composition is discarded. Native synthetic terminal CR and transient malformed UTF-16 are not model characters; native engine conformance remains pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn character(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn set_character(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn character_scalar(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn set_character_scalar(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_reads_exact_utf16_and_complete_scalars`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_replaces_first_scalar_and_retains_range_start_and_selection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_retains_overwritten_run_format_at_boundaries`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_run_splice_does_not_freeze_inherited_formatting`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_run_and_paragraph_replacements_follow_owner_presentation`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_replaces_inline_object_with_its_assigned_container_context`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_paragraph_split_retains_local_inheritance`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_invalid_utf16_end_and_length_leave_preview_untouched`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_noop_preserves_composition_and_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_lowered_limit_never_truncates_nonexpanding_replacement`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_publication_callback_preserves_external_edits_and_live_range_rebasing`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_changed_operations_recapture_committed_content_after_preview_cancellation`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I14](DEVIATIONS.md), [RT-A03](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Text.ITextRange.CharacterFormat`
 
@@ -1386,7 +1479,7 @@ State: **partial**. Typed get_text/set_text_with_options implement the mapped pl
 
 #### `M:Microsoft.UI.Text.RichEditTextDocument.LoadFromStream(Microsoft.UI.Text.TextSetOptions,Windows.Storage.Streams.IRandomAccessStream)`
 
-State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed.
+State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs) — `pub fn load_from_stream(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `pub struct RtfReader;`.
@@ -1394,6 +1487,9 @@ State: **partial**. The native random-access stream ABI is translated to FerroUI
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_fonts(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `struct DestinationText`.
 - Target: [src/FerroUI.Controls/rich_text/rtf_encoding.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding.rs) — `pub(super) struct EncodedText`.
+- Target: [src/FerroUI.Controls/rich_text/rtf_styles.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles.rs) — `pub(super) struct StyleTable`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn apply_style(`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_field(`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_encodings_round_trip_scalars_and_matching_byte_order_marks`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `malformed_stream_encodings_preserve_composition_selection_and_history`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `invalid_stream_flags_and_rtf_encoding_policy_do_not_access_the_stream`.
@@ -1414,7 +1510,20 @@ State: **partial**. The native random-access stream ABI is translated to FerroUI
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_code_page_limits_count_decoded_utf16_units`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_long_multibyte_runs_cross_decoder_output_buffers`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_ignored_destination_does_not_inject_hyperlink_target_text`.
-- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md), [RT-I18](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_forward_bases_and_direct_overrides_resolve_in_order`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_additive_character_format_keeps_the_paragraph_font`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_nonadditive_character_format_resets_only_character_properties`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_font_charset_drives_scoped_body_decoding`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_names_and_keycodes_never_become_document_content`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_selected_invalid_graphs_fail_without_silent_format_loss`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_expansion_and_inheritance_have_independent_work_bounds`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_import_rejects_invalid_graph_before_mutation_and_undoes_once`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_across_paragraphs_retains_targets_metrics_and_surrounding_text`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_empty_edges_do_not_create_invisible_hyperlinks`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_separators_count_toward_the_text_limit`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_segments_round_trip_through_canonical_rtf`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_metadata_expansion_is_bounded_across_the_whole_document`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md), [RT-I18](DEVIATIONS.md), [RT-I19](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextDocument.Redo`
 
@@ -1468,7 +1577,7 @@ State: **partial**. Shared RichTextEditor default formats are exposed through ev
 
 #### `M:Microsoft.UI.Text.RichEditTextDocument.SetText(Microsoft.UI.Text.TextSetOptions,System.String)`
 
-State: **partial**. Typed get_text/set_text_with_options implement the mapped plain/RTF projections, CR/CRLF/LF and terminal-paragraph handling, scalar-safe length policy, atomic parse/option validation and supported Unlink insertion. The native UseLfAndUseCrLf assertions are adapted directly. Object-text, numbering, hidden-text filtering/unhiding, UnicodeBidi insertion mode and ApplyRtfDocumentDefaults return explicit UnsupportedOptions; unknown/contradictory flags fail before editing. The model retains normalized UTF-16 text coordinates and the codec remains a bounded RTF subset. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed.
+State: **partial**. Typed get_text/set_text_with_options implement the mapped plain/RTF projections, CR/CRLF/LF and terminal-paragraph handling, scalar-safe length policy, atomic parse/option validation and supported Unlink insertion. The native UseLfAndUseCrLf assertions are adapted directly. Object-text, numbering, hidden-text filtering/unhiding, UnicodeBidi insertion mode and ApplyRtfDocumentDefaults return explicit UnsupportedOptions; unknown/contradictory flags fail before editing. The model retains normalized UTF-16 text coordinates and the codec remains a bounded RTF subset. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_text(`.
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn get_text(`.
@@ -1478,6 +1587,9 @@ State: **partial**. Typed get_text/set_text_with_options implement the mapped pl
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_fonts(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `struct DestinationText`.
 - Target: [src/FerroUI.Controls/rich_text/rtf_encoding.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding.rs) — `pub(super) struct EncodedText`.
+- Target: [src/FerroUI.Controls/rich_text/rtf_styles.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles.rs) — `pub(super) struct StyleTable`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn apply_style(`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_field(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_text_services_share_selection_history_and_visual_geometry`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `use_lf_and_use_cr_lf`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `retrieval_options_distinguish_story_terminal_mark_from_live_ranges`.
@@ -1503,7 +1615,20 @@ State: **partial**. Typed get_text/set_text_with_options implement the mapped pl
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_code_page_limits_count_decoded_utf16_units`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_long_multibyte_runs_cross_decoder_output_buffers`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_ignored_destination_does_not_inject_hyperlink_target_text`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-A03](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I18](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_forward_bases_and_direct_overrides_resolve_in_order`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_additive_character_format_keeps_the_paragraph_font`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_nonadditive_character_format_resets_only_character_properties`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_font_charset_drives_scoped_body_decoding`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_names_and_keycodes_never_become_document_content`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_selected_invalid_graphs_fail_without_silent_format_loss`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_expansion_and_inheritance_have_independent_work_bounds`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_import_rejects_invalid_graph_before_mutation_and_undoes_once`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_across_paragraphs_retains_targets_metrics_and_surrounding_text`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_empty_edges_do_not_create_invisible_hyperlinks`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_separators_count_toward_the_text_limit`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_segments_round_trip_through_canonical_rtf`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_metadata_expansion_is_bounded_across_the_whole_document`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-A03](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I18](DEVIATIONS.md), [RT-I19](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextDocument.Undo`
 
@@ -1585,6 +1710,39 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
+#### `M:Microsoft.UI.Text.RichEditTextRange.Delete(Microsoft.UI.Text.TextRangeUnit,System.Int32)`
+
+State: **partial**. Delete removes a nonempty range first and counts it once, then resolves remaining signed logical units against the changed document. Count zero removes only the selected span; extreme counts do not overflow. Supported paragraph joins retain the surviving following paragraph format, preserve local/inherited character provenance, rebase independent selection and collapse the edited range in one undo unit. The selection facade recaptures after layout callbacks. Proven external model changes during layout or publication survive rejection without stale history/selection rollback; ordinary errors still roll back. The Rust result is a nonnegative usize removed-unit count. Only the eight mapped units and normalized model positions are supported; native structural markers, additional units and native engine conformance remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn delete(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn delete_by(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `pub(super) fn resolve(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_editor.rs](../../../src/FerroUI.Controls/rich_text/rich_text_editor.rs) — `pub fn edit_group<T>(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_zero_removes_selection_without_resolving_units`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_nonempty_span_counts_once_then_uses_direction`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_scalar_counts_preserve_utf16_and_extreme_requests`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_word_units_include_following_whitespace`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_noop_preserves_redo_revision_and_composition`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_unavailable_layout_and_readonly_preserve_preview`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_paragraph_mark_and_partial_paragraph_keep_native_boundaries`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_join_uses_surviving_following_paragraph_format`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_whole_paragraph_drops_its_assigned_character_defaults`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_character_count_includes_an_explicit_paragraph_mark`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_shaped_cluster_removes_ligatures_and_reflows_after_first_span`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_line_after_first_span_uses_new_wrapped_layout`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_keeps_nested_formatting_and_embedded_control_identity`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_selection_facade_collapses_directed_selection_and_undoes_once`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_selection_collapses_when_its_paragraph_mark_is_retained`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_selection_recaptures_directed_endpoints_after_layout_callbacks`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_failed_outer_transaction_restores_structure_and_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_layout_callback_preserves_external_model_edits_in_nested_groups`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_deliberate_reentrant_error_still_rolls_back`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_delete_layout_only_reentrancy_rolls_back_the_group`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_publication_callback_preserves_external_edits_and_live_range_rebasing`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_changed_operations_recapture_committed_content_after_preview_cancellation`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_editor_publication_in_an_outer_batch_discards_history_and_composition_causes`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I14](DEVIATIONS.md), [RT-A03](DEVIATIONS.md).
+
 #### `M:Microsoft.UI.Text.RichEditTextRange.EndOf(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
 
 State: **partial**. end_of operates on live scalar-safe UTF-16 ranges. Start/end use signed displacements, indices are one-based or end-relative, and movement counts a nonempty collapse as its first unit. The eight implemented constants retain native numeric values. Character traverses Unicode scalars, Word includes following ASCII blanks, Sentence follows native punctuation rules, Paragraph handles native separators, HardParagraph distinguishes structural paragraphs from soft breaks, and Line uses a weak complete untrimmed view with headless Paragraph fallback. The model has one Story and excludes the synthetic terminal CR. Remaining native units, arbitrary stories and ABI remain pending. Shaped Cluster uses the same movement/index operations and requires complete validated live layout.
@@ -1625,6 +1783,14 @@ State: **partial**. The range operation uses shared live text positions and type
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn find_text(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_search_keeps_utf16_offsets_and_reverse_overlapping_matches`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.RichEditTextRange.GetCharacterUtf32(System.UInt32@,System.Int32)`
+
+State: **partial**. The signed offset is relative to the range end. Either UTF-16 surrogate half resolves to its scalar, and positions outside the story yield zero. Live range endpoints remain checked scalar boundaries.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn get_character_utf32(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `get_character_utf32_uses_end_relative_offsets_and_decodes_both_surrogates`.
+- Differences: [RT-A03](DEVIATIONS.md), [RT-I01](DEVIATIONS.md), [RT-I03](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.GetClone`
 
@@ -1694,6 +1860,17 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
+#### `M:Microsoft.UI.Text.RichEditTextRange.InStory(Microsoft.UI.Text.ITextRange)`
+
+State: **partial**. Endpoint crossing collapses the opposite endpoint; story identity and matching the active selection use the shared model. Rust endpoints are usize UTF-16 scalar boundaries, without native signed sentinel or structural marker positions.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_start_position(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_end_position(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn in_story(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn match_selection(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `range_endpoint_setters_collapse_crossings_and_reject_surrogate_interiors`.
+- Differences: [RT-A03](DEVIATIONS.md), [RT-I01](DEVIATIONS.md), [RT-I03](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
 #### `M:Microsoft.UI.Text.RichEditTextRange.IsEqual(Microsoft.UI.Text.ITextRange)`
 
 State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted.
@@ -1702,6 +1879,17 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_live_ranges_follow_edits_and_support_independent_clones`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.RichEditTextRange.MatchSelection`
+
+State: **partial**. Endpoint crossing collapses the opposite endpoint; story identity and matching the active selection use the shared model. Rust endpoints are usize UTF-16 scalar boundaries, without native signed sentinel or structural marker positions.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_start_position(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_end_position(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn in_story(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn match_selection(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `range_endpoint_setters_collapse_crossings_and_reject_surrogate_interiors`.
+- Differences: [RT-A03](DEVIATIONS.md), [RT-I01](DEVIATIONS.md), [RT-I03](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.Move(Microsoft.UI.Text.TextRangeUnit,System.Int32)`
 
@@ -1776,7 +1964,7 @@ State: **partial**. The range operation uses shared live text positions and type
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.SetText(Microsoft.UI.Text.TextSetOptions,System.String)`
 
-State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed.
+State: **partial**. The range operation uses shared live text positions and typed Result values. Unit movement and search use the documented Rust subset; native options, count conventions and geometry flags remain adapted. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn set_text(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `pub struct RtfReader;`.
@@ -1784,6 +1972,9 @@ State: **partial**. The range operation uses shared live text positions and type
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_fonts(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `struct DestinationText`.
 - Target: [src/FerroUI.Controls/rich_text/rtf_encoding.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding.rs) — `pub(super) struct EncodedText`.
+- Target: [src/FerroUI.Controls/rich_text/rtf_styles.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles.rs) — `pub(super) struct StyleTable`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn apply_style(`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_field(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_live_ranges_follow_edits_and_support_independent_clones`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_range_replacement_rebases_independent_selection_and_undoes_once`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_code_pages_decode_independent_multilingual_fixtures`.
@@ -1800,11 +1991,24 @@ State: **partial**. The range operation uses shared live text positions and type
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_code_page_limits_count_decoded_utf16_units`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_long_multibyte_runs_cross_decoder_output_buffers`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_ignored_destination_does_not_inject_hyperlink_target_text`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I18](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_forward_bases_and_direct_overrides_resolve_in_order`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_additive_character_format_keeps_the_paragraph_font`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_nonadditive_character_format_resets_only_character_properties`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_font_charset_drives_scoped_body_decoding`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_names_and_keycodes_never_become_document_content`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_selected_invalid_graphs_fail_without_silent_format_loss`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_expansion_and_inheritance_have_independent_work_bounds`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_import_rejects_invalid_graph_before_mutation_and_undoes_once`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_across_paragraphs_retains_targets_metrics_and_surrounding_text`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_empty_edges_do_not_create_invisible_hyperlinks`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_separators_count_toward_the_text_limit`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_segments_round_trip_through_canonical_rtf`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_metadata_expansion_is_bounded_across_the_whole_document`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I18](DEVIATIONS.md), [RT-I19](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.SetTextViaStream(Microsoft.UI.Text.TextSetOptions,Windows.Storage.Streams.IRandomAccessStream)`
 
-State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed.
+State: **partial**. The native random-access stream ABI is translated to FerroUI-style Rust Read/Write. TextStreamOptions explicitly selects plain UTF-8/UTF-16LE/UTF-16BE, BOM and byte bounds; RTF uses raw codec bytes. Input validation finishes before mutation, output encoding before writing, and caller ownership/current position are preserved. Unsupported flags/content fail explicitly; native engine encoding defaults and WinRT ABI are not inferred. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream.rs) — `pub fn set_text_via_stream(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `pub struct RtfReader;`.
@@ -1812,6 +2016,9 @@ State: **partial**. The native random-access stream ABI is translated to FerroUI
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_fonts(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `struct DestinationText`.
 - Target: [src/FerroUI.Controls/rich_text/rtf_encoding.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding.rs) — `pub(super) struct EncodedText`.
+- Target: [src/FerroUI.Controls/rich_text/rtf_styles.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles.rs) — `pub(super) struct StyleTable`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn apply_style(`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_field(`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `stream_encodings_round_trip_scalars_and_matching_byte_order_marks`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `malformed_stream_encodings_preserve_composition_selection_and_history`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) — `invalid_stream_flags_and_rtf_encoding_policy_do_not_access_the_stream`.
@@ -1835,7 +2042,20 @@ State: **partial**. The native random-access stream ABI is translated to FerroUI
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_code_page_limits_count_decoded_utf16_units`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_long_multibyte_runs_cross_decoder_output_buffers`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_ignored_destination_does_not_inject_hyperlink_target_text`.
-- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md), [RT-I18](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_forward_bases_and_direct_overrides_resolve_in_order`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_additive_character_format_keeps_the_paragraph_font`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_nonadditive_character_format_resets_only_character_properties`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_font_charset_drives_scoped_body_decoding`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_names_and_keycodes_never_become_document_content`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_selected_invalid_graphs_fail_without_silent_format_loss`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_expansion_and_inheritance_have_independent_work_bounds`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_import_rejects_invalid_graph_before_mutation_and_undoes_once`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_across_paragraphs_retains_targets_metrics_and_surrounding_text`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_empty_edges_do_not_create_invisible_hyperlinks`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_separators_count_toward_the_text_limit`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_segments_round_trip_through_canonical_rtf`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_metadata_expansion_is_bounded_across_the_whole_document`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I12](DEVIATIONS.md), [RT-I18](DEVIATIONS.md), [RT-I19](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.RichEditTextRange.StartOf(Microsoft.UI.Text.TextRangeUnit,System.Boolean)`
 
@@ -1851,6 +2071,28 @@ State: **partial**. start_of operates on live scalar-safe UTF-16 ranges. Start/e
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `tom_layout_navigation_rejects_reentrant_presentation_without_a_document_edit`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) — `cluster_units_preserve_zero_advance_soft_hyphens_and_joining_controls`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.RichEditTextRange.Character`
+
+State: **partial**. Character reads the exact UTF-16 code unit at the range start, including a leading surrogate, and returns zero at the model end. The u16 setter rejects isolated surrogate input and replacement of half an existing pair; Rust scalar getter/setter extensions handle complete supplementary characters safely. Replacement retains assigned run/container/paragraph formatting and inheritance, the range start, independent directed selection, scalar-safe length policy and one undo unit. Preflight validation/no-op calls preserve composition and redo; changed calls cancel preview then recapture committed content, which can itself be unchanged. Detected external writes retain their model while stale history/composition is discarded. Native synthetic terminal CR and transient malformed UTF-16 are not model characters; native engine conformance remains pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn character(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn set_character(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn character_scalar(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations.rs) — `pub fn set_character_scalar(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_reads_exact_utf16_and_complete_scalars`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_replaces_first_scalar_and_retains_range_start_and_selection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_retains_overwritten_run_format_at_boundaries`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_run_splice_does_not_freeze_inherited_formatting`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_run_and_paragraph_replacements_follow_owner_presentation`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_replaces_inline_object_with_its_assigned_container_context`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_paragraph_split_retains_local_inheritance`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_invalid_utf16_end_and_length_leave_preview_untouched`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_noop_preserves_composition_and_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_character_lowered_limit_never_truncates_nonexpanding_replacement`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_publication_callback_preserves_external_edits_and_live_range_rebasing`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) — `rich_range_changed_operations_recapture_committed_content_after_preview_cancellation`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I14](DEVIATIONS.md), [RT-A03](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Text.RichEditTextRange.CharacterFormat`
 
@@ -2290,7 +2532,7 @@ State: **partial**. Native numeric flags and FerroUI markup metadata are declare
 
 #### `F:Microsoft.UI.Text.TextSetOptions.FormatRtf`
 
-State: **partial**. Native numeric flags and FerroUI markup metadata are declared by the Rust type. Only the associated mapped operations implement flag behavior; unsupported modes return typed errors before mutation. This record does not count declaration of an unsupported flag as functional implementation of that mode. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed.
+State: **partial**. Native numeric flags and FerroUI markup metadata are declared by the Rust type. Only the associated mapped operations implement flag behavior; unsupported modes return typed errors before mutation. This record does not count declaration of an unsupported flag as functional implementation of that mode. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub struct TextSetOptions`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `pub struct RtfReader;`.
@@ -2298,6 +2540,9 @@ State: **partial**. Native numeric flags and FerroUI markup metadata are declare
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_fonts(`.
 - Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `struct DestinationText`.
 - Target: [src/FerroUI.Controls/rich_text/rtf_encoding.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding.rs) — `pub(super) struct EncodedText`.
+- Target: [src/FerroUI.Controls/rich_text/rtf_styles.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles.rs) — `pub(super) struct StyleTable`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn apply_style(`.
+- Target: [src/FerroUI.Controls/rich_text/rtf.rs](../../../src/FerroUI.Controls/rich_text/rtf.rs) — `fn read_field(`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `unknown_and_unimplemented_options_are_explicit_and_do_not_edit`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `use_lf_and_use_cr_lf`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document_tests.rs) — `bounded_search_respects_scan_edges_utf16_and_whole_word_options`.
@@ -2315,7 +2560,20 @@ State: **partial**. Native numeric flags and FerroUI markup metadata are declare
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_code_page_limits_count_decoded_utf16_units`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_long_multibyte_runs_cross_decoder_output_buffers`.
 - Test: [src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs) — `rich_edit_rtf_ignored_destination_does_not_inject_hyperlink_target_text`.
-- Differences: [RT-A03](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I18](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_forward_bases_and_direct_overrides_resolve_in_order`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_additive_character_format_keeps_the_paragraph_font`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_nonadditive_character_format_resets_only_character_properties`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_font_charset_drives_scoped_body_decoding`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_names_and_keycodes_never_become_document_content`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_selected_invalid_graphs_fail_without_silent_format_loss`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_expansion_and_inheritance_have_independent_work_bounds`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_styles_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_styles_tests.rs) — `rich_rtf_style_import_rejects_invalid_graph_before_mutation_and_undoes_once`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_across_paragraphs_retains_targets_metrics_and_surrounding_text`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_empty_edges_do_not_create_invisible_hyperlinks`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_separators_count_toward_the_text_limit`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_paragraph_segments_round_trip_through_canonical_rtf`.
+- Test: [src/FerroUI.Controls/rich_text/rtf_field_tests.rs](../../../src/FerroUI.Controls/rich_text/rtf_field_tests.rs) — `rich_rtf_field_metadata_expansion_is_bounded_across_the_whole_document`.
+- Differences: [RT-A03](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I04](DEVIATIONS.md), [RT-I18](DEVIATIONS.md), [RT-I19](DEVIATIONS.md).
 
 #### `F:Microsoft.UI.Text.TextSetOptions.None`
 
@@ -3198,7 +3456,25 @@ State: **partial**. The portable enum retains native numeric values and the Wind
 - Test: [src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs](../../../src/FerroUI.Controls/automation/provider/rich_text_automation_tests.rs) — `rich_automation_line_units_follow_wrapped_layout_and_paragraph_units_follow_breaks`.
 - Differences: [RT-I10](DEVIATIONS.md).
 
+### `Microsoft.UI.Xaml.Controls.CandidateWindowAlignment`
+
+Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed.
+
+All retained members remain pending.
+
 ### `Microsoft.UI.Xaml.Controls.CandidateWindowBoundsChangedEventArgs`
+
+Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.Controls.ContextMenuEventArgs`
+
+Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.Controls.ContextMenuOpeningEventHandler`
 
 Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed.
 
@@ -3237,18 +3513,21 @@ State: **partial**. Routed framework notification/cancellation is connected to t
 
 #### `E:Microsoft.UI.Xaml.Controls.RichEditBox.SelectionChanged`
 
-State: **partial**. SelectionChanging exposes the proposed view/TOM selection and a shared Cancel flag before publication. Cancellation preserves the prior selection, while reentrant view or TOM selection overrides cancellation and publishes the final selection once. Temporary grouped edit ranges stay internal; accepted post-edit selection participates in undo/redo. Native ABI and backend input scenarios remain separate acceptance work.
+State: **partial**. The persistent presenter routes accepted selection publication through the RichEditBox owner event and IME client identity. SelectionChanging exposes the proposed view/TOM selection with shared cancellation before publication; reentrant selection retains the newest accepted result. Grouped temporary ranges remain internal and accepted post-edit selection participates in history. Native event ABI and complete backend order remain separate conformance work.
 
 - Target: [src/FerroUI.Controls/rich_text_block.rs](../../../src/FerroUI.Controls/rich_text_block.rs) — `pub fn selection_changed(`.
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub struct RichEditBoxSelectionChangingEventArgs`.
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn selection_changing_event(`.
 - Target: [src/FerroUI.Controls/rich_text_block.rs](../../../src/FerroUI.Controls/rich_text_block.rs) — `pub fn select(`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn selection_changed_event(`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `fn raise_presenter_selection_changed(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_text_services_share_selection_history_and_visual_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_selection_changing_cancellation_preserves_selection_and_properties`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_selection_changing_reentrant_view_and_tom_changes_publish_once`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_canceled_post_edit_selection_is_retained_in_undo_and_redo`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_grouped_range_edits_expose_only_the_final_user_selection`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_selection_property_keyboard_and_ime_requests_share_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_presenter_selection_events_and_ime_requests_keep_the_owner_identity`.
 - Differences: [RT-I07](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
 
 #### `E:Microsoft.UI.Xaml.Controls.RichEditBox.SelectionChanging`
@@ -3294,7 +3573,7 @@ State: **partial**. TextChanging is raised synchronously after backing-document 
 
 #### `E:Microsoft.UI.Xaml.Controls.RichEditBox.TextCompositionChanged`
 
-State: **partial**. Routed framework notification/cancellation is connected to the rich editor operation. Native argument shape, exact timing and the complete event sequence remain explicitly adapted. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate.
+State: **partial**. Routed framework notification/cancellation is connected to the rich editor operation. Native argument shape, exact timing and the complete event sequence remain explicitly adapted. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn text_composition_changed_event(`.
 - Target: [src/FerroUI.Base/input/text_input/text_input_method_edit.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_edit.rs) — `pub struct TextInputMethodEdit`.
@@ -3303,6 +3582,9 @@ State: **partial**. Routed framework notification/cancellation is connected to t
 - Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn apply_exact_input_edit(`.
 - Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn complete_exact_composition(`.
 - Target: [src/Windows/FerroUI.WinUI/core_text_synchronization.rs](../../../src/Windows/FerroUI.WinUI/core_text_synchronization.rs) — `struct CoreTextSynchronization`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub struct RichEditCompositionEventArgs`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_native_surrounding_text_excludes_preview_and_selection_cancels_it`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_ime_notifications_expose_committed_text_during_preview_publication`.
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_input_replaces_requested_range_independently_of_selection_and_undoes_once`.
@@ -3316,11 +3598,30 @@ State: **partial**. Routed framework notification/cancellation is connected to t
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_input_selection_cancellation_rolls_back_structured_edit_without_history`.
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_composition_reentrant_callback_keeps_application_edit_and_rejects_native_success`.
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_input_identical_text_updates_selection_without_destroying_redo_or_formatting`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
 - Differences: [RT-I07](DEVIATIONS.md), [RT-I16](DEVIATIONS.md).
 
 #### `E:Microsoft.UI.Xaml.Controls.RichEditBox.TextCompositionEnded`
 
-State: **partial**. Routed framework notification/cancellation is connected to the rich editor operation. Native argument shape, exact timing and the complete event sequence remain explicitly adapted. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate.
+State: **partial**. Routed framework notification/cancellation is connected to the rich editor operation. Native argument shape, exact timing and the complete event sequence remain explicitly adapted. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn text_composition_ended_event(`.
 - Target: [src/FerroUI.Base/input/text_input/text_input_method_edit.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_edit.rs) — `pub struct TextInputMethodEdit`.
@@ -3329,6 +3630,9 @@ State: **partial**. Routed framework notification/cancellation is connected to t
 - Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn apply_exact_input_edit(`.
 - Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn complete_exact_composition(`.
 - Target: [src/Windows/FerroUI.WinUI/core_text_synchronization.rs](../../../src/Windows/FerroUI.WinUI/core_text_synchronization.rs) — `struct CoreTextSynchronization`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub struct RichEditCompositionEventArgs`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_native_surrounding_text_excludes_preview_and_selection_cancels_it`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_ime_notifications_expose_committed_text_during_preview_publication`.
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_input_replaces_requested_range_independently_of_selection_and_undoes_once`.
@@ -3342,11 +3646,30 @@ State: **partial**. Routed framework notification/cancellation is connected to t
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_input_selection_cancellation_rolls_back_structured_edit_without_history`.
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_composition_reentrant_callback_keeps_application_edit_and_rejects_native_success`.
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_input_identical_text_updates_selection_without_destroying_redo_or_formatting`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
 - Differences: [RT-I07](DEVIATIONS.md), [RT-I16](DEVIATIONS.md).
 
 #### `E:Microsoft.UI.Xaml.Controls.RichEditBox.TextCompositionStarted`
 
-State: **partial**. Routed framework notification/cancellation is connected to the rich editor operation. Native argument shape, exact timing and the complete event sequence remain explicitly adapted. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate.
+State: **partial**. Routed framework notification/cancellation is connected to the rich editor operation. Native argument shape, exact timing and the complete event sequence remain explicitly adapted. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn text_composition_started_event(`.
 - Target: [src/FerroUI.Base/input/text_input/text_input_method_edit.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_edit.rs) — `pub struct TextInputMethodEdit`.
@@ -3355,6 +3678,9 @@ State: **partial**. Routed framework notification/cancellation is connected to t
 - Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn apply_exact_input_edit(`.
 - Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn complete_exact_composition(`.
 - Target: [src/Windows/FerroUI.WinUI/core_text_synchronization.rs](../../../src/Windows/FerroUI.WinUI/core_text_synchronization.rs) — `struct CoreTextSynchronization`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub struct RichEditCompositionEventArgs`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_native_surrounding_text_excludes_preview_and_selection_cancels_it`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_ime_notifications_expose_committed_text_during_preview_publication`.
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_input_replaces_requested_range_independently_of_selection_and_undoes_once`.
@@ -3368,16 +3694,38 @@ State: **partial**. Routed framework notification/cancellation is connected to t
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_input_selection_cancellation_rolls_back_structured_edit_without_history`.
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_composition_reentrant_callback_keeps_application_edit_and_rejects_native_success`.
 - Test: [src/FerroUI.Controls/rich_edit_exact_input_tests.rs](../../../src/FerroUI.Controls/rich_edit_exact_input_tests.rs) — `rich_exact_input_identical_text_updates_selection_without_destroying_redo_or_formatting`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
 - Differences: [RT-I07](DEVIATIONS.md), [RT-I16](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Xaml.Controls.RichEditBox.#ctor`
 
-State: **partial**. The editable control derives from the rich view and shares model, layout, selection, history and input services. Native windowless engine, template and unimplemented service members are not supplied.
+State: **partial**. RichEditBox derives from FerroUI TemplatedControl and owns one persistent RichEditBoxTextPresenter with shared model, layout, directed selection, history and input services. Real template parts and retemplating retain composition and live services. Native windowless ABI, remaining platform services and unmapped public members remain pending.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `new`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `RichEditBox: TemplatedControl`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_presenter.rs](../../../src/FerroUI.Controls/rich_edit_box_text_presenter.rs) — `RichEditBoxTextPresenter: RichTextBlock`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_text_services_share_selection_history_and_visual_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_undo_restores_nested_inline_structure_and_paragraph_format`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_compound_transaction_rolls_back_on_error_and_is_one_undo_unit`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
 - Differences: [RT-I06](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.AcceptsReturn`
@@ -3858,9 +4206,11 @@ State: **partial**. The registered FerroUI property supplies metadata and invali
 
 #### `T:Microsoft.UI.Xaml.Controls.RichEditBox`
 
-State: **partial**. The editable control derives from the rich view and shares model, layout, selection, history and input services. Native windowless engine, template and unimplemented service members are not supplied.
+State: **partial**. RichEditBox derives from FerroUI TemplatedControl and owns one persistent RichEditBoxTextPresenter with shared model, layout, directed selection, history and input services. Real template parts and retemplating retain composition and live services. Native windowless ABI, remaining platform services and unmapped public members remain pending.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `RichEditBox`.
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `RichEditBox: TemplatedControl`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_presenter.rs](../../../src/FerroUI.Controls/rich_edit_box_text_presenter.rs) — `RichEditBoxTextPresenter: RichTextBlock`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_text_services_share_selection_history_and_visual_geometry`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_undo_restores_nested_inline_structure_and_paragraph_format`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_compound_transaction_rolls_back_on_error_and_is_one_undo_unit`.
@@ -3868,6 +4218,7 @@ State: **partial**. The editable control derives from the rich view and shares m
 - Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_edit_markup_commands_bind_the_real_owner_and_follow_read_only_state`.
 - Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_edit_text_binding_updates_the_document_in_both_directions`.
 - Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_markup_links_overflow_to_the_same_document`.
+- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_retemplate_preserves_composition_history_and_live_document_services`.
 - Differences: [RT-I06](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I08](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Controls.RichEditBoxSelectionChangingEventArgs`
@@ -4660,19 +5011,265 @@ All retained members remain pending.
 
 Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed.
 
-All retained members remain pending.
+#### `P:Microsoft.UI.Xaml.Controls.TextCompositionChangedEventArgs.Length`
+
+State: **partial**. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn length(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I13](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Controls.TextCompositionChangedEventArgs.StartIndex`
+
+State: **partial**. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn start_index(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I13](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.Controls.TextCompositionChangedEventArgs`
+
+State: **partial**. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub struct RichEditCompositionEventArgs`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I13](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Controls.TextCompositionEndedEventArgs`
 
 Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed.
 
-All retained members remain pending.
+#### `P:Microsoft.UI.Xaml.Controls.TextCompositionEndedEventArgs.Length`
+
+State: **partial**. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn length(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I13](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Controls.TextCompositionEndedEventArgs.StartIndex`
+
+State: **partial**. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn start_index(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I13](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.Controls.TextCompositionEndedEventArgs`
+
+State: **partial**. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub struct RichEditCompositionEventArgs`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I13](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Controls.TextCompositionStartedEventArgs`
 
 Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed.
 
-All retained members remain pending.
+#### `P:Microsoft.UI.Xaml.Controls.TextCompositionStartedEventArgs.Length`
+
+State: **partial**. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn length(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I13](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Controls.TextCompositionStartedEventArgs.StartIndex`
+
+State: **partial**. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn start_index(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I13](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.Controls.TextCompositionStartedEventArgs`
+
+State: **partial**. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.
+
+- Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub struct RichEditCompositionEventArgs`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs](../../../src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs) — `pub(crate) fn begin_input_method_composition(`.
+- Target: [src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs](../../../src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs) — `fn begin_composition(`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_event_default_range_uses_the_native_unavailable_sentinel`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_events_keep_the_full_range_across_disjoint_edits`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_end_callback_changes_reject_the_older_native_acknowledgement`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_event_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_event_tests.rs) — `rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_first_exact_replacement_establishes_its_range_independently_of_selection`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_legacy_first_preedit_still_starts_without_a_native_begin`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_empty_updates_do_not_invent_composition_text_changes`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_callback_can_cancel_without_adopting_the_ended_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_start_focus_handoff_invalidates_the_original_semantic_owner`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_restart_does_not_adopt_external_changes_during_cancellation`.
+- Test: [src/FerroUI.Controls/rich_edit_composition_start_tests.rs](../../../src/FerroUI.Controls/rich_edit_composition_start_tests.rs) — `rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I13](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-A01](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Controls.TextControlCopyingToClipboardEventArgs`
 
@@ -5574,29 +6171,44 @@ Review range value semantics, defaults, mutable brush invalidation and layering.
 
 #### `F:Microsoft.UI.Xaml.Documents.TextRange.Length`
 
-State: **partial**. Signed value fields use getter/setter methods so markup can populate a temporary box; cloning/inserting the value preserves native copy semantics. Invalid ranges are checked on conversion/use.
+State: **partial**. Signed value fields use getter/setter methods so markup can populate a temporary box; cloning/inserting the value preserves native copy semantics. Invalid ranges are checked on conversion/use. The framework-specific compiler intrinsic lowers the temporary Rc-backed range constructor and ordinary assignments before generic value-initializer validation. Attribute/property-element/x:Arguments forms retain copied collection values in runtime and emitted markup. Other value types retain the normal initializer guard. Differential comparison traverses blocks/highlighter/range collections.
 
 - Target: [src/FerroUI.Controls/documents/text_highlight_range.rs](../../../src/FerroUI.Controls/documents/text_highlight_range.rs) — `pub fn length(`.
+- Target: [src/Markup/FerroUI.Markup.Xaml.Loader/compiler_extensions/transformers/ferro_xaml_il_text_range_transformer.rs](../../../src/Markup/FerroUI.Markup.Xaml.Loader/compiler_extensions/transformers/ferro_xaml_il_text_range_transformer.rs) — `FerroXamlIlTextRangeTransformer`.
 - Test: [src/FerroUI.Controls/documents/text_highlighter_tests.rs](../../../src/FerroUI.Controls/documents/text_highlighter_tests.rs) — `text_highlight_ranges_preserve_native_value_semantics_and_validate_half_open_conversion`.
 - Test: [src/FerroUI.Controls/documents/text_highlighter_tests.rs](../../../src/FerroUI.Controls/documents/text_highlighter_tests.rs) — `text_highlight_range_markup_writes_a_box_then_copies_the_collection_value`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_range_markup_initializes_a_value_and_preserves_signed_fields`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_range_markup_rejects_invalid_fields_and_constructor_arguments`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_range_initialization_keeps_the_normal_value_type_guard`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_markup_preserves_nested_document_content_and_copied_highlight_values`.
 - Differences: [RT-I09](DEVIATIONS.md).
 
 #### `F:Microsoft.UI.Xaml.Documents.TextRange.StartIndex`
 
-State: **partial**. Signed value fields use getter/setter methods so markup can populate a temporary box; cloning/inserting the value preserves native copy semantics. Invalid ranges are checked on conversion/use.
+State: **partial**. Signed value fields use getter/setter methods so markup can populate a temporary box; cloning/inserting the value preserves native copy semantics. Invalid ranges are checked on conversion/use. The framework-specific compiler intrinsic lowers the temporary Rc-backed range constructor and ordinary assignments before generic value-initializer validation. Attribute/property-element/x:Arguments forms retain copied collection values in runtime and emitted markup. Other value types retain the normal initializer guard. Differential comparison traverses blocks/highlighter/range collections.
 
 - Target: [src/FerroUI.Controls/documents/text_highlight_range.rs](../../../src/FerroUI.Controls/documents/text_highlight_range.rs) — `pub fn start_index(`.
+- Target: [src/Markup/FerroUI.Markup.Xaml.Loader/compiler_extensions/transformers/ferro_xaml_il_text_range_transformer.rs](../../../src/Markup/FerroUI.Markup.Xaml.Loader/compiler_extensions/transformers/ferro_xaml_il_text_range_transformer.rs) — `FerroXamlIlTextRangeTransformer`.
 - Test: [src/FerroUI.Controls/documents/text_highlighter_tests.rs](../../../src/FerroUI.Controls/documents/text_highlighter_tests.rs) — `text_highlight_ranges_preserve_native_value_semantics_and_validate_half_open_conversion`.
 - Test: [src/FerroUI.Controls/documents/text_highlighter_tests.rs](../../../src/FerroUI.Controls/documents/text_highlighter_tests.rs) — `text_highlight_range_markup_writes_a_box_then_copies_the_collection_value`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_range_markup_initializes_a_value_and_preserves_signed_fields`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_range_markup_rejects_invalid_fields_and_constructor_arguments`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_range_initialization_keeps_the_normal_value_type_guard`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_markup_preserves_nested_document_content_and_copied_highlight_values`.
 - Differences: [RT-I09](DEVIATIONS.md).
 
 #### `T:Microsoft.UI.Xaml.Documents.TextRange`
 
-State: **partial**. Signed StartIndex/Length retain native value semantics with checked half-open conversion. Rust uses a distinct type name from the document gravity range; XAML keeps TextRange.
+State: **partial**. Signed StartIndex/Length retain native value semantics with checked half-open conversion. Rust uses a distinct type name from the document gravity range; XAML keeps TextRange. The framework-specific compiler intrinsic lowers the temporary Rc-backed range constructor and ordinary assignments before generic value-initializer validation. Attribute/property-element/x:Arguments forms retain copied collection values in runtime and emitted markup. Other value types retain the normal initializer guard. Differential comparison traverses blocks/highlighter/range collections.
 
 - Target: [src/FerroUI.Controls/documents/text_highlight_range.rs](../../../src/FerroUI.Controls/documents/text_highlight_range.rs) — `TextHighlightRange`.
+- Target: [src/Markup/FerroUI.Markup.Xaml.Loader/compiler_extensions/transformers/ferro_xaml_il_text_range_transformer.rs](../../../src/Markup/FerroUI.Markup.Xaml.Loader/compiler_extensions/transformers/ferro_xaml_il_text_range_transformer.rs) — `FerroXamlIlTextRangeTransformer`.
 - Test: [src/FerroUI.Controls/documents/text_highlighter_tests.rs](../../../src/FerroUI.Controls/documents/text_highlighter_tests.rs) — `text_highlight_ranges_preserve_native_value_semantics_and_validate_half_open_conversion`.
 - Test: [src/FerroUI.Controls/documents/text_highlighter_tests.rs](../../../src/FerroUI.Controls/documents/text_highlighter_tests.rs) — `text_highlight_range_markup_writes_a_box_then_copies_the_collection_value`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_range_markup_initializes_a_value_and_preserves_signed_fields`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_range_markup_rejects_invalid_fields_and_constructor_arguments`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_range_initialization_keeps_the_normal_value_type_guard`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_text_markup_preserves_nested_document_content_and_copied_highlight_values`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I09](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Documents.Typography`
@@ -5657,6 +6269,24 @@ State: **partial**. The None/Single hyperlink decoration choice is represented b
 - Test: [src/FerroUI.Controls/documents/rich_text_document_tests.rs](../../../src/FerroUI.Controls/documents/rich_text_document_tests.rs) — `hyperlink_events_cancellation_input_and_split_behavior_are_preserved`.
 - Test: [src/FerroUI.Controls/rich_text_block_tests.rs](../../../src/FerroUI.Controls/rich_text_block_tests.rs) — `rich_hyperlink_hit_testing_keyboard_focus_and_cancellation_use_the_host`.
 - Differences: [RT-I05](DEVIATIONS.md).
+
+### `Microsoft.UI.Xaml.Input.InputScope`
+
+Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.Input.InputScopeName`
+
+Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.Input.InputScopeNameValue`
+
+Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+
+All retained members remain pending.
 
 ### `Microsoft.UI.Xaml.LineStackingStrategy`
 

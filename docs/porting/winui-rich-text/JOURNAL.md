@@ -4,6 +4,191 @@ This journal records how the port is developed. [PROGRESS.md](PROGRESS.md) and
 the reviewed mapping remain the authority for implementation status; a checkpoint
 preserves work and does not establish complete parity.
 
+## Integration recovery and continued contracts — 2026-10-21
+
+Work resumed from published head `0fba6ea72d031bdfc5b1d4662ef9bf84ebcc4590`
+on PR #243. The shared-chat URL could not supply readable contents, so the actual
+branch, PR, pinned sources, existing journal and CI logs supplied continuity.
+The [baseline rich text workflow](https://github.com/wieslawsoltes/FerroUI/actions/runs/39495835486)
+provided concrete failures: Linux Base passed 4,405 tests; Controls passed 4,822
+with one failure in committed selection notification; the Win32 and WinUI host
+suites passed 308 and 28 tests. XAML passed 592 with ten failures and 17 ignored.
+Theme/XAML reference drift, rich value initialization, missing `LetterCase`
+registration, corpus accounting, source-pin expectations and a missing queued
+caret-scroll dispatcher drain accounted for the integration failures. Native
+Windows CoreText compilation, WinUI contracts and counted-string contracts
+passed their steps; the control-selection regression also failed on Windows.
+These results describe the old head, not subsequent changes.
+
+[`c3f9a8d6`](https://github.com/wieslawsoltes/FerroUI/commit/c3f9a8d6126a46df0d1d121cfd35bf362a311a5b)
+fixes the extra native SelectionChanged event by comparing committed selection
+only, while eagerly sampling intrinsic input revisions to retain callback and
+caret-round-trip invalidation. The original failing assertion is retained.
+[`34aeed1c`](https://github.com/wieslawsoltes/FerroUI/commit/34aeed1cb6b3fff3dffeff4445d01cf4f3fc6463)
+integrates main at `86b6b4ab41669bf830fba681504a4ee94752a4e6`, including the
+current declarative view generator and framework work.
+
+[`8ca12007`](https://github.com/wieslawsoltes/FerroUI/commit/8ca12007b9ffc9f42ad8d0c842fba908a51a6917)
+adds a framework-specific TextRange construction transform before XamlX's
+generic value initializer guard. Runtime and compiled markup use the same
+temporary carrier and normal field assignments, then copy the value into the
+collection. Attribute, property-element and `x:Arguments` forms are exercised;
+unrelated value initializers remain rejected. Differential dumps now traverse
+blocks and highlighter/range collections. Seven focused rich markup tests
+passed. The first full run passed 603 tests with two failures and 17 ignored:
+one differential fixture lacked a font-service test scope, and the deliberate
+missing-cast refusal manifest omitted the new rich fixture. The checkpoint
+repairs those harness issues; the later full rerun is recorded separately.
+
+[`a6152242`](https://github.com/wieslawsoltes/FerroUI/commit/a6152242dddbd0baf0ba243f97313b95ce1c3173)
+extends TOM Delete/Character and composition lifecycle contracts. Deletion resolves remaining units after removing an initial
+selection, retains paragraph join rules and preserves independently directed
+selection. Character replacement retains assigned/inherited formats and offers
+a scalar-safe Rust extension to the native UTF-16 property. Review exposed a
+transaction boundary where layout or deferred publication callbacks could change
+the model and a failed group would restore an obsolete snapshot. Mutation fences
+now preserve the external edit and live rebasing, reject stale completion and
+discard obsolete undo, typing state and queued causes. Ordinary failed edits
+still roll back; nested groups and held outer model batches have regressions.
+
+Composition events now carry readonly StartIndex/Length and accepted text.
+Explicit native begin captures the original document without a synthetic Delete,
+raises an empty 0/0 start, and waits for the first real delta to establish a
+composition extent. Empty completion/cancel closes once without history or lost
+redo; legacy implicit startup remains supported. The pending automation range
+is absent until an actual update. Reentrant callbacks and newer sessions retain
+ownership. Native asynchronous nested event dispatch and OS automation before
+the first update remain explicit conformance boundaries.
+
+[`3a3c638b`](https://github.com/wieslawsoltes/FerroUI/commit/3a3c638b36948bb4a3e39aac6b3e6da4dd6ba2fa)
+adds RTF import of supported paragraph/character stylesheet references and
+allows hyperlink field results across paragraphs. The style implementation uses
+the official RTF 1.9.1 grammar and existing FerroUI format decoding, with checked
+inheritance and expansion budgets. Independent review found a URI amplification
+risk when creating one link per paragraph; cumulative materialized URI/target
+bytes are now bounded before cloning. A small-limit stream regression checks
+rejection while an existing composition remains untouched. Named style and field
+identity, section/table styles and advanced RTF features remain pending.
+
+The source inventory adds `core/inc/TextCompositionEventArgs.h` as a reviewed
+source rather than leaving it only in the include dependency closure: 633
+selected files, 1,258 exact public API identifiers, 941 additional framework
+dependencies and 826 include boundaries. No runtime source file is marked
+complete. Test execution records below and in `mapping.json` qualify the
+implementation claims; compiling or adding a fixture alone is not runtime proof.
+
+The main-integration checkpoint's subsequent
+[CI job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39590676737/job/119190896776)
+passed all 4,405 Base, 4,827 Controls, 308 Win32 and 28 WinUI host tests before
+the next push cancelled the remaining workflow steps. This confirms the
+committed-selection regression repair. The newer Controls additions emitted no
+remaining Rust errors after three fixture type-annotation fixes, but the local
+monolithic lib-test compiler was killed with SIGKILL under the shared 8 GiB
+memory limit. That command executed no tests. Dedicated CI and a temporary
+focused external harness provide subsequent runtime evidence; memory-pressure
+failure is not recorded as either a test pass or a behavioral assertion failure.
+
+The final XAML rerun passed **605 tests, zero failures and 17 existing ignored**.
+Its differential tree walker now enumerates inherited text decorations instead
+of treating the collection as unreadable. All 127 model/emitter fixtures and
+runtime/emitted rich-document equality remain strict.
+
+A temporary external test harness reused those ordinary compiled libraries to
+avoid the monolithic Controls test compiler. It retained original test bodies
+and assertions, with three whole startup tests excluded because they require
+private APIs. Its first diagnostic run executed 122 tests: **120 passed and two
+failed**. All 40 RTF tests and 49 included input/composition/exact-edit tests
+passed. The two range failures isolated an empty formatting carrier left by
+whole-paragraph deletion and a fixture comparing a pre-installation hyperlink
+snapshot with its canonical installed formatting. Full Controls CI, including
+the excluded empty-start, empty-update and empty-completion tests, remains the
+acceptance gate. No private production API was exposed for this harness.
+
+The structural repair uses an empty document fragment for paragraph-spanning
+deletion; same-paragraph run splicing remains unchanged. The inherited-font
+assertion is retained. The hyperlink fixture now captures its installed model
+before editing, retaining full snapshot equality and explicit formatting, URI
+and embedded-control identity checks. After rebuilding the ordinary Controls
+library, the focused suite passed **all 122 tests**. The repair is preserved in
+[`73a5d338`](https://github.com/wieslawsoltes/FerroUI/commit/73a5d3384f5fcfa36ba30f604d38c521784189cd).
+
+[`338ef632`](https://github.com/wieslawsoltes/FerroUI/commit/338ef632397acb5cc855c12e9c27aff94c93036a)
+preserves the final differential collection comparison and theme fixture repairs.
+The theme tests drain queued caret-scroll work after layout without relaxing any
+caret/extent bounds. The WinUI source-provenance assertion recognizes the rich
+document's actual source pin. All **12 Simple/Fluent rich-theme tests passed**
+against their existing ordinary libraries with unchanged test bodies and public
+helpers. WinUI execution and full generated-reference freshness remain separate
+CI gates. The optional dedicated Loader pipeline test began rebuilding a large
+host dependency variant and was interrupted; no runtime result is claimed for
+that command.
+
+The completed Windows job for `3a3c638b`
+([run 39593957823](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593957823/job/119202048452))
+passed native adapter compilation, all 32 WinUI tests and both counted HSTRING
+tests. Its rich Controls filter passed 453 tests and failed three: the two range
+cases repaired above, and a Home/inline-break fixture with a hardcoded Unix
+offset. The model and formatter both represent inline breaks as CRLF on Windows,
+so the fixture selected the interior of that break instead of the following
+line. The three private startup tests excluded from the local public harness
+all passed on Windows. The overall failed job is retained as failure evidence;
+these results do not establish a real OS IME session or a passing complete suite.
+
+A dependency audit also found 59 missing public entries across candidate-window
+alignment, context-menu arguments/delegate and the InputScope family. They are
+now explicitly inventoried as pending. A single FerroUI content-type value does
+not implement the native Names collection or all scope constants. Three existing
+runtime-class range methods now share the already-reviewed partial mapping of
+their interface counterparts. Stale control/event descriptions now name the
+actual TemplatedControl owner, persistent presenter and composition range fields.
+
+The regenerated dependency audit and source-integrity check passed with **638
+selected source/reference files, 1,317 exact public identifiers, 938 additional
+framework dependencies and 827 include boundaries**. The map records 36 complete
+enum entries, 444 partial entries and 837 pending entries. No runtime source file
+is marked complete; these counts describe inventory dispositions, not functional
+parity percentages.
+
+[`2b1cfe70`](https://github.com/wieslawsoltes/FerroUI/commit/2b1cfe70f7f9043a7058fc05d91c0332bfb5d81d)
+corrects the inline-break navigation fixture to derive its offset from the
+platform model. The three original Home/End keyboard fixture bodies passed on
+Linux before and after that fixture correction. The Windows branch of the
+assertion still requires the subsequent native runner; a host pass is not a
+Windows execution claim.
+
+The completed Linux job at `3a3c638b`
+([run 39593957823](https://github.com/wieslawsoltes/FerroUI/actions/runs/39593957823/job/119202048744))
+passed 4,405 Base, 308 Win32 and 28 WinUI host tests. Full Controls passed 4,895
+tests and failed the two range cases repaired in `73a5d338`. Fluent passed 208
+with two generated-reference failures; Simple passed 210 with those two failures
+and the deferred-caret fixture; WinUI passed 293 with those two failures and the
+source-pin fixture. XAML passed 604 with the collection-enumeration failure. The
+fixture repairs are preserved in `338ef632`; the historical job remains failed.
+
+All three theme regeneration commands and the differential emitter regeneration
+completed successfully in that same job. Its artifact `12343074706` has archive
+SHA-256 `97e609469c28eea8e5bc3a50b5013a92ba58b890aaa7a9aeaaf81cf2f651f510`.
+Review verified the source run/head, exact eight-file archive, unchanged XAML
+metadata and differential emitter output, and independently identical local
+Simple/Fluent Rust generation. Each theme gains the RichEditBox document; the
+generated document counts become 83 Simple, 87 Fluent and 151 WinUI.
+
+The 17,277,327-byte WinUI Rust reference exceeds the connector's 16 MiB request
+limit. A temporary branch-scoped workflow therefore copied only that file from
+the verified artifact, checked its SHA-256 and exact Git blob
+`1a292a76fdfd29016c5e6a08224a20552c088cc1`, and made an ordinary push after checking
+that the branch had not advanced. The successful
+[transfer run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39599133779)
+produced [`4c867440`](https://github.com/wieslawsoltes/FerroUI/commit/4c867440ababd7acd1191af74604cd2b80d6ad12)
+after the Simple/Fluent checkpoint
+[`e8361dc2`](https://github.com/wieslawsoltes/FerroUI/commit/e8361dc2365507d68af0e26e7a9c6ee447da4ff1).
+The workflow was then removed in
+[`702f427c`](https://github.com/wieslawsoltes/FerroUI/commit/702f427ca9440727e76fd8343e9dc617e97bdf9f).
+Its final tree exactly matches the locally reviewed three-file regeneration.
+The regular conformance workflow now also regenerates and checks the markup
+Rust-path reference. Complete freshness and theme-suite results remain attached
+to the next actual CI execution, not inferred from the transfer.
+
 ## Reference and first published batches — 2026-10-17
 
 The source reference is fixed at

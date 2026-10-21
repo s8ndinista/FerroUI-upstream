@@ -17,7 +17,7 @@ Generated alongside the inventory. Source links are pinned to the same commit as
 
 ## Include graph
 
-The machine-readable graph records **942 additional framework files** reached from the selected scope and **826 boundary edges**. It reads source-relative paths first and otherwise follows only unique repository path suffixes. Windows case-insensitive lookup is applied to source paths.
+The machine-readable graph records **938 additional framework files** reached from the selected scope and **827 boundary edges**. It reads source-relative paths first and otherwise follows only unique repository path suffixes. Windows case-insensitive lookup is applied to source paths.
 
 This is a source-dependency audit, not a compiler dependency dump. Conditional compilation, build include-path precedence, SDK/private-package headers, generated headers, runtime interface acquisition and linker inputs cannot be inferred from filename matching. Ambiguous and absent includes are preserved with their referring file and line; traversal stops at those boundaries. `external_or_generated` means absent from this Git tree, not proof that an API is proprietary or unavailable elsewhere.
 
@@ -27,7 +27,7 @@ General dependency-object, rendering, input, UI Automation and DXAML framework h
 
 | Include | Resolution | Referring edges |
 |---|---|---:|
-| `precomp.h` | ambiguous | 139 |
+| `precomp.h` | ambiguous | 140 |
 | `vector` | external_or_generated | 28 |
 | `XamlTailored.h` | ambiguous | 26 |
 | `pch.h` | ambiguous | 26 |

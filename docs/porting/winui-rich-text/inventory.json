@@ -8844,6 +8844,10 @@
         {
           "path": "src/FerroUI.Controls/documents/text_highlight_range.rs",
           "symbol": "TextRangeCollection"
+        },
+        {
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/compiler_extensions/transformers/ferro_xaml_il_text_range_transformer.rs",
+          "symbol": "FerroXamlIlTextRangeTransformer"
         }
       ],
       "tests": [
@@ -8854,6 +8858,22 @@
         {
           "path": "src/FerroUI.Controls/documents/text_highlighter_tests.rs",
           "symbol": "text_highlight_range_markup_writes_a_box_then_copies_the_collection_value"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_range_markup_initializes_a_value_and_preserves_signed_fields"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_range_markup_rejects_invalid_fields_and_constructor_arguments"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_range_initialization_keeps_the_normal_value_type_guard"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_markup_preserves_nested_document_content_and_copied_highlight_values"
         }
       ],
       "includes": [
@@ -8939,7 +8959,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Native signed range values, copied collection semantics and markup boxing map to a distinct Rust TextHighlightRange type and shared collection adapter. Native ABI and unsupported range consumers remain separate.",
+      "reason": "Native signed range values, copied collection semantics and markup boxing map to a distinct Rust TextHighlightRange type and shared collection adapter. Native ABI and unsupported range consumers remain separate. The framework-specific compiler intrinsic lowers the temporary Rc-backed range constructor and ordinary assignments before generic value-initializer validation. Attribute/property-element/x:Arguments forms retain copied collection values in runtime and emitted markup. Other value types retain the normal initializer guard. Differential comparison traverses blocks/highlighter/range collections.",
       "deviations": [
         "RT-I09"
       ]
@@ -8965,6 +8985,10 @@
         {
           "path": "src/FerroUI.Controls/documents/text_highlight_range.rs",
           "symbol": "TextRangeCollection"
+        },
+        {
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/compiler_extensions/transformers/ferro_xaml_il_text_range_transformer.rs",
+          "symbol": "FerroXamlIlTextRangeTransformer"
         }
       ],
       "tests": [
@@ -8975,6 +8999,22 @@
         {
           "path": "src/FerroUI.Controls/documents/text_highlighter_tests.rs",
           "symbol": "text_highlight_range_markup_writes_a_box_then_copies_the_collection_value"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_range_markup_initializes_a_value_and_preserves_signed_fields"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_range_markup_rejects_invalid_fields_and_constructor_arguments"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_range_initialization_keeps_the_normal_value_type_guard"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_text_markup_preserves_nested_document_content_and_copied_highlight_values"
         }
       ],
       "includes": [
@@ -9016,7 +9056,7 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Native signed range values, copied collection semantics and markup boxing map to a distinct Rust TextHighlightRange type and shared collection adapter. Native ABI and unsupported range consumers remain separate.",
+      "reason": "Native signed range values, copied collection semantics and markup boxing map to a distinct Rust TextHighlightRange type and shared collection adapter. Native ABI and unsupported range consumers remain separate. The framework-specific compiler intrinsic lowers the temporary Rc-backed range constructor and ordinary assignments before generic value-initializer validation. Attribute/property-element/x:Arguments forms retain copied collection values in runtime and emitted markup. Other value types retain the normal initializer guard. Differential comparison traverses blocks/highlighter/range collections.",
       "deviations": [
         "RT-I09"
       ]
@@ -11995,6 +12035,34 @@
       "callable_candidates": []
     },
     {
+      "path": "dxaml/xcp/core/inc/ContextMenuEventArgs.h",
+      "git_blob": "e42b19cde14b43981c96339078053dc46f6109fc",
+      "sha256": "904eb974acef67103125e7f6365b28c2a2e92b9cf9fb489ab48576670af49413",
+      "bytes": 1489,
+      "lines": 60,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "shared text infrastructure",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Base/media/text_formatting/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "RoutedEventArgs.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/core/inc/RoutedEventArgs.h"
+          ]
+        }
+      ],
+      "callable_candidates": []
+    },
+    {
       "path": "dxaml/xcp/core/inc/FontAndScriptServices.h",
       "git_blob": "0d84d93af47537a3c588af540478403f1ee9ff03",
       "sha256": "0e3a204d65d0ea341f951887b82e27e7d553f7ebc90e3377e189047f596a7421",
@@ -12682,6 +12750,130 @@
       "tests": [],
       "includes": [],
       "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/core/inc/TextCompositionEventArgs.h",
+      "git_blob": "572fd4aebad8553629ef7881f769ce83967028f5",
+      "sha256": "50c5a78064b900598e86964dbccde7101a08f43c0f9402c847633730c63ebd3a",
+      "bytes": 1537,
+      "lines": 66,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "shared text infrastructure",
+      "state": "partial",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Base/media/text_formatting/",
+        "src/FerroUI.Controls/documents/"
+      ],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditCompositionEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn start_index("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub fn length("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs",
+          "symbol": "pub(crate) fn begin_input_method_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
+          "symbol": "fn begin_composition("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_event_default_range_uses_the_native_unavailable_sentinel"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_exact_events_keep_the_full_range_across_disjoint_edits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_end_callback_changes_reject_the_older_native_acknowledgement"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_first_exact_replacement_establishes_its_range_independently_of_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_legacy_first_preedit_still_starts_without_a_native_begin"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_empty_updates_do_not_invent_composition_text_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_start_callback_can_cancel_without_adopting_the_ended_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_start_focus_handoff_invalidates_the_original_semantic_owner"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_restart_does_not_adopt_external_changes_during_cancellation"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
+        }
+      ],
+      "includes": [],
+      "callable_candidates": [],
+      "reason": "The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
+      "deviations": [
+        "RT-I01",
+        "RT-I07",
+        "RT-I13",
+        "RT-I16",
+        "RT-A01"
+      ]
     },
     {
       "path": "dxaml/xcp/core/inc/TextContainer.h",
@@ -16931,6 +17123,18 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box_format_commands.rs",
           "symbol": "pub fn underline_state("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditCompositionEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs",
+          "symbol": "pub(crate) fn begin_input_method_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
+          "symbol": "fn begin_composition("
         }
       ],
       "tests": [
@@ -17113,6 +17317,82 @@
         {
           "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
           "symbol": "rich_edit_text_binding_updates_the_document_in_both_directions"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_event_default_range_uses_the_native_unavailable_sentinel"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_exact_events_keep_the_full_range_across_disjoint_edits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_end_callback_changes_reject_the_older_native_acknowledgement"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_first_exact_replacement_establishes_its_range_independently_of_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_legacy_first_preedit_still_starts_without_a_native_begin"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_empty_updates_do_not_invent_composition_text_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_start_callback_can_cancel_without_adopting_the_ended_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_start_focus_handoff_invalidates_the_original_semantic_owner"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_restart_does_not_adopt_external_changes_during_cancellation"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
         }
       ],
       "includes": [
@@ -17350,7 +17630,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Compiled WinUI/Fluent/Simple themes, formatting commands and runtime/compiled XAML fixtures now have explicit source and test anchors; fixture presence does not assert a runtime gate. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
       "deviations": [
         "RT-I04",
         "RT-I06",
@@ -18835,6 +19115,18 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_text_editor.rs",
           "symbol": "pub fn composition_changed("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box.rs",
+          "symbol": "pub struct RichEditCompositionEventArgs"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_text_exact_edit.rs",
+          "symbol": "pub(crate) fn begin_input_method_composition("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs",
+          "symbol": "fn begin_composition("
         }
       ],
       "tests": [
@@ -18961,6 +19253,82 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rich_text_composition_tests.rs",
           "symbol": "rich_composition_external_text_or_format_changes_inside_a_batch_invalidate_the_preview"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_event_default_range_uses_the_native_unavailable_sentinel"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_events_report_whole_utf16_extent_and_skip_cursor_only_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_commit_events_use_accepted_filtered_and_utf16_limited_text"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_exact_events_keep_the_full_range_across_disjoint_edits"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_exact_empty_deletion_reports_its_actual_zero_length_range"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_rejected_payload_ends_with_an_empty_range_and_no_undo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_reentrant_model_changes_do_not_publish_a_successful_end_event"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_end_callback_changes_reject_the_older_native_acknowledgement"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_event_tests.rs",
+          "symbol": "rich_composition_callback_caret_round_trips_cannot_be_acknowledged_as_unchanged"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_empty_composition_start_and_cancel_preserve_content_selection_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_empty_completion_and_empty_commit_close_once_without_undo_or_deletion"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_first_exact_replacement_establishes_its_range_independently_of_selection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_legacy_first_preedit_still_starts_without_a_native_begin"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_empty_updates_do_not_invent_composition_text_changes"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_start_callback_can_cancel_without_adopting_the_ended_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_reentrant_begin_from_start_or_end_preserves_the_newest_session"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_start_focus_handoff_invalidates_the_original_semantic_owner"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_restart_does_not_adopt_external_changes_during_cancellation"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_composition_start_tests.rs",
+          "symbol": "rich_native_intercepted_empty_completion_keeps_its_lifecycle_open_for_retry"
         }
       ],
       "includes": [
@@ -20523,7 +20891,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native composition argument range fields and full backend event order remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending. The three native composition argument classes map to one routed Rust RichEditCompositionEventArgs with readonly signed StartIndex/Length, native unavailable defaults -1/0, accepted replacement text and directed selection. Ranges count normalized UTF-16 model positions and cover the whole accepted composition independently of its caret. Cursor-only movement emits no changed event; filtered/truncated commit payloads report accepted text. Reentrant changes before end publication suppress stale successful completion reporting. Changes made by an Ended handler invalidate the native acknowledgement after event delivery. Shared Rust argument identity, FerroUI model coordinates, native nested asynchronous event dispatch and real backend ordering remain explicit differences. Explicit native begin captures committed content/selection without mutation or history, immediately raises empty 0/0 started args, and keeps active_composition_range absent until an accepted update. First exact replacement establishes its own extent. Empty completion/cancel closes once without undo or lost redo; legacy first-preedit implicit startup remains supported. Reentrant end/start callbacks cannot replace a newer session with an older request. Pending automation range absence is a framework projection; native pre-update automation and nested asynchronous event dispatch remain conformance boundaries.",
       "deviations": [
         "RT-A03",
         "RT-I06",
@@ -20820,7 +21188,7 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native composition argument range fields and full backend event order remain pending.",
+      "reason": "RichEditBox is a FerroUI TemplatedControl with one persistent RichEditBoxTextPresenter and shared model/editor/history. ContentElement accepts framework content hosts; header, placeholder and description use actual optional parts. Internal logical scrolling measures the full document at viewport width, keeps chrome fixed and shares text/caret/IME/automation offsets. Retemplating preserves live services, composition and undo. Owner-routed focus/selection and raw presenter automation avoid duplicate identity. Native windowless ABI, full backend services, touch UI and unmapped members remain pending. Accepted composition causes distinguish preview deltas, final committed text and empty cancellation. Group rollback discards causes, failed/read-only operations preserve active preview, and internal mutation identity rejects stale state before batched public revisions. Native nested asynchronous composition dispatch and full backend event order remain pending.",
       "deviations": [
         "RT-A03",
         "RT-I06",
@@ -51102,6 +51470,94 @@
       "callable_candidates": []
     },
     {
+      "path": "dxaml/xcp/dxaml/lib/ContextMenuEventArgs_Partial.cpp",
+      "git_blob": "884e0c1fafe22002e5877e5cece104a902aeaf4b",
+      "sha256": "31c89c537376a7d9f815b126c374ffb7646e751bd49f6343d4a5f0012f24f120",
+      "bytes": 380,
+      "lines": 12,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "control projection and services",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "precomp.h",
+          "line": 3,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/precomp.h"
+          ]
+        },
+        {
+          "header": "ContextMenuEventArgs.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContextMenuEventArgs.g.h"
+          ]
+        },
+        {
+          "header": "RoutedEventArgs.h",
+          "line": 6,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/RoutedEventArgs.h"
+          ]
+        },
+        {
+          "header": "ContextMenuEventArgs.h",
+          "line": 7,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/ContextMenuEventArgs.h"
+          ]
+        }
+      ],
+      "callable_candidates": [
+        {
+          "name": "DirectUI::ContextMenuEventArgs::CreateCorePeer",
+          "line": 9,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        }
+      ]
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/ContextMenuEventArgs_Partial.h",
+      "git_blob": "735be3abf2ef985244d3f5a9763cb433efbabb15",
+      "sha256": "09b8d3ecedd0f7c62bb72b221f792d884c146f35d01df7cf88f5fadbf49773e7",
+      "bytes": 343,
+      "lines": 15,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "control projection and services",
+      "state": "pending",
+      "reuse_or_destination_candidates": [
+        "src/FerroUI.Controls/"
+      ],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "ContextMenuEventArgs.g.h",
+          "line": 5,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContextMenuEventArgs.g.h"
+          ]
+        }
+      ],
+      "callable_candidates": []
+    },
+    {
       "path": "dxaml/xcp/dxaml/lib/FontFamily_Partial.cpp",
       "git_blob": "68159265b12d105376a227641e92c081fb8db306",
       "sha256": "50641303ff81120b4cd1b22d52291d641c626a46b1ff2f7270234a5b4897c202",
@@ -58183,6 +58639,175 @@
       "targets": [],
       "tests": [],
       "includes": [],
+      "callable_candidates": []
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContextMenuEventArgs.g.cpp",
+      "git_blob": "08948fc16dee0a4c201f85e96c0fa0c62dcd39d5",
+      "sha256": "7e94bece40dfdffc38d765841ce2015cdf07b7773953efabd90399fcd21d33b2",
+      "bytes": 4723,
+      "lines": 170,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "generated WinRT projection",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "precomp.h",
+          "line": 11,
+          "style": "quoted",
+          "resolution": "ambiguous",
+          "candidates": [
+            "dxaml/phone/lib/precomp.h",
+            "dxaml/test/appanalysis/lib/precomp.h",
+            "dxaml/test/appanalysis/ruleSet/precomp.h",
+            "dxaml/test/infra/client/pch/precomp.h",
+            "dxaml/test/infra/logging/precomp.h",
+            "dxaml/test/infra/server/precomp.h",
+            "dxaml/xcp/components/pch/precomp.h",
+            "dxaml/xcp/control/common/shared/precomp.h",
+            "dxaml/xcp/core/Parser/pch/precomp.h",
+            "dxaml/xcp/core/Parser/staticpch/precomp.h",
+            "dxaml/xcp/core/controls/generated/precomp.h",
+            "dxaml/xcp/core/core/elements/pch/precomp.h",
+            "dxaml/xcp/core/core/elements/pchexcept/precomp.h",
+            "dxaml/xcp/core/hw/precomp.h",
+            "dxaml/xcp/core/input/precomp.h",
+            "dxaml/xcp/core/metadata/dynamic/precomp.h",
+            "dxaml/xcp/core/native/media/precomp.h",
+            "dxaml/xcp/core/native/text/Common/precomp.h",
+            "dxaml/xcp/core/native/text/Controls/precomp.h",
+            "dxaml/xcp/core/precomp.h",
+            "dxaml/xcp/core/text/precomp.h",
+            "dxaml/xcp/dxaml/dllsrv/winrt/precomp.h",
+            "dxaml/xcp/dxaml/lib/precomp.h",
+            "dxaml/xcp/dxaml/tools/AppAnalysis/dll/precomp.h",
+            "dxaml/xcp/dxaml/tools/AppAnalysis/module/precomp.h",
+            "dxaml/xcp/dxaml/tools/AppAnalysis/runtime/common/precomp.h",
+            "dxaml/xcp/dxaml/tools/AppAnalysis/runtime/framework/precomp.h",
+            "dxaml/xcp/dxaml/tools/AppAnalysis/runtime/rules/precomp.h",
+            "dxaml/xcp/dxaml/tools/AppAnalysis/tool/precomp.h",
+            "dxaml/xcp/dxaml/tools/AppAnalysis/unittests/pch/precomp.h",
+            "dxaml/xcp/dxaml/tools/xamldiagnostics/tap/precomp.h",
+            "dxaml/xcp/pal/debug/precomp.h",
+            "dxaml/xcp/plat/win/browserdesktop/precomp.h",
+            "dxaml/xcp/plat/win/desktop/precomp.h",
+            "dxaml/xcp/precomp.h",
+            "dxaml/xcp/tools/GenXbfDLL/precomp.h",
+            "dxaml/xcp/win/shared/precomp.h",
+            "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/PrecompiledHeader/precomp.h"
+          ]
+        },
+        {
+          "header": "ContextMenuEventArgs.g.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContextMenuEventArgs.g.h"
+          ]
+        },
+        {
+          "header": "CoreEventArgsGroup.h",
+          "line": 14,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/core/inc/CoreEventArgsGroup.h"
+          ]
+        }
+      ],
+      "callable_candidates": [
+        {
+          "name": "DirectUI::ContextMenuEventArgsGenerated::ContextMenuEventArgsGenerated",
+          "line": 19,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::ContextMenuEventArgsGenerated::~ContextMenuEventArgsGenerated",
+          "line": 23,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::ContextMenuEventArgsGenerated::QueryInterfaceImpl",
+          "line": 27,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::ContextMenuEventArgsGenerated::get_Handled",
+          "line": 48,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::ContextMenuEventArgsGenerated::put_Handled",
+          "line": 66,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::ContextMenuEventArgsGenerated::get_CursorLeft",
+          "line": 82,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::ContextMenuEventArgsGenerated::put_CursorLeft",
+          "line": 100,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::ContextMenuEventArgsGenerated::get_CursorTop",
+          "line": 116,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        },
+        {
+          "name": "DirectUI::ContextMenuEventArgsGenerated::put_CursorTop",
+          "line": 134,
+          "kind": "scoped_callable_definition_candidate",
+          "state": "unreviewed"
+        }
+      ]
+    },
+    {
+      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContextMenuEventArgs.g.h",
+      "git_blob": "30c689aae3c41758de74c3d7e1f46a6c8deabe05",
+      "sha256": "f311760e14b7a9e9f90683ce49b12106becd81535c7f8bff09978eceafb5b0d5",
+      "bytes": 1899,
+      "lines": 58,
+      "scope_reason": "related document/control/service declaration or projection",
+      "component": "generated WinRT projection",
+      "state": "reference",
+      "reuse_or_destination_candidates": [],
+      "targets": [],
+      "tests": [],
+      "includes": [
+        {
+          "header": "RoutedEventArgs.g.h",
+          "line": 13,
+          "style": "quoted",
+          "resolution": "relative_path",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/RoutedEventArgs.g.h"
+          ]
+        },
+        {
+          "header": "ContextMenuEventArgs_Partial.h",
+          "line": 56,
+          "style": "quoted",
+          "resolution": "unique_path_suffix",
+          "candidates": [
+            "dxaml/xcp/dxaml/lib/ContextMenuEventArgs_Partial.h"
+          ]
+        }
+      ],
       "callable_candidates": []
     },
     {
@@ -73679,6 +74304,18 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rtf.rs",
           "symbol": "pub struct RtfWriter;"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_styles.rs",
+          "symbol": "pub(super) struct StyleTable"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf.rs",
+          "symbol": "fn apply_style("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf.rs",
+          "symbol": "fn read_field("
         }
       ],
       "tests": [
@@ -73737,14 +74374,67 @@
         {
           "path": "src/FerroUI.Controls/rich_text/rtf_encoding_tests.rs",
           "symbol": "rich_edit_rtf_ignored_destination_does_not_inject_hyperlink_target_text"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_styles_tests.rs",
+          "symbol": "rich_rtf_style_forward_bases_and_direct_overrides_resolve_in_order"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_styles_tests.rs",
+          "symbol": "rich_rtf_style_additive_character_format_keeps_the_paragraph_font"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_styles_tests.rs",
+          "symbol": "rich_rtf_style_nonadditive_character_format_resets_only_character_properties"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_styles_tests.rs",
+          "symbol": "rich_rtf_style_font_charset_drives_scoped_body_decoding"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_styles_tests.rs",
+          "symbol": "rich_rtf_style_names_and_keycodes_never_become_document_content"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_styles_tests.rs",
+          "symbol": "rich_rtf_style_selected_invalid_graphs_fail_without_silent_format_loss"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_styles_tests.rs",
+          "symbol": "rich_rtf_style_expansion_and_inheritance_have_independent_work_bounds"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_styles_tests.rs",
+          "symbol": "rich_rtf_style_import_rejects_invalid_graph_before_mutation_and_undoes_once"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_field_tests.rs",
+          "symbol": "rich_rtf_field_across_paragraphs_retains_targets_metrics_and_surrounding_text"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_field_tests.rs",
+          "symbol": "rich_rtf_field_empty_edges_do_not_create_invisible_hyperlinks"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_field_tests.rs",
+          "symbol": "rich_rtf_field_paragraph_separators_count_toward_the_text_limit"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_field_tests.rs",
+          "symbol": "rich_rtf_field_paragraph_segments_round_trip_through_canonical_rtf"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rtf_field_tests.rs",
+          "symbol": "rich_rtf_field_metadata_expansion_is_bounded_across_the_whole_document"
         }
       ],
-      "reason": "This file declares the exact public RichEdit document/range text and stream contracts. The RTF engine implementation is external to the WinUI tree; portable codec targets are mapped against the declared contract, not presented as source copied from this XML. Every documented member retains its individual state in the API inventory. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed.",
+      "reason": "This file declares the exact public RichEdit document/range text and stream contracts. The RTF engine implementation is external to the WinUI tree; portable codec targets are mapped against the declared contract, not presented as source copied from this XML. Every documented member retains its individual state in the API inventory. Portable byte decoding supports 874, 932, 936, 949, 950, 1250..1258, 10000, 10007 and 65001 through pinned encoding_rs tables. Raw/escaped multibyte tokens share one incremental UTF-16 decoder; malformed input and incomplete sequences at syntax boundaries fail without replacement. Font-scoped fcharset/cpg, default-font/plain resets, font names and field destinations share that codec. Symbol/OEM/Johab and unspecified pages remain explicit errors. Export retains the canonical Unicode-escaped writer; byte-for-byte native code-page roundtrip and full RTF content are not claimed. Paragraph/character stylesheet references now resolve forward based-on chains, additive formatting and subsequent direct overrides through the shared property decoder, with cycle/kind/reference/depth checks and an independent expansion work budget. Ignored style names/keycodes/metadata never become story text. Resolved appearance is retained; live named-style identity, next-style policies and section/table styles are not implemented. Hyperlink field results spanning paragraphs become separate paragraph-owned links with identical URI/target and retained metrics/formatting; empty paragraphs create no invisible links. Cumulative materialized URI/target bytes are checked against max_bytes before cloning. Imports finish parsing before model/history/preview mutation. Native field identity and full content/format conformance remain pending.",
       "deviations": [
         "RT-A03",
         "RT-I04",
         "RT-I12",
-        "RT-I18"
+        "RT-I18",
+        "RT-I19"
       ]
     },
     {
@@ -82943,23 +83633,6 @@
       ]
     },
     {
-      "path": "dxaml/xcp/core/inc/ContextMenuEventArgs.h",
-      "git_blob": "e42b19cde14b43981c96339078053dc46f6109fc",
-      "sha256": "904eb974acef67103125e7f6365b28c2a2e92b9cf9fb489ab48576670af49413",
-      "state": "framework_dependency_review",
-      "includes": [
-        {
-          "header": "RoutedEventArgs.h",
-          "line": 5,
-          "style": "quoted",
-          "resolution": "relative_path",
-          "candidates": [
-            "dxaml/xcp/core/inc/RoutedEventArgs.h"
-          ]
-        }
-      ]
-    },
-    {
       "path": "dxaml/xcp/core/inc/ContextRequestedEventArgs.h",
       "git_blob": "bed7ca1dd3f50426af26bc0829278b82ed00f5eb",
       "sha256": "863cf3a4dff9ea83771703f5f9e73f5573fafe51518132d349624eabc8781f4d",
@@ -86945,13 +87618,6 @@
           ]
         }
       ]
-    },
-    {
-      "path": "dxaml/xcp/core/inc/TextCompositionEventArgs.h",
-      "git_blob": "572fd4aebad8553629ef7881f769ce83967028f5",
-      "sha256": "50c5a78064b900598e86964dbccde7101a08f43c0f9402c847633730c63ebd3a",
-      "state": "framework_dependency_review",
-      "includes": []
     },
     {
       "path": "dxaml/xcp/core/inc/ThemeResourceExtension.h",
@@ -92048,23 +92714,6 @@
       ]
     },
     {
-      "path": "dxaml/xcp/dxaml/lib/ContextMenuEventArgs_Partial.h",
-      "git_blob": "735be3abf2ef985244d3f5a9763cb433efbabb15",
-      "sha256": "09b8d3ecedd0f7c62bb72b221f792d884c146f35d01df7cf88f5fadbf49773e7",
-      "state": "framework_dependency_review",
-      "includes": [
-        {
-          "header": "ContextMenuEventArgs.g.h",
-          "line": 5,
-          "style": "quoted",
-          "resolution": "unique_path_suffix",
-          "candidates": [
-            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContextMenuEventArgs.g.h"
-          ]
-        }
-      ]
-    },
-    {
       "path": "dxaml/xcp/dxaml/lib/Control_Partial.h",
       "git_blob": "432e5f9d4f7f628215b2b3915fac7cb296f331c1",
       "sha256": "28945bd16ddfa9fdafe6af46e012389646f6632bc17fb85ae3c3b7b429ace23d",
@@ -95376,32 +96025,6 @@
           "resolution": "unique_path_suffix",
           "candidates": [
             "dxaml/xcp/dxaml/lib/ContentPresenter_Partial.h"
-          ]
-        }
-      ]
-    },
-    {
-      "path": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContextMenuEventArgs.g.h",
-      "git_blob": "30c689aae3c41758de74c3d7e1f46a6c8deabe05",
-      "sha256": "f311760e14b7a9e9f90683ce49b12106becd81535c7f8bff09978eceafb5b0d5",
-      "state": "framework_dependency_review",
-      "includes": [
-        {
-          "header": "RoutedEventArgs.g.h",
-          "line": 13,
-          "style": "quoted",
-          "resolution": "relative_path",
-          "candidates": [
-            "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/RoutedEventArgs.g.h"
-          ]
-        },
-        {
-          "header": "ContextMenuEventArgs_Partial.h",
-          "line": 56,
-          "style": "quoted",
-          "resolution": "unique_path_suffix",
-          "candidates": [
-            "dxaml/xcp/dxaml/lib/ContextMenuEventArgs_Partial.h"
           ]
         }
       ]
@@ -113194,6 +113817,53 @@
     },
     {
       "from": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/CandidateWindowBoundsChangedEventArgs.g.cpp",
+      "header": "precomp.h",
+      "line": 11,
+      "style": "quoted",
+      "resolution": "ambiguous",
+      "candidates": [
+        "dxaml/phone/lib/precomp.h",
+        "dxaml/test/appanalysis/lib/precomp.h",
+        "dxaml/test/appanalysis/ruleSet/precomp.h",
+        "dxaml/test/infra/client/pch/precomp.h",
+        "dxaml/test/infra/logging/precomp.h",
+        "dxaml/test/infra/server/precomp.h",
+        "dxaml/xcp/components/pch/precomp.h",
+        "dxaml/xcp/control/common/shared/precomp.h",
+        "dxaml/xcp/core/Parser/pch/precomp.h",
+        "dxaml/xcp/core/Parser/staticpch/precomp.h",
+        "dxaml/xcp/core/controls/generated/precomp.h",
+        "dxaml/xcp/core/core/elements/pch/precomp.h",
+        "dxaml/xcp/core/core/elements/pchexcept/precomp.h",
+        "dxaml/xcp/core/hw/precomp.h",
+        "dxaml/xcp/core/input/precomp.h",
+        "dxaml/xcp/core/metadata/dynamic/precomp.h",
+        "dxaml/xcp/core/native/media/precomp.h",
+        "dxaml/xcp/core/native/text/Common/precomp.h",
+        "dxaml/xcp/core/native/text/Controls/precomp.h",
+        "dxaml/xcp/core/precomp.h",
+        "dxaml/xcp/core/text/precomp.h",
+        "dxaml/xcp/dxaml/dllsrv/winrt/precomp.h",
+        "dxaml/xcp/dxaml/lib/precomp.h",
+        "dxaml/xcp/dxaml/tools/AppAnalysis/dll/precomp.h",
+        "dxaml/xcp/dxaml/tools/AppAnalysis/module/precomp.h",
+        "dxaml/xcp/dxaml/tools/AppAnalysis/runtime/common/precomp.h",
+        "dxaml/xcp/dxaml/tools/AppAnalysis/runtime/framework/precomp.h",
+        "dxaml/xcp/dxaml/tools/AppAnalysis/runtime/rules/precomp.h",
+        "dxaml/xcp/dxaml/tools/AppAnalysis/tool/precomp.h",
+        "dxaml/xcp/dxaml/tools/AppAnalysis/unittests/pch/precomp.h",
+        "dxaml/xcp/dxaml/tools/xamldiagnostics/tap/precomp.h",
+        "dxaml/xcp/pal/debug/precomp.h",
+        "dxaml/xcp/plat/win/browserdesktop/precomp.h",
+        "dxaml/xcp/plat/win/desktop/precomp.h",
+        "dxaml/xcp/precomp.h",
+        "dxaml/xcp/tools/GenXbfDLL/precomp.h",
+        "dxaml/xcp/win/shared/precomp.h",
+        "src/XamlCompiler/Tests/RegressionProjects/Basic/CppWinRT/PrecompiledHeader/precomp.h"
+      ]
+    },
+    {
+      "from": "dxaml/xcp/dxaml/lib/winrtgeneratedclasses/ContextMenuEventArgs.g.cpp",
       "header": "precomp.h",
       "line": 11,
       "style": "quoted",

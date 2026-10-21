@@ -45,6 +45,8 @@ XAML_CONTROL_TYPES = {
     "TextCompositionEndedEventArgs", "TextChangedEventArgs", "TextSelectionChangedEventArgs",
     "CandidateWindowBoundsChangedEventArgs", "TextReadingOrder", "TextLineBounds", "TextWrapping",
     "TextTrimming", "TextAlignment", "LineStackingStrategy", "OpticalMarginAlignment",
+    "CandidateWindowAlignment", "ContextMenuEventArgs", "ContextMenuOpeningEventHandler",
+    "InputScope", "InputScopeName", "InputScopeNameValue",
 }
 XAML_TEXT_AUTOMATION_TYPES = {
     "ITextProvider", "ITextProvider2", "ITextRangeProvider", "ITextRangeProvider2",
@@ -80,6 +82,7 @@ RELATED_TYPES = XAML_CONTROL_TYPES | {
     "WindowLessSiteHost", "TextControlFlyoutHelper", "TextControlHelper", "TextBoxPlaceholderTextHelper",
     "TextAlternativesAsyncOperation", "CaretBrowsingGlobal", "BlockTextElement",
     "CaretBrowsingCaret", "CaretBrowsingDialog", "HyperLinkAutomationPeer", "TextOptions",
+    "TextCompositionEventArgs",
 }
 RELATED_NAMES = {name.lower() for name in RELATED_TYPES}
 EXPLICIT_REFERENCES = {

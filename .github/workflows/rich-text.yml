@@ -71,6 +71,9 @@ jobs:
       - name: Regenerate differential XAML reference
         if: ${{ !cancelled() }}
         run: cargo test --locked -p ferroui-markup-xaml-tests --lib emitter::differential_tests::regenerate_emitter_output -- --ignored --exact
+      - name: Regenerate markup Rust path reference
+        if: ${{ !cancelled() }}
+        run: cargo test --locked -p ferroui-markup-xaml-tests --lib emitter::rust_paths_tests::regenerate_rust_paths_check -- --ignored --exact
       - name: Verify checked-in generated references
         if: ${{ !cancelled() }}
         run: >-
@@ -83,6 +86,7 @@ jobs:
           src/FerroUI.Themes.Simple/compiled_xaml.xamlmeta
           tests/FerroUI.Markup.Xaml.UnitTests/emitter/generated.rs
           tests/FerroUI.Markup.Xaml.UnitTests/emitter/generated.map.json
+          tests/FerroUI.Markup.Xaml.UnitTests/emitter/rust_paths_check.rs
       - name: Upload generated references for review
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -98,6 +102,7 @@ jobs:
             src/FerroUI.Themes.Simple/compiled_xaml.xamlmeta
             tests/FerroUI.Markup.Xaml.UnitTests/emitter/generated.rs
             tests/FerroUI.Markup.Xaml.UnitTests/emitter/generated.map.json
+            tests/FerroUI.Markup.Xaml.UnitTests/emitter/rust_paths_check.rs
 
   windows:
     name: Native Windows input and automation contracts

@@ -142,8 +142,11 @@ second text engine, but does not prove identical native engine output.
 
 Public rich document positions count UTF-16 text. For `a😀b`, scalar boundaries
 are `0`, `1`, `3`, and `4`. An edit at offset `2` would split the surrogate pair
-and is rejected. Paragraph boundaries contribute LF; inline controls contribute
-U+FFFC. Native synthetic element-open/close markers are not exposed as text.
+and is rejected. Paragraph boundaries contribute LF. An inline `LineBreak` uses
+the framework's platform newline: CRLF on Windows and LF elsewhere; its UTF-16
+extent must therefore be measured from the model instead of assumed to be one.
+Inline controls contribute U+FFFC. Native synthetic element-open/close markers
+are not exposed as text.
 
 `TextPointer` holds a weak document reference and an offset/gravity pair. Gravity
 determines whether an insertion at that offset leaves the pointer before or after
@@ -188,6 +191,15 @@ through `set` to change the collection. Markup uses a temporary boxed value whil
 assigning the two fields, then copies it into the collection. Empty/invalid ranges
 do not paint, and valid regions are clipped to the document.
 
+The loader recognizes this specific framework value through
+`FerroXamlIlTextRangeTransformer`. It lowers the temporary `Ref<TextHighlightRange>`
+constructor and its ordinary field assignments before the generic XamlX value
+initializer guard. Attribute, property-element and `x:Arguments` forms therefore
+work in runtime and compiled markup while the collection still copies the value.
+Other value types retain the normal initializer validation. The differential
+markup harness traverses blocks, highlighters and copied ranges, so its tree
+comparison observes actual rich content rather than only the outer control.
+
 Later highlighter layers replace both foreground and background with their own
 brushes/defaults. Visual normalization occurs per layer before overlap resolution
 so scalar boundaries do not change precedence or rewrite the public range value.
@@ -226,8 +238,15 @@ introducing a second editable model behind the control.
 The editor enforces read-only and UTF-16 maximum-length policies, performs
 grapheme-aware deletion, coalesces compatible typing, bounds undo storage and
 clears stale history after external edits. A failed grouped edit restores the
-prior snapshot/selection and does not create a partial undo unit. A successful
-group creates one undo unit. Typing format is retained at a collapsed selection
+prior snapshot/selection and does not create a partial undo unit. If a layout or
+publication callback independently changes the model, restoring that old
+snapshot would overwrite application state. A mutation fence instead rejects
+the interrupted group, retains the external edit and live position rebasing,
+and discards stale history, typing format and queued composition causes. Nested
+groups inherit that invalidation even if their action catches the inner error;
+an ordinary `ReentrantEdit` error without a proved model change still rolls back.
+A successful group records at most one undo unit when history is enabled;
+no-op and preview-only groups add none. Typing format is retained at a collapsed selection
 until the caret moves.
 
 Format patches distinguish “leave unchanged” (`None`) from explicitly clearing
@@ -263,6 +282,29 @@ Extreme counts saturate at the story boundary; invalid indices are nonmutating.
 A control associates its persistent presenter after first measure. A manually
 associated view is weak and must share the model. Incomplete or trimmed line
 coverage produces an explicit error rather than fabricated display lines.
+
+`RichEditTextRange::delete(unit, count)` removes the existing nonempty range
+first, counting it as one deleted unit. A zero count removes only that range;
+positive and negative counts then extend forward or backward. Remaining units
+are resolved after the first deletion because a joined word or reflowed line can
+have different boundaries. The operation follows the supported native paragraph
+join rules, retains the editor's independent directed selection and forms one
+undo unit. `RichEditTextSelection::delete_by` instead collapses the selected
+range at the resulting insertion point. Its layout preflight recaptures the live
+selection after application callbacks. Extreme signed counts are handled without
+absolute-value overflow. Native structural markers and unsupported units remain
+outside this contract.
+
+`character()` reads the exact UTF-16 code unit at the range start, even for a
+degenerate range; it returns zero at the model's end. `set_character(u16)` rejects
+an isolated surrogate and refuses to replace half of an existing pair. The Rust
+`character_scalar()` / `set_character_scalar(char)` extension handles complete
+Unicode scalars. Replacements preserve assigned formatting and container context,
+including inherited owner/paragraph values, and retain the range's start while
+rebasing its far endpoint and the independent selection. Preflight no-ops and validation failures preserve composition and redo.
+A changed request may cancel preview before rechecking its committed character;
+a detected external callback edit instead invalidates stale history/composition. The native synthetic final CR is not
+an editable character in this model.
 
 Search supports forward/backward and whole-word options with Unicode lowercase
 mapping and preserved UTF-16 offsets; it is not a locale collation or full case
@@ -345,8 +387,8 @@ assert_eq!(decoded.text(), snapshot.text());
 
 The [RTF codec](../../../src/FerroUI.Controls/rich_text/rtf.rs) supports its RTF1
 subset: groups/escapes, Unicode fallback and the portable byte encodings below,
-font/color tables, supported character formatting, paragraph metrics, and
-hyperlink/bookmark/target fields. Native OLE/pictures, tables/lists, additional code pages and unsupported
+font/color tables, supported paragraph/character styles, character formatting,
+paragraph metrics, and hyperlink/bookmark/target fields. Native OLE/pictures, tables/lists, additional code pages and unsupported
 format representations return explicit errors. Rust stream adapters use the codec for RTF and have an explicit byte/encoding
 policy. The native stream ABI and every TextGetOptions/TextSetOptions flag are
 not supplied by the codec.
@@ -355,6 +397,38 @@ Default reader bounds are 16 MiB of input, nesting depth 128, one million parsed
 tokens and 8 Mi UTF-16 text units. `read_with_limits` permits a caller to choose
 tighter bounds. A syntactically accepted RTF group is not proof that all its
 content features are supported; unsupported required content is rejected.
+
+### RTF styles and fields spanning paragraphs
+
+The [stylesheet resolver](../../../src/FerroUI.Controls/rich_text/rtf_styles.rs)
+implements paragraph `s` and character `cs` references, forward `sbasedon` chains,
+the no-base sentinel, additive character formatting, and subsequent direct
+formatting overrides. It follows the *Style Sheet* grammar in Microsoft's
+[RTF 1.9.1 specification](https://officeprotocoldoc.z19.web.core.windows.net/files/Archive_References/%5BMSFT-RTF%5D.pdf),
+pages 24–26. Definitions replay supported format controls through the same decoder
+as body formatting. Font/charset selection, language, paragraph spacing,
+indentation and tabs therefore retain their existing validation and units.
+Group exit restores the outer character style state.
+
+Style names, key bindings and unknown starred metadata do not become document
+text. Used inheritance chains are checked for missing/wrong-kind references,
+cycles and depth. Expansion also consumes a separate work budget bounded by
+`max_tokens`, preventing repeatedly selected styles from multiplying decoding
+work without limit. Unused unsupported section/table definitions can remain in
+the input; applying them fails explicitly. The result retains resolved appearance,
+not editable named-style identity, next-style policies or linked style updates.
+Export writes canonical direct formatting rather than reconstructing the original
+style sheet. These limitations are recorded as RT-I19.
+
+A hyperlink field result may span multiple paragraphs. FerroUI's document tree
+gives each nonempty result segment its own paragraph-owned `Hyperlink`, retaining
+the URI, target, inline formatting, paragraph metrics and surrounding text. Empty
+paragraphs create no invisible hyperlink or automation focus target. Paragraph
+separators count toward the text limit. The cumulative URI/target strings
+materialized across all segments are separately bounded by `max_bytes` before
+cloning, including across multiple fields. Stream imports parse and validate the
+complete result before touching the live model or canceling composition. The
+separate link identities are an explicit model translation of the original field.
 
 [RichTextTransfer](../../../src/FerroUI.Controls/rich_text/rich_text_transfer.rs)
 offers an exact in-process snapshot and, when encodable, platform RTF formats
@@ -435,23 +509,51 @@ writer callbacks, so reentrant writer behavior does not alter the chosen snapsho
 
 The input-method client exposes committed surrounding text and UTF-16 selection
 separately from the preview shown by a composition. Repeated previews replace
-the prior preview. Cancel restores the original rich content/selection; commit
-produces one undo unit. An external edit prevents cancellation from restoring a
+the prior preview. Cancel restores the original rich content/selection; a commit
+that changes document content or formatting produces at most one undo unit when
+history is enabled, while an
+empty/no-change completion produces none. An external edit prevents cancellation from restoring a
 stale snapshot over the changed model, even while an outer model batch has not
 yet published its revision.
+
+An explicit native begin starts the lifecycle before a text update. It captures
+the committed snapshot and directed selection without changing content,
+formatting, revision or history. `is_composing()` is true, while
+`active_composition_range()` is `None` until a real update defines an extent.
+The start event reports empty text and the native unknown-start projection 0/0.
+The first exact delta establishes its own range, independently of the original
+selection. A legacy caller may still begin implicitly with its first preedit
+update. Canceling or completing an empty session raises one empty end event and
+preserves redo without adding undo. The absence of a pending automation range
+is a deliberate framework projection; native automation behavior before the
+first update needs platform conformance evidence.
+
+The three routed composition events use `RichEditCompositionEventArgs`. Its
+readonly `StartIndex` and `Length` are signed UTF-16 values for the entire
+accepted extent, independent of the caret; uninitialized arguments retain the
+native -1/0 sentinel. Changed events exclude cursor-only updates, and ended
+payloads contain accepted filtered/limited text rather than the original request.
+Reentrant model changes or caret round trips invalidate stale native completion
+acknowledgements. A nested begin from an end callback owns its new session.
+Native asynchronous dispatch of nested composition events remains separate work.
 
 `composition_changed` supplies accepted preview deltas and finalization causes.
 Filtering, normalization and UTF-16 limits are reflected in the payload. Moving
 the preview cursor does not emit a text cause; finalization contains the accepted
-committed text, or an empty string for cancellation. Commit is one history unit,
-without a preceding cancellation notification. Grouped edits queue causes until
+committed text, or an empty string for cancellation. Commit creates at most one
+history unit when history is enabled and document content or formatting changes, without a
+preceding cancellation notification. Grouped edits queue causes until
 the group settles and discard them on rollback. Preview-only groups create no
 undo entry. An independently held model batch can defer public model Changed
 beyond the cause callback; that event-order difference is recorded explicitly.
 
 Input scope and prediction settings are passed to existing backend options.
 They do not implement native proofing, dictionary prediction, handwriting or
-candidate-window services. Real platform composition, cancellation and focus
+candidate-window services. The native `InputScope.Names` collection, its name
+wrappers and complete `InputScopeNameValue` family are separately inventoried;
+the single framework content type does not provide those public APIs. Native
+context-menu coordinates/cancellation and candidate-window alignment also retain
+their own pending mappings (RT-I20). Real platform composition, cancellation and focus
 flows remain separate tests from the deterministic control suite. Synchronous TextChanging, deferred TextChanged and cancellable/reentrant
 SelectionChanging now follow the mapped native host contracts. Real platform
 input ordering still requires separate backend verification.
@@ -471,7 +573,7 @@ An exact composition retains its complete active span separately from the
 current caret/selection. Subsequent updates address the current UTF-16 preview
 without losing its suffix when the caret moves inside it. Starting composition
 does not synthesize a separate Delete of the previous selection. Selection-only
-updates keep the preview; completion finalizes one undo unit; cancellation
+updates keep the preview; changed completion finalizes one undo unit; cancellation
 restores the original rich snapshot. An intercepted completion retains preview
 for a later retry.
 
