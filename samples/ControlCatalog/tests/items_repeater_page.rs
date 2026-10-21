@@ -52,6 +52,53 @@ fn all_four_layouts_keep_a_large_collection_virtualized() {
 }
 
 #[test]
+fn lined_flow_metadata_keeps_cards_inside_the_horizontal_viewport_after_resize_and_edits() {
+    let _app = start_catalog_application();
+    let page = ItemsRepeaterPage::new();
+    let window = show(&page);
+    let repeater = page.get_control::<ItemsRepeater>("Repeater");
+    let scroller = page.get_control::<ScrollViewer>("RepeaterScroller");
+    click(&page, "LinedFlowLayoutButton");
+    let layout = repeater
+        .layout()
+        .unwrap()
+        .cast::<LinedFlowLayout>()
+        .unwrap();
+    let assert_cards_fit = || {
+        assert!(layout.uses_fast_path_layout());
+        let width = scroller.viewport().width;
+        assert!(width > 0.0);
+        let elements = repeater.realized_elements();
+        assert!(!elements.is_empty() && elements.len() < 10_000);
+        for element in elements {
+            let bounds = element.bounds();
+            assert!(bounds.width >= 128.0);
+            assert!(
+                bounds.x >= 0.0 && bounds.right() <= width + 1.0,
+                "item {}: {bounds:?} exceeds the {width}-DIP viewport",
+                repeater.get_element_index(&element)
+            );
+        }
+    };
+    for width in [1000.0, 720.0, 1280.0] {
+        window.set_width(width);
+        Dispatcher::ui_thread().run_jobs(None);
+        assert!(scroller.viewport().width < width);
+        assert_cards_fit();
+    }
+    for name in [
+        "InsertItemButton",
+        "MoveItemButton",
+        "RemoveItemButton",
+        "ResetItemsButton",
+    ] {
+        click(&page, name);
+        assert_cards_fit();
+    }
+    window.close();
+}
+
+#[test]
 fn collection_buttons_use_notifying_insert_remove_move_and_reset() {
     let _app = start_catalog_application();
     let page = ItemsRepeaterPage::new();

@@ -5,7 +5,9 @@ use crate::markup::{content_page_class, xaml_class};
 use ferroui_base::collections::FerroList;
 use ferroui_base::metadata::from_markup_value;
 use ferroui_base::{ferro_class_info, instantiate, Ref};
-use ferroui_controls::{Button, ContentPage, ItemsRepeater, ItemsSource, Layout, TextBlock};
+use ferroui_controls::{
+    Button, ContentPage, ItemsRepeater, ItemsSource, Layout, LinedFlowLayout, TextBlock,
+};
 use std::cell::Cell;
 use std::rc::Rc;
 
@@ -51,6 +53,36 @@ impl ItemsRepeaterPage {
             let button = this.get_control::<Button>(name);
             let layout =
                 from_markup_value::<Ref<Layout>>(&button.tag()).expect("the layout of the button");
+            if let Some(lined) = layout.cast::<LinedFlowLayout>() {
+                let owner = this.downgrade();
+                lined.items_info_requested(move |args| {
+                    if let Some(owner) = owner.upgrade() {
+                        // These text cards have known minimum widths and a fixed 64-DIP height.
+                        // Supplying the complete source lets the metadata path wrap at those
+                        // minimums. The estimated regular path intentionally retains WinUI's
+                        // overflowing rows when a hard MinWidth prevents its items from shrinking.
+                        let minimums: Vec<_> = owner
+                            .items
+                            .snapshot()
+                            .iter()
+                            .map(|item| {
+                                if item.starts_with("Inserted item ") {
+                                    192.0
+                                } else {
+                                    128.0
+                                }
+                            })
+                            .collect();
+                        let ratios: Vec<_> = minimums.iter().map(|width| width / 64.0).collect();
+                        args.set_items_range_start_index(0)
+                            .expect("the source starts at zero");
+                        args.set_desired_aspect_ratios(&ratios)
+                            .expect("the complete source covers the requested range");
+                        args.set_min_widths(&minimums)
+                            .expect("each aspect ratio has a matching minimum width");
+                    }
+                });
+            }
             let owner = this.downgrade();
             button.click(move |_, _| {
                 if let Some(owner) = owner.upgrade() {
