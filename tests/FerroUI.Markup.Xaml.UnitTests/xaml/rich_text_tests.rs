@@ -6,15 +6,82 @@ use crate::support::app::{styled_window_application, xaml_test_base};
 use crate::support::loader::{parse, try_load};
 use ferroui_base::media::text_formatting::testing::TextTestScope;
 use ferroui_base::media::{FontStyle, FontWeight};
-use ferroui_base::metadata::from_markup_value;
+use ferroui_base::interactivity::IRoutedEventArgs;
+use ferroui_base::metadata::{from_markup_value, into_markup_value, MarkupType, MarkupTyped};
 use ferroui_base::Ref;
 use ferroui_controls::documents::{InlineSnapshotKind, TextHighlightRange};
 use ferroui_controls::{
-    Button, Control, RichEditBox, RichTextBlock, RichTextBlockOverflow, TextBox, UserControl,
-    Window,
+    Button, ContextMenuEventArgs, Control, RichEditBox, RichEditBoxSelectionChangingEventArgs,
+    RichEditBoxTextChangingEventArgs, RichEditCompositionEventArgs, RichTextBlock, RichTextBlockOverflow,
+    TextBox, UserControl, Window,
 };
 
 const DOCUMENT: &str = include_str!("../emitter/fixtures/rich_text_document.xaml");
+
+#[test]
+fn rich_context_menu_arguments_metadata_keeps_coordinates_read_only_and_handled_live() {
+    let _scope = xaml_test_base();
+    let markup = MarkupType::find("FerroUI.Controls", "ContextMenuEventArgs")
+        .expect("context-menu event arguments are registered for markup");
+    assert!(std::ptr::eq(markup, <ContextMenuEventArgs as MarkupTyped>::MARKUP));
+    assert!(markup.constructors.is_empty(), "event arguments are supplied by the control");
+    let args = ContextMenuEventArgs::new(12.5, -4.25);
+    let value = into_markup_value(args.share());
+    for (name, expected) in [("CursorLeft", 12.5), ("CursorTop", -4.25)] {
+        let property = markup.find_property(name).expect("the coordinate is exposed through metadata");
+        assert!(property.set.is_none(), "{name} is read-only");
+        let actual = (property.get.expect("the coordinate has a getter"))(&[value.clone()]).unwrap();
+        assert_eq!(from_markup_value::<f64>(&actual), Some(expected));
+    }
+    let base = markup.base_type().expect("the metadata retains the routed-argument base");
+    let handled = base.find_property("Handled").expect("Handled is inherited from routed-event arguments");
+    (handled.set.expect("Handled has a setter"))(&[value, into_markup_value(true)]).unwrap();
+    assert!(args.handled(), "metadata mutates the live arguments the control raised");
+}
+
+#[test]
+fn rich_composition_event_arguments_metadata_reads_the_shared_handler_payload() {
+    let _scope = xaml_test_base();
+    let mut composition = RichEditCompositionEventArgs::default();
+    composition.text = "accepted 😀".to_owned();
+    let composition_value = into_markup_value(composition.share());
+    let composition_type = <RichEditCompositionEventArgs as MarkupTyped>::MARKUP;
+    let text = composition_type.find_property("Text").unwrap();
+    assert!(text.set.is_none());
+    let actual = (text.get.unwrap())(&[composition_value]).expect("composition metadata reads the shared handler arguments");
+    assert_eq!(from_markup_value::<String>(&actual).as_deref(), Some("accepted 😀"));
+    let base = composition_type.base_type().expect("composition arguments retain their routed-argument base");
+    assert!(base.find_property("Handled").is_some());
+}
+
+#[test]
+fn rich_selection_changing_event_arguments_metadata_mutates_the_shared_cancel_flag() {
+    let _scope = xaml_test_base();
+    let selection = RichEditBoxSelectionChangingEventArgs::default();
+    let selection_value = into_markup_value(selection.share());
+    let selection_type = <RichEditBoxSelectionChangingEventArgs as MarkupTyped>::MARKUP;
+    let cancel = selection_type.find_property("Cancel").unwrap();
+    (cancel.set.unwrap())(&[selection_value.clone(), into_markup_value(true)])
+        .expect("selection metadata mutates the live cancel flag");
+    assert!(selection.cancel());
+    assert_eq!(from_markup_value::<bool>(&(cancel.get.unwrap())(&[selection_value]).unwrap()), Some(true));
+    let base = selection_type.base_type().expect("selection-changing arguments retain their routed-argument base");
+    assert!(base.find_property("Handled").is_some());
+}
+
+#[test]
+fn rich_text_changing_event_arguments_metadata_reads_the_shared_handler_payload() {
+    let _scope = xaml_test_base();
+    let changing = RichEditBoxTextChangingEventArgs::default();
+    let changing_type = <RichEditBoxTextChangingEventArgs as MarkupTyped>::MARKUP;
+    let content = changing_type.find_property("IsContentChanging").unwrap();
+    assert!(content.set.is_none());
+    let actual = (content.get.unwrap())(&[into_markup_value(changing.share())])
+        .expect("text-changing metadata reads the shared handler arguments");
+    assert_eq!(from_markup_value::<bool>(&actual), Some(false));
+    let base = changing_type.base_type().expect("text-changing arguments retain their routed-argument base");
+    assert!(base.find_property("Handled").is_some());
+}
 
 #[test]
 fn rich_text_markup_preserves_nested_document_content_and_copied_highlight_values() {

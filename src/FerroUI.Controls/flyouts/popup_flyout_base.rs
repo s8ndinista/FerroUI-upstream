@@ -57,6 +57,10 @@ ferro_class! {
         /// Shows the flyout at the given control, at the pointer location
         /// when `show_at_pointer`. Returns true if the action was handled.
         fn show_at_core(this, placement_target: &Control, show_at_pointer: bool) -> bool;
+        /// Shows the flyout below an explicit rectangle in the target's
+        /// coordinates. The popup positioner applies RTL and screen constraints.
+        /// This request does not modify the flyout's placement properties.
+        fn show_at_rect_core(this, placement_target: &Control, placement_rect: Rect) -> bool;
         /// Raises the `Opening` event.
         fn on_opening(this, args: &CancelEventArgs);
         /// Raises the `Closing` event.
@@ -125,12 +129,47 @@ impl PopupFlyoutBaseImpl for PopupFlyoutBase {
     }
 
     fn show_at_core(this: &Self, placement_target: &Control, show_at_pointer: bool) -> bool {
+        Self::show_at_with_placement(this, placement_target, show_at_pointer, None)
+    }
+
+    fn show_at_rect_core(this: &Self, placement_target: &Control, placement_rect: Rect) -> bool {
+        Self::show_at_with_placement(this, placement_target, false, Some(placement_rect))
+    }
+
+    fn on_opening(this: &Self, args: &CancelEventArgs) {
+        for (_, handler) in this.opening.snapshot().iter() {
+            handler(args);
+        }
+    }
+
+    fn on_closing(this: &Self, args: &CancelEventArgs) {
+        for (_, handler) in this.closing.snapshot().iter() {
+            handler(args);
+        }
+    }
+
+    fn create_presenter(_this: &Self) -> Ref<Control> {
+        panic!("PopupFlyoutBase is abstract.")
+    }
+}
+
+impl PopupFlyoutBase {
+    fn show_at_with_placement(
+        this: &Self,
+        placement_target: &Control,
+        show_at_pointer: bool,
+        placement_rect: Option<Rect>,
+    ) -> bool {
         let placement_target = placement_target.to_ref();
 
         *this.last_placement_target.borrow_mut() = Some(placement_target.downgrade());
 
         if this.is_open.get() {
             if this.target().as_ref() == Some(&placement_target) {
+                if placement_rect.is_some() {
+                    this.position_popup(false, placement_rect);
+                    return true;
+                }
                 return false;
             } else {
                 // Close before opening a new one
@@ -154,7 +193,7 @@ impl PopupFlyoutBaseImpl for PopupFlyoutBase {
             return false;
         }
 
-        this.position_popup(show_at_pointer);
+        this.position_popup(show_at_pointer, placement_rect);
         this.is_open.set(true);
         {
             let _ignore = this.begin_ignoring_is_open();
@@ -211,22 +250,6 @@ impl PopupFlyoutBaseImpl for PopupFlyoutBase {
         }
 
         true
-    }
-
-    fn on_opening(this: &Self, args: &CancelEventArgs) {
-        for (_, handler) in this.opening.snapshot().iter() {
-            handler(args);
-        }
-    }
-
-    fn on_closing(this: &Self, args: &CancelEventArgs) {
-        for (_, handler) in this.closing.snapshot().iter() {
-            handler(args);
-        }
-    }
-
-    fn create_presenter(_this: &Self) -> Ref<Control> {
-        panic!("PopupFlyoutBase is abstract.")
     }
 }
 
@@ -669,7 +692,7 @@ impl PopupFlyoutBase {
         IgnoreIsOpenScope { owner: self }
     }
 
-    fn position_popup(&self, show_at_pointer: bool) {
+    fn position_popup(&self, show_at_pointer: bool, placement_rect: Option<Rect>) {
         let popup = self.popup();
 
         // The child of the popup can't be missing here, it was set in
@@ -686,7 +709,13 @@ impl PopupFlyoutBase {
         popup.set_placement_anchor(self.placement_anchor());
         popup.set_placement_gravity(self.placement_gravity());
         popup.set_custom_popup_placement_callback(self.custom_popup_placement_callback());
-        if show_at_pointer {
+        // Every opening supplies its own rectangle, including None, so a
+        // later ordinary request cannot reuse a previous text-context anchor.
+        popup.set_placement_rect(placement_rect);
+        if placement_rect.is_some() {
+            popup.set_placement(PlacementMode::BottomEdgeAlignedLeft);
+            popup.set_placement_constraint_adjustment(self.placement_constraint_adjustment());
+        } else if show_at_pointer {
             popup.set_placement(PlacementMode::Pointer);
         } else {
             popup.set_placement(self.placement());
@@ -724,7 +753,7 @@ impl PopupFlyoutBase {
         }
     }
 
-    fn on_control_context_requested(sender: &Interactive, e: &ContextRequestedEventArgs) {
+    pub(crate) fn on_control_context_requested(sender: &Interactive, e: &ContextRequestedEventArgs) {
         if e.handled() {
             return;
         }
@@ -740,10 +769,13 @@ impl PopupFlyoutBase {
         }
 
         if let Some(popup_flyout) = flyout.cast::<PopupFlyoutBase>() {
-            // Absolute popup positioning is not supported yet, so the point
-            // is ignored at this moment.
-            let triggered_by_pointer_input = e.try_get_position(None).is_some();
-            e.set_handled(popup_flyout.show_at_core(control, triggered_by_pointer_input));
+            let handled = if let Some(rect) = e.try_get_placement_rect(control) {
+                popup_flyout.show_at_rect_core(control, rect)
+            } else {
+                let triggered_by_pointer_input = e.try_get_position(None).is_some();
+                popup_flyout.show_at_core(control, triggered_by_pointer_input)
+            };
+            e.set_handled(handled);
 
             if e.handled() && e.is_holding() {
                 control.perform_feedback(FeedbackAction::hold());

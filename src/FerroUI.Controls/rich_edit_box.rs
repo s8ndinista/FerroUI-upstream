@@ -21,7 +21,7 @@ use crate::templates::{IControlTemplate, IDataTemplate};
 use crate::utils::ClipboardHelper;
 use crate::TextBlock;
 use crate::{
-    Application, ContentControl, Control, ControlImpl, Decorator, Panel, RichEditBoxTextPresenter,
+    Application, ContentControl, ContextMenuEventArgs, Control, ControlImpl, Decorator, Panel, RichEditBoxTextPresenter,
     RichTextBlock, TextBox, TopLevel,
 };
 use ferroui_base::animation::TimeSpan;
@@ -36,7 +36,7 @@ use ferroui_base::input::{
     KeyGesture, KeyboardDevice, LocalBoxFuture, PointerPressedEventArgs, TextInputEventArgs,
 };
 use ferroui_base::interactivity::{
-    Interactive, InteractiveImpl, RoutedEvent, RoutedEventArgs, RoutedEventHandlerToken,
+    IRoutedEventArgs, Interactive, InteractiveImpl, RoutedEvent, RoutedEventArgs, RoutedEventHandlerToken,
     RoutingStrategies,
 };
 use ferroui_base::layout::{LayoutableImpl, LayoutableImplExt};
@@ -60,6 +60,9 @@ use std::rc::Rc;
 
 #[path = "rich_edit_box_format_commands.rs"]
 mod format_commands;
+
+#[path = "rich_edit_context_menu.rs"]
+mod context_menu;
 
 /// Character casing applied to newly entered text, including clipboard and IME commits.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash)]
@@ -130,17 +133,40 @@ impl RichEditCompositionEventArgs {
     }
 }
 ferro_routed_event_args!(RichEditCompositionEventArgs: RoutedEventArgs);
+
+fn typed_rich_edit_event_args<T: IRoutedEventArgs, R>(
+    args: &Rc<dyn IRoutedEventArgs>,
+    read: impl FnOnce(&T) -> R,
+) -> Result<R, String> {
+    args.downcast_ref::<T>()
+        .map(read)
+        .ok_or_else(|| format!("The arguments are not {}.", std::any::type_name::<T>()))
+}
+
 ferroui_base::ferro_markup_type!(class RichEditCompositionEventArgs {
     namespace: "FerroUI.Controls",
     handles: [RichEditCompositionEventArgs],
+    this: Rc<dyn IRoutedEventArgs>,
+    base: Rc<dyn IRoutedEventArgs>,
     properties: [
-        Text: String { get: |args: &RichEditCompositionEventArgs| args.text.clone() },
-        SelectionStart: i32 { get: |args: &RichEditCompositionEventArgs| args.selection.anchor.min(i32::MAX as usize) as i32 },
-        SelectionEnd: i32 { get: |args: &RichEditCompositionEventArgs| args.selection.active.min(i32::MAX as usize) as i32 },
-        Committed: bool { get: |args: &RichEditCompositionEventArgs| args.committed },
-        StartIndex: i32 { get: RichEditCompositionEventArgs::start_index },
-        Length: i32 { get: RichEditCompositionEventArgs::length },
-        Handled: bool { get: |args: &RichEditCompositionEventArgs| args.handled(), set: |args: &RichEditCompositionEventArgs, value: bool| args.set_handled(value) },
+        Text: String {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args::<RichEditCompositionEventArgs, _>(args, |args| args.text.clone())
+        },
+        SelectionStart: i32 {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args::<RichEditCompositionEventArgs, _>(args, |args| args.selection.anchor.min(i32::MAX as usize) as i32)
+        },
+        SelectionEnd: i32 {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args::<RichEditCompositionEventArgs, _>(args, |args| args.selection.active.min(i32::MAX as usize) as i32)
+        },
+        Committed: bool {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args::<RichEditCompositionEventArgs, _>(args, |args| args.committed)
+        },
+        StartIndex: i32 {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args(args, RichEditCompositionEventArgs::start_index)
+        },
+        Length: i32 {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args(args, RichEditCompositionEventArgs::length)
+        },
     ],
 });
 
@@ -184,10 +210,19 @@ impl RichEditBoxSelectionChangingEventArgs {
 ferroui_base::ferro_markup_type!(class RichEditBoxSelectionChangingEventArgs {
     namespace: "FerroUI.Controls",
     handles: [RichEditBoxSelectionChangingEventArgs],
+    this: Rc<dyn IRoutedEventArgs>,
+    base: Rc<dyn IRoutedEventArgs>,
     properties: [
-        SelectionStart: i32 { get: |args: &RichEditBoxSelectionChangingEventArgs| args.selection_start().min(i32::MAX as usize) as i32 },
-        SelectionLength: i32 { get: |args: &RichEditBoxSelectionChangingEventArgs| args.selection_length().min(i32::MAX as usize) as i32 },
-        Cancel: bool { get: RichEditBoxSelectionChangingEventArgs::cancel, set: RichEditBoxSelectionChangingEventArgs::set_cancel },
+        SelectionStart: i32 {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args::<RichEditBoxSelectionChangingEventArgs, _>(args, |args| args.selection_start().min(i32::MAX as usize) as i32)
+        },
+        SelectionLength: i32 {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args::<RichEditBoxSelectionChangingEventArgs, _>(args, |args| args.selection_length().min(i32::MAX as usize) as i32)
+        },
+        Cancel: bool {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args(args, RichEditBoxSelectionChangingEventArgs::cancel),
+            try_set: |args: &Rc<dyn IRoutedEventArgs>, value: bool| typed_rich_edit_event_args::<RichEditBoxSelectionChangingEventArgs, _>(args, |args| args.set_cancel(value))
+        },
     ],
 });
 
@@ -207,8 +242,12 @@ impl RichEditBoxTextChangingEventArgs {
 ferroui_base::ferro_markup_type!(class RichEditBoxTextChangingEventArgs {
     namespace: "FerroUI.Controls",
     handles: [RichEditBoxTextChangingEventArgs],
+    this: Rc<dyn IRoutedEventArgs>,
+    base: Rc<dyn IRoutedEventArgs>,
     properties: [
-        IsContentChanging: bool { get: RichEditBoxTextChangingEventArgs::is_content_changing },
+        IsContentChanging: bool {
+            try_get: |args: &Rc<dyn IRoutedEventArgs>| typed_rich_edit_event_args(args, RichEditBoxTextChangingEventArgs::is_content_changing)
+        },
     ],
 });
 
@@ -257,6 +296,7 @@ pub struct RichEditBox {
     selection_brush_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
     context_flyout_closed_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     flyout_focus_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+    context_menu_request_generation: Cell<u64>,
     force_focused_visual_state: Cell<bool>,
     can_undo: Cell<bool>,
     can_redo: Cell<bool>,
@@ -313,6 +353,7 @@ ferroui_base::ferro_class_info!(RichEditBox {
             TextChangingEvent: RoutedEvent<RichEditBoxTextChangingEventArgs> => || *RichEditBox::text_changing_event(),
             SelectionChangingEvent: RoutedEvent<RichEditBoxSelectionChangingEventArgs> => || *RichEditBox::selection_changing_event(),
             SelectionChangedEvent: RoutedEvent<RoutedEventArgs> => || *RichEditBox::selection_changed_event(),
+            ContextMenuOpeningEvent: RoutedEvent<ContextMenuEventArgs> => || *RichEditBox::context_menu_opening_event(),
             TextCompositionStartedEvent: RoutedEvent<RichEditCompositionEventArgs> => || *RichEditBox::text_composition_started_event(),
             TextCompositionChangedEvent: RoutedEvent<RichEditCompositionEventArgs> => || *RichEditBox::text_composition_changed_event(),
             TextCompositionEndedEvent: RoutedEvent<RichEditCompositionEventArgs> => || *RichEditBox::text_composition_ended_event(),
@@ -509,12 +550,14 @@ impl FerroObjectImpl for RichEditBox {
 
 impl VisualImpl for RichEditBox {
     fn on_attached_to_visual_tree(this: &Self, event: &VisualTreeAttachmentEventArgs) {
+        this.invalidate_context_menu_request();
         Self::parent_on_attached_to_visual_tree(this, event);
         this.reset_caret_blink();
         this.ensure_caret_visible();
     }
 
     fn on_detached_from_visual_tree(this: &Self, event: &VisualTreeAttachmentEventArgs) {
+        this.invalidate_context_menu_request();
         Self::parent_on_detached_from_visual_tree(this, event);
         this.stop_caret_blink();
     }
@@ -527,7 +570,10 @@ impl InputElementImpl for RichEditBox {
             return;
         }
         this.set_force_focused_visual_state(false);
-        this.im_client.raise_text_view_visual_changed();
+        // The persistent presenter has not changed identity. A view requery
+        // here would still see the manager's previous focus destination while
+        // KeyboardDevice is publishing GotFocus, retiring an owned-popup
+        // composition just before its semantic owner regains focus.
         this.im_client.raise_cursor_rectangle_changed();
         this.reset_caret_blink();
         this.ensure_caret_visible();
@@ -746,6 +792,11 @@ ferroui_base::ferro_properties! { impl RichEditBox {
 impl RichEditBox {
     fn static_constructor() {
         InputElement::focusable_property().override_default_value::<RichEditBox>(true);
+        InputElement::context_requested_event().add_class_handler_with::<RichEditBox>(
+            Self::on_context_requested,
+            RoutingStrategies::BUBBLE,
+            false,
+        );
         InputElement::text_input_method_client_requested_event().add_class_handler::<RichEditBox>(
             |this, event| {
                 if !this.is_read_only() && event.source().as_ref() == Some(&this.to_ref().upcast())
@@ -776,6 +827,7 @@ impl RichEditBox {
             selection_brush_subscriptions: RefCell::new(Vec::new()),
             context_flyout_closed_subscription: RefCell::new(None),
             flyout_focus_subscription: RefCell::new(None),
+            context_menu_request_generation: Cell::new(0),
             force_focused_visual_state: Cell::new(false),
             can_undo: Cell::new(false),
             can_redo: Cell::new(false),

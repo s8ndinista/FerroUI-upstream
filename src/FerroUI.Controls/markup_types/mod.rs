@@ -50,6 +50,8 @@ const RICH_TEXT_TYPES: &[&MarkupType] = &[
     <crate::documents::TextHighlighterCollection as MarkupTyped>::MARKUP,
     <crate::RichEditCharacterCasing as MarkupTyped>::MARKUP,
     <crate::DisabledFormattingAccelerators as MarkupTyped>::MARKUP,
+    <crate::ContextMenuEventArgs as MarkupTyped>::MARKUP,
+    <crate::ContextMenuOpeningRoutedEvent as MarkupTyped>::MARKUP,
     <crate::RichEditCompositionEventArgs as MarkupTyped>::MARKUP,
     <crate::RichEditCompositionRoutedEvent as MarkupTyped>::MARKUP,
     <crate::RichEditBoxSelectionChangingEventArgs as MarkupTyped>::MARKUP,
@@ -120,6 +122,7 @@ fn register_rich_text_value_types() {
     ValueTypes::register_nullable::<crate::rich_text::TextRangeUnit>();
     ValueTypes::register_nullable::<crate::rich_text::LetterCase>();
     ValueTypes::register_nullable::<crate::automation::provider::TextEditChangeType>();
+    ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::ContextMenuEventArgs>>();
     ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditCompositionEventArgs>>();
     ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditBoxSelectionChangingEventArgs>>();
     ValueTypes::register_nullable::<ferroui_base::interactivity::RoutedEvent<crate::RichEditBoxTextChangingEventArgs>>();

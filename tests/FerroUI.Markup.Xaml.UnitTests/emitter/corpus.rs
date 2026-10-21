@@ -344,6 +344,22 @@ pub const CLASS_DOCUMENTS: &[ClassDocument] = &[
         class: "FerroUI.Markup.Xaml.UnitTests.Xaml.MyPanel",
         xaml: "<Panel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' x:Class='FerroUI.Markup.Xaml.UnitTests.Xaml.MyPanel'><Button Name='target'><Button.Template><ControlTemplate><Border Name='part' Tapped='OnTapped'/></ControlTemplate></Button.Template></Button></Panel>",
     },
+    // WinUI's rich-editor opening event has its own argument type. A handler
+    // accepting the routed-argument base must receive its live handled state.
+    ClassDocument {
+        module: "rich_context_menu_event",
+        name: "Handlers/RichContextMenuEvent.xaml",
+        class: "FerroUI.Markup.Xaml.UnitTests.Xaml.MyHost",
+        xaml: "<Panel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' x:Class='FerroUI.Markup.Xaml.UnitTests.Xaml.MyHost'><RichEditBox Name='editor' ContextMenuOpening='OnContextMenuOpening'/></Panel>",
+    },
+    // The rich editor's existing custom argument types must also remain
+    // assignable to a code-behind method accepting routed-event arguments.
+    ClassDocument {
+        module: "rich_editor_events",
+        name: "Handlers/RichEditorEvents.xaml",
+        class: "FerroUI.Markup.Xaml.UnitTests.Xaml.MyHost",
+        xaml: "<Panel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml' x:Class='FerroUI.Markup.Xaml.UnitTests.Xaml.MyHost'><RichEditBox Name='editor' TextCompositionStarted='OnRichEvent' TextCompositionChanged='OnRichEvent' TextCompositionEnded='OnRichEvent' SelectionChanging='OnRichEvent' TextChanging='OnRichEvent'/></Panel>",
+    },
 ];
 
 /// A document that names a method no method of its root object answers to: the class the

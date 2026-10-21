@@ -5797,6 +5797,11 @@ pub trait RichEditBoxProps: ElementBuilder {
     fn on_text_composition_ended(self, handler: impl Fn(&ferroui_controls::RichEditCompositionEventArgs) + 'static) -> Self {
         self.routed(<ferroui_controls::RichEditBox>::text_composition_ended_event(), move |_, e| handler(e))
     }
+
+    /// Handles [`RichEditBox::context_menu_opening_event`](ferroui_controls::RichEditBox::context_menu_opening_event).
+    fn on_context_menu_opening(self, handler: impl Fn(&ferroui_controls::ContextMenuEventArgs) + 'static) -> Self {
+        self.routed(<ferroui_controls::RichEditBox>::context_menu_opening_event(), move |_, e| handler(e))
+    }
 }
 impl<T: ObjectType + Upcast<ferroui_controls::RichEditBox>> RichEditBoxProps for El<T> {}
 
