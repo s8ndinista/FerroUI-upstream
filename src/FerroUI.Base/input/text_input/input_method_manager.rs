@@ -59,6 +59,7 @@ pub(crate) struct TextInputMethodManager {
     client: RefCell<Option<Rc<dyn TextInputMethodClient>>>,
     connection: RefCell<Option<Rc<TextInputMethodConnection>>>,
     generation: Cell<u64>,
+    cursor_generation: Cell<u64>,
     client_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
     transform_tracker: Rc<TransformTrackingHelper>,
     subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
@@ -76,6 +77,7 @@ impl TextInputMethodManager {
             client: RefCell::new(None),
             connection: RefCell::new(None),
             generation: Cell::new(0),
+            cursor_generation: Cell::new(0),
             client_subscriptions: RefCell::new(Vec::new()),
             transform_tracker: TransformTrackingHelper::new(true),
             subscriptions: RefCell::new(Vec::new()),
@@ -358,19 +360,44 @@ impl TextInputMethodManager {
     }
 
     fn update_cursor_rect(&self) {
+        let generation = self.generation.get();
+        if !self.current(generation) {
+            return;
+        }
+        let cursor_generation = self.cursor_generation.get().wrapping_add(1);
+        self.cursor_generation.set(cursor_generation);
         let (Some(im), Some(client), Some(owner)) = (self.im(), self.client(), self.owner()) else {
             return;
+        };
+        let current = || {
+            self.current(generation)
+                && self.cursor_generation.get() == cursor_generation
+                && self.owner().as_ref() == Some(&owner)
+                && same_client(self.client().as_ref(), Some(&client))
+                && same_input_method(self.im().as_ref(), Some(&im))
         };
         let Some(root) = owner.visual_root() else {
             self.try_find_and_apply_client();
             return;
         };
+        if !current() {
+            return;
+        }
+        // Resolving a caret can invoke layout/application callbacks. They may
+        // install another owner or publish newer geometry for this same client.
+        // Capture the accepted owner transform only after that query returns.
+        let local = client.cursor_rectangle();
+        if !current() || owner.visual_root().as_ref() != Some(&root) {
+            return;
+        }
         let rect = owner
             .transform_to_visual(&root)
             .map_or_else(Rect::default, |transform| {
-                client.cursor_rectangle().transform_to_aabb(transform)
+                local.transform_to_aabb(transform)
             });
-        im.set_cursor_rect(rect);
+        if current() && owner.visual_root().as_ref() == Some(&root) {
+            im.set_cursor_rect(rect);
+        }
     }
 
     pub(crate) fn set_focused_element(&self, element: Option<Ref<InputElement>>) {
