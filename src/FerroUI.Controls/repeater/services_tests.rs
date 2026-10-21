@@ -434,6 +434,74 @@ impl IDataTemplateSelector for FallbackSelector {
         Some(self.template.clone())
     }
 }
+
+fn template_with_release_callback(callback: impl Fn() + 'static) -> Rc<dyn IDataTemplate> {
+    struct ReleaseCallback(Box<dyn Fn()>);
+    impl Drop for ReleaseCallback {
+        fn drop(&mut self) {
+            (self.0)();
+        }
+    }
+    let release = ReleaseCallback(Box::new(callback));
+    FuncDataTemplate::new(
+        move |_| {
+            let _ = &release;
+            true
+        },
+        |_, _| Some(Border::new().upcast()),
+        true,
+    )
+}
+
+#[test]
+fn template_replacement_releases_old_template_after_publishing_the_new_value() {
+    let _scope = test_scope();
+    let wrapper = ItemTemplateWrapper::new(template(true));
+    let replacement = template(true);
+    let expected = replacement.clone();
+    let weak = Rc::downgrade(&wrapper);
+    let released = Rc::new(Cell::new(false));
+    let observed = released.clone();
+    wrapper.set_template(Some(template_with_release_callback(move || {
+        let wrapper = weak.upgrade().unwrap();
+        assert!(Rc::ptr_eq(&wrapper.template().unwrap(), &expected));
+        wrapper.set_template(None);
+        observed.set(true);
+    })));
+
+    wrapper.set_template(Some(replacement));
+    assert!(released.get());
+    assert!(wrapper.template().is_none());
+}
+
+#[test]
+fn selector_replacement_releases_old_selector_after_publishing_the_new_value() {
+    let _scope = test_scope();
+    let wrapper = ItemTemplateWrapper::new(template(true));
+    wrapper.set_template(None);
+    let replacement: Rc<dyn IDataTemplateSelector> = Rc::new(FallbackSelector {
+        template: template(true),
+        calls: Cell::new(0),
+    });
+    let expected = replacement.clone();
+    let weak = Rc::downgrade(&wrapper);
+    let released = Rc::new(Cell::new(false));
+    let observed = released.clone();
+    wrapper.set_template_selector(Some(Rc::new(FallbackSelector {
+        template: template_with_release_callback(move || {
+            let wrapper = weak.upgrade().unwrap();
+            assert!(Rc::ptr_eq(&wrapper.template_selector().unwrap(), &expected));
+            wrapper.set_template_selector(None);
+            observed.set(true);
+        }),
+        calls: Cell::new(0),
+    })));
+
+    wrapper.set_template_selector(Some(replacement));
+    assert!(released.get());
+    assert!(wrapper.template_selector().is_none());
+}
+
 #[test]
 fn selector_retries_container_overload_and_empty_content_has_zero_size() {
     let _scope = test_scope();
@@ -849,6 +917,62 @@ fn scheduler_orders_work_and_defers_work_registered_during_a_frame() {
     assert_eq!(*log.borrow(), vec![1, 2, 0]);
     assert_eq!(BuildTreeScheduler::pending_work_count(), 0);
     assert_eq!(BuildTreeScheduler::budget_milliseconds(), 40.0);
+}
+
+#[test]
+fn scheduler_cancels_and_releases_work_already_selected_for_a_frame() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let log = Rc::new(RefCell::new(Vec::new()));
+    let resource = Rc::new(());
+    let released = Rc::downgrade(&resource);
+    let cancelled = BuildTreeScheduler::register_work(1, move || {
+        drop(resource);
+        panic!("Work cancelled during this frame must not run.");
+    });
+    let first = log.clone();
+    BuildTreeScheduler::register_work(0, move || {
+        cancelled.dispose();
+        cancelled.dispose();
+        assert!(released.upgrade().is_none());
+        first.borrow_mut().push(0);
+    });
+    let last = log.clone();
+    BuildTreeScheduler::register_work(2, move || last.borrow_mut().push(2));
+
+    clock.pulse(0.0);
+    assert_eq!(*log.borrow(), vec![0, 2]);
+    assert_eq!(BuildTreeScheduler::pending_work_count(), 0);
+}
+
+#[test]
+fn recycling_during_another_callback_defers_replacement_phases_until_the_next_frame() {
+    let _scope = test_scope();
+    let clock = TestClock::install();
+    let phaser = phaser();
+    let log = Rc::new(RefCell::new(Vec::new()));
+    let (original, original_info, _) = phase_item(0, &log, Rect::new(0.0, 0.0, 80.0, 20.0));
+    let (replacement, replacement_info, _) =
+        phase_item(1, &log, Rect::new(0.0, 0.0, 80.0, 20.0));
+    phaser.phase_element(&original, &original_info);
+    let recycle = phaser.clone();
+    BuildTreeScheduler::register_work(0, move || {
+        recycle.stop_phasing(&original, &original_info);
+        original_info.move_ownership_to_element_factory();
+        recycle.phase_element(&replacement, &replacement_info);
+    });
+
+    clock.pulse(0.0);
+    assert_eq!(*log.borrow(), vec![(0, 0, 0), (1, 0, 1)]);
+    assert_eq!(phaser.pending_count(), 1);
+    assert_eq!(BuildTreeScheduler::pending_work_count(), 1);
+    clock.pulse(16.0);
+    assert_eq!(
+        *log.borrow(),
+        vec![(0, 0, 0), (1, 0, 1), (1, 1, -1), (1, 2, -1)]
+    );
+    assert_eq!(phaser.pending_count(), 0);
+    assert_eq!(BuildTreeScheduler::pending_work_count(), 0);
 }
 
 #[test]

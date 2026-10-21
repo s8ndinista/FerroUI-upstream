@@ -72,14 +72,18 @@ impl ItemTemplateWrapper {
         self.template.borrow().clone()
     }
     pub fn set_template(&self, template: Option<Rc<dyn IDataTemplate>>) {
-        *self.template.borrow_mut() = template;
+        // Releasing the old implementation can run application destructors
+        // that observe or replace this wrapper again.
+        let previous = self.template.replace(template);
+        drop(previous);
         RecyclePool::prune_template_pools();
     }
     pub fn template_selector(&self) -> Option<Rc<dyn IDataTemplateSelector>> {
         self.selector.borrow().clone()
     }
     pub fn set_template_selector(&self, selector: Option<Rc<dyn IDataTemplateSelector>>) {
-        *self.selector.borrow_mut() = selector;
+        let previous = self.selector.replace(selector);
+        drop(previous);
         RecyclePool::prune_template_pools();
     }
 }

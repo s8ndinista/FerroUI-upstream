@@ -9,10 +9,12 @@ use ferroui_base::{FerroLocator, LocatorExtensions};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
+type WorkCallback = Rc<RefCell<Option<Box<dyn FnOnce()>>>>;
+
 struct WorkInfo {
     priority: i32,
     id: u64,
-    callback: Box<dyn FnOnce()>,
+    callback: WorkCallback,
 }
 struct SchedulerState {
     pending: Vec<WorkInfo>,
@@ -31,11 +33,19 @@ ferroui_base::ferro_thread_local! {
 /// yields after the same 40 ms work budget as the source implementation.
 pub struct BuildTreeScheduler;
 impl BuildTreeScheduler {
+    /// Registers work for a rendering frame. Disposing the returned handle
+    /// cancels it until invocation starts, including from another callback in
+    /// the same frame. Dropping the handle does not cancel the work.
     pub fn register_work(priority: i32, callback: impl FnOnce() + 'static) -> Rc<dyn IDisposable> {
         assert!(
             priority >= 0,
             "Build-tree work requires a nonnegative phase priority."
         );
+        // The frame takes a snapshot before invoking user code. Keep the
+        // callback independently cancellable while it is in that snapshot,
+        // as well as while it is in the pending queue.
+        let callback: WorkCallback = Rc::new(RefCell::new(Some(Box::new(callback))));
+        let cancellation = Rc::downgrade(&callback);
         let (id, queue) = STATE.with(|state| {
             let mut state = state.borrow_mut();
             let id = state.next_id;
@@ -43,7 +53,7 @@ impl BuildTreeScheduler {
             state.pending.push(WorkInfo {
                 priority,
                 id,
-                callback: Box::new(callback),
+                callback,
             });
             let queue = !state.queued;
             state.queued = true;
@@ -53,6 +63,9 @@ impl BuildTreeScheduler {
             queue_render_callback(Self::on_rendering);
         }
         Disposable::create(move || {
+            let callback = cancellation
+                .upgrade()
+                .and_then(|callback| callback.borrow_mut().take());
             let removed = STATE.with(|state| {
                 let mut state = state.borrow_mut();
                 state
@@ -62,6 +75,9 @@ impl BuildTreeScheduler {
                     .map(|index| state.pending.remove(index))
             });
             drop(removed);
+            // Captured values may run user destructors. Release them after
+            // leaving the scheduler state and callback borrows.
+            drop(callback);
         })
     }
     pub fn should_yield() -> bool {
@@ -97,8 +113,14 @@ impl BuildTreeScheduler {
         work.sort_by(|a, b| b.priority.cmp(&a.priority).then_with(|| b.id.cmp(&a.id)));
         while !work.is_empty() && !Self::should_yield() {
             let item = work.pop().expect("Work is nonempty.");
-            (item.callback)();
+            let callback = item.callback.borrow_mut().take();
+            if let Some(callback) = callback {
+                callback();
+            }
         }
+        // A callback can cancel a later item and exhaust the budget before we
+        // reach it. Empty work must not request another rendering frame.
+        work.retain(|item| item.callback.borrow().is_some());
         let queue = STATE.with(|state| {
             let mut state = state.borrow_mut();
             state.pending.extend(work);
