@@ -6,12 +6,12 @@
       "id": "windows-ink-points-and-attributes",
       "upstream": "Windows.UI.Input.Inking.InkPoint / InkDrawingAttributes / PenTipShape",
       "scope": "required",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_point.rs",
         "src/FerroUI.Controls/inking/ink_drawing_attributes.rs"
       ],
-      "notes": "Portable validated value types replace WinRT objects. Pressure, tilt/twist/timestamps and drawing metadata can be retained without reproducing the OS renderer. Native pencil texture and full OS geometry conformance require separate validation."
+      "notes": "Validated Rust point/attribute values retain pressure, tilt, twist, microsecond timestamps, nib, curve/pressure/tilt flags, colors and pencil opacity. Native renderer appearance is separately recorded. Additional uncalled OS ModelerAttributes members remain explicit in service-api-map.json."
     },
     {
       "id": "windows-ink-stroke-renderer",
@@ -43,23 +43,23 @@
       "id": "windows-isf",
       "upstream": "InkStrokeContainer.SaveAsync / LoadAsync, InkPersistenceFormat.Isf",
       "scope": "required",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/Windows/FerroUI.WinUI/inking.rs",
         "src/FerroUI.Controls/inking/ink_platform_services.rs",
         "src/FerroUI.Controls/inking/ink_stroke_container.rs"
       ],
-      "notes": "WindowsInkServices invokes the actual OS SaveWithFormatAsync(Isf)/LoadAsync through windows 0.62.2. Portable builds use FERROINK, not ISF. Windows execution/fixtures remain required; native f32 precision, fresh imported IDs and explicit twist-loss policy are documented."
+      "notes": "WindowsInkServices invokes actual OS SaveWithFormatAsync(Isf)/LoadAsync. Real Windows CI run39600257242/job119222654079 at353c692 passes ISF conversion/round-trip, malformed-load atomicity and explicit twist-loss tests. Portable builds use FERROINK. Native f32/ISF quantization, fresh imported IDs and twist policy are documented."
     },
     {
       "id": "gif-with-embedded-isf",
       "upstream": "InkPersistenceFormat.GifWithEmbeddedIsf",
       "scope": "required",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/Windows/FerroUI.WinUI/inking.rs"
       ],
-      "notes": "WindowsInkServices invokes the real OS SaveAsync GIF-with-ISF operation and LoadAsync decoder. Raster bounds and byte limits are checked. Windows-produced fixture/preview comparisons have not yet been executed."
+      "notes": "WindowsInkServices invokes real OS SaveAsync GIF-with-ISF and LoadAsync. The Windows CI round-trip fixture passes at353c692, including GIF signature and recovered strokes/attributes/transforms/visible geometry. Raster bounds and byte budgets are enforced; visual preview pixel equivalence is a renderer boundary."
     },
     {
       "id": "native-ink-clipboard",
@@ -90,13 +90,14 @@
       "id": "high-contrast-services",
       "upstream": "AccessibilitySettings / UISettings / InkHighContrastAdjustment",
       "scope": "required",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_input.rs",
         "src/FerroUI.Controls/inking/ink_canvas.rs",
-        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
+        "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs",
+        "src/FerroUI.Controls/inking/color_names.rs"
       ],
-      "notes": "Canvas implements adjustment modes using the application high-contrast/theme state. Exact OS-selected system colors, contrast-filtered pen palettes, full theme-change propagation and visual comparisons remain open."
+      "notes": "Canvas and live pen palettes follow platform/theme color resources and the three source adjustment policies, including 7:1 filtering and separate normal/contrast selections. Existing FerroUI platform settings supply system changes; native pixel/OS palette comparison is recorded at the visual and renderer boundaries."
     },
     {
       "id": "pointer-routing",
@@ -118,7 +119,7 @@
       "rust_files": [
         "src/Windows/FerroUI.WinUI/inking.rs"
       ],
-      "notes": "Optional WindowsInkServices recognizers/recognize methods call installed OS handwriting engines, returning candidates, bounds and original FerroUI stroke IDs. This is an adjacent extension, not a WinUI control IDL member. Recognition runtime/language availability remains OS-dependent and has not been executed on this Linux host."
+      "notes": "Optional WindowsInkServices recognizers/recognize methods invoke installed OS handwriting engines, returning candidates/bounds/original FerroUI IDs. Optional enumeration fixture passes in Windows CI; language availability and candidate recognition accuracy are not yet tested. This adjacent extension is not called by the pinned controls."
     },
     {
       "id": "ink-analysis",
@@ -128,5 +129,28 @@
       "rust_files": [],
       "notes": "Document/shape/text analysis is outside the two pinned WinUI control directories and is not required by their public IDLs. It is tracked explicitly because a broader Windows Ink feature claim would otherwise be ambiguous. No analyzer implementation or recognition-model parity is claimed."
     }
-  ]
+  ],
+  "native_validation": {
+    "run_url": "https://github.com/wieslawsoltes/FerroUI/actions/runs/39600257242",
+    "job_id": 119222654079,
+    "revision": "353c692",
+    "command": "cargo test --locked -p ferroui-winui --lib inking::",
+    "result": {
+      "passed": 8,
+      "failed": 0,
+      "ignored": 1,
+      "seconds": 2.4
+    },
+    "ignored_test": "inking::tests::native_clipboard_round_trip",
+    "passing_tests": [
+      "clipboard_position_must_be_finite_and_bounded",
+      "affine_matrix_layout_matches_windows",
+      "native_export_requires_explicit_twist_loss",
+      "native_conversion_preserves_supported_attributes_samples_and_transform",
+      "malformed_native_load_preserves_existing_container",
+      "real_native_save_rejects_twist_until_application_opts_in",
+      "native_isf_and_gif_round_trip_preserve_strokes_attributes_and_geometry",
+      "installed_recognizer_enumeration_is_optional"
+    ]
+  }
 }

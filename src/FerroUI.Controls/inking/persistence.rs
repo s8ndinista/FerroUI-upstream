@@ -16,7 +16,19 @@ const HEADER_SIZE: usize = 20;
 const POINT_SIZE: usize = 40;
 const STROKE_FIXED_SIZE: usize = 136;
 
-/// Resource limits apply before allocation and cumulatively across records.
+/// Codec resource limits apply before allocation and cumulatively across
+/// records. The defaults permit a 64 MiB payload, 100,000 strokes, 65,536
+/// samples per stroke and 1,000,000 samples in total.
+///
+/// These limits bound serialized input and raw telemetry. Stroke construction
+/// and collection admission additionally reserve derived geometry against
+/// [`InkStroke::MAX_RENDERED_VERTICES`] and
+/// [`super::InkStrokeContainer::MAX_RENDERED_VERTICES`]. Changing codec limits
+/// does not raise those limits or the collection's raw sample limits. Geometry
+/// rejection returns [`InkError::LimitExceeded`] before the collection changes.
+/// Cached raw/smoothed samples, contour vectors and renderer-owned geometry
+/// occupy separate allocations; the serialized byte cap is not a total heap
+/// memory cap.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct InkPersistenceLimits {
     pub max_bytes: usize,

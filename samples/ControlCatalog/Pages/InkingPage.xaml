@@ -13,7 +13,7 @@
     <Border Grid.Row="2" MinHeight="320" BorderBrush="Gray" BorderThickness="1" Background="White">
       <InkCanvas x:Name="InkSurface" />
     </Border>
-    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="10">
+    <WrapPanel Grid.Row="3" Orientation="Horizontal" ItemSpacing="10" LineSpacing="10">
       <Button x:Name="SelectInk" Content="Select all" />
       <Button x:Name="CopyInk" Content="Copy" />
       <Button x:Name="PasteInk" Content="Paste" />
@@ -21,6 +21,6 @@
       <Button x:Name="SaveInk" Content="Save snapshot" />
       <Button x:Name="RestoreInk" Content="Restore snapshot" />
       <TextBlock x:Name="InkStatus" VerticalAlignment="Center" Text="Ready" />
-    </StackPanel>
+    </WrapPanel>
   </Grid>
 </ContentPage>

@@ -31,6 +31,7 @@ struct ActiveStroke {
     fragments: Vec<Vec<InkPoint>>,
     last_point: InkPoint,
     sample_count: usize,
+    geometry_vertices: usize,
     attributes: InkDrawingAttributes,
     last_event: InkPointerEventArgs,
     erasing: bool,
@@ -42,6 +43,8 @@ impl ActiveStroke {
         &mut self,
         parts: Vec<Vec<InkPoint>>,
         point: InkPoint,
+        geometry_limit: usize,
+        point_limit: usize,
     ) -> Result<(), InkError> {
         self.last_point = point;
         self.preview = None;
@@ -51,11 +54,24 @@ impl ActiveStroke {
             }
             for sample in part {
                 if self.points.last() != Some(&sample) {
-                    if self.sample_count >= InkPersistenceLimits::DEFAULT.max_points_per_stroke {
+                    if self.sample_count
+                        >= point_limit.min(InkPersistenceLimits::DEFAULT.max_points_per_stroke)
+                    {
+                        return Err(InkError::LimitExceeded);
+                    }
+                    let additional = self.points.last().map_or(32, |previous| {
+                        super::ink_stroke::geometry_segment_vertex_bound(*previous, sample)
+                    });
+                    let vertices = self
+                        .geometry_vertices
+                        .checked_add(additional)
+                        .ok_or(InkError::LimitExceeded)?;
+                    if vertices > geometry_limit.min(InkStroke::MAX_RENDERED_VERTICES) {
                         return Err(InkError::LimitExceeded);
                     }
                     self.points.push(sample);
                     self.sample_count += 1;
+                    self.geometry_vertices = vertices;
                 }
             }
         }
@@ -100,6 +116,9 @@ impl PartialEq for InkPresenter {
 }
 
 impl InkPresenter {
+    /// Bounds synthetic multi-pointer input as well as native device input.
+    pub const MAX_ACTIVE_POINTERS: usize = 256;
+
     pub fn new() -> Rc<Self> {
         let presenter: Rc<Self> = Rc::new_cyclic(|weak| Self {
             devices: Cell::new(CoreInputDeviceTypes::PEN),
@@ -267,6 +286,9 @@ impl InkPresenter {
     pub fn has_active_pointer(&self, id: i32) -> bool {
         self.active.borrow().contains_key(&id)
     }
+    pub(crate) fn is_inking(&self) -> bool {
+        self.active.borrow().values().any(|stroke| !stroke.erasing)
+    }
     pub fn cancel_pointer(&self, id: i32) {
         let active = self.active.borrow_mut().remove(&id);
         if let Some(active) = active {
@@ -363,7 +385,22 @@ impl InkPresenter {
         match phase {
             InkPointerPhase::Pressed => {
                 if self.has_active_pointer(e.pointer_id) {
+                    let epoch = self.epoch.get();
                     self.cancel_pointer(e.pointer_id);
+                    // Cancellation can synchronously disable input or start a
+                    // replacement stroke. Do not overwrite that callback's work.
+                    if self.has_active_pointer(e.pointer_id) {
+                        return Ok(true);
+                    }
+                    if epoch != self.epoch.get()
+                        || !self.enabled.get()
+                        || !self.admits(e.device_type)
+                        || (e.is_eraser && !self.input.is_eraser_input_enabled())
+                        || (e.is_barrel_button_pressed
+                            && !self.input.is_primary_barrel_button_input_enabled())
+                    {
+                        return Ok(false);
+                    }
                 }
                 if self.configuration.get()
                     == InkPresenterPredefinedConfiguration::SimpleSinglePointer
@@ -374,6 +411,18 @@ impl InkPresenter {
                 }
                 let erasing = self.processing.mode() == InkInputProcessingMode::Erasing
                     || (e.is_eraser && self.input.is_eraser_input_enabled());
+                {
+                    let active = self.active.borrow();
+                    let reserved = active.values().map(|s| s.geometry_vertices).sum::<usize>();
+                    let points = active.values().map(|s| s.sample_count).sum::<usize>();
+                    let initial_vertices = if erasing { 0 } else { 32 };
+                    if active.len() >= Self::MAX_ACTIVE_POINTERS
+                        || reserved + initial_vertices > InkStrokeContainer::MAX_RENDERED_VERTICES
+                        || points >= InkPersistenceLimits::DEFAULT.max_total_points
+                    {
+                        return Err(InkError::LimitExceeded);
+                    }
+                }
                 let point = if erasing {
                     point
                 } else {
@@ -390,6 +439,7 @@ impl InkPresenter {
                         fragments: Vec::new(),
                         last_point: point,
                         sample_count: usize::from(visible),
+                        geometry_vertices: if visible && !erasing { 32 } else { 0 },
                         attributes: self.attributes.get(),
                         last_event: e.clone(),
                         erasing,
@@ -407,10 +457,30 @@ impl InkPresenter {
             InkPointerPhase::Moved | InkPointerPhase::Released => {
                 let step = {
                     let mut active = self.active.borrow_mut();
+                    let other_vertices = active
+                        .iter()
+                        .filter(|(id, _)| **id != e.pointer_id)
+                        .map(|(_, stroke)| stroke.geometry_vertices)
+                        .sum::<usize>();
+                    let geometry_limit =
+                        InkStrokeContainer::MAX_RENDERED_VERTICES.saturating_sub(other_vertices);
+                    let other_points = active
+                        .iter()
+                        .filter(|(id, _)| **id != e.pointer_id)
+                        .map(|(_, stroke)| stroke.sample_count)
+                        .sum::<usize>();
+                    let point_limit = InkPersistenceLimits::DEFAULT
+                        .max_total_points
+                        .saturating_sub(other_points);
                     active
                         .get_mut(&e.pointer_id)
                         .map(|stroke| {
                             let previous = stroke.last_point;
+                            if point.timestamp < previous.timestamp {
+                                return Err(InkError::InvalidInput(
+                                    "Ink timestamps must be nondecreasing",
+                                ));
+                            }
                             if previous != point {
                                 if stroke.erasing {
                                     stroke.points.clear();
@@ -423,7 +493,12 @@ impl InkPresenter {
                                         &self.ruler,
                                         &self.protractor,
                                     );
-                                    stroke.append_visible(parts, point)?;
+                                    stroke.append_visible(
+                                        parts,
+                                        point,
+                                        geometry_limit,
+                                        point_limit,
+                                    )?;
                                 }
                             }
                             stroke.last_event = e.clone();

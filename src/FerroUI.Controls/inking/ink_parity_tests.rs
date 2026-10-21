@@ -9,16 +9,19 @@ use crate::automation::provider::{
 };
 use crate::automation::{AutomationProperties, ExpandCollapseState, ValuePatternIdentifiers};
 use crate::presenters::ScrollContentPresenter;
-use crate::primitives::PlacementMode;
+use crate::primitives::PopupFlyoutBase;
 use crate::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
 use crate::test_support::{test_scope, TestRoot};
 use crate::testing::{TestServices, UnitTestApplication, UnitTestApplicationScope};
-use crate::{Button, Canvas, Control, Flyout, Panel, ScrollViewer, StackPanel, TextBlock, Window};
+use crate::{
+    Button, Canvas, CheckBox, ComboBox, Control, Flyout, Panel, PlacementMode, ScrollViewer,
+    StackPanel, TextBlock, ToolTip, Window,
+};
 use ferroui_base::input::{IKeyboardDevice, InputElement, Key, KeyEventArgs, KeyboardDevice};
 use ferroui_base::layout::Orientation;
-use ferroui_base::media::RectangleGeometry;
+use ferroui_base::media::{Geometry, RectangleGeometry};
 use ferroui_base::threading::{Dispatcher, DispatcherPriority};
-use ferroui_base::{Point, Rect, Ref, Size};
+use ferroui_base::{Rect, Ref, Size};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
@@ -62,7 +65,7 @@ fn stencil_items(button: &InkToolbarStencilButton) -> Vec<Ref<InkToolbarFlyoutIt
     panel
         .children()
         .snapshot()
-        .into_iter()
+        .iter()
         .filter_map(|child| child.cast())
         .collect()
 }
@@ -104,9 +107,9 @@ fn canvas_automation_respects_empty_ancestor_and_own_geometry_clips() {
         host.children().add(&ink);
         let clip = RectangleGeometry::with_rect(Rect::default());
         if self_clip {
-            ink.set_clip(Some(clip.upcast()));
+            ink.set_clip(Some(clip.upcast::<Geometry>()));
         } else {
-            host.set_clip(Some(clip.upcast()));
+            host.set_clip(Some(clip.upcast::<Geometry>()));
         }
         let _root = attach(&host, Size::new(400.0, 300.0));
         let automation = peer(&ink);
@@ -123,7 +126,7 @@ fn canvas_automation_reduces_bounds_for_own_partial_clip() {
     let automation = peer(&ink);
     let full = automation.get_bounding_rectangle();
     ink.set_clip(Some(
-        RectangleGeometry::with_rect(Rect::new(0.0, 0.0, 100.0, 75.0)).upcast(),
+        RectangleGeometry::with_rect(Rect::new(0.0, 0.0, 100.0, 75.0)).upcast::<Geometry>(),
     ));
     let clipped = automation.get_bounding_rectangle();
     assert!(!automation.is_offscreen());
@@ -194,9 +197,7 @@ fn dropping_canvas_before_queued_presenter_change_does_not_keep_it_alive() {
         // subscription after its owner has been detached and dropped.
         Dispatcher::ui_thread().post_local(
             move || {
-                presenter
-                    .update_default_drawing_attributes(InkDrawingAttributes::create_for_pencil())
-                    .unwrap();
+                presenter.set_ruler_visible(true);
             },
             DispatcherPriority::BACKGROUND,
         );
@@ -221,22 +222,42 @@ fn toolbar_orientation_and_every_flyout_placement_round_trip_and_reach_flyouts()
     toolbar.set_orientation(Orientation::Horizontal);
     assert_eq!(toolbar.orientation(), Orientation::Horizontal);
     for (ink, expected) in [
-        (InkToolbarButtonFlyoutPlacement::Top, PlacementMode::Top),
+        (
+            InkToolbarButtonFlyoutPlacement::Top,
+            PlacementMode::TopEdgeAlignedLeft,
+        ),
         (
             InkToolbarButtonFlyoutPlacement::Bottom,
-            PlacementMode::Bottom,
+            PlacementMode::BottomEdgeAlignedLeft,
         ),
         (InkToolbarButtonFlyoutPlacement::Left, PlacementMode::Left),
         (InkToolbarButtonFlyoutPlacement::Right, PlacementMode::Right),
     ] {
         toolbar.set_button_flyout_placement(ink);
         assert_eq!(toolbar.button_flyout_placement(), ink);
-        for child in toolbar.children().snapshot() {
-            if let Some(flyout) = child.cast::<Button>().and_then(|button| button.flyout()) {
+        for child in toolbar.children().snapshot().iter() {
+            if let Some(flyout) = child
+                .cast::<Button>()
+                .and_then(|button| button.flyout())
+                .and_then(|flyout| flyout.cast::<PopupFlyoutBase>())
+            {
                 assert_eq!(flyout.placement(), expected);
             }
         }
     }
+    toolbar.set_orientation(Orientation::Vertical);
+    toolbar.set_button_flyout_placement(InkToolbarButtonFlyoutPlacement::Auto);
+    let pen = toolbar
+        .get_tool_button(InkToolbarTool::BallpointPen)
+        .unwrap();
+    assert_eq!(
+        pen.flyout()
+            .unwrap()
+            .cast::<PopupFlyoutBase>()
+            .unwrap()
+            .placement(),
+        PlacementMode::BottomEdgeAlignedLeft
+    );
 }
 
 #[test]
@@ -266,6 +287,140 @@ fn toolbar_in_visual_tree_drives_canvas_and_legacy_ruler_toggle() {
     toolbar.set_is_ruler_button_checked(false);
     assert!(!toolbar.is_ruler_button_checked());
     assert!(!ink.ink_presenter().ruler_visible());
+}
+
+/// Ports the seven source interaction-page actions through actual FerroUI
+/// selectors, checkbox providers and routed handlers. The source harness's
+/// out-of-process Windows UIA transport is replaced by framework test services.
+#[test]
+fn interaction_page_selectors_and_checkboxes_drive_the_live_toolbar() {
+    fn selector(labels: &[&str], changed: impl Fn(usize) + 'static) -> Ref<ComboBox> {
+        let selector = ComboBox::new();
+        for label in labels {
+            selector.items().add(Some(Rc::new((*label).to_owned())));
+        }
+        selector.selection_changed(move |sender, _| {
+            let selector = sender.to_ref().cast::<ComboBox>().unwrap();
+            if selector.selected_index() >= 0 {
+                changed(selector.selected_index() as usize);
+            }
+        });
+        selector
+    }
+    let _scope = test_scope();
+    let toolbar = InkToolbar::new();
+    let ink = canvas();
+    toolbar.set_target_ink_canvas(Some(ink.clone()));
+    let active_text = TextBlock::new();
+    let active_label = active_text.clone();
+    toolbar.active_tool_changed(move |toolbar| {
+        active_label.set_text(Some(
+            &toolbar
+                .active_tool()
+                .map(|tool| format!("{:?}", tool.tool_kind()))
+                .unwrap_or_else(|| "None".into()),
+        ));
+    });
+    let target = toolbar.clone();
+    let initial = selector(
+        &["None", "PensOnly", "AllExceptPens", "All"],
+        move |index| {
+            target.set_initial_controls(
+                [
+                    InkToolbarInitialControls::None,
+                    InkToolbarInitialControls::PensOnly,
+                    InkToolbarInitialControls::AllExceptPens,
+                    InkToolbarInitialControls::All,
+                ][index],
+            );
+        },
+    );
+    let target = toolbar.clone();
+    let orientation = selector(&["Vertical", "Horizontal"], move |index| {
+        target.set_orientation([Orientation::Vertical, Orientation::Horizontal][index]);
+    });
+    let target = toolbar.clone();
+    let placement = selector(&["Top", "Bottom", "Left", "Right", "Auto"], move |index| {
+        target.set_button_flyout_placement(
+            [
+                InkToolbarButtonFlyoutPlacement::Top,
+                InkToolbarButtonFlyoutPlacement::Bottom,
+                InkToolbarButtonFlyoutPlacement::Left,
+                InkToolbarButtonFlyoutPlacement::Right,
+                InkToolbarButtonFlyoutPlacement::Auto,
+            ][index],
+        );
+    });
+    let ruler = CheckBox::new();
+    let target = toolbar.clone();
+    ruler.is_checked_changed(move |sender, _| {
+        target.set_is_ruler_button_checked(
+            sender.to_ref().cast::<CheckBox>().unwrap().is_checked() == Some(true),
+        );
+    });
+    let stencil = CheckBox::new();
+    let target = toolbar.clone();
+    stencil.is_checked_changed(move |sender, _| {
+        target.set_is_stencil_button_checked(
+            sender.to_ref().cast::<CheckBox>().unwrap().is_checked() == Some(true),
+        );
+    });
+    let panel = StackPanel::new();
+    let controls: [Ref<Control>; 8] = [
+        toolbar.clone().upcast(),
+        ink.clone().upcast(),
+        initial.clone().upcast(),
+        orientation.clone().upcast(),
+        placement.clone().upcast(),
+        ruler.clone().upcast(),
+        stencil.clone().upcast(),
+        active_text.clone().upcast(),
+    ];
+    for control in &controls {
+        panel.children().add(control);
+    }
+    let root = attach(&panel, Size::new(600.0, 800.0));
+    for control in controls {
+        assert!(control.visual_root().is_some());
+    }
+    for (index, expected_count) in [0, 3, 2, 5].into_iter().enumerate() {
+        initial.set_selected_index(index as i32);
+        root.measure(Size::new(600.0, 800.0));
+        root.arrange(Rect::new(0.0, 0.0, 600.0, 800.0));
+        assert_eq!(toolbar.children().count(), expected_count);
+    }
+    assert_eq!(active_text.text().as_deref(), Some("BallpointPen"));
+    for (index, expected) in [Orientation::Vertical, Orientation::Horizontal]
+        .into_iter()
+        .enumerate()
+    {
+        orientation.set_selected_index(index as i32);
+        assert_eq!(toolbar.orientation(), expected);
+    }
+    for (index, expected) in [
+        InkToolbarButtonFlyoutPlacement::Top,
+        InkToolbarButtonFlyoutPlacement::Bottom,
+        InkToolbarButtonFlyoutPlacement::Left,
+        InkToolbarButtonFlyoutPlacement::Right,
+        InkToolbarButtonFlyoutPlacement::Auto,
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        placement.set_selected_index(index as i32);
+        assert_eq!(toolbar.button_flyout_placement(), expected);
+    }
+    for checkbox in [&ruler, &stencil] {
+        let toggle = peer(checkbox)
+            .get_provider::<dyn IToggleProvider>()
+            .unwrap();
+        toggle.toggle().unwrap();
+        assert_eq!(checkbox.is_checked(), Some(true));
+        assert!(ink.ink_presenter().ruler_visible());
+        toggle.toggle().unwrap();
+        assert_eq!(checkbox.is_checked(), Some(false));
+        assert!(!ink.ink_presenter().ruler_visible());
+    }
 }
 
 #[test]
@@ -306,6 +461,14 @@ fn toolbar_instances_controls_toggle_lookup_and_custom_configuration_are_indepen
     content.set_text(Some("Custom configuration".into()));
     tool.set_configuration_content(Some(content.clone().upcast()));
     assert_eq!(tool.configuration_content(), Some(content.upcast()));
+    let custom_pen = InkToolbarCustomPenButton::new();
+    assert_eq!(custom_pen.tool_kind(), InkToolbarTool::CustomPen);
+    assert!(custom_pen.custom_pen().is_none());
+    assert!(custom_pen.configuration_content().is_none());
+    let content = TextBlock::new();
+    content.set_text(Some("Custom pen configuration".into()));
+    custom_pen.set_configuration_content(Some(content.clone().upcast()));
+    assert_eq!(custom_pen.configuration_content(), Some(content.upcast()));
 }
 
 #[test]
@@ -504,6 +667,33 @@ fn tool_peers_report_pen_roles_selected_names_and_palette_help() {
     assert!(selection.is_selected());
     assert_eq!(toolbar.active_tool(), Some(pencil));
     assert!(!peer(&ballpoint).get_name().contains("selected"));
+}
+
+#[test]
+fn builtin_tool_names_and_tooltips_are_available_after_loading() {
+    let _scope = test_scope();
+    let toolbar = InkToolbar::new();
+    let _root = attach(&toolbar, Size::new(500.0, 100.0));
+    Dispatcher::ui_thread().run_jobs(None);
+    assert!(toolbar.is_loaded());
+    for (tool, expected) in [
+        (InkToolbarTool::BallpointPen, "Ballpoint pen"),
+        (InkToolbarTool::Pencil, "Pencil"),
+        (InkToolbarTool::Highlighter, "Highlighter"),
+        (InkToolbarTool::Eraser, "Eraser"),
+    ] {
+        let button = toolbar.get_tool_button(tool).unwrap();
+        button.measure(Size::new(1000.0, 1000.0));
+        assert_eq!(
+            AutomationProperties::get_name(&button).as_deref(),
+            Some(expected)
+        );
+        let tooltip = ToolTip::get_tip(&button).unwrap();
+        assert_eq!(
+            tooltip.downcast_ref::<String>().map(String::as_str),
+            Some(expected)
+        );
+    }
 }
 
 #[test]
@@ -748,7 +938,7 @@ fn width_value_provider_clamps_and_announces_absolute_range_and_value_changes() 
     let events = Rc::new(Cell::new(0));
     let count = events.clone();
     automation.property_changed(move |event| {
-        if event.property == ValuePatternIdentifiers::value_property() {
+        if event.property() == ValuePatternIdentifiers::value_property() {
             count.set(count.get() + 1);
         }
     });

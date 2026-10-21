@@ -50,6 +50,7 @@ pub struct InkStroke {
     outlines: RefCell<Option<Rc<Vec<Vec<Point>>>>>,
     bounds: Cell<Option<Rect>>,
     changed: Rc<HandlerList<dyn Fn()>>,
+    geometry_vertex_bound: usize,
 }
 
 impl PartialEq for InkStroke {
@@ -69,11 +70,15 @@ impl std::fmt::Debug for InkStroke {
 }
 
 impl InkStroke {
+    /// Conservative maximum contour vertices reserved by one stroke. This
+    /// accounts for curve subdivision and the most detailed supported nib.
+    pub const MAX_RENDERED_VERTICES: usize = 1_048_576;
+
     pub fn new(
         points: Vec<InkPoint>,
         attributes: InkDrawingAttributes,
     ) -> Result<Rc<Self>, InkError> {
-        Self::validate(&points, attributes)?;
+        let geometry_vertex_bound = Self::validate(&points, attributes)?;
         let id = allocate_id()?;
         Ok(Self::allocate(
             id,
@@ -81,6 +86,7 @@ impl InkStroke {
             attributes,
             Matrix::IDENTITY,
             false,
+            geometry_vertex_bound,
         ))
     }
 
@@ -90,6 +96,7 @@ impl InkStroke {
         attributes: InkDrawingAttributes,
         transform: Matrix,
         selected: bool,
+        geometry_vertex_bound: usize,
     ) -> Rc<Self> {
         Rc::new(Self {
             id,
@@ -101,6 +108,7 @@ impl InkStroke {
             outlines: RefCell::new(None),
             bounds: Cell::new(None),
             changed: Rc::new(HandlerList::new()),
+            geometry_vertex_bound,
         })
     }
 
@@ -111,7 +119,7 @@ impl InkStroke {
         transform: Matrix,
         selected: bool,
     ) -> Result<Rc<Self>, InkError> {
-        Self::validate(&points, attributes)?;
+        let geometry_vertex_bound = Self::validate(&points, attributes)?;
         validate_affine(transform)?;
         validate_transformed_points(&points, transform)?;
         if id == 0 {
@@ -123,10 +131,17 @@ impl InkStroke {
         STROKE_IDS.with(|ids| {
             *ids.borrow_mut().live.entry(id).or_default() += 1;
         });
-        Ok(Self::allocate(id, points, attributes, transform, selected))
+        Ok(Self::allocate(
+            id,
+            points,
+            attributes,
+            transform,
+            selected,
+            geometry_vertex_bound,
+        ))
     }
 
-    fn validate(points: &[InkPoint], attributes: InkDrawingAttributes) -> Result<(), InkError> {
+    fn validate(points: &[InkPoint], attributes: InkDrawingAttributes) -> Result<usize, InkError> {
         if points.is_empty() {
             return Err(InkError::EmptyStroke);
         }
@@ -142,7 +157,11 @@ impl InkStroke {
                 "Ink timestamps must be nondecreasing",
             ));
         }
-        Ok(())
+        geometry_vertex_bound(points)
+    }
+
+    pub(crate) fn geometry_vertex_bound(&self) -> usize {
+        self.geometry_vertex_bound
     }
 
     pub fn id(&self) -> u32 {
@@ -219,7 +238,15 @@ impl InkStroke {
             return points.clone();
         }
         let points = if self.attributes.get().fit_to_curve && self.points.len() >= 3 {
-            let mut result = Vec::with_capacity(self.points.len().saturating_mul(4));
+            let capacity = 1 + self
+                .points
+                .windows(2)
+                .map(|pair| {
+                    ((Point::distance(pair[0].position, pair[1].position) / 4.0).ceil() as usize)
+                        .clamp(1, 8)
+                })
+                .sum::<usize>();
+            let mut result = Vec::with_capacity(capacity);
             result.push(self.points[0]);
             for i in 0..self.points.len() - 1 {
                 let p0 = self.points[i.saturating_sub(1)].position;
@@ -229,6 +256,10 @@ impl InkStroke {
                 let distance = Point::distance(p1, p2);
                 let steps = ((distance / 4.0).ceil() as usize).clamp(1, 8);
                 for step in 1..=steps {
+                    if step == steps {
+                        result.push(self.points[i + 1]);
+                        continue;
+                    }
                     let t = step as f64 / steps as f64;
                     let t2 = t * t;
                     let t3 = t2 * t;
@@ -266,9 +297,15 @@ impl InkStroke {
             return outlines.clone();
         }
         let points = self.rendering_points();
-        let mut outlines = Vec::with_capacity(points.len());
+        let mut outlines = Vec::with_capacity((self.geometry_vertex_bound - 32) / 64 + 1);
         let mut previous: Option<Vec<Point>> = None;
+        let mut previous_sample: Option<InkPoint> = None;
         for point in points.iter() {
+            // Elapsed time alone does not alter the nib. Preserve every raw
+            // timestamp while avoiding identical overlapping contours.
+            if previous_sample.is_some_and(|before| same_geometry_sample(before, *point)) {
+                continue;
+            }
             let nib = self.nib_polygon(*point);
             if let Some(before) = previous.as_ref() {
                 let mut both = Vec::with_capacity(before.len() + nib.len());
@@ -282,6 +319,7 @@ impl InkStroke {
                 outlines.push(nib.clone());
             }
             previous = Some(nib);
+            previous_sample = Some(*point);
         }
         let outlines = Rc::new(outlines);
         *self.outlines.borrow_mut() = Some(outlines.clone());
@@ -392,6 +430,46 @@ impl InkStroke {
                     })
             })
     }
+}
+
+fn same_geometry_sample(a: InkPoint, b: InkPoint) -> bool {
+    a.position == b.position
+        && a.pressure == b.pressure
+        && a.tilt_x == b.tilt_x
+        && a.tilt_y == b.tilt_y
+        && a.twist == b.twist
+}
+
+/// Reserves the maximum curve-fitted contour cost between validated samples.
+/// Input collection uses this incrementally, adding 32 vertices per fragment
+/// and enforcing the stroke budget before accepting a sample. Equal geometry
+/// samples still retain their timestamps but need no additional contour.
+pub(crate) fn geometry_segment_vertex_bound(a: InkPoint, b: InkPoint) -> usize {
+    if same_geometry_sample(a, b) {
+        return 0;
+    }
+    let subdivisions =
+        ((Point::distance(a.position, b.position) / 4.0).ceil() as usize).clamp(1, 8);
+    subdivisions * 64
+}
+
+fn geometry_vertex_bound(points: &[InkPoint]) -> Result<usize, InkError> {
+    let mut vertices = 32usize;
+    for pair in points.windows(2) {
+        if same_geometry_sample(pair[0], pair[1]) {
+            continue;
+        }
+        let cost = if points.len() >= 3 {
+            geometry_segment_vertex_bound(pair[0], pair[1])
+        } else {
+            64
+        };
+        vertices = vertices.checked_add(cost).ok_or(InkError::LimitExceeded)?;
+        if vertices > InkStroke::MAX_RENDERED_VERTICES {
+            return Err(InkError::LimitExceeded);
+        }
+    }
+    Ok(vertices)
 }
 
 impl Drop for InkStroke {
@@ -607,6 +685,50 @@ mod tests {
         let b = a.clone_stroke().unwrap();
         assert_ne!(a.id(), b.id());
         assert_eq!(a.ink_points(), b.ink_points());
+    }
+    #[test]
+    fn geometry_budget_accounts_for_subdivision_and_repeated_samples() {
+        let samples = |spacing: f64| {
+            (0..2100)
+                .map(|index| InkPoint::new(Point::new(index as f64 * spacing, 0.0), 1.0).unwrap())
+                .collect()
+        };
+        assert!(InkStroke::new(samples(1.0), Default::default()).is_ok());
+        assert!(matches!(
+            InkStroke::new(samples(32.0), Default::default()),
+            Err(InkError::LimitExceeded)
+        ));
+        // Keep the complete timed device history, but render one stationary
+        // nib instead of thousands of identical overlapping contours.
+        let repeated = (0..65_536)
+            .map(|timestamp| {
+                let mut point = InkPoint::new(Point::default(), 1.0).unwrap();
+                point.timestamp = timestamp;
+                point
+            })
+            .collect();
+        let stroke = InkStroke::new(repeated, Default::default()).unwrap();
+        assert_eq!(stroke.ink_points().len(), 65_536);
+        assert_eq!(stroke.geometry_vertex_bound(), 32);
+        assert_eq!(stroke.outline_polygons().len(), 1);
+    }
+    #[test]
+    fn smoothing_preserves_exact_device_endpoints_at_large_coordinates() {
+        let mut endpoint = InkPoint::new(Point::new(0.001, 0.003), 1.0e-8).unwrap();
+        endpoint.timestamp = (1u64 << 54) + 3;
+        let points = vec![
+            InkPoint::new(Point::new(1.0e12, -1.0e12), 1.0).unwrap(),
+            endpoint,
+            InkPoint {
+                position: Point::new(0.002, 0.004),
+                ..endpoint
+            },
+        ];
+        let stroke = InkStroke::new(points.clone(), Default::default()).unwrap();
+        let rendered = stroke.rendering_points();
+        for original in points {
+            assert!(rendered.contains(&original));
+        }
     }
     #[test]
     fn imported_ids_do_not_exhaust_new_strokes_or_collide() {

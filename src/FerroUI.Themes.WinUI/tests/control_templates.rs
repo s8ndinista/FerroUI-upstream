@@ -686,3 +686,38 @@ fn a_path_icon_in_a_button_is_scaled_into_its_box() {
     assert_eq!(ferroui_base::media::Stretch::Uniform, path.stretch(), "the geometry is scaled");
     window.close();
 }
+
+/// The panel-backed ink controls retain the source Control border/padding contract and
+/// account for it once, even when their child templates and margins come from this theme.
+#[test]
+fn ink_toolbar_border_and_padding_offset_themed_children() {
+    use ferroui_controls::{InkToolbar, InkToolbarCustomToolButton, InkToolbarInitialControls,
+        InkToolbarPenConfigurationControl, StackPanel};
+    let _app = start_themed_application();
+    let host = StackPanel::new();
+    let toolbar = InkToolbar::new();
+    toolbar.set_initial_controls(InkToolbarInitialControls::None);
+    toolbar.set_width(200.0);
+    toolbar.set_height(80.0);
+    toolbar.set_padding(Thickness::new(6.0, 8.0, 10.0, 12.0));
+    toolbar.set_border_thickness(Thickness::new(1.0, 2.0, 3.0, 4.0));
+    toolbar.set_corner_radius(CornerRadius::uniform(7.0));
+    let tool = InkToolbarCustomToolButton::new();
+    toolbar.children().add(&tool);
+    host.children().add(&toolbar);
+    let configuration = InkToolbarPenConfigurationControl::new();
+    configuration.set_padding(toolbar.padding());
+    configuration.set_border_thickness(toolbar.border_thickness());
+    host.children().add(&configuration);
+    let window = Window::new();
+    window.set_content(Some(Control::boxed(&host)));
+    window.show();
+    window.update_layout();
+    assert!(tool.template().is_some());
+    assert_eq!(tool.bounds().x, 7.0 + tool.margin().left);
+    assert_eq!(tool.bounds().y, 10.0 + tool.margin().top);
+    let first = configuration.children().get(0);
+    assert_eq!(first.bounds().x, 7.0 + first.margin().left);
+    assert_eq!(first.bounds().y, 10.0 + first.margin().top);
+    window.close();
+}

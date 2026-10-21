@@ -19,6 +19,8 @@
       <StaticResource x:Key="InkToolbarButtonBackgroundPressed" ResourceKey="SubtleFillColorTertiaryBrush" />
       <StaticResource x:Key="InkToolbarButtonBackgroundDisabled" ResourceKey="ControlFillColorDisabledBrush" />
       <StaticResource x:Key="InkToolbarButtonSelectedBackground" ResourceKey="SubtleFillColorSecondaryBrush" />
+      <!-- Supply the legacy selected alias outside HighContrast for complete theme lookup. -->
+      <StaticResource x:Key="InkToolbarButtonSelectedBackgroundThemeBrush" ResourceKey="InkToolbarButtonSelectedBackground" />
       <StaticResource x:Key="InkToolbarButtonSelectedBackgroundPointerOver" ResourceKey="SubtleFillColorSecondaryBrush" />
       <StaticResource x:Key="InkToolbarButtonSelectedBackgroundPressed" ResourceKey="SubtleFillColorTertiaryBrush" />
       <StaticResource x:Key="InkToolbarButtonSelectedBackgroundDisabled" ResourceKey="ControlFillColorDisabledBrush" />
@@ -79,6 +81,8 @@
       <StaticResource x:Key="InkToolbarButtonBackgroundPressed" ResourceKey="SubtleFillColorTertiaryBrush" />
       <StaticResource x:Key="InkToolbarButtonBackgroundDisabled" ResourceKey="ControlFillColorDisabledBrush" />
       <StaticResource x:Key="InkToolbarButtonSelectedBackground" ResourceKey="SubtleFillColorSecondaryBrush" />
+      <!-- Supply the legacy selected alias outside HighContrast for complete theme lookup. -->
+      <StaticResource x:Key="InkToolbarButtonSelectedBackgroundThemeBrush" ResourceKey="InkToolbarButtonSelectedBackground" />
       <StaticResource x:Key="InkToolbarButtonSelectedBackgroundPointerOver" ResourceKey="SubtleFillColorSecondaryBrush" />
       <StaticResource x:Key="InkToolbarButtonSelectedBackgroundPressed" ResourceKey="SubtleFillColorSecondaryBrush" />
       <StaticResource x:Key="InkToolbarButtonSelectedBackgroundDisabled" ResourceKey="ControlFillColorDisabledBrush" />

@@ -86,9 +86,20 @@ impl InkPoint {
     }
 
     pub(crate) fn interpolate(a: Self, b: Self, t: f64) -> Self {
-        let mix = |a: f32, b: f32| a + (b - a) * t as f32;
+        // Keep actual device samples bit-for-bit at segment boundaries. In
+        // particular a floating-point timestamp interpolation cannot exactly
+        // represent every u64, and f32 subtraction can lose small pressures.
+        if t <= 0.0 {
+            return a;
+        }
+        if t >= 1.0 {
+            return b;
+        }
+        let mix = |a: f32, b: f32| (f64::from(a) + (f64::from(b) - f64::from(a)) * t) as f32;
         // Twist follows the shortest arc, including the 359 -> 0 boundary.
-        let twist_delta = (b.twist - a.twist + 540.0).rem_euclid(360.0) - 180.0;
+        let twist_delta =
+            (f64::from(b.twist) - f64::from(a.twist) + 540.0).rem_euclid(360.0) - 180.0;
+        let twist = (f64::from(a.twist) + twist_delta * t).rem_euclid(360.0) as f32;
         Self {
             position: Point::new(
                 a.position.x + (b.position.x - a.position.x) * t,
@@ -97,10 +108,13 @@ impl InkPoint {
             pressure: mix(a.pressure, b.pressure),
             tilt_x: mix(a.tilt_x, b.tilt_x),
             tilt_y: mix(a.tilt_y, b.tilt_y),
-            twist: (a.twist + twist_delta * t as f32).rem_euclid(360.0),
+            // Rounding a value just below 360 to f32 can produce 360, which
+            // is outside the public sample range and equivalent to zero.
+            twist: if twist >= 360.0 { 0.0 } else { twist },
             timestamp: a
                 .timestamp
-                .saturating_add(((b.timestamp.saturating_sub(a.timestamp)) as f64 * t) as u64),
+                .saturating_add(((b.timestamp.saturating_sub(a.timestamp)) as f64 * t) as u64)
+                .min(b.timestamp),
         }
     }
 }
@@ -129,5 +143,26 @@ mod tests {
         a.twist = 359.0;
         b.twist = 1.0;
         assert_eq!(InkPoint::interpolate(a, b, 0.5).twist, 0.0);
+    }
+    #[test]
+    fn interpolation_preserves_original_endpoints_and_large_timestamps() {
+        let mut a = InkPoint::new(Point::new(1.0e12, 1.0e12), 1.0).unwrap();
+        a.timestamp = 1;
+        let mut b = InkPoint::new(Point::new(0.001, 0.001), 1.0e-8).unwrap();
+        b.timestamp = (1u64 << 54) + 3;
+        assert_eq!(InkPoint::interpolate(a, b, 0.0), a);
+        assert_eq!(InkPoint::interpolate(a, b, 1.0), b);
+        let near_end = InkPoint::interpolate(a, b, 1.0 - f64::EPSILON);
+        assert!(near_end.timestamp <= b.timestamp);
+        near_end.validate().unwrap();
+    }
+    #[test]
+    fn twist_rounding_never_generates_an_invalid_360_degree_sample() {
+        let a = InkPoint::new(Point::default(), 0.5).unwrap();
+        let mut b = a;
+        b.twist = 359.99;
+        let sample = InkPoint::interpolate(a, b, 0.001);
+        sample.validate().unwrap();
+        assert_eq!(sample.twist, 0.0);
     }
 }

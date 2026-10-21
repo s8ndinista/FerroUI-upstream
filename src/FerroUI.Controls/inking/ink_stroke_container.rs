@@ -15,6 +15,7 @@ struct ContainerState {
     by_id: HashMap<u32, Rc<InkStroke>>,
     subscriptions: HashMap<u32, Rc<dyn IDisposable>>,
     total_points: usize,
+    geometry_vertices: usize,
 }
 
 /// UI-thread-affine stroke collection with stable identities and notifying
@@ -43,6 +44,11 @@ impl std::fmt::Debug for InkStrokeContainer {
 }
 
 impl InkStrokeContainer {
+    /// Maximum aggregate conservative contour-vertex reservation. Attribute
+    /// edits cannot increase the reservation made when a stroke is admitted.
+    /// Point storage is at most 64 MiB; vector and backend caches are extra.
+    pub const MAX_RENDERED_VERTICES: usize = 4_194_304;
+
     pub fn new() -> Rc<Self> {
         Rc::new_cyclic(|weak| Self {
             state: RefCell::new(ContainerState::default()),
@@ -79,6 +85,7 @@ impl InkStrokeContainer {
         }
         let mut seen = HashSet::with_capacity(strokes.len());
         let mut additional_points = 0usize;
+        let mut additional_vertices = 0usize;
         {
             let state = self.state.borrow();
             if state
@@ -96,11 +103,21 @@ impl InkStrokeContainer {
                 additional_points = additional_points
                     .checked_add(s.ink_points().len())
                     .ok_or(InkError::LimitExceeded)?;
+                additional_vertices = additional_vertices
+                    .checked_add(s.geometry_vertex_bound())
+                    .ok_or(InkError::LimitExceeded)?;
             }
             if state
                 .total_points
                 .checked_add(additional_points)
                 .is_none_or(|n| n > limits.max_total_points)
+            {
+                return Err(InkError::LimitExceeded);
+            }
+            if state
+                .geometry_vertices
+                .checked_add(additional_vertices)
+                .is_none_or(|n| n > Self::MAX_RENDERED_VERTICES)
             {
                 return Err(InkError::LimitExceeded);
             }
@@ -111,6 +128,7 @@ impl InkStrokeContainer {
         {
             let mut state = self.state.borrow_mut();
             state.total_points += additional_points;
+            state.geometry_vertices += additional_vertices;
             for s in strokes {
                 let weak = self.weak_self.clone();
                 let subscription = s.changed(move || {
@@ -257,6 +275,7 @@ impl InkStrokeContainer {
             for id in ids {
                 if let Some(stroke) = state.by_id.remove(&id) {
                     state.total_points -= stroke.ink_points().len();
+                    state.geometry_vertices -= stroke.geometry_vertex_bound();
                 }
                 if let Some(subscription) = state.subscriptions.remove(&id) {
                     removed.push(subscription);
@@ -344,11 +363,7 @@ impl InkStrokeContainer {
         limits: InkPersistenceLimits,
     ) -> Result<(), InkError> {
         let strokes = persistence::decode(data, limits)?;
-        validate_imported_strokes(&strokes)?;
-        let _batch = ChangeBatch::new(self);
-        self.clear();
-        // decode has already checked every ID, so this cannot partially fail.
-        self.add_strokes(strokes)
+        self.replace_document(strokes)
     }
     /// Auto-detects native portable ink; other representations are delegated to
     /// the attached OS service. The old document survives all decode failures.
@@ -365,13 +380,10 @@ impl InkStrokeContainer {
                 let service = service.ok_or(InkError::UnsupportedFormat)?;
                 service.load(data).await?
             };
-            validate_imported_strokes(&strokes)?;
             let this = this.ok_or(InkError::InvalidOperation(
                 "The ink collection is no longer available",
             ))?;
-            let _batch = ChangeBatch::new(&this);
-            this.clear();
-            this.add_strokes(strokes)
+            this.replace_document(strokes)
         })
     }
 
@@ -392,6 +404,7 @@ impl InkStrokeContainer {
             return Err(InkError::InvalidPoint);
         }
         let imported = persistence::decode(data, InkPersistenceLimits::DEFAULT)?;
+        validate_imported_strokes(&imported)?;
         if imported.is_empty() {
             return Ok(Rect::default());
         }
@@ -409,7 +422,7 @@ impl InkStrokeContainer {
     }
     pub fn can_paste(data: &[u8]) -> bool {
         persistence::decode(data, InkPersistenceLimits::DEFAULT)
-            .is_ok_and(|strokes| !strokes.is_empty())
+            .is_ok_and(|strokes| !strokes.is_empty() && validate_imported_strokes(&strokes).is_ok())
     }
     pub fn copy_selected_to_clipboard(&self) -> Result<(), InkError> {
         let service = self
@@ -465,6 +478,39 @@ impl InkStrokeContainer {
         }
         Ok(result)
     }
+
+    fn replace_document(&self, strokes: Vec<Rc<InkStroke>>) -> Result<(), InkError> {
+        validate_imported_strokes(&strokes)?;
+        let mut next = ContainerState {
+            by_id: HashMap::with_capacity(strokes.len()),
+            subscriptions: HashMap::with_capacity(strokes.len()),
+            ..ContainerState::default()
+        };
+        for stroke in &strokes {
+            let weak = self.weak_self.clone();
+            let subscription = stroke.changed(move || {
+                if let Some(this) = weak.upgrade() {
+                    this.notify();
+                }
+            });
+            next.total_points += stroke.ink_points().len();
+            next.geometry_vertices += stroke.geometry_vertex_bound();
+            next.by_id.insert(stroke.id(), stroke.clone());
+            next.subscriptions.insert(stroke.id(), subscription);
+        }
+        next.strokes = strokes;
+        let _batch = ChangeBatch::new(self);
+        // Commit the complete document before releasing old objects. A stroke
+        // event handler can own a resource whose destructor reenters us; it
+        // must observe the replacement, never a temporarily empty document.
+        let previous = self.state.replace(next);
+        for subscription in previous.subscriptions.values() {
+            subscription.dispose();
+        }
+        drop(previous);
+        self.notify();
+        Ok(())
+    }
 }
 
 fn validate_imported_strokes(strokes: &[Rc<InkStroke>]) -> Result<(), InkError> {
@@ -474,6 +520,7 @@ fn validate_imported_strokes(strokes: &[Rc<InkStroke>]) -> Result<(), InkError> 
     }
     let mut seen = HashSet::with_capacity(strokes.len());
     let mut total = 0usize;
+    let mut vertices = 0usize;
     for stroke in strokes {
         if !seen.insert(stroke.id()) {
             return Err(InkError::DuplicateStrokeId(stroke.id()));
@@ -481,8 +528,12 @@ fn validate_imported_strokes(strokes: &[Rc<InkStroke>]) -> Result<(), InkError> 
         total = total
             .checked_add(stroke.ink_points().len())
             .ok_or(InkError::LimitExceeded)?;
+        vertices = vertices
+            .checked_add(stroke.geometry_vertex_bound())
+            .ok_or(InkError::LimitExceeded)?;
         if stroke.ink_points().len() > limits.max_points_per_stroke
             || total > limits.max_total_points
+            || vertices > InkStrokeContainer::MAX_RENDERED_VERTICES
         {
             return Err(InkError::LimitExceeded);
         }
@@ -515,7 +566,10 @@ impl Drop for ChangeBatch<'_> {
 }
 
 fn bounds(items: impl Iterator<Item = Rect>) -> Rect {
-    items.reduce(union_rect).unwrap_or_default()
+    items
+        .filter(|rect| !rect.is_empty())
+        .reduce(union_rect)
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -538,6 +592,7 @@ mod tests {
         saved_count: Cell<usize>,
         pasted: RefCell<Vec<Rc<InkStroke>>>,
         failure: Cell<bool>,
+        on_drop: Option<Box<dyn Fn()>>,
     }
     impl TestPlatform {
         fn new() -> Rc<Self> {
@@ -546,7 +601,15 @@ mod tests {
                 saved_count: Cell::new(0),
                 pasted: RefCell::new(Vec::new()),
                 failure: Cell::new(false),
+                on_drop: None,
             })
+        }
+    }
+    impl Drop for TestPlatform {
+        fn drop(&mut self) {
+            if let Some(callback) = self.on_drop.take() {
+                callback();
+            }
         }
     }
     impl IInkPlatformServices for TestPlatform {
@@ -595,6 +658,38 @@ mod tests {
         c.add_stroke(a.clone()).unwrap();
         assert!(c.add_strokes([stroke(20.0), a]).is_err());
         assert_eq!(c.len(), 1);
+    }
+    #[test]
+    fn document_geometry_budget_rejects_add_and_load_atomically() {
+        let imported: Vec<_> = (0..5)
+            .map(|_| {
+                InkStroke::new(
+                    (0..2048)
+                        .map(|index| {
+                            InkPoint::new(Point::new(index as f64 * 32.0, 0.0), 1.0).unwrap()
+                        })
+                        .collect(),
+                    Default::default(),
+                )
+                .unwrap()
+            })
+            .collect();
+        let container = InkStrokeContainer::new();
+        let original = stroke(0.0);
+        container.add_stroke(original.clone()).unwrap();
+        assert_eq!(
+            container.add_strokes(imported.clone()),
+            Err(InkError::LimitExceeded)
+        );
+        let data = persistence::encode(&imported, InkPersistenceLimits::DEFAULT).unwrap();
+        assert!(!InkStrokeContainer::can_paste(&data));
+        assert_eq!(
+            container.paste(&data, Point::default()),
+            Err(InkError::LimitExceeded)
+        );
+        assert_eq!(container.load(&data), Err(InkError::LimitExceeded));
+        assert_eq!(container.len(), 1);
+        assert!(Rc::ptr_eq(&container.get_strokes()[0], &original));
     }
     #[test]
     fn changed_handlers_can_reenter_collection() {
@@ -648,6 +743,88 @@ mod tests {
         assert_eq!(count.get(), 0);
     }
     #[test]
+    fn removal_does_not_confuse_instances_from_different_documents() {
+        let original = InkStrokeContainer::new();
+        let stroke = stroke(0.0);
+        original.add_stroke(stroke.clone()).unwrap();
+        let other = InkStrokeContainer::new();
+        other.load(&original.save().unwrap()).unwrap();
+        let restored = other.get_strokes().remove(0);
+        assert_eq!(restored.id(), stroke.id());
+        assert!(!Rc::ptr_eq(&restored, &stroke));
+        let notifications = Rc::new(Cell::new(0));
+        let observed = notifications.clone();
+        original.changed(move || observed.set(observed.get() + 1));
+
+        original.remove_strokes(&[restored]);
+        assert_eq!(original.len(), 1);
+        assert_eq!(notifications.get(), 0);
+        original.remove_strokes(&[stroke]);
+        assert!(original.is_empty());
+        assert_eq!(notifications.get(), 1);
+    }
+
+    #[test]
+    fn replacing_an_adapter_releases_it_without_a_collection_borrow() {
+        let container = InkStrokeContainer::new();
+        let observed = Rc::new(Cell::new(false));
+        let flag = observed.clone();
+        let weak = Rc::downgrade(&container);
+        let mut platform = TestPlatform::new();
+        Rc::get_mut(&mut platform).unwrap().on_drop = Some(Box::new(move || {
+            let container = weak.upgrade().unwrap();
+            assert!(container.platform_services().is_none());
+            container.set_platform_services(Some(TestPlatform::new()));
+            flag.set(true);
+        }));
+        container.set_platform_services(Some(platform));
+        container.set_platform_services(None);
+        assert!(observed.get());
+        assert!(container.platform_services().is_some());
+    }
+
+    #[test]
+    fn load_commits_before_releasing_the_previous_document() {
+        struct InsertOnDrop {
+            container: Weak<InkStrokeContainer>,
+            stroke: Rc<InkStroke>,
+            result: Rc<RefCell<Option<Result<(), InkError>>>>,
+        }
+        impl Drop for InsertOnDrop {
+            fn drop(&mut self) {
+                if let Some(container) = self.container.upgrade() {
+                    self.result
+                        .replace(Some(container.add_stroke(self.stroke.clone())));
+                }
+            }
+        }
+
+        let container = InkStrokeContainer::new();
+        let replacement = stroke(50.0);
+        let data =
+            persistence::encode(&[replacement.clone()], InkPersistenceLimits::DEFAULT).unwrap();
+        let result = Rc::new(RefCell::new(None));
+        let guard = InsertOnDrop {
+            container: Rc::downgrade(&container),
+            stroke: replacement.clone(),
+            result: result.clone(),
+        };
+        let previous = stroke(0.0);
+        previous.changed(move || {
+            let _ = &guard;
+        });
+        container.add_stroke(previous).unwrap();
+
+        container.load(&data).unwrap();
+        assert_eq!(container.len(), 1);
+        let held = container.get_stroke_by_id(replacement.id()).unwrap();
+        assert!(!Rc::ptr_eq(&held, &replacement));
+        assert_eq!(
+            *result.borrow(),
+            Some(Err(InkError::DuplicateStrokeId(replacement.id())))
+        );
+    }
+    #[test]
     fn paste_allocates_ids_and_places_visible_bounds() {
         let c = InkStrokeContainer::new();
         let s = stroke(0.0);
@@ -659,6 +836,57 @@ mod tests {
         assert_eq!(c.len(), 2);
         assert_ne!(c.get_strokes()[0].id(), c.get_strokes()[1].id());
         assert!(!s.selected());
+    }
+    #[test]
+    fn invisible_strokes_do_not_shift_visible_bounds_or_paste_placement() {
+        let container = InkStrokeContainer::new();
+        let visible = stroke(100.0);
+        let invisible = InkStroke::new(
+            vec![InkPoint::new(Point::default(), 0.0).unwrap()],
+            Default::default(),
+        )
+        .unwrap();
+        visible.set_selected(true);
+        invisible.set_selected(true);
+        container.add_strokes([invisible, visible.clone()]).unwrap();
+        assert_eq!(container.bounding_rect(), visible.bounding_rect());
+        let result = container
+            .paste(&container.copy_selected().unwrap(), Point::new(50.0, 60.0))
+            .unwrap();
+        assert_eq!(result.position(), Point::new(50.0, 60.0));
+        assert_eq!(result.size(), visible.bounding_rect().size());
+    }
+    #[test]
+    fn paste_selection_callbacks_observe_the_committed_document() {
+        for system_clipboard in [false, true] {
+            let container = InkStrokeContainer::new();
+            let original = stroke(0.0);
+            original.set_selected(true);
+            container.add_stroke(original.clone()).unwrap();
+            let data = container.copy_selected().unwrap();
+            let platform = TestPlatform::new();
+            platform.pasted.replace(vec![original.clone()]);
+            container.set_platform_services(Some(platform));
+            let observed_count = Rc::new(Cell::new(0));
+            let count = observed_count.clone();
+            let weak = Rc::downgrade(&container);
+            original.changed(move || {
+                if let Some(container) = weak.upgrade() {
+                    count.set(container.len());
+                    // Application code may intentionally clear the entire
+                    // newly pasted selection in response to this event.
+                    container.clear();
+                }
+            });
+
+            if system_clipboard {
+                container.paste_from_clipboard(Point::default()).unwrap();
+            } else {
+                container.paste(&data, Point::default()).unwrap();
+            }
+            assert_eq!(observed_count.get(), 2);
+            assert!(container.is_empty());
+        }
     }
     #[test]
     fn portable_async_io_does_not_require_a_platform_service() {

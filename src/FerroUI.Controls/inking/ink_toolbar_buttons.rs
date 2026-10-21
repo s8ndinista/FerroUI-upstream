@@ -12,12 +12,15 @@ use super::{
 use crate::automation::AutomationProperties;
 use crate::primitives::{TemplatedControlImpl, ToggleButton, ToggleButtonImpl};
 use crate::{
-    ButtonImpl, ButtonImplExt, CheckBox, ContentControlImpl, Control, ControlImpl, Flyout,
+    Button, ButtonImpl, ButtonImplExt, CheckBox, ContentControlImpl, Control, ControlImpl, Flyout,
     RadioButton, StackPanel,
 };
 use ferroui_base::collections::FerroList;
 use ferroui_base::controls::ResourceKey;
-use ferroui_base::input::InputElementImpl;
+use ferroui_base::input::{
+    HoldingRoutedEventArgs, HoldingState, InputElement, InputElementImpl, InputElementImplExt,
+    TappedEventArgs,
+};
 use ferroui_base::interactivity::InteractiveImpl;
 use ferroui_base::layout::LayoutableImpl;
 use ferroui_base::media::immutable::ImmutableSolidColorBrush;
@@ -45,7 +48,23 @@ ferro_class!(InkToolbarToolButton: RadioButton);
 ferro_class_info!(InkToolbarToolButton { new: InkToolbarToolButton::new, markup: {
     properties: [ToolKind: InkToolbarTool { get: InkToolbarToolButton::tool_kind }],
 } });
-ferro_impl_classes!(InkToolbarToolButton: FerroObjectImpl, VisualImpl, LayoutableImpl, InteractiveImpl, InputElementImpl, TemplatedControlImpl, ContentControlImpl, ToggleButtonImpl);
+ferro_impl_classes!(InkToolbarToolButton: FerroObjectImpl, VisualImpl, LayoutableImpl, InteractiveImpl, TemplatedControlImpl, ContentControlImpl, ToggleButtonImpl);
+impl InputElementImpl for InkToolbarToolButton {
+    fn on_right_tapped(this: &Self, event: &TappedEventArgs) {
+        Self::parent_on_right_tapped(this, event);
+        if this.is_effectively_enabled() {
+            this.activate_secondary();
+            event.set_handled(true);
+        }
+    }
+    fn on_holding(this: &Self, event: &HoldingRoutedEventArgs) {
+        Self::parent_on_holding(this, event);
+        if this.is_effectively_enabled() && event.holding_state() == HoldingState::Started {
+            this.activate_secondary();
+            event.set_handled(true);
+        }
+    }
+}
 impl ButtonImpl for InkToolbarToolButton {
     fn on_click(this: &Self) {
         let was_checked = this.is_checked() == Some(true);
@@ -54,7 +73,7 @@ impl ButtonImpl for InkToolbarToolButton {
         this.permit_flyout.set(previous);
     }
     fn open_flyout(this: &Self) {
-        if this.permit_flyout.get() && this.is_extension_glyph_shown() {
+        if this.permit_flyout.get() && this.can_open_configuration() {
             Self::parent_open_flyout(this);
         }
     }
@@ -74,6 +93,29 @@ ferro_properties! { impl InkToolbarToolButton {
     pub fn is_extension_glyph_shown_property() -> StyledProperty<bool> { FerroProperty::register::<InkToolbarToolButton,_>("IsExtensionGlyphShown", true) }
 } }
 impl InkToolbarToolButton {
+    fn static_constructor() {
+        InputElement::is_holding_enabled_property()
+            .override_default_value::<InkToolbarToolButton>(true);
+    }
+    fn activate_secondary(&self) {
+        self.set_current_value(ToggleButton::is_checked_property(), Some(true));
+        self.open_flyout();
+    }
+    pub(crate) fn can_open_configuration(&self) -> bool {
+        !toolbar_is_inking(self)
+            && self
+                .to_ref()
+                .cast::<InkToolbarCustomPenButton>()
+                .is_none_or(|pen| pen.configuration_content().is_some())
+            && self
+                .to_ref()
+                .cast::<InkToolbarCustomToolButton>()
+                .is_none_or(|tool| tool.configuration_content().is_some())
+            && self
+                .to_ref()
+                .cast::<InkToolbarEraserButton>()
+                .is_none_or(|eraser| eraser.is_clear_all_visible())
+    }
     pub fn construct() -> Self {
         Self {
             base: RadioButton::construct(),
@@ -461,7 +503,7 @@ pub struct InkToolbarCustomPen {
     base: FerroObject,
 }
 ferro_class! { InkToolbarCustomPen: FerroObject, virtuals InkToolbarCustomPenImpl: FerroObjectImpl {
-    fn create_ink_drawing_attributes_core(this, brush: Rc<dyn IBrush>, stroke_width: f64) -> Result<InkDrawingAttributes,InkError>;
+    fn create_ink_drawing_attributes_core(this, brush: Option<Rc<dyn IBrush>>, stroke_width: f64) -> Result<InkDrawingAttributes,InkError>;
 } }
 ferro_class_info!(InkToolbarCustomPen {
     new: InkToolbarCustomPen::new
@@ -470,15 +512,14 @@ ferro_impl_classes!(InkToolbarCustomPen: FerroObjectImpl);
 impl InkToolbarCustomPenImpl for InkToolbarCustomPen {
     fn create_ink_drawing_attributes_core(
         _this: &Self,
-        brush: Rc<dyn IBrush>,
+        brush: Option<Rc<dyn IBrush>>,
         stroke_width: f64,
     ) -> Result<InkDrawingAttributes, InkError> {
         let color = brush
-            .as_solid_color_brush()
-            .ok_or(InkError::InvalidInput(
-                "Custom ink pen requires a solid color or a custom factory",
-            ))?
-            .color();
+            .as_ref()
+            .and_then(|brush| brush.as_solid_color_brush())
+            .map(|brush| brush.color())
+            .unwrap_or_else(|| InkDrawingAttributes::default().color);
         let attrs = InkDrawingAttributes {
             color,
             size: Size::new(stroke_width, stroke_width),
@@ -499,7 +540,7 @@ impl InkToolbarCustomPen {
     }
     pub fn create_ink_drawing_attributes(
         &self,
-        brush: Rc<dyn IBrush>,
+        brush: Option<Rc<dyn IBrush>>,
         stroke_width: f64,
     ) -> Result<InkDrawingAttributes, InkError> {
         self.create_ink_drawing_attributes_core(brush, stroke_width)
@@ -526,8 +567,7 @@ impl InkToolbarPenButtonImpl for InkToolbarCustomPenButton {
     fn create_ink_drawing_attributes(this: &Self) -> Result<InkDrawingAttributes, InkError> {
         match this.custom_pen() {
             Some(pen) => pen.create_ink_drawing_attributes(
-                this.selected_brush()
-                    .ok_or(InkError::InvalidInput("No selected brush"))?,
+                this.selected_brush(),
                 this.determine_stroke_width(),
             ),
             None => {
@@ -773,17 +813,52 @@ pub struct InkToolbarStencilButton {
     protractor: RefCell<Option<Rc<super::InkPresenterProtractor>>>,
     menu_items: RefCell<Vec<(InkToolbarStencilKind, Ref<InkToolbarFlyoutItem>)>>,
     syncing_menu: Cell<bool>,
+    permit_flyout: Cell<bool>,
 }
 ferro_class!(InkToolbarStencilButton:InkToolbarMenuButton);
 ferro_class_info!(InkToolbarStencilButton {
     new: InkToolbarStencilButton::new
 });
-ferro_impl_classes!(InkToolbarStencilButton:StyledElementImpl,VisualImpl,LayoutableImpl,InteractiveImpl,InputElementImpl,ControlImpl,TemplatedControlImpl,ContentControlImpl,ToggleButtonImpl);
+ferro_impl_classes!(InkToolbarStencilButton:StyledElementImpl,VisualImpl,LayoutableImpl,InteractiveImpl,ControlImpl,TemplatedControlImpl,ContentControlImpl);
+impl InputElementImpl for InkToolbarStencilButton {
+    fn on_right_tapped(this: &Self, event: &TappedEventArgs) {
+        Self::parent_on_right_tapped(this, event);
+        if this.is_effectively_enabled() {
+            this.activate_secondary();
+            event.set_handled(true);
+        }
+    }
+    fn on_holding(this: &Self, event: &HoldingRoutedEventArgs) {
+        Self::parent_on_holding(this, event);
+        if this.is_effectively_enabled() && event.holding_state() == HoldingState::Started {
+            this.activate_secondary();
+            event.set_handled(true);
+        }
+    }
+}
+impl ToggleButtonImpl for InkToolbarStencilButton {
+    fn toggle(this: &Self) {
+        // Two choices retain the active stencil when opening configuration. A single choice
+        // behaves as a normal toggle, just as the source's one-stencil mode.
+        let checked = if this.is_ruler_item_visible() && this.is_protractor_item_visible() {
+            true
+        } else {
+            this.is_checked() != Some(true)
+        };
+        this.set_current_value(ToggleButton::is_checked_property(), Some(checked));
+    }
+}
 impl ButtonImpl for InkToolbarStencilButton {
+    fn on_click(this: &Self) {
+        let previous = this.permit_flyout.replace(this.is_checked() == Some(true));
+        Self::parent_on_click(this);
+        this.permit_flyout.set(previous);
+    }
     fn open_flyout(this: &Self) {
         if this.is_ruler_item_visible()
             && this.is_protractor_item_visible()
-            && this.is_extension_glyph_shown()
+            && this.permit_flyout.get()
+            && !toolbar_is_inking(this)
         {
             Self::parent_open_flyout(this);
         }
@@ -815,6 +890,18 @@ ferro_properties! {impl InkToolbarStencilButton{
     pub fn is_protractor_item_visible_property()->StyledProperty<bool>{FerroProperty::register::<InkToolbarStencilButton,_>("IsProtractorItemVisible",true)}
 }}
 impl InkToolbarStencilButton {
+    fn static_constructor() {
+        InputElement::is_holding_enabled_property()
+            .override_default_value::<InkToolbarStencilButton>(true);
+    }
+    fn activate_secondary(&self) {
+        if self.is_ruler_item_visible() && self.is_protractor_item_visible() {
+            self.set_current_value(ToggleButton::is_checked_property(), Some(true));
+            self.open_flyout();
+        } else {
+            self.on_click();
+        }
+    }
     pub fn construct() -> Self {
         Self {
             base: InkToolbarMenuButton::construct(),
@@ -823,6 +910,7 @@ impl InkToolbarStencilButton {
             protractor: RefCell::new(None),
             menu_items: RefCell::new(Vec::new()),
             syncing_menu: Cell::new(false),
+            permit_flyout: Cell::new(true),
         }
     }
     pub fn new() -> Ref<Self> {
@@ -840,6 +928,11 @@ impl InkToolbarStencilButton {
         ] {
             let item = InkToolbarFlyoutItem::new();
             item.set_kind(InkToolbarFlyoutItemKind::RadioCheck);
+            item.set_name(Some(if kind == InkToolbarStencilKind::Ruler {
+                "StencilRuler".to_owned()
+            } else {
+                "StencilProtractor".to_owned()
+            }));
             strings::bind_content(&item, label);
             let weak = self.to_ref().downgrade();
             item.checked(move |_| {
@@ -864,6 +957,14 @@ impl InkToolbarStencilButton {
                     }
                     button.syncing_menu.set(false);
                     button.synchronize_stencil_menu();
+                }
+            });
+            let weak = self.to_ref().downgrade();
+            item.add_handler(Button::click_event(), move |_, _| {
+                if let Some(button) = weak.upgrade() {
+                    if let Some(flyout) = button.flyout() {
+                        flyout.hide();
+                    }
                 }
             });
             panel.children().add(&item);
@@ -947,6 +1048,19 @@ impl InkToolbarStencilButton {
     pub fn set_is_protractor_item_visible(&self, value: bool) {
         self.set_value(Self::is_protractor_item_visible_property(), value);
     }
+}
+
+pub(crate) fn toolbar_is_inking(control: &Control) -> bool {
+    let mut parent = control.parent();
+    while let Some(element) = parent {
+        if let Some(toolbar) = element.cast::<InkToolbar>() {
+            return toolbar
+                .effective_ink_presenter()
+                .is_some_and(|presenter| presenter.is_inking());
+        }
+        parent = element.parent();
+    }
+    false
 }
 
 /// Use a dedicated theme when one is installed, retaining the framework's native control

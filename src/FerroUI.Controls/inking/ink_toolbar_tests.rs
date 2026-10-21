@@ -51,6 +51,78 @@ fn localized_names_update_from_resources_without_overwriting_local_values() {
 }
 
 #[test]
+fn configuration_headings_slider_and_palette_use_live_localized_resources() {
+    use crate::automation::AutomationProperties;
+    use crate::test_support::TestRoot;
+    use crate::{TextBlock, ToolTip, WrapPanel};
+    let _scope = test_scope();
+    let host = StackPanel::new();
+    for (key, text) in [
+        ("InkToolbarPenConfigurationColorsLabel", "Ink colors"),
+        ("InkToolbarPenConfigurationSizeLabel", "Stroke size"),
+        ("InkToolbarPenConfigurationSizeSliderName", "Nib size"),
+        ("InkToolbarColorNameBlack", "Night"),
+        ("InkToolbarColorPaletteHelpText", "Choose an ink color"),
+    ] {
+        host.resources().add_value(key, text.to_owned());
+    }
+    let toolbar = InkToolbar::new();
+    let pen = toolbar
+        .active_tool()
+        .unwrap()
+        .cast::<InkToolbarPenButton>()
+        .unwrap();
+    let configuration = InkToolbarPenConfigurationControl::for_pen(&pen);
+    host.children().add(&toolbar);
+    host.children().add(&configuration);
+    let _root = TestRoot::with_child(&host);
+    let headings: Vec<_> = configuration
+        .children()
+        .snapshot()
+        .iter()
+        .filter_map(|child| child.cast::<TextBlock>())
+        .collect();
+    assert_eq!(headings[0].text().as_deref(), Some("Ink colors"));
+    assert_eq!(headings[1].text().as_deref(), Some("Stroke size"));
+    assert_eq!(AutomationProperties::get_heading_level(&headings[0]), 2);
+    let slider = configuration.stroke_width_slider().unwrap();
+    assert_eq!(
+        AutomationProperties::get_name(&slider).as_deref(),
+        Some("Nib size")
+    );
+    let palette = configuration
+        .children()
+        .snapshot()
+        .iter()
+        .find_map(|child| child.cast::<WrapPanel>())
+        .unwrap();
+    let first = palette.children().get(0);
+    assert_eq!(
+        AutomationProperties::get_name(&first).as_deref(),
+        Some("Night")
+    );
+    assert_eq!(
+        ToolTip::get_tip(&first)
+            .unwrap()
+            .downcast_ref::<String>()
+            .unwrap(),
+        "Night"
+    );
+    let peer = ControlAutomationPeer::create_peer_for_element(&pen);
+    assert!(peer.get_help_text().contains("Night"));
+    assert!(peer.get_help_text().contains("Choose an ink color"));
+    host.resources().set(
+        "InkToolbarColorNameBlack",
+        Some(Rc::new("Midnight".to_owned())),
+    );
+    assert_eq!(
+        AutomationProperties::get_name(&palette.children().get(0)).as_deref(),
+        Some("Midnight")
+    );
+    assert!(peer.get_help_text().contains("Midnight"));
+}
+
+#[test]
 fn color_names_quantize_known_families_and_format_unknown_rgb() {
     use super::color_names::{color_name, color_resource_key};
     let _scope = test_scope();
@@ -206,6 +278,7 @@ fn toolbar_style_key_tracks_available_theme_and_returns_to_native_fallback() {
     use ferroui_base::styling::ControlTheme;
     let _scope = test_scope();
     let pen = InkToolbarBallpointPenButton::new();
+    let _root = crate::test_support::TestRoot::with_child(&pen);
     assert!(std::ptr::eq(pen.style_key(), RadioButton::TYPE));
     let inherited = ControlTheme::with_target_type(InkToolbarPenButton::TYPE);
     pen.resources()
@@ -225,6 +298,92 @@ fn toolbar_style_key_tracks_available_theme_and_returns_to_native_fallback() {
     pen.resources()
         .remove(&ResourceKey::Type(InkToolbarPenButton::TYPE));
     assert!(std::ptr::eq(pen.style_key(), RadioButton::TYPE));
+}
+
+#[test]
+fn palette_arrow_keys_follow_six_column_layout_and_tab_keeps_selection() {
+    use crate::test_support::TestRoot;
+    use crate::WrapPanel;
+    use ferroui_base::input::{InputElement, Key, KeyEventArgs};
+    let _scope = test_scope();
+    let pen = InkToolbarBallpointPenButton::new();
+    let config = InkToolbarPenConfigurationControl::for_pen(&pen);
+    let _root = TestRoot::with_child(&config);
+    let panel = config
+        .children()
+        .snapshot()
+        .iter()
+        .find_map(|child| child.cast::<WrapPanel>())
+        .unwrap();
+    let first = panel.children().get(0);
+    assert!(first.focus());
+    let key = |key: Key| {
+        let mut event = KeyEventArgs::new();
+        event.key = key;
+        event.set_routed_event(Some(InputElement::key_down_event()));
+        let focused = panel
+            .children()
+            .snapshot()
+            .iter()
+            .find(|child| child.is_focused())
+            .unwrap()
+            .clone();
+        focused.raise_event(&event);
+        assert!(event.handled());
+    };
+    key(Key::Down);
+    assert_eq!(pen.selected_brush_index(), 6);
+    assert!(panel.children().get(6).is_focused());
+    key(Key::Right);
+    assert_eq!(pen.selected_brush_index(), 7);
+    key(Key::End);
+    assert_eq!(pen.selected_brush_index(), 29);
+    key(Key::Right);
+    assert_eq!(pen.selected_brush_index(), 29);
+    key(Key::Home);
+    assert_eq!(pen.selected_brush_index(), 0);
+}
+
+#[test]
+fn panel_adaptation_includes_native_border_and_padding_in_measure_and_arrange() {
+    use crate::Border;
+    use ferroui_base::{CornerRadius, Rect, Size, Thickness};
+    let _scope = test_scope();
+    let toolbar = InkToolbar::new();
+    toolbar.set_initial_controls(InkToolbarInitialControls::None);
+    let child = Control::new();
+    child.set_width(20.0);
+    child.set_height(10.0);
+    toolbar.children().add(&child);
+    toolbar.set_padding(Thickness::new(3.0, 5.0, 7.0, 11.0));
+    toolbar.set_border_thickness(Thickness::new(1.0, 2.0, 3.0, 4.0));
+    toolbar.set_corner_radius(CornerRadius::uniform(7.0));
+    assert_eq!(
+        toolbar.get_value(Border::corner_radius_property()),
+        CornerRadius::uniform(7.0)
+    );
+    toolbar.measure(Size::new(1000.0, 1000.0));
+    assert_eq!(toolbar.desired_size(), Size::new(34.0, 32.0));
+    toolbar.arrange(Rect::from_size(toolbar.desired_size()));
+    assert_eq!(child.bounds(), Rect::new(4.0, 7.0, 20.0, 10.0));
+
+    let config = InkToolbarPenConfigurationControl::new();
+    config.measure(Size::new(1000.0, 1000.0));
+    let unpadded = config.desired_size();
+    config.arrange(Rect::from_size(unpadded));
+    let first = config.children().get(0);
+    let original_bounds = first.bounds();
+    config.set_padding(toolbar.padding());
+    config.set_border_thickness(toolbar.border_thickness());
+    assert!(!config.is_measure_valid());
+    config.measure(Size::new(1000.0, 1000.0));
+    assert_eq!(
+        config.desired_size(),
+        Size::new(unpadded.width + 14.0, unpadded.height + 22.0)
+    );
+    config.arrange(Rect::from_size(config.desired_size()));
+    assert_eq!(first.bounds().x, original_bounds.x + 4.0);
+    assert_eq!(first.bounds().y, original_bounds.y + 7.0);
 }
 
 #[test]
@@ -584,7 +743,7 @@ ferroui_base::ferro_impl_classes!(CustomNibPen:FerroObjectImpl);
 impl InkToolbarCustomPenImpl for CustomNibPen {
     fn create_ink_drawing_attributes_core(
         _this: &Self,
-        _brush: Rc<dyn IBrush>,
+        _brush: Option<Rc<dyn IBrush>>,
         stroke_width: f64,
     ) -> Result<InkDrawingAttributes, InkError> {
         Ok(InkDrawingAttributes {
@@ -594,6 +753,19 @@ impl InkToolbarCustomPenImpl for CustomNibPen {
             ..InkDrawingAttributes::default()
         })
     }
+}
+#[test]
+fn custom_pen_base_accepts_null_brush_and_preserves_requested_width() {
+    let _scope = test_scope();
+    let pen = InkToolbarCustomPen::new();
+    let attributes = pen.create_ink_drawing_attributes(None, 3.0).unwrap();
+    assert_eq!(attributes.color, InkDrawingAttributes::default().color);
+    assert_eq!(attributes.size, ferroui_base::Size::new(3.0, 3.0));
+    let red = Color::from_rgb(255, 0, 0);
+    let brush = Rc::new(ImmutableSolidColorBrush::new(red)) as Rc<dyn IBrush>;
+    let attributes = pen.create_ink_drawing_attributes(Some(brush), 5.0).unwrap();
+    assert_eq!(attributes.color, red);
+    assert_eq!(attributes.size, ferroui_base::Size::new(5.0, 5.0));
 }
 #[test]
 fn custom_pen_factory_is_dispatched_virtually_by_toolbar() {

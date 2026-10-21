@@ -790,6 +790,41 @@ mod tests {
     }
 
     #[test]
+    fn native_move_selected_uses_relative_translation_like_portable_container() {
+        native_thread(|| {
+            let services = WindowsInkServices::new().expect("Windows ink activation");
+            let source = fixture_strokes();
+            let native = services.native_container(&source).unwrap();
+            let native_strokes = native.GetStrokes().unwrap();
+            let selected = native_strokes.GetAt(0).unwrap();
+            let unselected = native_strokes.GetAt(1).unwrap();
+            let before = selected.BoundingRect().unwrap();
+            let untouched = unselected.BoundingRect().unwrap();
+            // The Learn parameter description calls this a destination, while
+            // the API names it translation. Pin the installed OS behavior with
+            // nonzero initial coordinates instead of assuming either wording.
+            let moved = native
+                .MoveSelected(NativePoint { X: 25.0, Y: -10.0 })
+                .unwrap();
+            let after = selected.BoundingRect().unwrap();
+            near(after.X as f64, before.X as f64 + 25.0, 0.01);
+            near(after.Y as f64, before.Y as f64 - 10.0, 0.01);
+            assert_eq!(moved, after);
+            assert_eq!(unselected.BoundingRect().unwrap(), untouched);
+
+            let portable = InkStrokeContainer::new();
+            portable.add_strokes(source).unwrap();
+            let first = portable.get_strokes()[0].clone();
+            let before = first.bounding_rect();
+            let moved = portable.move_selected(Point::new(25.0, -10.0)).unwrap();
+            let after = first.bounding_rect();
+            near(after.x, before.x + 25.0, 1e-10);
+            near(after.y, before.y - 10.0, 1e-10);
+            assert_eq!(moved, after);
+        });
+    }
+
+    #[test]
     fn native_isf_and_gif_round_trip_preserve_strokes_attributes_and_geometry() {
         native_thread(|| {
             let services = WindowsInkServices::new().expect("Windows ink activation");

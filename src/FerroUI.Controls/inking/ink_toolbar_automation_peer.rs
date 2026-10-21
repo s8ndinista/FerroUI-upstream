@@ -43,12 +43,15 @@ fn append_text(base: Option<String>, suffix: String) -> Option<String> {
     })
 }
 fn is_builtin_pen(owner: &Button) -> bool {
-    owner.to_ref().cast::<InkToolbarToolButton>().is_some_and(|owner| {
-        matches!(
-            owner.tool_kind(),
-            InkToolbarTool::BallpointPen | InkToolbarTool::Pencil | InkToolbarTool::Highlighter
-        )
-    })
+    owner
+        .to_ref()
+        .cast::<InkToolbarToolButton>()
+        .is_some_and(|owner| {
+            matches!(
+                owner.tool_kind(),
+                InkToolbarTool::BallpointPen | InkToolbarTool::Pencil | InkToolbarTool::Highlighter
+            )
+        })
 }
 fn menu_has_dropdown(owner: &Button) -> bool {
     owner.flyout().is_some()
@@ -428,6 +431,11 @@ impl AutomationPeerImpl for InkToolbarFlyoutItemAutomationPeer {
         AutomationControlType::MenuItem
     }
     fn get_provider_core(this: &Self, provider_type: ValueType) -> Option<BoxedValue> {
+        if provider_type == ValueType::of::<Rc<dyn IToggleProvider>>() {
+            // The WinUI item derives from ButtonBase, exposing invocation and
+            // (for radio kinds) selection rather than an additional Toggle.
+            return None;
+        }
         if provider_type == ValueType::of::<Rc<dyn ISelectionItemProvider>>()
             && !is_radio_item(&this.owner_item())
         {

@@ -729,7 +729,7 @@
       "status": "not_ported",
       "rust_files": [],
       "symbols": [],
-      "notes": "Portable rendering_points/outlines are not a port of Windows InkStrokeRenderingSegment/B\u00e9zier control-point semantics.",
+      "notes": "Portable rendering_points/outlines are not a port of Windows InkStrokeRenderingSegment/Bézier control-point semantics.",
       "control_role": "returned_service_api",
       "upstream_references": []
     },
@@ -1271,7 +1271,7 @@
       "type": "InkStrokeContainer",
       "name": "LoadAsync",
       "projection_signature": "pub fn LoadAsync<P0>(&self, inputstream: P0) -> windows_core::Result<windows_future::IAsyncActionWithProgress<u64>>",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_stroke_container.rs",
         "src/Windows/FerroUI.WinUI/inking.rs"
@@ -1279,7 +1279,7 @@
       "symbols": [
         "load_async"
       ],
-      "notes": "Portable format/payload support and actual Windows OS service bridge are implemented. Windows runtime fixtures and exact conversion boundaries remain tracked separately; save_async defaults to Portable.",
+      "notes": "Portable bounded FERROINK futures and optional genuine Windows ISF/GIF calls. Windows CI run39600257242/job119222654079 at353c692 passes native attribute/transform conversion, both format round trips, malformed-load atomicity and explicit twist-loss policy. Native f32/ISF quantization and fresh import IDs are documented adaptations; Rust save_async defaults to Portable, with GifWithEmbeddedIsf requested explicitly.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"
@@ -1290,7 +1290,7 @@
       "type": "InkStrokeContainer",
       "name": "SaveAsync",
       "projection_signature": "pub fn SaveAsync<P0>(&self, outputstream: P0) -> windows_core::Result<windows_future::IAsyncOperationWithProgress<u32, u32>>",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_stroke_container.rs",
         "src/Windows/FerroUI.WinUI/inking.rs"
@@ -1298,7 +1298,7 @@
       "symbols": [
         "save_async"
       ],
-      "notes": "Portable format/payload support and actual Windows OS service bridge are implemented. Windows runtime fixtures and exact conversion boundaries remain tracked separately; save_async defaults to Portable.",
+      "notes": "Portable bounded FERROINK futures and optional genuine Windows ISF/GIF calls. Windows CI run39600257242/job119222654079 at353c692 passes native attribute/transform conversion, both format round trips, malformed-load atomicity and explicit twist-loss policy. Native f32/ISF quantization and fresh import IDs are documented adaptations; Rust save_async defaults to Portable, with GifWithEmbeddedIsf requested explicitly.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"
@@ -1387,7 +1387,7 @@
       "type": "InkStrokeContainer",
       "name": "SaveWithFormatAsync",
       "projection_signature": "pub fn SaveWithFormatAsync<P0>(&self, outputstream: P0, inkpersistenceformat: InkPersistenceFormat) -> windows_core::Result<windows_future::IAsyncOperationWithProgress<u32, u32>>",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_stroke_container.rs",
         "src/Windows/FerroUI.WinUI/inking.rs"
@@ -1395,7 +1395,7 @@
       "symbols": [
         "save_with_format_async"
       ],
-      "notes": "Portable format/payload support and actual Windows OS service bridge are implemented. Windows runtime fixtures and exact conversion boundaries remain tracked separately; save_async defaults to Portable.",
+      "notes": "Portable bounded FERROINK futures and optional genuine Windows ISF/GIF calls. Windows CI run39600257242/job119222654079 at353c692 passes native attribute/transform conversion, both format round trips, malformed-load atomicity and explicit twist-loss policy. Native f32/ISF quantization and fresh import IDs are documented adaptations; Rust save_async defaults to Portable, with GifWithEmbeddedIsf requested explicitly.",
       "control_role": "required_by_controls",
       "upstream_references": [
         "controls/dev/InkCanvas/InkPresenter.cpp"

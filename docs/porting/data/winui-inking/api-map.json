@@ -99,7 +99,7 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_stroke_container.rs"
       ],
-      "notes": "Portable collection operations and bounded FERROINK persistence; optional Windows service provides actual ISF/GIF/clipboard APIs. Native interoperability has conversion boundaries and still needs Windows runtime fixtures.",
+      "notes": "Portable collection operations and bounded FERROINK persistence, plus a Windows service that passes real OS ISF/GIF round-trip and malformed-load fixtures. Native clipboard execution remains a separate pending fixture; conversion adaptations are explicit.",
       "members": [
         {
           "name": "Clear",
@@ -162,7 +162,7 @@
           "kind": "method",
           "declaration": "Windows.Foundation.IAsyncAction SaveAsync(Windows.Storage.Streams.IOutputStream outputStream);",
           "id": "InkStrokeContainer.SaveAsync",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_stroke_container.rs",
             "src/FerroUI.Controls/inking/ink_platform_services.rs",
@@ -172,14 +172,14 @@
           "symbols": [
             "save_async"
           ],
-          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented. Rust save_async defaults to Portable, unlike the native GIF default; request GifWithEmbeddedIsf explicitly for native compatibility."
+          "notes": "Portable bounded FERROINK futures and optional genuine Windows ISF/GIF calls. Windows CI run39600257242/job119222654079 at353c692 passes native attribute/transform conversion, both format round trips, malformed-load atomicity and explicit twist-loss policy. Native f32/ISF quantization and fresh import IDs are documented adaptations; Rust save_async defaults to Portable, with GifWithEmbeddedIsf requested explicitly."
         },
         {
           "name": "SaveWithFormatAsync",
           "kind": "method",
           "declaration": "Windows.Foundation.IAsyncAction SaveWithFormatAsync(Windows.Storage.Streams.IOutputStream outputStream, Windows.UI.Input.Inking.InkPersistenceFormat inkPersistenceFormat);",
           "id": "InkStrokeContainer.SaveWithFormatAsync",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_stroke_container.rs",
             "src/FerroUI.Controls/inking/ink_platform_services.rs",
@@ -189,14 +189,14 @@
           "symbols": [
             "save_with_format_async"
           ],
-          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
+          "notes": "Portable bounded FERROINK futures and optional genuine Windows ISF/GIF calls. Windows CI run39600257242/job119222654079 at353c692 passes native attribute/transform conversion, both format round trips, malformed-load atomicity and explicit twist-loss policy. Native f32/ISF quantization and fresh import IDs are documented adaptations; Rust save_async defaults to Portable, with GifWithEmbeddedIsf requested explicitly."
         },
         {
           "name": "LoadAsync",
           "kind": "method",
           "declaration": "Windows.Foundation.IAsyncAction LoadAsync(Windows.Storage.Streams.IInputStream inputStream);",
           "id": "InkStrokeContainer.LoadAsync",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_stroke_container.rs",
             "src/FerroUI.Controls/inking/ink_platform_services.rs",
@@ -206,7 +206,7 @@
           "symbols": [
             "load_async"
           ],
-          "notes": "Portable bounded FERROINK bytes or an explicitly attached WindowsInkServices adapter. Windows uses real OS ISF/GIF/clipboard APIs, but exact ISF/clipboard round trips still require Windows execution; f32 conversion, fresh imported identities and unsupported twist are documented."
+          "notes": "Portable bounded FERROINK futures and optional genuine Windows ISF/GIF calls. Windows CI run39600257242/job119222654079 at353c692 passes native attribute/transform conversion, both format round trips, malformed-load atomicity and explicit twist-loss policy. Native f32/ISF quantization and fresh import IDs are documented adaptations; Rust save_async defaults to Portable, with GifWithEmbeddedIsf requested explicitly."
         },
         {
           "name": "GetStrokeById",
@@ -799,11 +799,11 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_synchronizer.rs"
       ],
-      "notes": "Transactional pending-ink snapshot and batch retirement are implemented. Coordination with a separately composited Windows ink thread is replaced by ordinary FerroUI redraws.",
+      "notes": "Explicit begin/end dry transactions retain wet ink until the matching snapshot is retired. FerroUI redraws replace separately composited Windows ink-thread coordination; invalid ordering returns InkError.",
       "members": [
         {
           "name": "BeginDry",
@@ -840,11 +840,11 @@
       "kind": "runtimeclass",
       "base": "",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_presenter.rs"
       ],
-      "notes": "Portable UI-thread presenter and stable weak-linked services. OS independent ink-thread rendering/prediction and complete native system-color behavior remain outside this replacement.",
+      "notes": "Stable UI-thread service and all pinned presenter configuration/input/event members use FerroUI. DirectInk rendering/prediction and native host scheduling are separate external dependency records, not missing presenter property implementations.",
       "members": [
         {
           "name": "InputDeviceTypes",
@@ -907,7 +907,7 @@
           "kind": "method",
           "declaration": "void SetPredefinedConfiguration(Windows.UI.Input.Inking.InkPresenterPredefinedConfiguration configuration);",
           "id": "InkPresenter.SetPredefinedConfiguration",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_presenter.rs",
             "src/FerroUI.Controls/inking/ink_canvas.rs"
@@ -915,14 +915,14 @@
           "symbols": [
             "set_predefined_configuration"
           ],
-          "notes": "Configuration is applied to portable processing/rendering. Full native prediction/independent latency and exact live system-color palette equivalence are not established."
+          "notes": "SimpleSinglePointer/ SimpleMultiplePointer choose the corresponding portable pointer-collection behavior; multi-pointer and cancel/reentrancy tests exercise it. Native thread scheduling is recorded separately at the host dependency."
         },
         {
           "name": "HighContrastAdjustment",
           "kind": "property",
           "declaration": "InkHighContrastAdjustment HighContrastAdjustment;",
           "id": "InkPresenter.HighContrastAdjustment",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_presenter.rs",
             "src/FerroUI.Controls/inking/ink_canvas.rs"
@@ -930,7 +930,7 @@
           "symbols": [
             "high_contrast_adjustment"
           ],
-          "notes": "Configuration is applied to portable processing/rendering. Full native prediction/independent latency and exact live system-color palette equivalence are not established."
+          "notes": "Original colors, system colors and use-system-when-necessary policies drive canvas and live toolbar palettes through existing platform/theme resources, using the documented7:1 contrast threshold. Exact backend-provided color values depend on the existing platform service."
         },
         {
           "name": "StrokeContainer",
@@ -1051,11 +1051,11 @@
       "kind": "runtimeclass",
       "base": "Microsoft.UI.Xaml.FrameworkElement",
       "source": "controls/dev/InkCanvas/InkCanvas.idl",
-      "status": "partial",
+      "status": "adapted",
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_canvas.rs"
       ],
-      "notes": "FerroUI Control hosts drawing, routed/coalesced pointer samples and a stable presenter. Native DirectComposition/independent ink latency and exact OS rendering are not reproduced.",
+      "notes": "Ordinary FerroUI Control supplies drawing, routed/coalesced input, capture, layout, clipping and automation. DirectComposition host replacement is a documented framework adaptation; native renderer parity is separately recorded.",
       "members": [
         {
           "name": "InkCanvas",
@@ -1670,7 +1670,7 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar.rs"
       ],
-      "notes": "Functional controls, target orchestration, properties, events and lazy flyouts use FerroUI. Complete upstream templates, glyphs, visual states, localized resources and contrast-filtered palettes remain open.",
+      "notes": "Functional toolbar, target orchestration, public properties/events, actual flyouts, localized resources and contrast-aware palettes use FerroUI. Dedicated templates exist; the source configuration entrance transition and rendered comparisons remain open.",
       "members": [
         {
           "name": "InkToolbar",
@@ -1789,14 +1789,14 @@
           "kind": "property",
           "declaration": "Microsoft.UI.Xaml.Controls.InkToolbarButtonFlyoutPlacement ButtonFlyoutPlacement;",
           "id": "InkToolbar.ButtonFlyoutPlacement",
-          "status": "partial",
+          "status": "adapted",
           "rust_files": [
             "src/FerroUI.Controls/inking/ink_toolbar.rs"
           ],
           "symbols": [
             "button_flyout_placement"
           ],
-          "notes": "Maps requested directions to FerroUI flyout placement. Full upstream automatic placement/edge behavior needs visual platform comparison."
+          "notes": "Explicit directions and orientation-sensitive Auto map to real FerroUI Flyout placement; existing framework popup placement handles screen fit. Native pixel/animation comparisons are a separate visual-resource boundary."
         },
         {
           "name": "Orientation",
@@ -2076,7 +2076,7 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_configuration.rs"
       ],
-      "notes": "Live palette and width slider are composed from FerroUI controls. Upstream headings/localization, exact template and visual-state fidelity remain open.",
+      "notes": "Actual palette, slider, localized headings and the 103-point stroke preview use FerroUI controls. Windows animation/template pixel comparison remains at the visual-resource boundary.",
       "members": [
         {
           "name": "InkToolbarPenConfigurationControl",
@@ -3061,7 +3061,7 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
       ],
-      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
+      "notes": "FerroUI exposes the semantic ToolBar role, a deliberate accessibility adaptation from the pinned native peer's Pane role. Child tool/menu peers preserve their specific source patterns, names and help.",
       "members": [
         {
           "name": "InkToolbarAutomationPeer",
@@ -3142,7 +3142,7 @@
       "rust_files": [
         "src/FerroUI.Controls/inking/ink_toolbar_automation_peer.rs"
       ],
-      "notes": "Public surface is expressed using FerroUI classes/properties or Rc service values; per-member adaptations are recorded below. A type mapping does not establish visual or Windows-runtime parity.",
+      "notes": "Invoke plus conditional radio SelectionItem providers and MenuItem role are adapted to framework automation. Invalid selection operations return the existing provider error with an explicit message; the native UIA_E_INVALIDOPERATION HRESULT category is not separately represented.",
       "members": [
         {
           "name": "InkToolbarFlyoutItemAutomationPeer",

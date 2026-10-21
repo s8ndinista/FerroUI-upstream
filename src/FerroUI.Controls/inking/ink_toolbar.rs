@@ -4,9 +4,10 @@ use super::*;
 use crate::automation::peers::AutomationControlType;
 use crate::automation::AutomationProperties;
 use crate::primitives::{PopupFlyoutBase, ToggleButton};
+use crate::utils::BorderRenderHelper;
 use crate::{
-    Button, Control, ControlImpl, Controls, Flyout, PanelImpl, PanelImplExt, PlacementMode,
-    StackPanel, StackPanelImpl,
+    Border, Button, Control, ControlImpl, Controls, Decorator, Flyout, PanelImpl, PanelImplExt,
+    PlacementMode, StackPanel, StackPanelImpl,
 };
 use ferroui_base::collections::NotifyCollectionChangedEventArgs;
 use ferroui_base::input::{
@@ -14,15 +15,19 @@ use ferroui_base::input::{
     KeyboardNavigationMode, NavigationMethod,
 };
 use ferroui_base::interactivity::InteractiveImpl;
-use ferroui_base::layout::{LayoutableImpl, LayoutableImplExt, Orientation};
+use ferroui_base::layout::{
+    LayoutHelper, Layoutable, LayoutableImpl, LayoutableImplExt, Orientation,
+};
+use ferroui_base::media::{BackgroundSizing, BoxShadows, DrawingContext, IBrush};
 use ferroui_base::metadata::{into_markup_value, MarkupDelegate};
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::{EventArgs, HandlerList};
 use ferroui_base::BoxedValue;
 use ferroui_base::{
-    ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate,
+    ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate, CornerRadius,
     DirectProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, Ref, StyledElementImpl, StyledProperty, VisualImpl, WeakRef,
+    FerroPropertyChangedEventArgs, Rect, Ref, Size, StyledElementImpl, StyledProperty, Thickness,
+    Visual, VisualImpl, WeakRef,
 };
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -50,6 +55,7 @@ pub struct InkToolbar {
     ink_drawing_attributes_changed: ToolbarHandlers,
     erase_all_clicked: ToolbarHandlers,
     stencil_changed: Rc<HandlerList<dyn Fn(&InkToolbarIsStencilButtonCheckedChangedEventArgs)>>,
+    border_renderer: RefCell<BorderRenderHelper>,
 }
 ferro_class!(InkToolbar: StackPanel);
 ferro_class_info!(InkToolbar { new: InkToolbar::new, markup: {
@@ -78,9 +84,9 @@ ferro_class_info!(InkToolbar { new: InkToolbar::new, markup: {
         },
     ],
 } });
-ferro_impl_classes!(InkToolbar:StyledElementImpl,VisualImpl,InteractiveImpl,StackPanelImpl);
+ferro_impl_classes!(InkToolbar:StyledElementImpl,InteractiveImpl);
 impl LayoutableImpl for InkToolbar {
-    fn measure_override(this: &Self, available_size: ferroui_base::Size) -> ferroui_base::Size {
+    fn measure_override(this: &Self, available_size: Size) -> Size {
         if this.active_tool().is_none() {
             let first_pen = this
                 .children()
@@ -92,7 +98,44 @@ impl LayoutableImpl for InkToolbar {
                 this.set_active_tool(first_pen);
             }
         }
-        Self::parent_measure_override(this, available_size)
+        let insets = this.layout_insets();
+        Self::parent_measure_override(this, available_size.deflate(insets)).inflate(insets)
+    }
+    fn arrange_override(this: &Self, final_size: Size) -> Size {
+        Self::parent_arrange_override(this, final_size.deflate(this.layout_insets()));
+        final_size
+    }
+}
+impl StackPanelImpl for InkToolbar {
+    fn arrange_child(
+        this: &Self,
+        child: &Ref<Control>,
+        rect: Rect,
+        _panel_size: Size,
+        _orientation: Orientation,
+    ) {
+        let insets = this.layout_insets();
+        child.arrange(
+            rect.with_x(rect.x + insets.left)
+                .with_y(rect.y + insets.top),
+        );
+    }
+}
+impl VisualImpl for InkToolbar {
+    fn render(this: &Self, context: &mut DrawingContext) {
+        this.border_renderer.borrow_mut().render(
+            context,
+            this.bounds().size(),
+            round_panel_thickness(this, this.border_thickness()),
+            this.corner_radius(),
+            this.background_sizing(),
+            this.background().as_ref(),
+            this.border_brush().as_ref(),
+            &BoxShadows::default(),
+        );
+    }
+    fn clip_to_bounds_radius(this: &Self) -> Option<CornerRadius> {
+        Some(this.corner_radius())
     }
 }
 impl InputElementImpl for InkToolbar {
@@ -220,6 +263,11 @@ ferro_properties! {impl InkToolbar{
     pub fn button_flyout_placement_property()->StyledProperty<InkToolbarButtonFlyoutPlacement>{FerroProperty::register::<InkToolbar,_>("ButtonFlyoutPlacement",InkToolbarButtonFlyoutPlacement::Auto)}
     pub fn orientation_property()->StyledProperty<Orientation>{StackPanel::orientation_property().add_owner::<InkToolbar>()}
     pub fn target_ink_presenter_property()->StyledProperty<Option<Rc<InkPresenter>>>{FerroProperty::register::<InkToolbar,_>("TargetInkPresenter",None)}
+    pub fn border_brush_property()->StyledProperty<Option<Rc<dyn IBrush>>>{Border::border_brush_property().add_owner::<InkToolbar>()}
+    pub fn border_thickness_property()->StyledProperty<Thickness>{Border::border_thickness_property().add_owner::<InkToolbar>()}
+    pub fn corner_radius_property()->StyledProperty<CornerRadius>{Border::corner_radius_property().add_owner::<InkToolbar>()}
+    pub fn background_sizing_property()->StyledProperty<BackgroundSizing>{Border::background_sizing_property().add_owner::<InkToolbar>()}
+    pub fn padding_property()->StyledProperty<Thickness>{Decorator::padding_property().add_owner::<InkToolbar>()}
 }}
 impl InkToolbar {
     fn static_constructor() {
@@ -227,6 +275,16 @@ impl InkToolbar {
         KeyboardNavigation::tab_navigation_property()
             .override_default_value::<InkToolbar>(KeyboardNavigationMode::Once);
         InputElement::is_tab_stop_property().override_default_value::<InkToolbar>(false);
+        Visual::affects_render::<InkToolbar>(&[
+            Self::border_brush_property().as_property(),
+            Self::border_thickness_property().as_property(),
+            Self::corner_radius_property().as_property(),
+            Self::background_sizing_property().as_property(),
+        ]);
+        Layoutable::affects_measure::<InkToolbar>(&[
+            Self::padding_property().as_property(),
+            Self::border_thickness_property().as_property(),
+        ]);
     }
     pub fn construct() -> Self {
         Self {
@@ -242,6 +300,7 @@ impl InkToolbar {
             ink_drawing_attributes_changed: Rc::new(HandlerList::new()),
             erase_all_clicked: Rc::new(HandlerList::new()),
             stencil_changed: Rc::new(HandlerList::new()),
+            border_renderer: RefCell::new(BorderRenderHelper::new()),
         }
     }
     pub fn new() -> Ref<Self> {
@@ -249,6 +308,40 @@ impl InkToolbar {
     }
     pub fn children(&self) -> Controls {
         self.base.children()
+    }
+    pub fn border_brush(&self) -> Option<Rc<dyn IBrush>> {
+        self.get_value(Self::border_brush_property())
+    }
+    pub fn set_border_brush(&self, value: Option<Rc<dyn IBrush>>) {
+        self.set_value(Self::border_brush_property(), value);
+    }
+    pub fn border_thickness(&self) -> Thickness {
+        self.get_value(Self::border_thickness_property())
+    }
+    pub fn set_border_thickness(&self, value: Thickness) {
+        self.set_value(Self::border_thickness_property(), value);
+    }
+    pub fn corner_radius(&self) -> CornerRadius {
+        self.get_value(Self::corner_radius_property())
+    }
+    pub fn set_corner_radius(&self, value: CornerRadius) {
+        self.set_value(Self::corner_radius_property(), value);
+    }
+    pub fn background_sizing(&self) -> BackgroundSizing {
+        self.get_value(Self::background_sizing_property())
+    }
+    pub fn set_background_sizing(&self, value: BackgroundSizing) {
+        self.set_value(Self::background_sizing_property(), value);
+    }
+    pub fn padding(&self) -> Thickness {
+        self.get_value(Self::padding_property())
+    }
+    pub fn set_padding(&self, value: Thickness) {
+        self.set_value(Self::padding_property(), value);
+    }
+    fn layout_insets(&self) -> Thickness {
+        round_panel_thickness(self, self.padding())
+            + round_panel_thickness(self, self.border_thickness())
     }
     pub fn initial_controls(&self) -> InkToolbarInitialControls {
         self.get_value(Self::initial_controls_property())
@@ -469,19 +562,21 @@ impl InkToolbar {
                 let (Some(pen), Some(flyout)) = (weak_pen.upgrade(), weak_flyout.upgrade()) else {
                     return;
                 };
-                if flyout.content().is_none() {
-                    let content = pen
-                        .cast::<InkToolbarCustomPenButton>()
-                        .and_then(|custom| custom.configuration_content())
-                        .unwrap_or_else(|| {
-                            InkToolbarPenConfigurationControl::for_pen(&pen).upcast()
-                        });
+                if let Some(custom) = pen.cast::<InkToolbarCustomPenButton>() {
+                    flyout.set_content(
+                        custom
+                            .configuration_content()
+                            .map(|content| Rc::new(content) as BoxedValue),
+                    );
+                } else if flyout.content().is_none() {
+                    let content =
+                        InkToolbarPenConfigurationControl::for_pen(&pen).upcast::<Control>();
                     flyout.set_content(Some(Rc::new(content)));
                 }
             });
             pen.set_flyout(flyout);
         } else if let Some(eraser) = child.cast::<InkToolbarEraserButton>() {
-            let button = Button::new();
+            let button = InkToolbarFlyoutItem::new();
             strings::bind_content(&button, "InkToolbarClearAllLabel");
             button.bind_indexer(
                 &ferroui_base::Visual::is_visible_property().bind(),
@@ -687,17 +782,12 @@ impl InkToolbar {
     }
     fn update_flyout_placement(&self) {
         let placement = match self.button_flyout_placement() {
-            InkToolbarButtonFlyoutPlacement::Top => PlacementMode::Top,
-            InkToolbarButtonFlyoutPlacement::Bottom => PlacementMode::Bottom,
+            InkToolbarButtonFlyoutPlacement::Top => PlacementMode::TopEdgeAlignedLeft,
+            InkToolbarButtonFlyoutPlacement::Bottom | InkToolbarButtonFlyoutPlacement::Auto => {
+                PlacementMode::BottomEdgeAlignedLeft
+            }
             InkToolbarButtonFlyoutPlacement::Left => PlacementMode::Left,
             InkToolbarButtonFlyoutPlacement::Right => PlacementMode::Right,
-            InkToolbarButtonFlyoutPlacement::Auto => {
-                if self.orientation() == Orientation::Horizontal {
-                    PlacementMode::Bottom
-                } else {
-                    PlacementMode::Right
-                }
-            }
         };
         for button in self
             .children()
@@ -709,14 +799,22 @@ impl InkToolbar {
                 flyout.set_placement(placement);
             }
             for (name, direction) in [
-                (":flyout-top", PlacementMode::Top),
-                (":flyout-bottom", PlacementMode::Bottom),
+                (":flyout-top", PlacementMode::TopEdgeAlignedLeft),
+                (":flyout-bottom", PlacementMode::BottomEdgeAlignedLeft),
                 (":flyout-left", PlacementMode::Left),
                 (":flyout-right", PlacementMode::Right),
             ] {
                 button.pseudo_classes().set(name, placement == direction);
             }
         }
+    }
+}
+/// Use the same device-pixel rounding as Border and Decorator while retaining native panel layout.
+pub(crate) fn round_panel_thickness(control: &Layoutable, thickness: Thickness) -> Thickness {
+    if control.use_layout_rounding() {
+        LayoutHelper::round_layout_thickness(thickness, LayoutHelper::get_layout_scale(control))
+    } else {
+        thickness
     }
 }
 fn subscribe(

@@ -42,36 +42,226 @@ fn eraser_release_callback_can_start_a_new_stroke_with_the_same_pointer() {
 }
 
 #[test]
+fn duplicate_press_respects_input_disabled_by_the_canceled_handler() {
+    let presenter = InkPresenter::new();
+    presenter
+        .process_pointer(InkPointerPhase::Pressed, &event(1, 0.0, 0.0))
+        .unwrap();
+    let weak = Rc::downgrade(&presenter);
+    presenter.stroke_input().stroke_canceled(move |_| {
+        weak.upgrade().unwrap().set_is_input_enabled(false);
+    });
+
+    assert!(!presenter
+        .process_pointer(InkPointerPhase::Pressed, &event(1, 50.0, 0.0))
+        .unwrap());
+    assert!(!presenter.is_input_enabled());
+    assert!(!presenter.has_active_pointer(1));
+    assert!(presenter.visible_strokes().is_empty());
+    assert!(presenter.stroke_container().is_empty());
+}
+
+#[test]
+fn duplicate_press_preserves_a_reentrant_replacement_with_the_same_id() {
+    let presenter = InkPresenter::new();
+    presenter
+        .set_predefined_configuration(InkPresenterPredefinedConfiguration::SimpleMultiplePointer);
+    presenter
+        .process_pointer(InkPointerPhase::Pressed, &event(1, 0.0, 0.0))
+        .unwrap();
+    let weak = Rc::downgrade(&presenter);
+    presenter.stroke_input().stroke_canceled(move |_| {
+        weak.upgrade()
+            .unwrap()
+            .process_pointer(InkPointerPhase::Pressed, &event(1, 1000.0, 1000.0))
+            .unwrap();
+    });
+
+    presenter
+        .process_pointer(InkPointerPhase::Pressed, &event(1, 50.0, 0.0))
+        .unwrap();
+    assert!(presenter.has_active_pointer(1));
+    presenter
+        .process_pointer(InkPointerPhase::Released, &event(1, 1001.0, 1000.0))
+        .unwrap();
+    let strokes = presenter.stroke_container().get_strokes();
+    assert_eq!(strokes.len(), 1);
+    assert_eq!(
+        strokes[0].ink_points()[0].position,
+        Point::new(1000.0, 1000.0)
+    );
+}
+
+#[test]
+fn backwards_input_timestamp_is_rejected_before_preview_becomes_invalid() {
+    let presenter = InkPresenter::new();
+    let mut sample = event(1, 0.0, 0.0);
+    sample.point.timestamp = 100;
+    presenter
+        .process_pointer(InkPointerPhase::Pressed, &sample)
+        .unwrap();
+    assert_eq!(presenter.visible_strokes().len(), 1);
+    sample.point.timestamp = 99;
+    sample.point.position.x = 1.0;
+    assert_eq!(
+        presenter.process_pointer(InkPointerPhase::Moved, &sample),
+        Err(InkError::InvalidInput(
+            "Ink timestamps must be nondecreasing"
+        ))
+    );
+    assert!(!presenter.has_active_pointer(1));
+    assert!(presenter.visible_strokes().is_empty());
+    assert!(presenter.stroke_container().is_empty());
+}
+
+#[test]
 fn exact_sample_limit_accepts_an_identical_release_and_rejects_an_extra_point() {
     let p = InkPresenter::new();
     let limit = InkPersistenceLimits::DEFAULT.max_points_per_stroke;
-    p.process_pointer(InkPointerPhase::Pressed, &event(1, 0.0, 0.0))
+    // Time-varying stationary samples exercise the raw input budget separately
+    // from the rendered geometry budget.
+    let sample = |id, timestamp: usize| {
+        let mut e = event(id, 0.0, 0.0);
+        e.point.timestamp = timestamp as u64;
+        e
+    };
+    p.process_pointer(InkPointerPhase::Pressed, &sample(1, 0))
         .unwrap();
     for i in 1..limit {
-        p.process_pointer(InkPointerPhase::Moved, &event(1, i as f64, 0.0))
+        p.process_pointer(InkPointerPhase::Moved, &sample(1, i))
             .unwrap();
     }
-    p.process_pointer(
-        InkPointerPhase::Released,
-        &event(1, (limit - 1) as f64, 0.0),
-    )
-    .unwrap();
+    p.process_pointer(InkPointerPhase::Released, &sample(1, limit - 1))
+        .unwrap();
     assert_eq!(
         p.stroke_container().get_strokes()[0].ink_points().len(),
         limit
     );
-    p.process_pointer(InkPointerPhase::Pressed, &event(2, 0.0, 1.0))
+    p.process_pointer(InkPointerPhase::Pressed, &sample(2, 0))
         .unwrap();
     for i in 1..limit {
-        p.process_pointer(InkPointerPhase::Moved, &event(2, i as f64, 1.0))
+        p.process_pointer(InkPointerPhase::Moved, &sample(2, i))
             .unwrap();
     }
     assert_eq!(
-        p.process_pointer(InkPointerPhase::Released, &event(2, limit as f64, 1.0)),
+        p.process_pointer(InkPointerPhase::Released, &sample(2, limit)),
         Err(InkError::LimitExceeded)
     );
     assert!(!p.has_active_pointer(2));
     assert_eq!(p.stroke_container().len(), 1);
+}
+
+#[test]
+fn active_geometry_limit_reports_cancellation_before_preview_can_disappear() {
+    let p = InkPresenter::new();
+    let cancellations = Rc::new(Cell::new(0));
+    let count = cancellations.clone();
+    p.stroke_input()
+        .stroke_canceled(move |_| count.set(count.get() + 1));
+    p.process_pointer(InkPointerPhase::Pressed, &event(1, 0.0, 0.0))
+        .unwrap();
+    for i in 1..2048 {
+        p.process_pointer(InkPointerPhase::Moved, &event(1, i as f64 * 32.0, 0.0))
+            .unwrap();
+    }
+    assert_eq!(p.visible_strokes().len(), 1);
+    assert_eq!(
+        p.process_pointer(InkPointerPhase::Moved, &event(1, 2048.0 * 32.0, 0.0)),
+        Err(InkError::LimitExceeded)
+    );
+    assert_eq!(cancellations.get(), 1);
+    assert!(!p.has_active_pointer(1));
+    assert!(p.visible_strokes().is_empty());
+    assert!(p.stroke_container().is_empty());
+}
+
+#[test]
+fn multi_pointer_admission_and_total_active_geometry_are_bounded() {
+    let p = InkPresenter::new();
+    p.set_predefined_configuration(InkPresenterPredefinedConfiguration::SimpleMultiplePointer);
+    for id in 0..InkPresenter::MAX_ACTIVE_POINTERS as i32 {
+        p.process_pointer(InkPointerPhase::Pressed, &event(id, 0.0, 0.0))
+            .unwrap();
+    }
+    assert_eq!(
+        p.process_pointer(InkPointerPhase::Pressed, &event(256, 0.0, 0.0)),
+        Err(InkError::LimitExceeded)
+    );
+    assert!(p.has_active_pointer(255));
+    p.cancel_all();
+    for id in 0..4 {
+        p.process_pointer(InkPointerPhase::Pressed, &event(id, 0.0, id as f64))
+            .unwrap();
+        for i in 1..2048 {
+            p.process_pointer(
+                InkPointerPhase::Moved,
+                &event(id, i as f64 * 32.0, id as f64),
+            )
+            .unwrap();
+        }
+    }
+    p.process_pointer(InkPointerPhase::Pressed, &event(4, 0.0, 4.0))
+        .unwrap();
+    for i in 1..4 {
+        p.process_pointer(InkPointerPhase::Moved, &event(4, i as f64 * 32.0, 4.0))
+            .unwrap();
+    }
+    assert_eq!(
+        p.process_pointer(InkPointerPhase::Moved, &event(4, 128.0, 4.0)),
+        Err(InkError::LimitExceeded)
+    );
+    assert!(!p.has_active_pointer(4));
+    assert!((0..4).all(|id| p.has_active_pointer(id)));
+    p.cancel_all();
+}
+
+#[test]
+fn total_active_telemetry_is_bounded_even_when_stationary_geometry_is_shared() {
+    let presenter = InkPresenter::new();
+    presenter
+        .set_predefined_configuration(InkPresenterPredefinedConfiguration::SimpleMultiplePointer);
+    let limits = InkPersistenceLimits::DEFAULT;
+    let sample = |id, timestamp: usize| {
+        let mut sample = event(id, id as f64, 0.0);
+        sample.point.timestamp = timestamp as u64;
+        sample
+    };
+    let mut remaining = limits.max_total_points;
+    let mut id = 0;
+    let mut last_count = 0;
+    while remaining != 0 {
+        let count = remaining.min(limits.max_points_per_stroke);
+        presenter
+            .process_pointer(InkPointerPhase::Pressed, &sample(id, 0))
+            .unwrap();
+        for timestamp in 1..count {
+            presenter
+                .process_pointer(InkPointerPhase::Moved, &sample(id, timestamp))
+                .unwrap();
+        }
+        remaining -= count;
+        last_count = count;
+        id += 1;
+    }
+    assert_eq!(id, 16);
+    assert!(last_count < limits.max_points_per_stroke);
+    assert_eq!(
+        presenter.process_pointer(InkPointerPhase::Pressed, &sample(id, 0)),
+        Err(InkError::LimitExceeded)
+    );
+    assert!(!presenter.has_active_pointer(id));
+    // A duplicate consumes no space even when the aggregate budget is full.
+    presenter
+        .process_pointer(InkPointerPhase::Moved, &sample(id - 1, last_count - 1))
+        .unwrap();
+    assert_eq!(
+        presenter.process_pointer(InkPointerPhase::Moved, &sample(id - 1, last_count)),
+        Err(InkError::LimitExceeded)
+    );
+    assert!(!presenter.has_active_pointer(id - 1));
+    assert!((0..id - 1).all(|other| presenter.has_active_pointer(other)));
+    assert!(presenter.stroke_container().is_empty());
+    presenter.cancel_all();
 }
 
 #[test]

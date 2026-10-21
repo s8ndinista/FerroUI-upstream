@@ -1,27 +1,35 @@
 //! Pen palette and width editing built from the existing FerroUI controls.
 use super::color_names::{bind_color_name, high_contrast_colors};
+use super::ink_toolbar::round_panel_thickness;
 use super::ink_toolbar_buttons::{strings, toolbar_style_key};
 use super::{InkToolbarFlyoutItemKind, InkToolbarPenButton};
 use crate::automation::AutomationProperties;
 use crate::primitives::{RangeBase, TemplatedControlImpl, ToggleButton, ToggleButtonImpl};
 use crate::shapes::{Ellipse, Path};
+use crate::utils::BorderRenderHelper;
 use crate::{
-    ButtonImpl, Canvas, ContentControlImpl, Control, ControlImpl, PanelImpl, Slider, SliderImpl,
-    StackPanel, StackPanelImpl, TextBlock, WrapPanel,
+    Border, ButtonImpl, Canvas, ContentControlImpl, Control, ControlImpl, Decorator, PanelImpl,
+    Slider, SliderImpl, StackPanel, StackPanelImpl, TextBlock, WrapPanel,
 };
 use ferroui_base::collections::FerroList;
-use ferroui_base::input::InputElementImpl;
+use ferroui_base::input::{
+    InputElementImpl, InputElementImplExt, Key, KeyEventArgs, KeyboardNavigation,
+    KeyboardNavigationMode, NavigationMethod,
+};
 use ferroui_base::interactivity::InteractiveImpl;
-use ferroui_base::layout::{LayoutableImpl, Orientation};
+use ferroui_base::layout::{Layoutable, LayoutableImpl, LayoutableImplExt, Orientation};
 use ferroui_base::media::immutable::ImmutableSolidColorBrush;
-use ferroui_base::media::{FontWeight, IBrush, PenLineCap, PenLineJoin, PolylineGeometry};
+use ferroui_base::media::{
+    BackgroundSizing, BoxShadows, DrawingContext, FontWeight, IBrush, PenLineCap, PenLineJoin,
+    PolylineGeometry,
+};
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{
-    ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate,
+    ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate, CornerRadius,
     DirectProperty, FerroObjectImpl, FerroObjectImplExt, FerroProperty,
-    FerroPropertyChangedEventArgs, Point, Ref, StyledElementImpl, StyledProperty, Thickness,
-    TypeInfo, VisualImpl,
+    FerroPropertyChangedEventArgs, Point, Rect, Ref, Size, StyledElementImpl, StyledProperty,
+    Thickness, TypeInfo, Visual, VisualImpl,
 };
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
@@ -76,12 +84,92 @@ pub struct InkToolbarPenConfigurationControl {
     syncing: Cell<bool>,
     displayed_palette: RefCell<Vec<Rc<dyn IBrush>>>,
     preview: RefCell<Option<(Ref<Canvas>, Ref<Path>)>>,
+    border_renderer: RefCell<BorderRenderHelper>,
 }
 ferro_class!(InkToolbarPenConfigurationControl:StackPanel);
 ferro_class_info!(InkToolbarPenConfigurationControl {
     new: InkToolbarPenConfigurationControl::new
 });
-ferro_impl_classes!(InkToolbarPenConfigurationControl:StyledElementImpl,VisualImpl,LayoutableImpl,InteractiveImpl,InputElementImpl,ControlImpl,PanelImpl,StackPanelImpl);
+ferro_impl_classes!(InkToolbarPenConfigurationControl:StyledElementImpl,InteractiveImpl,ControlImpl,PanelImpl);
+impl LayoutableImpl for InkToolbarPenConfigurationControl {
+    fn measure_override(this: &Self, available_size: Size) -> Size {
+        let insets = this.layout_insets();
+        Self::parent_measure_override(this, available_size.deflate(insets)).inflate(insets)
+    }
+    fn arrange_override(this: &Self, final_size: Size) -> Size {
+        Self::parent_arrange_override(this, final_size.deflate(this.layout_insets()));
+        final_size
+    }
+}
+impl StackPanelImpl for InkToolbarPenConfigurationControl {
+    fn arrange_child(
+        this: &Self,
+        child: &Ref<Control>,
+        rect: Rect,
+        _panel_size: Size,
+        _orientation: Orientation,
+    ) {
+        let insets = this.layout_insets();
+        child.arrange(
+            rect.with_x(rect.x + insets.left)
+                .with_y(rect.y + insets.top),
+        );
+    }
+}
+impl VisualImpl for InkToolbarPenConfigurationControl {
+    fn render(this: &Self, context: &mut DrawingContext) {
+        this.border_renderer.borrow_mut().render(
+            context,
+            this.bounds().size(),
+            round_panel_thickness(this, this.border_thickness()),
+            this.corner_radius(),
+            this.background_sizing(),
+            this.background().as_ref(),
+            this.border_brush().as_ref(),
+            &BoxShadows::default(),
+        );
+    }
+    fn clip_to_bounds_radius(this: &Self) -> Option<CornerRadius> {
+        Some(this.corner_radius())
+    }
+}
+impl InputElementImpl for InkToolbarPenConfigurationControl {
+    fn on_key_down(this: &Self, event: &KeyEventArgs) {
+        Self::parent_on_key_down(this, event);
+        if event.handled() {
+            return;
+        }
+        let panel = this.palette_panel.borrow().clone();
+        let Some(panel) = panel else {
+            return;
+        };
+        let children = panel.children().snapshot();
+        let Some(index) = children
+            .iter()
+            .position(|child| child.is_keyboard_focus_within())
+        else {
+            return;
+        };
+        let destination = match event.key {
+            Key::Left => index.checked_sub(1),
+            Key::Right => index.checked_add(1),
+            Key::Up => index.checked_sub(6),
+            Key::Down => index.checked_add(6),
+            Key::Home => Some(0),
+            Key::End => children.len().checked_sub(1),
+            _ => return,
+        };
+        if let Some(destination) = destination.filter(|&index| index < children.len()) {
+            let child = &children[destination];
+            if child.focus_with(NavigationMethod::Directional, event.key_modifiers) {
+                if let Some(pen) = this.pen_button() {
+                    pen.set_selected_brush_index(destination as i32);
+                }
+            }
+        }
+        event.set_handled(true);
+    }
+}
 impl FerroObjectImpl for InkToolbarPenConfigurationControl {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
@@ -90,6 +178,8 @@ impl FerroObjectImpl for InkToolbarPenConfigurationControl {
         let palette = WrapPanel::new();
         palette.set_width(312.0);
         palette.set_margin(Thickness::new(4.0, 0.0, 4.0, 2.0));
+        KeyboardNavigation::set_tab_navigation(&palette, KeyboardNavigationMode::Once);
+        strings::bind_name(&palette, "InkToolbarPenConfigurationColorsLabel");
         let colors_title = TextBlock::new();
         colors_title.set_font_weight(FontWeight::SemiBold);
         colors_title.set_margin(Thickness::new(12.0, 0.0, 12.0, 0.0));
@@ -150,8 +240,27 @@ impl FerroObjectImpl for InkToolbarPenConfigurationControl {
         }
     }
 }
-ferro_properties! {impl InkToolbarPenConfigurationControl{pub fn pen_button_property()->DirectProperty<InkToolbarPenConfigurationControl,Option<Ref<InkToolbarPenButton>>>{FerroProperty::register_direct::<InkToolbarPenConfigurationControl,_>("PenButton",InkToolbarPenConfigurationControl::pen_button,None,None)}}}
+ferro_properties! {impl InkToolbarPenConfigurationControl{
+    pub fn pen_button_property()->DirectProperty<InkToolbarPenConfigurationControl,Option<Ref<InkToolbarPenButton>>>{FerroProperty::register_direct::<InkToolbarPenConfigurationControl,_>("PenButton",InkToolbarPenConfigurationControl::pen_button,None,None)}
+    pub fn border_brush_property()->StyledProperty<Option<Rc<dyn IBrush>>>{Border::border_brush_property().add_owner::<InkToolbarPenConfigurationControl>()}
+    pub fn border_thickness_property()->StyledProperty<Thickness>{Border::border_thickness_property().add_owner::<InkToolbarPenConfigurationControl>()}
+    pub fn corner_radius_property()->StyledProperty<CornerRadius>{Border::corner_radius_property().add_owner::<InkToolbarPenConfigurationControl>()}
+    pub fn background_sizing_property()->StyledProperty<BackgroundSizing>{Border::background_sizing_property().add_owner::<InkToolbarPenConfigurationControl>()}
+    pub fn padding_property()->StyledProperty<Thickness>{Decorator::padding_property().add_owner::<InkToolbarPenConfigurationControl>()}
+}}
 impl InkToolbarPenConfigurationControl {
+    fn static_constructor() {
+        Visual::affects_render::<InkToolbarPenConfigurationControl>(&[
+            Self::border_brush_property().as_property(),
+            Self::border_thickness_property().as_property(),
+            Self::corner_radius_property().as_property(),
+            Self::background_sizing_property().as_property(),
+        ]);
+        Layoutable::affects_measure::<InkToolbarPenConfigurationControl>(&[
+            Self::padding_property().as_property(),
+            Self::border_thickness_property().as_property(),
+        ]);
+    }
     pub fn construct() -> Self {
         Self {
             base: StackPanel::construct(),
@@ -163,6 +272,7 @@ impl InkToolbarPenConfigurationControl {
             syncing: Cell::new(false),
             displayed_palette: RefCell::new(Vec::new()),
             preview: RefCell::new(None),
+            border_renderer: RefCell::new(BorderRenderHelper::new()),
         }
     }
     pub fn new() -> Ref<Self> {
@@ -175,6 +285,40 @@ impl InkToolbarPenConfigurationControl {
     }
     pub fn pen_button(&self) -> Option<Ref<InkToolbarPenButton>> {
         self.pen.borrow().clone()
+    }
+    pub fn border_brush(&self) -> Option<Rc<dyn IBrush>> {
+        self.get_value(Self::border_brush_property())
+    }
+    pub fn set_border_brush(&self, value: Option<Rc<dyn IBrush>>) {
+        self.set_value(Self::border_brush_property(), value);
+    }
+    pub fn border_thickness(&self) -> Thickness {
+        self.get_value(Self::border_thickness_property())
+    }
+    pub fn set_border_thickness(&self, value: Thickness) {
+        self.set_value(Self::border_thickness_property(), value);
+    }
+    pub fn corner_radius(&self) -> CornerRadius {
+        self.get_value(Self::corner_radius_property())
+    }
+    pub fn set_corner_radius(&self, value: CornerRadius) {
+        self.set_value(Self::corner_radius_property(), value);
+    }
+    pub fn background_sizing(&self) -> BackgroundSizing {
+        self.get_value(Self::background_sizing_property())
+    }
+    pub fn set_background_sizing(&self, value: BackgroundSizing) {
+        self.set_value(Self::background_sizing_property(), value);
+    }
+    pub fn padding(&self) -> Thickness {
+        self.get_value(Self::padding_property())
+    }
+    pub fn set_padding(&self, value: Thickness) {
+        self.set_value(Self::padding_property(), value);
+    }
+    fn layout_insets(&self) -> Thickness {
+        round_panel_thickness(self, self.padding())
+            + round_panel_thickness(self, self.border_thickness())
     }
     pub fn stroke_width_slider(&self) -> Option<Ref<InkToolbarStrokeWidthSlider>> {
         self.slider.borrow().clone()
@@ -276,7 +420,14 @@ impl InkToolbarPenConfigurationControl {
         if let (Some(pen), Some(panel)) = (pen, panel) {
             for (index, item) in panel.children().snapshot().iter().enumerate() {
                 if let Some(item) = item.cast::<InkToolbarFlyoutItem>() {
-                    item.set_is_checked(Some(index as i32 == pen.selected_brush_index()));
+                    let selected = index as i32 == pen.selected_brush_index();
+                    item.set_is_checked(Some(selected));
+                    if selected {
+                        KeyboardNavigation::set_tab_once_active_element(
+                            &panel,
+                            Some(item.upcast()),
+                        );
+                    }
                 }
             }
         }

@@ -178,8 +178,46 @@ def main() -> int:
         if actual_members != contract.get(name):
             errors.append(f"Member ledger differs from pinned IDL: {name}")
 
+    # Keep API and interaction scenarios exhaustive against their original C#
+    # suites. Tests can be consolidated in Rust, but a source method cannot
+    # disappear merely by being removed from the mutable JSON ledger.
+    expected_test_sources = {
+        path for path, item in file_map.items()
+        if item["category"] in {"api-tests", "interaction-tests"}
+    }
+    test_snapshots = tests["snapshots"]
+    if (len(test_snapshots) != 4
+            or {item["source"] for item in test_snapshots} != expected_test_sources):
+        errors.append("Test snapshots must retain exactly the two API and two interaction suites")
+    source_tests = {"api": set(), "interaction": set()}
+    for snapshot in test_snapshots:
+        file = local_file(snapshot["file"])
+        if file is None:
+            continue
+        contents = file.read_bytes()
+        actual = hashlib.sha1(b"blob " + str(len(contents)).encode() + b"\0" + contents).hexdigest()
+        upstream = file_map.get(snapshot["source"], {})
+        if actual != snapshot["sha"] or actual != upstream.get("sha"):
+            errors.append(f"Pinned test-suite contents have changed: {snapshot['file']}")
+        suite = snapshot["suite"]
+        expected_category = {"api": "api-tests", "interaction": "interaction-tests"}.get(suite)
+        if expected_category is None or upstream.get("category") != expected_category:
+            errors.append(f"Test snapshot has an invalid suite classification: {snapshot['file']}")
+            continue
+        methods = re.findall(
+            r"\[TestMethod\](?:\s*\[[^\]]*\])*\s*public\s+(?:async\s+)?(?:void|Task)\s+(\w+)\s*\(",
+            contents.decode("utf-8-sig"),
+        )
+        source_tests[suite].update((snapshot["source"], method) for method in methods)
+    if len(source_tests["api"]) != 65 or len(source_tests["interaction"]) != 8:
+        errors.append("Pinned test declarations must contain 65 API and eight interaction methods")
+    for suite, key in [("api", "tests"), ("interaction", "interaction_tests")]:
+        recorded = {(item["source"], item["method"]) for item in tests[key]}
+        if recorded != source_tests[suite] or len(recorded) != len(tests[key]):
+            errors.append(f"{suite} test ledger differs from the pinned source methods")
+
     test_ids = set()
-    for item in tests["tests"]:
+    for item in tests["tests"] + tests["interaction_tests"]:
         if item["id"] in test_ids or item["source"] not in file_map:
             errors.append(f"Invalid or repeated test identity: {item['id']}")
         test_ids.add(item["id"])
@@ -237,7 +275,8 @@ def main() -> int:
         errors.append("External service ledger must retain all 12 selected classes")
 
     sections = {"files": files, "types": api["types"], "members": all_members,
-                "api_tests": tests["tests"], "dependencies": dependencies["dependencies"],
+                "api_tests": tests["tests"], "interaction_tests": tests["interaction_tests"],
+                "dependencies": dependencies["dependencies"],
                 "service_members": services["members"]}
     summary = {key: dict(sorted(Counter(item["status"] for item in records).items()))
                for key, records in sections.items()}

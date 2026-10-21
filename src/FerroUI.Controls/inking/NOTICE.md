@@ -1,6 +1,7 @@
 # WinUI inking attribution
 
-The controls, service contracts, default palettes, and matching behavioral tests
+The controls, service contracts, default palettes, localized resource tables,
+preview sample points and matching behavioral tests
 in this directory are derived from or informed by the Microsoft WinUI sources:
 
 - Repository: https://github.com/microsoft/microsoft-ui-xaml
@@ -14,6 +15,15 @@ may share a Rust file as recorded there. Windows Runtime and DirectComposition
 dependencies are replaced by FerroUI services or explicitly tracked as missing;
 their operating-system implementation is not included in the WinUI repository
 and has not been copied here.
+
+The generated `ink_toolbar_strings_data.rs` retains all 86 source cultures and
+59 resource keys per culture. `scripts/winui-inking/generate-strings.py` checks
+each source Git blob before regenerating those tables. The dedicated toolbar
+themes in `src/FerroUI.Themes.WinUI/Controls/InkToolbar.xaml` and
+`src/FerroUI.Themes.WinUI/Resources/InkToolbar.xaml` are adaptations of the same
+pinned WinUI XAML and use the Microsoft notice below. Their tool icons use
+FerroUI vector geometry; this port does not redistribute the Windows symbol
+font.
 
 ## Microsoft WinUI license
 

@@ -755,5 +755,137 @@
       "rust_tests": [],
       "notes": "Locale-specific headings or palette descriptions are not ported/tested. English fallback strings cannot satisfy this scenario."
     }
+  ],
+  "snapshots": [
+    {
+      "source": "controls/dev/InkCanvas/APITests/InkCanvasTests.cs",
+      "file": "docs/porting/data/winui-inking/upstream/InkCanvas.APITests.cs",
+      "sha": "e629c9751b8f50891ec10b40b7c0bbe1056d743b",
+      "suite": "api"
+    },
+    {
+      "source": "controls/dev/InkCanvas/InteractionTests/InkCanvasTests.cs",
+      "file": "docs/porting/data/winui-inking/upstream/InkCanvas.InteractionTests.cs",
+      "sha": "7f8ae8952210c8943e914ccf0f9afe16d7e8e159",
+      "suite": "interaction"
+    },
+    {
+      "source": "controls/dev/InkToolbar/APITests/InkToolbarTests.cs",
+      "file": "docs/porting/data/winui-inking/upstream/InkToolbar.APITests.cs",
+      "sha": "507a09671db4d5ba6bc1314965c48cc607adbdb9",
+      "suite": "api"
+    },
+    {
+      "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
+      "file": "docs/porting/data/winui-inking/upstream/InkToolbar.InteractionTests.cs",
+      "sha": "4865b0cd7ea6fb906c95f519cdfafd79e7f8d05c",
+      "suite": "interaction"
+    }
+  ],
+  "interaction_tests": [
+    {
+      "id": "InkCanvas.Interaction.InkCanvasRendersInVisualTree",
+      "source": "controls/dev/InkCanvas/InteractionTests/InkCanvasTests.cs",
+      "method": "InkCanvasRendersInVisualTree",
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "canvas_automation_reports_visible_bounds_and_collapsed_or_outside_root"
+        }
+      ],
+      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+    },
+    {
+      "id": "InkToolbar.Interaction.InkToolbarRendersInVisualTree",
+      "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
+      "method": "InkToolbarRendersInVisualTree",
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
+        }
+      ],
+      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+    },
+    {
+      "id": "InkToolbar.Interaction.InkToolbarInitialControlsSelection",
+      "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
+      "method": "InkToolbarInitialControlsSelection",
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
+        }
+      ],
+      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+    },
+    {
+      "id": "InkToolbar.Interaction.InkToolbarOrientationSwitching",
+      "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
+      "method": "InkToolbarOrientationSwitching",
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
+        }
+      ],
+      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+    },
+    {
+      "id": "InkToolbar.Interaction.InkToolbarFlyoutPlacementSwitching",
+      "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
+      "method": "InkToolbarFlyoutPlacementSwitching",
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
+        }
+      ],
+      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+    },
+    {
+      "id": "InkToolbar.Interaction.InkToolbarRulerToggle",
+      "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
+      "method": "InkToolbarRulerToggle",
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
+        }
+      ],
+      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+    },
+    {
+      "id": "InkToolbar.Interaction.InkToolbarStencilToggle",
+      "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
+      "method": "InkToolbarStencilToggle",
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
+        }
+      ],
+      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+    },
+    {
+      "id": "InkToolbar.Interaction.InkToolbarActiveToolDisplay",
+      "source": "controls/dev/InkToolbar/InteractionTests/InkToolbarTests.cs",
+      "method": "InkToolbarActiveToolDisplay",
+      "status": "partial",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls/inking/ink_parity_tests.rs",
+          "name": "interaction_page_selectors_and_checkboxes_drive_the_live_toolbar"
+        }
+      ],
+      "notes": "Equivalent FerroUI visual-tree/control actions are implemented in the mapped fixture and await test execution. The out-of-process Windows UIA harness is adapted to existing FerroUI test services; the source scenario does not assert physical pen telemetry or native pixel matching."
+    }
   ]
 }

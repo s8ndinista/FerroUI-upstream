@@ -142,6 +142,7 @@
     </Setter>
   </ControlTheme>
   <ControlTheme x:Key="{x:Type InkToolbarBallpointPenButton}" TargetType="InkToolbarBallpointPenButton" BasedOn="{StaticResource InkToolbarCommonButtonStyle}">
+    <Setter Property="AutomationProperties.AutomationId" Value="InkToolbarBallpointPenButton" />
     <Setter Property="MinStrokeWidth" Value="1" />
     <Setter Property="MaxStrokeWidth" Value="24" />
     <Setter Property="SelectedStrokeWidth" Value="2" />
@@ -150,6 +151,8 @@
         <Border x:Name="RootElement" Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
             <Path x:Name="ContentFillGlyph" Width="16" Height="16" Stretch="Uniform"
                   Data="{StaticResource InkToolbarBallpointFill}" Fill="{TemplateBinding SelectedBrush}"
@@ -162,11 +165,13 @@
                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Opacity="0"
                   IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
+          </ContentPresenter>
         </Border>
       </ControlTemplate>
     </Setter>
   </ControlTheme>
   <ControlTheme x:Key="{x:Type InkToolbarPencilButton}" TargetType="InkToolbarPencilButton" BasedOn="{StaticResource InkToolbarCommonButtonStyle}">
+    <Setter Property="AutomationProperties.AutomationId" Value="InkToolbarPencilButton" />
     <Setter Property="MinStrokeWidth" Value="1" />
     <Setter Property="MaxStrokeWidth" Value="24" />
     <Setter Property="SelectedStrokeWidth" Value="4" />
@@ -175,6 +180,8 @@
         <Border x:Name="RootElement" Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
             <Path x:Name="ContentFillGlyph" Width="16" Height="16" Stretch="Uniform"
                   Data="{StaticResource InkToolbarPencilFill}" Fill="{TemplateBinding SelectedBrush}"
@@ -187,11 +194,13 @@
                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Opacity="0"
                   IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
+          </ContentPresenter>
         </Border>
       </ControlTemplate>
     </Setter>
   </ControlTheme>
   <ControlTheme x:Key="{x:Type InkToolbarHighlighterButton}" TargetType="InkToolbarHighlighterButton" BasedOn="{StaticResource InkToolbarCommonButtonStyle}">
+    <Setter Property="AutomationProperties.AutomationId" Value="InkToolbarHighlighterButton" />
     <Setter Property="MinStrokeWidth" Value="12" />
     <Setter Property="MaxStrokeWidth" Value="64" />
     <Setter Property="SelectedStrokeWidth" Value="36" />
@@ -200,6 +209,8 @@
         <Border x:Name="RootElement" Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
             <Path x:Name="ContentFillGlyph" Width="16" Height="16" Stretch="Uniform"
                   Data="{StaticResource InkToolbarHighlighterFill}" Fill="{TemplateBinding SelectedBrush}"
@@ -212,6 +223,7 @@
                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Opacity="0"
                   IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
+          </ContentPresenter>
         </Border>
       </ControlTemplate>
     </Setter>
@@ -241,11 +253,14 @@
     </Setter>
   </ControlTheme>
   <ControlTheme x:Key="{x:Type InkToolbarEraserButton}" TargetType="InkToolbarEraserButton" BasedOn="{StaticResource InkToolbarCommonButtonStyle}">
+    <Setter Property="AutomationProperties.AutomationId" Value="InkToolbarEraserButton" />
     <Setter Property="Template">
       <ControlTemplate TargetType="InkToolbarEraserButton">
         <Border x:Name="RootElement" Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
             <Path x:Name="ContentGlyph" Width="16" Height="16" Stretch="Uniform"
                   Data="{StaticResource InkToolbarEraserOutline}" Fill="{TemplateBinding Foreground}"
@@ -255,6 +270,7 @@
                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Opacity="0"
                   IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
+          </ContentPresenter>
         </Border>
       </ControlTemplate>
     </Setter>
@@ -355,16 +371,20 @@
     </Style>
   </ControlTheme>
   <ControlTheme x:Key="{x:Type InkToolbarRulerButton}" TargetType="InkToolbarRulerButton" BasedOn="{StaticResource InkToolbarCommonButtonStyle}">
+    <Setter Property="AutomationProperties.AutomationId" Value="InkToolbarRulerButton" />
     <Setter Property="Template">
       <ControlTemplate TargetType="InkToolbarRulerButton">
         <Border x:Name="RootElement" Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
             <Path x:Name="ContentGlyph" Width="16" Height="16" Stretch="Uniform"
                   Data="{StaticResource InkToolbarRulerOutline}" Fill="{TemplateBinding Foreground}"
                   HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" />
           </Grid>
+          </ContentPresenter>
         </Border>
       </ControlTemplate>
     </Setter>
@@ -411,11 +431,14 @@
     </Setter>
   </ControlTheme>
   <ControlTheme x:Key="{x:Type InkToolbarStencilButton}" TargetType="InkToolbarStencilButton" BasedOn="{StaticResource InkToolbarCommonButtonStyle}">
+    <Setter Property="AutomationProperties.AutomationId" Value="InkToolbarStencilButton" />
     <Setter Property="Template">
       <ControlTemplate TargetType="InkToolbarStencilButton">
         <Border x:Name="RootElement" Background="{TemplateBinding Background}"
                 BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
                 CornerRadius="{TemplateBinding CornerRadius}" Padding="{TemplateBinding Padding}">
+          <ContentPresenter x:Name="PART_ContentPresenter"
+                            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
           <Grid>
             <Path x:Name="ContentGlyph" Width="16" Height="16" Stretch="Uniform"
                   Data="{StaticResource InkToolbarRulerOutline}" Fill="{TemplateBinding Foreground}"
@@ -425,6 +448,7 @@
                   HorizontalAlignment="Center" VerticalAlignment="Bottom" Opacity="0"
                   IsVisible="{TemplateBinding IsExtensionGlyphShown}" IsHitTestVisible="False" />
           </Grid>
+          </ContentPresenter>
         </Border>
       </ControlTemplate>
     </Setter>

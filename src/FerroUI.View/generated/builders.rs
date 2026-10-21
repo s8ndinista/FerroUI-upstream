@@ -4088,6 +4088,31 @@ pub trait InkToolbarProps: ElementBuilder {
     fn target_ink_presenter<M>(self, value: impl IntoProp<Option<std::rc::Rc<ferroui_controls::InkPresenter>>, M>) -> Self {
         self.prop(<ferroui_controls::InkToolbar>::target_ink_presenter_property(), value)
     }
+
+    /// Sets [`InkToolbar::border_brush_property`](ferroui_controls::InkToolbar::border_brush_property).
+    fn border_brush<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::media::IBrush>>, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::border_brush_property(), value)
+    }
+
+    /// Sets [`InkToolbar::border_thickness_property`](ferroui_controls::InkToolbar::border_thickness_property).
+    fn border_thickness<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::border_thickness_property(), value)
+    }
+
+    /// Sets [`InkToolbar::corner_radius_property`](ferroui_controls::InkToolbar::corner_radius_property).
+    fn corner_radius<M>(self, value: impl IntoProp<ferroui_base::CornerRadius, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::corner_radius_property(), value)
+    }
+
+    /// Sets [`InkToolbar::background_sizing_property`](ferroui_controls::InkToolbar::background_sizing_property).
+    fn background_sizing<M>(self, value: impl IntoProp<ferroui_base::media::BackgroundSizing, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::background_sizing_property(), value)
+    }
+
+    /// Sets [`InkToolbar::padding_property`](ferroui_controls::InkToolbar::padding_property).
+    fn padding<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbar>::padding_property(), value)
+    }
 }
 impl<T: ObjectType + Upcast<ferroui_controls::InkToolbar>> InkToolbarProps for El<T> {}
 
@@ -4169,6 +4194,35 @@ pub trait InkToolbarPenButtonProps: ElementBuilder {
     }
 }
 impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarPenButton>> InkToolbarPenButtonProps for El<T> {}
+
+/// The properties and routed events of [`InkToolbarPenConfigurationControl`](ferroui_controls::InkToolbarPenConfigurationControl).
+pub trait InkToolbarPenConfigurationControlProps: ElementBuilder {
+    /// Sets [`InkToolbarPenConfigurationControl::border_brush_property`](ferroui_controls::InkToolbarPenConfigurationControl::border_brush_property).
+    fn border_brush<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::media::IBrush>>, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenConfigurationControl>::border_brush_property(), value)
+    }
+
+    /// Sets [`InkToolbarPenConfigurationControl::border_thickness_property`](ferroui_controls::InkToolbarPenConfigurationControl::border_thickness_property).
+    fn border_thickness<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenConfigurationControl>::border_thickness_property(), value)
+    }
+
+    /// Sets [`InkToolbarPenConfigurationControl::corner_radius_property`](ferroui_controls::InkToolbarPenConfigurationControl::corner_radius_property).
+    fn corner_radius<M>(self, value: impl IntoProp<ferroui_base::CornerRadius, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenConfigurationControl>::corner_radius_property(), value)
+    }
+
+    /// Sets [`InkToolbarPenConfigurationControl::background_sizing_property`](ferroui_controls::InkToolbarPenConfigurationControl::background_sizing_property).
+    fn background_sizing<M>(self, value: impl IntoProp<ferroui_base::media::BackgroundSizing, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenConfigurationControl>::background_sizing_property(), value)
+    }
+
+    /// Sets [`InkToolbarPenConfigurationControl::padding_property`](ferroui_controls::InkToolbarPenConfigurationControl::padding_property).
+    fn padding<M>(self, value: impl IntoProp<ferroui_base::Thickness, M>) -> Self {
+        self.prop(<ferroui_controls::InkToolbarPenConfigurationControl>::padding_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::InkToolbarPenConfigurationControl>> InkToolbarPenConfigurationControlProps for El<T> {}
 
 /// The properties and routed events of [`InkToolbarStencilButton`](ferroui_controls::InkToolbarStencilButton).
 pub trait InkToolbarStencilButtonProps: ElementBuilder {

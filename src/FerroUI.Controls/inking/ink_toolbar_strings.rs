@@ -150,9 +150,11 @@ mod tests {
             for_culture(key, "sr-Latn-RS")
         );
         assert_eq!(
-            for_culture(key, "sr-Cyrl-BA"),
+            for_culture(key, "sr-Cyrl-ME"),
             for_culture(key, "sr-Cyrl-RS")
         );
+        // Bosnia has an independent pinned translation and must take precedence over fallback.
+        assert_eq!(for_culture(key, "sr-Cyrl-BA"), "Хемијска оловка");
         assert_eq!(for_culture(key, "unknown"), "Ballpoint pen");
         assert_eq!(for_culture("UnknownResource", "pl-PL"), "");
     }
