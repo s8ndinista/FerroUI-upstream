@@ -604,6 +604,9 @@ def compare_api(api: dict, rust: dict, mappings: dict) -> dict:
                 mapped = "new"
             elif member["kind"] == "enum-value":
                 mapped = overrides.get(member["name"], member["name"])
+            # Overloads can have different Rust entry points. A type/name-only
+            # map must not make SymbolIcon(Symbol) look like the zero-arg new().
+            mapped = (mapping or {}).get("overloads", {}).get(member["signature"], mapped)
             declaring = inherited_member(rust, selected, mapped) if selected else None
             identity = upstream["id"] + "::" + member["kind"] + ":" + member["signature"]
             members.append({"id": identity, "name": member["name"], "kind": member["kind"], "signature": member["signature"],

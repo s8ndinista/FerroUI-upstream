@@ -1,5 +1,9 @@
-use super::*;
-use crate::winui::{WinUIXamlMemberMapping, WinUIXamlNamespaceMapping, WinUIXamlTypeMapping};
+use ferroui_markup_xaml_loader::winui::*;
+use ferroui_base::metadata::FERRO_XML_NAMESPACE;
+use roxmltree::{Document, Node};
+
+const XAML_NAMESPACE: &str = "http://schemas.microsoft.com/winfx/2006/xaml";
+const COMPAT_NAMESPACE: &str = "using:FerroUI.Controls.WinUI";
 
 fn source(body: &str) -> String {
     format!("<Grid xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:x='{XAML_NAMESPACE}'>{body}</Grid>")
@@ -404,7 +408,7 @@ fn long_attribute_whitespace_uses_true_source_ranges() {
 #[cfg(feature = "runtime")]
 #[test]
 fn opt_in_runtime_loader_creates_real_controls_and_preserves_normal_loader_dialect() {
-    use crate::FerroRuntimeXamlLoader;
+    use ferroui_markup_xaml_loader::FerroRuntimeXamlLoader;
     use ferroui_base::data::core::ValueTypes;
     let source = format!(
         "<Button xmlns='{WINUI_PRESENTATION_NAMESPACE}' Visibility='Collapsed' Content='Live'/>"
@@ -426,7 +430,7 @@ fn opt_in_runtime_loader_creates_real_controls_and_preserves_normal_loader_diale
 fn runtime_rejects_semantic_diagnostics_before_instantiating_unknown_controls() {
     let input = source("<Unknown Text='{x:Bind Name}'/>");
     let error =
-        crate::FerroRuntimeXamlLoader::parse_winui(&input, None, &WinUIXamlOptions::default())
+        ferroui_markup_xaml_loader::FerroRuntimeXamlLoader::parse_winui(&input, None, &WinUIXamlOptions::default())
             .err()
             .unwrap();
     assert!(error.message().contains("WXAML1007"));
@@ -435,7 +439,7 @@ fn runtime_rejects_semantic_diagnostics_before_instantiating_unknown_controls() 
 #[cfg(feature = "runtime")]
 #[test]
 fn fresh_root_deferred_resource_error_is_returned_and_default_loader_still_throws() {
-    use crate::FerroRuntimeXamlLoader;
+    use ferroui_markup_xaml_loader::FerroRuntimeXamlLoader;
     use std::panic::{catch_unwind, AssertUnwindSafe};
     let input = source("<Grid.Resources><ControlTheme x:Key='Example' TargetType='Button' BasedOn='{StaticResource MissingTheme}'/></Grid.Resources><Button Theme='{StaticResource Example}'/>");
     let error = FerroRuntimeXamlLoader::parse_winui(&input, None, &WinUIXamlOptions::default())

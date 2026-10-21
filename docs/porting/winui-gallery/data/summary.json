@@ -28,8 +28,8 @@
       "xml:space": 8
     },
     "page_statuses": {
-      "partial": 42,
-      "pending": 84
+      "partial": 63,
+      "pending": 63
     },
     "pages": 126,
     "snippet_files": 355,
@@ -198,13 +198,13 @@
   "schema_version": 1,
   "upstream": {
     "member_candidates": {
-      "missing-source-candidate": 6511,
-      "source-candidate": 955
+      "missing-source-candidate": 6215,
+      "source-candidate": 1251
     },
     "members_public_source": 7466,
     "type_candidates": {
-      "missing-source-candidate": 1292,
-      "source-candidate": 253
+      "missing-source-candidate": 1276,
+      "source-candidate": 269
     },
     "types_private_source": 198,
     "types_public_source": 1545

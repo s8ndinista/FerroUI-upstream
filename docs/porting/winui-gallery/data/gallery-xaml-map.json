@@ -2,8 +2,8 @@
   "meaning": "XAML member spellings joined through WinUI and FerroUI inheritance; candidates are not semantic compatibility.",
   "member_statuses": {
     "gallery-owned-contract": 102,
-    "missing-source-candidate": 620,
-    "source-candidate": 464,
+    "missing-source-candidate": 588,
+    "source-candidate": 496,
     "unresolved-upstream-member": 208
   },
   "members": [
@@ -8613,9 +8613,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.FontIcon",
       "rust_member": "font_family",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.FontIcon",
+      "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.FontIcon.FontFamily",
       "uses": [
         {
@@ -8640,9 +8640,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.FontIcon",
       "rust_member": "font_size",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.FontIcon",
+      "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.FontIcon.FontSize",
       "uses": [
         {
@@ -8703,9 +8703,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.IconElement",
       "rust_member": "foreground",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.FontIcon",
+      "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.FontIcon.Foreground",
       "uses": [
         {
@@ -8738,9 +8738,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.FontIcon",
       "rust_member": "glyph",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.FontIcon",
+      "target_declared_by": "FerroUI.Controls.WinUI.FontIcon",
       "upstream": "Microsoft.UI.Xaml.Controls.FontIcon.Glyph",
       "uses": [
         {
@@ -8841,9 +8841,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "horizontal_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.FontIcon",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.FontIcon.HorizontalAlignment",
       "uses": [
         {
@@ -8856,9 +8856,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "margin",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.FontIcon",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.FontIcon.Margin",
       "uses": [
         {
@@ -8875,9 +8875,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "vertical_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.FontIcon",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.FontIcon.VerticalAlignment",
       "uses": [
         {
@@ -8949,7 +8949,7 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.ContentControl",
       "rust_member": "content_transitions",
       "status": "missing-source-candidate",
-      "target": null,
+      "target": "FerroUI.Controls.WinUI.Frame",
       "target_declared_by": null,
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.ContentTransitions",
       "uses": [
@@ -8963,9 +8963,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "height",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.Height",
       "uses": [
         {
@@ -8978,9 +8978,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "horizontal_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.HorizontalAlignment",
       "uses": [
         {
@@ -8993,9 +8993,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.Frame",
       "rust_member": "is_navigation_stack_enabled",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Controls.WinUI.Frame",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.IsNavigationStackEnabled",
       "uses": [
         {
@@ -9008,9 +9008,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "margin",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.Margin",
       "uses": [
         {
@@ -9023,9 +9023,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "max_height",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.MaxHeight",
       "uses": [
         {
@@ -9038,9 +9038,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "min_height",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.MinHeight",
       "uses": [
         {
@@ -9057,9 +9057,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "min_width",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.MinWidth",
       "uses": [
         {
@@ -9072,9 +9072,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.Frame",
       "rust_member": "navigated",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Controls.WinUI.Frame",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.Navigated",
       "uses": [
         {
@@ -9087,9 +9087,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.Frame",
       "rust_member": "navigating",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Controls.WinUI.Frame",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.Navigating",
       "uses": [
         {
@@ -9102,9 +9102,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.Control",
       "rust_member": "padding",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.Padding",
       "uses": [
         {
@@ -9117,9 +9117,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "vertical_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.Frame.VerticalAlignment",
       "uses": [
         {
@@ -16384,9 +16384,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
       "rust_member": "accepts_expression",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.AcceptsExpression",
       "uses": [
         {
@@ -16399,9 +16399,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
       "rust_member": "header",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.Header",
       "uses": [
         {
@@ -16463,7 +16463,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "horizontal_alignment",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.HorizontalAlignment",
       "uses": [
@@ -16478,7 +16478,7 @@
       "declared_by": "Microsoft.UI.Xaml.UIElement",
       "rust_member": "key_down",
       "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
       "target_declared_by": null,
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.KeyDown",
       "uses": [
@@ -16492,9 +16492,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
       "rust_member": "large_change",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.LargeChange",
       "uses": [
         {
@@ -16528,7 +16528,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "margin",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.Margin",
       "uses": [
@@ -16551,8 +16551,8 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
       "rust_member": "maximum",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.Maximum",
       "uses": [
         {
@@ -16606,7 +16606,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "min_width",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.MinWidth",
       "uses": [
@@ -16621,8 +16621,8 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
       "rust_member": "minimum",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.Minimum",
       "uses": [
         {
@@ -16686,10 +16686,10 @@
     {
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
-      "rust_member": "watermark",
+      "rust_member": "placeholder_text",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.PlaceholderText",
       "uses": [
         {
@@ -16701,10 +16701,10 @@
     {
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
-      "rust_member": "increment",
+      "rust_member": "small_change",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.SmallChange",
       "uses": [
         {
@@ -16741,9 +16741,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
       "rust_member": "spin_button_placement_mode",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.SpinButtonPlacementMode",
       "uses": [
         {
@@ -16801,7 +16801,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "style",
       "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
       "target_declared_by": null,
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.Style",
       "uses": [
@@ -16819,9 +16819,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
       "rust_member": "validation_mode",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.ValidationMode",
       "uses": [
         {
@@ -16839,8 +16839,8 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
       "rust_member": "value",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.Value",
       "uses": [
         {
@@ -16914,8 +16914,8 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.NumberBox",
       "rust_member": "value_changed",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
-      "target_declared_by": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.NumberBox",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.ValueChanged",
       "uses": [
         {
@@ -16953,7 +16953,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "vertical_alignment",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.VerticalAlignment",
       "uses": [
@@ -16972,7 +16972,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "width",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.NumericUpDown",
+      "target": "FerroUI.Controls.WinUI.NumberBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.NumberBox.Width",
       "uses": [
@@ -16991,7 +16991,7 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.Control",
       "rust_member": "background",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.Page",
+      "target": "FerroUI.Controls.WinUI.Page",
       "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.Page.Background",
       "uses": [
@@ -17006,7 +17006,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "resources",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.Page",
+      "target": "FerroUI.Controls.WinUI.Page",
       "target_declared_by": "FerroUI.StyledElement",
       "upstream": "Microsoft.UI.Xaml.Controls.Page.Resources",
       "uses": [
@@ -18766,9 +18766,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.Control",
       "rust_member": "font_weight",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RadioButtons",
+      "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RadioButtons.FontWeight",
       "uses": [
         {
@@ -18781,9 +18781,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RadioButtons",
       "rust_member": "header",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RadioButtons",
+      "target_declared_by": "FerroUI.Controls.Primitives.HeaderedSelectingItemsControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RadioButtons.Header",
       "uses": [
         {
@@ -18872,9 +18872,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RadioButtons",
       "rust_member": "max_columns",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RadioButtons",
+      "target_declared_by": "FerroUI.Controls.WinUI.RadioButtons",
       "upstream": "Microsoft.UI.Xaml.Controls.RadioButtons.MaxColumns",
       "uses": [
         {
@@ -18887,9 +18887,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RadioButtons",
       "rust_member": "selected_index",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RadioButtons",
+      "target_declared_by": "FerroUI.Controls.Primitives.SelectingItemsControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RadioButtons.SelectedIndex",
       "uses": [
         {
@@ -18934,9 +18934,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RadioButtons",
       "rust_member": "selection_changed",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RadioButtons",
+      "target_declared_by": "FerroUI.Controls.Primitives.SelectingItemsControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RadioButtons.SelectionChanged",
       "uses": [
         {
@@ -24331,9 +24331,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.IconElement",
       "rust_member": "foreground",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.SymbolIcon",
+      "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.SymbolIcon.Foreground",
       "uses": [
         {
@@ -24358,9 +24358,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "horizontal_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.SymbolIcon",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.SymbolIcon.HorizontalAlignment",
       "uses": [
         {
@@ -24373,9 +24373,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "margin",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.SymbolIcon",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.SymbolIcon.Margin",
       "uses": [
         {
@@ -24400,9 +24400,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.SymbolIcon",
       "rust_member": "symbol",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.SymbolIcon",
+      "target_declared_by": "FerroUI.Controls.WinUI.SymbolIcon",
       "upstream": "Microsoft.UI.Xaml.Controls.SymbolIcon.Symbol",
       "uses": [
         {

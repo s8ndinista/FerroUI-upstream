@@ -12,6 +12,8 @@ python3 scripts/winui-gallery/scan.py
 # Offline CI: validate pinned snapshot hashes, evidence anchors and exact reports.
 python3 -m unittest discover -s scripts/winui-gallery -p 'test_*.py'
 python3 scripts/winui-gallery/scan.py --check
+python3 scripts/winui-gallery/event_targets.py --check
+python3 scripts/winui-gallery/symbol_map.py --check
 
 # Deliberately fails while API contracts or Gallery pages lack execution evidence.
 python3 scripts/winui-gallery/scan.py --check --require-complete
@@ -45,6 +47,7 @@ All generated outputs live in `docs/porting/winui-gallery/data/`.
 | `gallery-pages.json` | Every upstream catalog page, code-behind, example and page-directory snippet |
 | `gallery-usage.json` | Every Gallery XAML file's expanded type/member names and markup features; C# imports and explicitly qualified references |
 | `api-mappings.json` | Reviewed adaptation candidates, member renames and semantic cautions; hand-maintained input |
+| `symbol-glyphs.tsv` / `symbol-sources.lock.json` | Every pinned Symbol API value and modern rendered glyph, with API-model and native-renderer hashes |
 | `api-evidence.json` | Contract-specific implementation/test anchors and exact-source execution records; hand-maintained input |
 | `api-map.json` | Namespace-scoped Rust candidates and inherited-member presence; behavior remains unverified |
 | `gallery-xaml-map.json` | XAML member requirements joined through both inheritance trees, with declaring owner and every use site |
@@ -58,6 +61,24 @@ preview and private APIs as well as released APIs; private contracts are retaine
 and counted separately. No SDK-version or ABI completeness claim is inferred.
 The Gallery input includes **all** tracked XAML, C#, snippet text, project and
 JSON files under `WinUIGallery`, plus its public machine-readable catalog.
+
+Type mappings can include an `overloads` object keyed by the exact source
+signature. This distinguishes a constructor such as `SymbolIcon(Symbol)` from
+the parameterless constructor when their Rust entry points differ. The mapping
+still establishes only a declaration candidate; behavioral evidence is separate.
+
+The icon-specific `symbol_map.py` gate checks all 197 public values, their
+modern glyph conversions from WinUI's `icon.cpp`, the Rust iteration table and
+the XAML enum names. It runs offline. Refreshing its immutable reference uses
+`--refresh-source --winui-root <clean pinned checkout>`. See
+`docs/porting/winui-gallery/CONTROL-CONTRACTS.md` for native rendering test scope
+and installed-font limitations.
+
+The `event_targets.py` gate generates the XAML loader's exact event-owner table
+from the pinned public API snapshot. It follows WinUI inheritance and requires an
+unambiguous namespace/type identity. A custom property with the same spelling as
+a WinUI event does not become an event by name alone. The table prepares strict
+target diagnostics; it does not establish that an event-binding contract is implemented.
 
 The exported catalog is an index, not the original snippet text. Its exporter
 may remove substitution tokens from the displayed XAML. Every example retains
@@ -112,8 +133,9 @@ for construction/inheritance and every public member before it can be verified.
 - Rust comparison uses the crate's namespace table, public member declarations
   and unambiguous base-class lookup. It does not prove Rust signatures, XAML
   registration behavior, property defaults, event ordering or visual equality.
-- Alternate control candidates such as `NumberBox` to `NumericUpDown` retain
-  explicit semantic cautions and cannot be treated as interchangeable aliases.
+- Alternate control candidates such as `ListView` to `ListBox` retain explicit
+  semantic cautions and cannot be treated as interchangeable aliases. New opt-in
+  implementations such as `NumberBox` map to their own WinUI namespace types.
 - Platform imports remain unresolved adapter requirements until native service
   implementations and platform-specific execution evidence exist.
 

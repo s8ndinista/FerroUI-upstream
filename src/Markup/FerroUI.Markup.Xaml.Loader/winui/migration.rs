@@ -873,7 +873,3 @@ fn validate_options(options: &WinUIXamlOptions) -> Result<(), WinUIXamlMigration
     }
     Ok(())
 }
-
-#[cfg(test)]
-#[path = "migration_tests.rs"]
-mod tests;

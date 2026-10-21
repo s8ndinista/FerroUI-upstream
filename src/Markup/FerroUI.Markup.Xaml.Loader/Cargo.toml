@@ -17,6 +17,10 @@ autoexamples = false
 [lib]
 path = "lib.rs"
 
+[[test]]
+name = "winui_migration"
+path = "tests/winui_migration.rs"
+
 [features]
 default = ["runtime"]
 # The run-time back end: the run-time type system, the AST interpreter (`ferroui_markup_xaml_loader::runtime`)

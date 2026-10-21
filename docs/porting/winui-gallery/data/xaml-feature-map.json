@@ -85,11 +85,11 @@
       "tests": [
         {
           "name": "implicit_winui_binding_modes_are_one_way_even_for_two_way_target_properties",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         },
         {
           "name": "object_element_binding_defaults_and_explicit_modes_are_preserved",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ],
       "uses": [
@@ -588,7 +588,7 @@
       "tests": [
         {
           "name": "theme_resources_require_explicit_policy_and_nested_lookups_are_recorded",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ],
       "uses": [
@@ -975,7 +975,7 @@
       "tests": [
         {
           "name": "xbind_reports_root_source_semantics_even_with_an_alternative_xaml_prefix",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ],
       "uses": [
@@ -2078,7 +2078,7 @@
       "tests": [
         {
           "name": "custom_namespace_maps_update_class_identity_without_rewriting_user_text",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ],
       "uses": [
@@ -2841,7 +2841,7 @@
       "tests": [
         {
           "name": "aliases_resolve_type_references_in_templates_directives_and_type_extensions",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ],
       "uses": [
@@ -3276,7 +3276,7 @@
       "tests": [
         {
           "name": "unknown_state_lifecycle_and_localization_contracts_are_not_discarded",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ],
       "uses": [
@@ -3299,7 +3299,7 @@
       "tests": [
         {
           "name": "event_handlers_and_entity_spelling_stay_exactly_as_authored",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ],
       "uses": [

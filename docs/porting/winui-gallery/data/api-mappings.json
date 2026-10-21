@@ -1,6 +1,18 @@
 {
   "schema_version": 1,
   "types": {
+    "Microsoft.UI.Xaml.Automation.Peers.NumberBoxAutomationPeer": {
+      "target": "FerroUI.Controls.WinUI.NumberBoxAutomationPeer",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native automation-provider composition. Platform-specific Windows notification sequences remain separate validation."
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.RadioButtonsAutomationPeer": {
+      "target": "FerroUI.Controls.WinUI.RadioButtonsAutomationPeer",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native automation-provider composition. Platform-specific Windows notification sequences remain separate validation."
+    },
     "Microsoft.UI.Xaml.Controls.AutoSuggestBox": {
       "kind": "candidate-requiring-adapter",
       "members": {
@@ -14,6 +26,18 @@
       "members": {},
       "notes": "Reuse content presentation; WinUI template and alignment semantics require review.",
       "target": "FerroUI.Controls.Presenters.ContentPresenter"
+    },
+    "Microsoft.UI.Xaml.Controls.FontIcon": {
+      "target": "FerroUI.Controls.WinUI.FontIcon",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native TextBlock font glyph rendering, live typography/foreground and opt-in RTL mirroring. Default Segoe Fluent Icons/20; host must supply licensed font. IsTextScaleFactorEnabled is unsupported; native text-property inheritance differs from some Windows formatting rules."
+    },
+    "Microsoft.UI.Xaml.Controls.Frame": {
+      "target": "FerroUI.Controls.WinUI.Frame",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Separate opt-in page factory, navigation history, cancellation, failure events, cache and option contracts. Native TypeInfo and typed factory/error adapters replace CLR type activation. Persistent navigation-state serialization and transition parity remain unsupported."
     },
     "Microsoft.UI.Xaml.Controls.ListView": {
       "kind": "candidate-requiring-adapter",
@@ -34,13 +58,49 @@
       "target": "FerroUI.Controls.DrawerPage"
     },
     "Microsoft.UI.Xaml.Controls.NumberBox": {
-      "kind": "candidate-requiring-adapter",
-      "members": {
-        "PlaceholderText": "watermark",
-        "SmallChange": "increment"
-      },
-      "notes": "NumberBox NaN, expressions, formatter and validation contracts differ from NumericUpDown; this is not a direct alias.",
-      "target": "FerroUI.Controls.NumericUpDown"
+      "target": "FerroUI.Controls.WinUI.NumberBox",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Double/NaN numeric domain, parser, validation, native editors/spinners and range automation are implemented as an opt-in facade. NumberFormatter requires the explicit native formatter/parser adapter; Windows globalization and full styling contracts are not certified."
+    },
+    "Microsoft.UI.Xaml.Controls.NumberBoxSpinButtonPlacementMode": {
+      "target": "FerroUI.Controls.WinUI.NumberBoxSpinButtonPlacementMode",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Opt-in enum accompanies NumberBox; member-level evidence is tracked separately."
+    },
+    "Microsoft.UI.Xaml.Controls.NumberBoxValidationMode": {
+      "target": "FerroUI.Controls.WinUI.NumberBoxValidationMode",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Opt-in enum accompanies NumberBox; member-level evidence is tracked separately."
+    },
+    "Microsoft.UI.Xaml.Controls.Page": {
+      "target": "FerroUI.Controls.WinUI.Page",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Separate opt-in content page with weak Frame ownership, NavigationCacheMode and navigation lifecycle hooks. Existing ContentPage type remains unchanged; Windows-specific inherited contracts remain unverified."
+    },
+    "Microsoft.UI.Xaml.Controls.RadioButtons": {
+      "target": "FerroUI.Controls.WinUI.RadioButtons",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native RadioButton containers and HeaderedSelectingItemsControl support item/header templates, selection, keyboard focus and constrained column-major MaxColumns layout. Native ItemsSource/inline collection rules and invalid-index normalization differ; element factories, template selectors, gamepad escape and exact Windows UIA/theme behavior are not certified."
+    },
+    "Microsoft.UI.Xaml.Controls.Symbol": {
+      "target": "FerroUI.Controls.WinUI.Symbol",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "All197 pinned public enum values, XAML enum names and modern rendered glyph conversions. Exact values are checked offline and through native text drawing with deterministic test fonts."
+    },
+    "Microsoft.UI.Xaml.Controls.SymbolIcon": {
+      "target": "FerroUI.Controls.WinUI.SymbolIcon",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native icon text rendering with all197 exact pinned public Symbol values mapped through WinUI icon.cpp modern glyph conversion. Default Emoji; licensed font must be supplied by host. Windows visual/font availability parity is not certified.",
+      "overloads": {
+        "public SymbolIcon(Microsoft.UI.Xaml.Controls.Symbol symbol)": "with_symbol"
+      }
     },
     "Microsoft.UI.Xaml.Controls.TabView": {
       "kind": "candidate-requiring-adapter",
@@ -78,6 +138,48 @@
       "notes": "Layout, resources and inherited data context share the existing framework. WinUI defaults and XAML member spellings remain adapter contracts.",
       "target": "FerroUI.Controls.Control"
     },
+    "Microsoft.UI.Xaml.Navigation.FrameNavigationOptions": {
+      "target": "FerroUI.Controls.WinUI.FrameNavigationOptions",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Opt-in native navigation contract; TypeInfo, native page references and typed result/error adapters replace WinRT/CLR handles."
+    },
+    "Microsoft.UI.Xaml.Navigation.NavigatingCancelEventArgs": {
+      "target": "FerroUI.Controls.WinUI.NavigatingCancelEventArgs",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Opt-in native navigation contract; TypeInfo, native page references and typed result/error adapters replace WinRT/CLR handles."
+    },
+    "Microsoft.UI.Xaml.Navigation.NavigationCacheMode": {
+      "target": "FerroUI.Controls.WinUI.NavigationCacheMode",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Opt-in native navigation contract; TypeInfo, native page references and typed result/error adapters replace WinRT/CLR handles."
+    },
+    "Microsoft.UI.Xaml.Navigation.NavigationEventArgs": {
+      "target": "FerroUI.Controls.WinUI.NavigationEventArgs",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Opt-in native navigation contract; TypeInfo, native page references and typed result/error adapters replace WinRT/CLR handles."
+    },
+    "Microsoft.UI.Xaml.Navigation.NavigationFailedEventArgs": {
+      "target": "FerroUI.Controls.WinUI.NavigationFailedEventArgs",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Opt-in native navigation contract; TypeInfo, native page references and typed result/error adapters replace WinRT/CLR handles."
+    },
+    "Microsoft.UI.Xaml.Navigation.NavigationMode": {
+      "target": "FerroUI.Controls.WinUI.NavigationMode",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Opt-in native navigation contract; TypeInfo, native page references and typed result/error adapters replace WinRT/CLR handles."
+    },
+    "Microsoft.UI.Xaml.Navigation.PageStackEntry": {
+      "target": "FerroUI.Controls.WinUI.PageStackEntry",
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Opt-in native navigation contract; TypeInfo, native page references and typed result/error adapters replace WinRT/CLR handles."
+    },
     "Microsoft.UI.Xaml.StaticResource": {
       "kind": "shared-core-adaptation",
       "members": {},
@@ -103,11 +205,11 @@
       "tests": [
         {
           "name": "implicit_winui_binding_modes_are_one_way_even_for_two_way_target_properties",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         },
         {
           "name": "object_element_binding_defaults_and_explicit_modes_are_preserved",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ]
     },
@@ -120,7 +222,7 @@
       "tests": [
         {
           "name": "theme_resources_require_explicit_policy_and_nested_lookups_are_recorded",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ]
     },
@@ -133,7 +235,7 @@
       "tests": [
         {
           "name": "xbind_reports_root_source_semantics_even_with_an_alternative_xaml_prefix",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ]
     },
@@ -146,7 +248,7 @@
       "tests": [
         {
           "name": "custom_namespace_maps_update_class_identity_without_rewriting_user_text",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ]
     },
@@ -159,7 +261,7 @@
       "tests": [
         {
           "name": "aliases_resolve_type_references_in_templates_directives_and_type_extensions",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ]
     },
@@ -172,7 +274,7 @@
       "tests": [
         {
           "name": "unknown_state_lifecycle_and_localization_contracts_are_not_discarded",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ]
     },
@@ -185,7 +287,7 @@
       "tests": [
         {
           "name": "event_handlers_and_entity_spelling_stay_exactly_as_authored",
-          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration_tests.rs"
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ]
     },

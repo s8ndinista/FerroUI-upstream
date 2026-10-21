@@ -168,6 +168,22 @@ class CandidateTests(unittest.TestCase):
         self.assertEqual(result["members"][0]["behavior"], "unverified")
         self.assertEqual(result["behavior"], "unverified")
 
+    def test_constructor_overloads_can_map_to_distinct_native_entry_points(self):
+        api = {"types": [{"id": "Microsoft.UI.Xaml.Controls.SymbolIcon", "namespace": "Microsoft.UI.Xaml.Controls", "name": "SymbolIcon",
+                          "audience": "public-source", "members": [
+                              {"name": "SymbolIcon", "kind": "constructor", "signature": "public SymbolIcon()", "audience": "public-source"},
+                              {"name": "SymbolIcon", "kind": "constructor", "signature": "public SymbolIcon(Symbol symbol)", "audience": "public-source"},
+                          ]}]}
+        rust = {"FerroUI.Controls.WinUI.SymbolIcon": {"name": "SymbolIcon", "namespace": "FerroUI.Controls.WinUI", "base": None,
+                                                     "members": {"new", "with_symbol"}, "sources": [], "registered": True}}
+        mappings = {"types": {"Microsoft.UI.Xaml.Controls.SymbolIcon": {
+            "target": "FerroUI.Controls.WinUI.SymbolIcon",
+            "overloads": {"public SymbolIcon(Symbol symbol)": "with_symbol"},
+        }}}
+        result = scan.compare_api(api, rust, mappings)["types"][0]
+        self.assertEqual([member["rust_member"] for member in result["members"]], ["new", "with_symbol"])
+        self.assertTrue(all(member["behavior"] == "unverified" for member in result["members"]))
+
     def test_upstream_inherited_property_resolves_declaring_owner(self):
         api = {"N.Button": {"namespace": "N", "name": "Button", "base": "N.Control", "members": []},
                "N.Control": {"namespace": "N", "name": "Control", "base": None,

@@ -57,10 +57,10 @@ in every generated inventory so that an upstream update cannot silently change t
 
 - [x] Inspect the framework and pin source revisions.
 - [x] Establish the nonbreaking architecture and open a working PR.
-- [ ] Generate complete WinUI declaration and Gallery requirement inventories.
-- [ ] Implement the opt-in XAML projection and conflict-safe controls.
-- [ ] Port the Gallery catalog, shell and interactive samples.
-- [ ] Add deterministic API/usage maps and automated regression/completeness gates.
+- [x] Generate pinned WinUI source-declaration and Gallery requirement inventories.
+- [x] Implement the opt-in XAML projection and initial conflict-safe controls.
+- [x] Port the complete exported catalog, native shell and a documented interactive subset.
+- [x] Add deterministic API/usage maps and automated regression/completeness gates.
 - [ ] Validate runtime loading, interaction, rendering and platform behavior.
 - [ ] Reconcile every remaining requirement and publish a full parity report.
 
@@ -78,3 +78,40 @@ or branch state. Features in another unmerged PR are dependencies, not implement
 established.** The PR remains draft until the complete requirement map has executable evidence
 and all strict acceptance gates pass. Subsequent commits update this record with measured
 counts, commands, exact results and limitations.
+
+At the first native Gallery checkpoint the pinned source inventory contains **1,545 public-source
+types, 7,466 public-source members and 198 separately counted private-source types**. The Gallery
+has **126 catalog pages, 350 exported examples and 355 actual ControlExample instances**. All
+126 pages are searchable and navigable. The port records **63 partial pages** (62 markup
+adaptations plus the live ScratchPad editor) and **63 pending pages**. No complete page is yet
+claimed as behaviorally verified. The generated [report](data/REPORT.md) is the current ledger.
+
+The native Gallery's 21 integration tests and the XAML migration/runtime suite's 31 integration
+tests pass at this checkpoint. The offline scanner, glyph and namespace-builder regression
+suite has 33 passing tests. Native control-specific tests, desktop construction, rendering and
+platform comparisons are tracked separately; these counts do not certify all upstream behavior.
+
+## Review and run
+
+- [API design and remaining contract obligations](API-DESIGN.md)
+- [Selection and icon contract details](CONTROL-CONTRACTS.md)
+- [Native Gallery, run commands and page boundaries](../../../samples/WinUIGallery/README.md)
+- [Source scanner, evidence format and regeneration](../../../scripts/winui-gallery/README.md)
+- [Reviewed API mappings](data/api-mappings.json) and [generated use-site mappings](data/gallery-xaml-map.json)
+
+```sh
+cargo run -p winui-gallery --features desktop -- --page=NumberBox
+cargo test -p winui-gallery --lib
+cargo test -p ferroui-markup-xaml-loader --test winui_migration
+cargo test -p ferroui-controls --features testing \
+  --test winui_navigation --test winui_number_box --test winui_icons --test winui_radio_buttons
+python3 -m unittest discover -s scripts/winui-gallery -p 'test_*.py'
+python3 scripts/winui-gallery/scan.py --check
+python3 scripts/winui-gallery/event_targets.py --check
+python3 scripts/winui-gallery/symbol_map.py --check
+```
+
+The `WinUI and Gallery parity` workflow runs freshness checks and native contract tests. Its
+separate `require_complete` workflow-dispatch option runs
+`python3 scripts/winui-gallery/scan.py --check --require-complete`; this gate intentionally
+fails while API contracts or complete Gallery pages lack current behavioral execution evidence.
