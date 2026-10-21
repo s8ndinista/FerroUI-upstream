@@ -403,6 +403,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f079e83a288787bcd14a6aea84cee5c87a67c5a3e660c30f557a3d24761b3527"
 
 [[package]]
+name = "charts-demo"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-build",
+ "ferroui-controls",
+ "ferroui-controls-charts",
+ "ferroui-desktop",
+ "ferroui-harfbuzz",
+ "ferroui-markup-xaml",
+ "ferroui-markup-xaml-loader",
+ "ferroui-themes-winui",
+ "ferroui-vello",
+]
+
+[[package]]
 name = "cipher"
 version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -848,6 +864,7 @@ dependencies = [
  "ferroui-base",
  "ferroui-browser",
  "ferroui-controls",
+ "ferroui-controls-charts",
  "ferroui-controls-color-picker",
  "ferroui-controls-treedatagrid",
  "ferroui-desktop",

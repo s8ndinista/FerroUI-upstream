@@ -5,14 +5,14 @@
   "tests": [
     {
       "id": "controls/dev/Charts/APITests/ChartAutomationTests.cs::AppFullDescriptionWins",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
           "function": "app_full_description_wins"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Uses existing FerroUI AutomationProperties::HelpText and AutomationPeer::get_help_text as the platform description contract. Explicit description wins; no duplicate FullDescription property is added."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAutomationTests.cs::ExplicitAutomationNameWinsOverLabeledBy",
@@ -49,9 +49,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::AppLevelAxisResourceOverridesKeepLocalBrushPropertiesUnset",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "app_level_axis_resource_overrides_keep_local_brush_properties_unset"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::AxisBaseDefaultsAndRoundTrips",
@@ -77,15 +82,25 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::AxisResourceOverridesAndThemeChangesDoNotChangeLocalBrushValues",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "axis_resource_overrides_and_theme_changes_do_not_change_local_brush_values"
+        }
+      ],
+      "notes": "Uses native chart/window resource lookup and Window.RequestedThemeVariant inheritance; verifies brushes remain locally unset and geometry remains available through theme changes."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::AxisVisibilityCanChangeWhileLoaded",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "axis_visibility_can_change_while_loaded"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::CartesianAxisBrushDefaultsAreNull",
@@ -232,9 +247,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::DateTimeAxisIntervalTypesChangeWhileLoaded",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "date_time_axis_interval_types_change_while_loaded"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::DateTimeAxisLabelFormatRoundTripsThroughPropertyAndDependencyProperty",
@@ -249,9 +269,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::DateTimeAxisLoadsWithDateValues",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "date_time_axis_loads_with_date_values"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::DateTimeAxisRejectsInvalidBoundsAndPreservesPreviousValues",
@@ -266,27 +291,47 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::LineSeriesAcceptsCompatibleExplicitAxes",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "line_series_accepts_compatible_explicit_axes"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::LineSeriesCategoryAxisHandlesXValueTypeChanges",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "line_series_category_axis_handles_x_value_type_changes"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::LineSeriesPreservesAxisAfterRejectedReplacement",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "line_series_preserves_axis_after_rejected_replacement"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::LineSeriesRejectsIncompatibleExplicitAxesBeforeLoad",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "line_series_rejects_incompatible_explicit_axes_before_load"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::LinearAxisDefaultsAreAutomatic",
@@ -312,9 +357,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::LinearAxisPropertiesCanChangeWhileLoaded",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "linear_axis_properties_can_change_while_loaded"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartAxisTests.cs::LinearAxisRejectsInvalidBoundsAndPreservesPreviousValues",
@@ -582,9 +632,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartSamplesTests.cs::UnsupportedScalarItemsSourceIsRetainedAndDoesNotPreventLayout",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "mapped",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/samples_tests.rs",
+          "function": "unsupported_scalar_items_source_is_retained_and_does_not_prevent_layout"
+        }
+      ],
+      "notes": "Exact translated test name; execution is recorded separately."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartSamplesTests.cs::XValuesAcceptStringsAndNumbers",
@@ -753,14 +808,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartSeriesTests.cs::DataLabelOverrideMapRaisesEventsForAddUpdateRemoveAndClear",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/series_tests.rs",
           "function": "data_label_override_map_raises_events_for_add_update_remove_and_clear"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Uses native FerroDictionary notifications. Add, replacement and removal retain source semantics; clear reports Remove with the removed entries rather than WinRT MapChanged Reset. Descriptor identity is preserved."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartSeriesTests.cs::DataLabelOverrideMapSupportsAddUpdateRemoveAndClear",
@@ -797,14 +852,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartSeriesTests.cs::DataMarkerOverrideMapRaisesEventsForAddUpdateRemoveAndClear",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/series_tests.rs",
           "function": "data_marker_override_map_raises_events_for_add_update_remove_and_clear"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Uses native FerroDictionary notifications. Add, replacement and removal retain source semantics; clear reports Remove with the removed entries rather than WinRT MapChanged Reset. Descriptor identity is preserved."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartSeriesTests.cs::DataMarkerOverrideMapSupportsAddUpdateRemoveAndClear",
@@ -841,9 +896,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartSeriesTests.cs::InvalidMarkerShapeIsRetainedByPublicProperty",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "not-applicable",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/series_tests.rs",
+          "function": "enum_discriminants_match_the_published_api"
+        }
+      ],
+      "notes": "Rust MarkerShape is a closed repr(i32) enum. An arbitrary out-of-range discriminant cannot be safely constructed. The enum test checks all published discriminants; no unsafe invalid enum is manufactured to imitate a managed integer cast."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartSeriesTests.cs::LineSeriesDefaultsArePublicProperties",
@@ -990,25 +1050,25 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::AxisCollectionRejectsDuplicateCrossChartNullAndOutOfRange",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
           "function": "axis_collection_rejects_duplicate_cross_chart_null_and_out_of_range"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Tests duplicate, cross-chart and out-of-range rejection without mutation. Ref<Axis> elements cannot be null in safe Rust."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::AxisCollectionSupportsAddRemoveAndVectorEvents",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
           "function": "axis_collection_supports_add_remove_and_vector_events"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Translates WinRT IObservableVector actions/indexes to FerroUI NotifyCollectionChanged events. The source add/insert/replace/remove/reset sequence is asserted through the native event protocol."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::ChartCanLoadUnloadAndReload",
@@ -1078,14 +1138,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::DataCollectionSupportsBasicListAndVectorSemantics",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
           "function": "data_collection_supports_basic_list_and_vector_semantics"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Translates WinRT IObservableVector actions/indexes to FerroUI NotifyCollectionChanged events. The source add/insert/replace/remove/reset sequence is asserted through the native event protocol."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::ExplicitAxesCanBeAssignedToSeriesInSameChart",
@@ -1133,14 +1193,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::ParentRequestedThemeCanChangeWhileChartIsLoaded",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
           "function": "parent_requested_theme_can_change_while_chart_is_loaded"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Uses Window.RequestedThemeVariant inheritance, following FerroUI theme-scope APIs. Chart does not duplicate WinUI RequestedTheme on every Control."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::SeriesCanBeAddedAgainAfterRemoval",
@@ -1155,31 +1215,36 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::SeriesCollectionMutationDuringIterationThrows",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "series_collection_mutation_preserves_existing_snapshot"
+        }
+      ],
+      "notes": "FerroUI FerroList iteration is a retained immutable snapshot. Mutation preserves the old snapshot and the current collection reflects new contents; it does not throw an invalid-enumerator exception."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::SeriesCollectionRaisesExactVectorEvents",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
           "function": "series_collection_raises_exact_vector_events"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Translates WinRT IObservableVector actions/indexes to FerroUI NotifyCollectionChanged events. The source add/insert/replace/remove/reset sequence is asserted through the native event protocol."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::SeriesCollectionRejectsOutOfRangeAndNull",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
           "function": "series_collection_rejects_out_of_range_and_null"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Tests the out-of-range rollback contract. Ref<CartesianSeries> collection elements cannot be null in safe Rust, so the managed null-insertion case is enforced by the type system."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::SeriesCollectionSupportsIndexingCopyAndEnumeration",
@@ -1216,9 +1281,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::XamlChartsResourcesMetadataResolvesAndConstructorSetsSource",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/xaml_tests.rs",
+          "function": "xaml_charts_resources_metadata_activates_native_theme_dictionaries"
+        }
+      ],
+      "notes": "Activates the native ResourceDictionary subclass and verifies its theme dictionaries. Native resources are constructed directly; no Microsoft package ms-appx Source URI is retained."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::XamlMetadataAreaAndBarSeriesActivateAndExposeFill",
@@ -1233,25 +1303,25 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::XamlMetadataBaseTypeChainAndContentPropertiesAreReported",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/xaml_tests.rs",
           "function": "xaml_metadata_base_type_chain_and_content_properties_are_reported"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Native Chart derives TemplatedControl to obtain the typography/background/foreground surface present on WinUI Control. Other class chains and content properties use the corresponding FerroUI types."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::XamlMetadataCartesianSeriesMembersAreOnBaseType",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/xaml_tests.rs",
           "function": "xaml_metadata_cartesian_series_members_are_on_base_type"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Registers native FerroObject metadata. XAxis and YAxis use validated FerroUI DirectProperty values for observation rather than upstream plain WinRT properties; override maps remain excluded from XAML."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::XamlMetadataChartActivatesAndAddsDataAxesAndSeries",
@@ -1321,14 +1391,14 @@
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::XamlMetadataTypeOverloadAndXmlnsDefinitionsWork",
-      "status": "mapped",
+      "status": "adapted",
       "rust_tests": [
         {
           "file": "src/FerroUI.Controls.Charts/xaml_tests.rs",
           "function": "xaml_metadata_type_overload_and_xmlns_definitions_work"
         }
       ],
-      "notes": "Exact translated test name; execution is recorded separately."
+      "notes": "Uses native TypeInfo handle lookup and registers the FerroUI Charts XML namespace; WinRT IXamlMetadataProvider overloads and its empty namespace table are not copied."
     },
     {
       "id": "controls/dev/Charts/APITests/ChartTests.cs::XamlMetadataUnknownTypesReturnNull",
@@ -1365,15 +1435,25 @@
     },
     {
       "id": "controls/dev/Charts/InteractionTests/ChartsTests.cs::ChartIsExposedToUIAutomation",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "chart_is_exposed_to_ui_automation"
+        }
+      ],
+      "notes": "Traverses the native Window automation-peer tree and asserts the Chart role/name. This is in-process accessibility integration, not Windows UIA host discovery or OS input injection."
     },
     {
       "id": "controls/dev/Charts/InteractionTests/ChartsTests.cs::ChartKeepsWorkingThroughDataSeriesLegendAndThemeChanges",
-      "status": "pending",
-      "rust_tests": [],
-      "notes": ""
+      "status": "adapted",
+      "rust_tests": [
+        {
+          "file": "src/FerroUI.Controls.Charts/chart_tests.rs",
+          "function": "chart_keeps_working_through_data_series_legend_and_theme_changes"
+        }
+      ],
+      "notes": "Applies the upstream live mutation sequence through native collections/properties and verifies layout plus the automation tree after each change. This uses FerroUI Window theme inheritance, not WinUI TestApp buttons or OS input injection."
     }
   ]
 }

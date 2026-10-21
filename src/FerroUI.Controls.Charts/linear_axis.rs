@@ -255,17 +255,36 @@ impl NumericRange {
         }
     }
 
-    /// Maps a value to axis coordinates without clipping. Scaling first
-    /// avoids overflow for finite ranges spanning both floating-point extrema.
+    /// Maps a value to axis coordinates without clipping to the axis domain.
+    /// Scaled subtraction avoids overflow at opposite floating-point extrema.
+    /// A finite value whose coordinate exceeds the representable range
+    /// saturates to `-f64::MAX` or `f64::MAX`, retaining its side of the domain
+    /// for line clipping. Non-finite sample values remain non-finite.
     pub fn normalize(&self, value: f64) -> f64 {
         let span = self.maximum - self.minimum;
         if span == 0.0 {
             return 0.5;
         }
-        if span.is_finite() {
-            (value - self.minimum) / span
+        let normalized = if span.is_finite() {
+            let difference = value - self.minimum;
+            if difference.is_finite() {
+                difference / span
+            } else {
+                // A finite span can still have an overflowing numerator when
+                // the sample is very far outside the explicit axis interval.
+                (value * 0.5 - self.minimum * 0.5) / (span * 0.5)
+            }
         } else {
             (value * 0.5 - self.minimum * 0.5) / (self.maximum * 0.5 - self.minimum * 0.5)
+        };
+        if normalized.is_infinite()
+            && value.is_finite()
+            && self.minimum.is_finite()
+            && self.maximum.is_finite()
+        {
+            normalized.signum() * f64::MAX
+        } else {
+            normalized
         }
     }
 

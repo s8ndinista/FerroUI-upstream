@@ -2,18 +2,24 @@
 
 use crate::*;
 use ferroui_base::data::core::ValueTypes;
-use ferroui_base::metadata::{MarkupAssembly, MarkupType, MarkupTyped, XmlnsDefinition, FERRO_XML_NAMESPACE};
-use ferroui_base::{StaticType, TypeInfo};
 use ferroui_base::media::IBrush;
+use ferroui_base::metadata::{
+    MarkupAssembly, MarkupType, MarkupTyped, XmlnsDefinition, FERRO_XML_NAMESPACE,
+};
+use ferroui_base::TypeInfo;
 use std::rc::Rc;
 
 // Descriptors are immutable reference objects. Identity equality preserves the
 // observable-map replacement semantics when their fields happen to be equal.
 impl PartialEq for DataLabelOverride {
-    fn eq(&self, other: &Self) -> bool { std::ptr::eq(self, other) }
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self, other)
+    }
 }
 impl PartialEq for DataMarkerOverride {
-    fn eq(&self, other: &Self) -> bool { std::ptr::eq(self, other) }
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self, other)
+    }
 }
 
 ferroui_base::ferro_markup_type!(class DataLabelOverride {
@@ -40,7 +46,10 @@ pub const CHARTS_XML_NAMESPACE: &str = "https://github.com/ferroui/charts";
 
 const NAMESPACES: &[(&str, &str)] = &[
     ("ferroui_controls_charts", "FerroUI.Controls.Charts"),
-    ("ferroui_controls_charts::chart_automation_peer", "FerroUI.Automation.Peers"),
+    (
+        "ferroui_controls_charts::chart_automation_peer",
+        "FerroUI.Automation.Peers",
+    ),
 ];
 
 /// Assembly identity used by both compiled markup and the runtime loader.
@@ -48,8 +57,14 @@ pub static ASSEMBLY: MarkupAssembly = MarkupAssembly {
     name: "FerroUI.Controls.Charts",
     crate_name: "ferroui_controls_charts",
     xmlns_definitions: &[
-        XmlnsDefinition { xml_namespace: CHARTS_XML_NAMESPACE, namespace: "FerroUI.Controls.Charts" },
-        XmlnsDefinition { xml_namespace: FERRO_XML_NAMESPACE, namespace: "FerroUI.Controls.Charts" },
+        XmlnsDefinition {
+            xml_namespace: CHARTS_XML_NAMESPACE,
+            namespace: "FerroUI.Controls.Charts",
+        },
+        XmlnsDefinition {
+            xml_namespace: FERRO_XML_NAMESPACE,
+            namespace: "FerroUI.Controls.Charts",
+        },
     ],
     xmlns_prefixes: &[],
     metadata: &[],

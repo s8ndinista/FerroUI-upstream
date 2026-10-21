@@ -449,6 +449,49 @@ fn numeric_tick_index_stride_does_not_overflow_across_extreme_bounds() {
 }
 
 #[test]
+fn automatic_numeric_range_preserves_subnormal_sample_scale() {
+    let smallest = f64::from_bits(1);
+    let range = NumericRange::from_values(&[0.0, smallest], None, None, None, 5);
+    assert_eq!(0.0, range.minimum);
+    assert_eq!(smallest, range.maximum);
+    assert_eq!(smallest, range.spacing);
+    assert_eq!(vec![0.0, smallest], range.ticks());
+    assert_eq!(1.0, range.normalize(smallest));
+}
+
+#[test]
+fn numeric_normalization_scales_overflowing_subtraction_for_a_finite_axis_span() {
+    let range = NumericRange {
+        minimum: -f64::MAX,
+        maximum: (-f64::MAX).next_up(),
+        spacing: 1.0,
+    };
+    assert!((range.maximum - range.minimum).is_finite());
+    assert_eq!(0.0, range.normalize(range.minimum));
+    assert_eq!(1.0, range.normalize(range.maximum));
+    // MAX = (2^53 - 1) ulps at this exponent, so the opposite extreme
+    // is exactly (2^54 - 2) one-ulp intervals above the minimum.
+    assert_eq!((1_u64 << 54) as f64 - 2.0, range.normalize(f64::MAX));
+}
+
+#[test]
+fn numeric_normalization_saturates_only_unrepresentable_finite_coordinates() {
+    let range = NumericRange {
+        minimum: 0.0,
+        maximum: 1.0e-300,
+        spacing: 1.0e-301,
+    };
+    assert_eq!(0.0, range.normalize(0.0));
+    assert_eq!(1.0, range.normalize(1.0e-300));
+    assert_eq!(0.5, range.normalize(5.0e-301));
+    assert_eq!(f64::MAX, range.normalize(1.0e308));
+    assert_eq!(-f64::MAX, range.normalize(-1.0e308));
+    assert!(range.normalize(f64::NAN).is_nan());
+    assert_eq!(f64::INFINITY, range.normalize(f64::INFINITY));
+    assert_eq!(f64::NEG_INFINITY, range.normalize(f64::NEG_INFINITY));
+}
+
+#[test]
 fn calendar_ticks_keep_real_month_boundaries_and_leap_days() {
     let axis = DateTimeAxis::new();
     axis.set_interval_type(DateTimeIntervalType::Month);

@@ -29,6 +29,7 @@ RUST_TEST_RE = re.compile(
     r"(?:pub(?:\([^)]*\))?\s+)?(?:async\s+)?fn\s+(\w+)\s*\("
 )
 STATUSES = {"pending", "mapped", "adapted", "not-applicable"}
+FILE_STATUSES = {"contract-tests", "scenario-reference", "native-replacement", "reference-only", "not-applicable"}
 
 
 def git(upstream: Path, *arguments: str) -> bytes:
@@ -65,11 +66,11 @@ def role(path: str) -> str:
 
 def proposed_target(path: str) -> list[str]:
     names = {
-        "ChartTests.cs": ["chart_tests.rs", "markup_tests.rs"],
-        "ChartAxisTests.cs": ["axis_tests.rs"],
+        "ChartTests.cs": ["chart_tests.rs", "xaml_tests.rs"],
+        "ChartAxisTests.cs": ["axis_tests.rs", "chart_tests.rs"],
         "ChartSeriesTests.cs": ["series_tests.rs"],
         "ChartSamplesTests.cs": ["samples_tests.rs"],
-        "ChartAutomationTests.cs": ["automation_tests.rs"],
+        "ChartAutomationTests.cs": ["chart_tests.rs"],
         "ChartsTests.cs": ["chart_tests.rs"],
     }
     return ["src/FerroUI.Controls.Charts/" + p for p in names.get(Path(path).name, [])]
@@ -130,6 +131,36 @@ def inventory(upstream: Path) -> tuple[dict, list[dict]]:
     return manifest, tests
 
 
+def file_mapping_entry(source: dict) -> dict:
+    path, category = source["path"], source["role"]
+    entry = {"upstream_file": path, "status": "reference-only", "rust_files": [], "notes": ""}
+    if category in {"api-tests", "interaction-tests"}:
+        entry.update(status="contract-tests", rust_files=proposed_target(path),
+                     notes="Every source test method is tracked individually in test-map.json; execution evidence is separate.")
+    elif category == "source-availability-documentation":
+        entry.update(rust_files=["docs/porting/winui-charts.md", "src/FerroUI.Controls.Charts/NOTICE.md"],
+                     notes="Evidence for the unpublished internal implementation and the public-package/build boundary.")
+    elif category == "windows-host-assets":
+        entry.update(status="not-applicable", notes="Windows sample package branding; no chart behavior or reusable framework implementation. The native sample does not redistribute these logos.")
+    elif "ObservableVector" in path:
+        entry.update(status="native-replacement", rust_files=["src/FerroUI.Controls.Charts/samples.rs", "src/FerroUI.Controls.Charts/chart_collection.rs", "samples/ChartsDemo/lib.rs"],
+                     notes="Existing FerroList, ItemsSource and ItemsSourceView replace the sample WinRT observable-vector implementation; chart ownership adds transactional validation.")
+    elif category == "test-support":
+        entry.update(status="native-replacement", rust_files=["src/FerroUI.Controls.Charts/chart_tests.rs", "src/FerroUI.Controls.Charts/samples_tests.rs", "samples/ChartsDemo/MainView.xaml"],
+                     notes="Native test application, window/layout helpers and sample commands replace the WinUI TestApp fixture. The two interaction cases are in-process and do not claim OS input injection.")
+    elif category == "windows-build-and-deployment":
+        native = "src/FerroUI.Controls.Charts/Cargo.toml" if path.startswith("controls/") else "samples/ChartsDemo/Cargo.toml"
+        entry.update(status="native-replacement", rust_files=[native],
+                     notes="Cargo and existing FerroUI platform hosts replace MSBuild, NuGet/internal package linkage, MSIX and Windows publishing profiles. No Windows package manifest is required by the controls library.")
+    elif Path(path).name.startswith(("MainWindow", "SecondaryChartWindow")):
+        entry.update(status="scenario-reference", rust_files=["samples/ChartsDemo/MainView.xaml", "samples/ChartsDemo/lib.rs", "samples/ChartsDemo/tests.rs"],
+                     notes="Reference for declarative series/axes, source sharing and interactive mutations. The native consolidated sample demonstrates the chart contract; it does not reproduce every engineering-menu item or secondary-window command.")
+    else:
+        entry.update(status="native-replacement", rust_files=["samples/ChartsDemo/app.rs", "samples/ChartsDemo/program.rs", "samples/ChartsDemo/register_types.rs"],
+                     notes="One optional native desktop runner and a backend-independent view library replace the four C#/C++ packaged/unpackaged bootstrap variants and precompiled-header/IDL glue.")
+    return entry
+
+
 def generate(upstream: Path, check: bool) -> int:
     manifest, tests = inventory(upstream)
     destination = DATA / "source-manifest.json"
@@ -152,6 +183,15 @@ def generate(upstream: Path, check: bool) -> int:
         }) for t in tests],
     }
     write_json(mapping_path, mapping)
+    file_mapping_path = DATA / "file-map.json"
+    previous_files = read_json(file_mapping_path) if file_mapping_path.exists() else {}
+    old_files = {item["upstream_file"]: item for item in previous_files.get("files", [])}
+    write_json(file_mapping_path, {
+        "schema_version": 1,
+        "revision": REVISION,
+        "meaning": "Complete disposition of published files, not a claim that unpublished implementation or all engineering UI was copied.",
+        "files": [old_files.get(item["path"], file_mapping_entry(item)) for item in manifest["files"]],
+    })
     print(f"Generated inventory: {len(manifest['files'])} files, {len(tests)} tests.")
     return 0
 
@@ -185,13 +225,14 @@ def bind_names() -> int:
     return 0
 
 
-def validate(upstream: Path | None, require_complete: bool) -> int:
+def validate(upstream: Path | None, require_complete: bool, execution_log: Path | None) -> int:
     errors = []
     if upstream is not None and generate(upstream, check=True):
         errors.append("Pinned source manifest verification failed")
     manifest = read_json(DATA / "source-manifest.json")
     mapping = read_json(DATA / "test-map.json")
-    if manifest["revision"] != REVISION or mapping["revision"] != REVISION:
+    file_mapping = read_json(DATA / "file-map.json")
+    if manifest["revision"] != REVISION or mapping["revision"] != REVISION or file_mapping["revision"] != REVISION:
         errors.append("Manifest/mapping revision does not match the scanner's pinned revision")
     source_ids = [t["id"] for t in manifest["tests"]]
     map_ids = [t["id"] for t in mapping["tests"]]
@@ -204,6 +245,19 @@ def validate(upstream: Path | None, require_complete: bool) -> int:
     if manifest["test_count"] != len(source_ids) or manifest["file_count"] != len(manifest["files"]):
         errors.append("Manifest counts do not match its entries")
     source_files = {f["path"]: f for f in manifest["files"]}
+    file_map_paths = [f["upstream_file"] for f in file_mapping["files"]]
+    if len(file_map_paths) != len(set(file_map_paths)):
+        errors.append("Duplicate source file disposition")
+    if set(file_map_paths) != set(source_files):
+        errors.append("File dispositions do not exactly match the source file inventory")
+    for item in file_mapping["files"]:
+        if item["status"] not in FILE_STATUSES or not item["notes"].strip():
+            errors.append(f"Invalid/undocumented file disposition: {item['upstream_file']}")
+        if item["status"] in {"contract-tests", "native-replacement", "scenario-reference"} and not item["rust_files"]:
+            errors.append(f"File disposition has no native counterpart: {item['upstream_file']}")
+        for target in item["rust_files"]:
+            if not (ROOT / target).is_file():
+                errors.append(f"Native file counterpart does not exist: {target}")
     for item in manifest["tests"]:
         if item["upstream_file"] not in source_files:
             errors.append(f"Test references a file absent from source inventory: {item['id']}")
@@ -230,7 +284,32 @@ def validate(upstream: Path | None, require_complete: bool) -> int:
     if require_complete and counts["pending"]:
         errors.append(f"Incomplete mapping: {counts['pending']} upstream tests remain pending")
     print(f"Upstream tests: {len(source_ids)}; " + "; ".join(f"{status}: {counts[status]}" for status in sorted(STATUSES)))
-    print("This command validates mapping integrity; run cargo test for execution evidence.")
+    if execution_log is None:
+        print("This command validates mapping integrity; run cargo test for execution evidence.")
+    else:
+        # Cargo's ordinary libtest output includes the complete module path.
+        # A trailing function name is sufficient only because the map also
+        # verifies its declaring source file above and duplicate names fail.
+        output = re.sub(r"\x1b\[[0-9;]*m", "", execution_log.read_text(encoding="utf-8"))
+        results: dict[str, list[str]] = {}
+        for match in re.finditer(r"^test (\S+) \.\.\. (ok|FAILED|ignored)(?: .*)?$", output, re.MULTILINE):
+            function = match.group(1).rsplit("::", 1)[-1]
+            results.setdefault(function, []).append(match.group(2))
+        if not re.search(r"^test result: ok\. \d+ passed; 0 failed;", output, re.MULTILINE):
+            errors.append("Execution log has no successful libtest result summary")
+        checked = set()
+        for entry in mapping["tests"]:
+            if entry["status"] not in {"mapped", "adapted"}:
+                continue
+            for target in entry["rust_tests"]:
+                key = (target["file"], target["function"])
+                if key in checked:
+                    continue
+                checked.add(key)
+                observed = results.get(target["function"], [])
+                if observed != ["ok"]:
+                    errors.append(f"Execution evidence is missing, nonpassing or ambiguous for {key[0]}::{key[1]}: {observed}")
+        print(f"Execution log checked against {len(checked)} mapped/adapted Rust tests: {execution_log}")
     for error in errors:
         print("ERROR: " + error, file=sys.stderr)
     return bool(errors)
@@ -246,13 +325,15 @@ def main() -> int:
     check_parser = commands.add_parser("check", help="Validate source and Rust test mapping integrity")
     check_parser.add_argument("--upstream", type=Path)
     check_parser.add_argument("--require-complete", action="store_true")
+    check_parser.add_argument("--execution-log", type=Path,
+                              help="Also require one passing libtest result per mapped/adapted Rust function")
     args = parser.parse_args()
     try:
         if args.command == "inventory":
             return generate(args.upstream, args.check)
         if args.command == "bind-names":
             return bind_names()
-        return validate(args.upstream, args.require_complete)
+        return validate(args.upstream, args.require_complete, args.execution_log)
     except (OSError, ValueError, KeyError, subprocess.CalledProcessError) as error:
         print(f"Conformance error: {error}", file=sys.stderr)
         return 1

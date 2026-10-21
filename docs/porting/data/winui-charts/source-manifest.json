@@ -529,7 +529,7 @@
       "mode": "100644",
       "role": "api-tests",
       "proposed_rust_targets": [
-        "src/FerroUI.Controls.Charts/automation_tests.rs"
+        "src/FerroUI.Controls.Charts/chart_tests.rs"
       ]
     },
     {
@@ -538,7 +538,8 @@
       "mode": "100644",
       "role": "api-tests",
       "proposed_rust_targets": [
-        "src/FerroUI.Controls.Charts/axis_tests.rs"
+        "src/FerroUI.Controls.Charts/axis_tests.rs",
+        "src/FerroUI.Controls.Charts/chart_tests.rs"
       ]
     },
     {
@@ -573,7 +574,7 @@
       "role": "api-tests",
       "proposed_rust_targets": [
         "src/FerroUI.Controls.Charts/chart_tests.rs",
-        "src/FerroUI.Controls.Charts/markup_tests.rs"
+        "src/FerroUI.Controls.Charts/xaml_tests.rs"
       ]
     },
     {

@@ -47,8 +47,13 @@ pub use rendering::{ChartLayout, ChartPoint};
 pub use samples::*;
 pub use xaml_charts_resources::*;
 
-#[cfg(test)] mod axis_tests;
-#[cfg(test)] mod samples_tests;
-#[cfg(test)] mod series_tests;
-#[cfg(test)] mod chart_tests;
-#[cfg(test)] mod xaml_tests;
+#[cfg(test)]
+mod axis_tests;
+#[cfg(test)]
+mod chart_tests;
+#[cfg(test)]
+mod samples_tests;
+#[cfg(test)]
+mod series_tests;
+#[cfg(test)]
+mod xaml_tests;

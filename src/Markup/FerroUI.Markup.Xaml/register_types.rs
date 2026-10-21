@@ -239,6 +239,13 @@ macro_rules! for_each_assignability {
 ///
 /// Registered once, for every thread, by [`register_types`].
 fn register_value_types() {
+    // Object-typed sources (for example Charts Samples.ItemsSource) retain a
+    // RuntimeList instead of receiving its typed ItemsSource cast while the
+    // document is built. Let consumers resolve the same shared, observable
+    // storage later through the framework's normal value conversions.
+    ferroui_controls::ItemsSource::register_binding_conversion_with::<crate::xaml_il::runtime::RuntimeList>(
+        |list| list.items().clone().into(),
+    );
 
     macro_rules! references {
         ($($type_:ty),* $(,)?) => {

@@ -106,6 +106,7 @@ members = [
     "samples/BindingDemo",
     "samples/VirtualizationDemo",
     "samples/TreeDataGridDemo",
+    "samples/ChartsDemo",
     "samples/ReactiveDemo",
     "samples/ReactiveUIExample",
     "samples/TextTestApp",

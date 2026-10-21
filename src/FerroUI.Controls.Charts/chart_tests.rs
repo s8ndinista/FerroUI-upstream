@@ -1357,10 +1357,9 @@ fn mutable_stroke_axis_override_and_resource_brushes_invalidate_cached_scenes() 
     axis.set_axis_line_brush(None);
     series.data_label_overrides().clear();
     let replacement: Rc<dyn IBrush> = Rc::new(ImmutableSolidColorBrush::new(Colors::BLACK));
-    chart.resources().set(
-        "ChartsTickLabelBrush",
-        Some(ferroui_base::boxed(replacement)),
-    );
+    chart
+        .resources()
+        .set("ChartsTickLabelBrush", Some(Rc::new(replacement)));
     let revision = chart.revision();
     for brush in [&stroke, &axis_brush, &override_brush, &resource_brush] {
         brush.set_opacity(0.5);
@@ -1433,4 +1432,96 @@ fn duplicate_samples_references_receive_one_subscription_and_disconnect_after_re
     values.set(1, 7.0);
     assert_eq!(revision, chart.revision());
     assert!(chart.layout_snapshot(size).points.is_empty());
+}
+
+#[test]
+fn reentrant_deferred_resource_resolution_does_not_duplicate_or_leak_subscriptions() {
+    let chart = Chart::new();
+    let series = line();
+    chart.series().add(series.clone()).unwrap();
+    assert_eq!(1, series.property_changed_subscriber_count());
+    let weak = chart.downgrade();
+    chart
+        .resources()
+        .add_deferred_fn("ChartsTickLabelBrush", move |_| {
+            // Resource factories execute application code. This raises a nested
+            // collection notification while the chart rebuilds its subscriptions.
+            weak.upgrade()
+                .unwrap()
+                .data()
+                .add(Samples::from_values([10.0]))
+                .unwrap();
+            let brush: Rc<dyn IBrush> = Rc::new(ImmutableSolidColorBrush::new(Colors::RED));
+            Some(Rc::new(brush))
+        });
+    assert_eq!(1, chart.data().count());
+    assert_eq!(1, series.property_changed_subscriber_count());
+    chart.series().clear().unwrap();
+    assert_eq!(0, series.property_changed_subscriber_count());
+    let revision = chart.revision();
+    series.set_title("Detached series");
+    assert_eq!(revision, chart.revision());
+}
+
+#[test]
+fn native_template_children_are_measured_and_arranged_without_changing_chart_sizing() {
+    let _app = UnitTestApplication::start(TestServices::styled_window());
+    let chart = populated_chart();
+    let child = ferroui_controls::Border::new();
+    child.set_width(24.0);
+    child.set_height(12.0);
+    let template_child = child.clone();
+    chart.set_template(Some(ferroui_controls::templates::FuncControlTemplate::new(
+        move |_, _| template_child.clone().upcast(),
+    )));
+    let window = show(&chart);
+    assert!(child.is_measure_valid());
+    assert!(child.is_arrange_valid());
+    assert_eq!(Size::new(24.0, 12.0), child.desired_size());
+    assert_eq!(Size::new(24.0, 12.0), child.bounds().size());
+    assert_eq!(Size::new(400.0, 300.0), chart.desired_size());
+    assert_eq!(Size::new(400.0, 300.0), chart.bounds().size());
+    chart.set_width(500.0);
+    chart.update_layout();
+    assert!(child.is_arrange_valid());
+    assert_eq!(Size::new(24.0, 12.0), child.bounds().size());
+    assert_eq!(Size::new(500.0, 300.0), chart.bounds().size());
+    window.close();
+}
+
+#[test]
+fn item_conversion_finishes_before_collection_bounds_and_ownership_checks() {
+    struct ClearingConversion {
+        collection: ChartSeriesCollection,
+        item: Ref<LineSeries>,
+    }
+    impl ferroui_base::IntoRef<CartesianSeries> for ClearingConversion {
+        fn into_ref(self) -> Ref<CartesianSeries> {
+            self.collection.clear().unwrap();
+            self.item.upcast()
+        }
+    }
+    for operation in 0..3 {
+        let chart = Chart::new();
+        chart.series().add(line()).unwrap();
+        let item = line();
+        let conversion = ClearingConversion {
+            collection: chart.series(),
+            item: item.clone(),
+        };
+        let result = match operation {
+            0 => chart.series().insert(1, conversion),
+            1 => chart.series().set(0, conversion),
+            _ => chart.series().add(conversion),
+        };
+        if operation < 2 {
+            assert_eq!(Err(ChartError::IndexOutOfBounds), result);
+            assert!(chart.series().is_empty());
+            Chart::new().series().add(item).unwrap();
+        } else {
+            result.unwrap();
+            assert_eq!(1, chart.series().count());
+            assert!(chart.series().get(0).unwrap() == item);
+        }
+    }
 }
