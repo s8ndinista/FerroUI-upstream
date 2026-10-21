@@ -14,6 +14,7 @@ members = [
     "src/FerroUI.View",
     "src/FerroUI.View.Macros",
     "src/FerroUI.Controls.ColorPicker",
+    "src/FerroUI.Controls.Charts",
     "src/TreeDataGrid/FerroUI.TreeDataGrid.Core",
     "src/TreeDataGrid/FerroUI.Controls.TreeDataGrid",
     "src/Markup/FerroUI.Markup",
@@ -155,6 +156,7 @@ ferroui-controls = { version = "=0.4.0-preview.1", path = "src/FerroUI.Controls"
 ferroui-view = { version = "=0.4.0-preview.1", path = "src/FerroUI.View" }
 ferroui-view-macros = { version = "=0.4.0-preview.1", path = "src/FerroUI.View.Macros" }
 ferroui-controls-color-picker = { version = "=0.4.0-preview.1", path = "src/FerroUI.Controls.ColorPicker" }
+ferroui-controls-charts = { version = "=0.4.0-preview.1", path = "src/FerroUI.Controls.Charts" }
 ferroui-treedatagrid-core = { version = "=0.4.0-preview.1", path = "src/TreeDataGrid/FerroUI.TreeDataGrid.Core" }
 ferroui-controls-treedatagrid = { version = "=0.4.0-preview.1", path = "src/TreeDataGrid/FerroUI.Controls.TreeDataGrid" }
 ferroui-markup = { version = "=0.4.0-preview.1", path = "src/Markup/FerroUI.Markup" }

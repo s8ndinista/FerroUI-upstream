@@ -970,6 +970,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferroui-controls-charts"
+version = "0.4.0-preview.1"
+dependencies = [
+ "ferroui-base",
+ "ferroui-build-scan",
+ "ferroui-controls",
+ "ferroui-markup-xaml-loader",
+]
+
+[[package]]
 name = "ferroui-controls-color-picker"
 version = "0.4.0-preview.1"
 dependencies = [

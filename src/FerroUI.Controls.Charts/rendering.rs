@@ -1,0 +1,580 @@
+use crate::xaml_charts_resources::{solid, SERIES_COLORS};
+use crate::{AreaSeries, Axis, BarOrientation, BarSeries, CartesianAxis, CartesianSeries, CategoryAxis,
+    CategorySortKey, Chart, DateTimeAxis, GridLines, MarkerShape, NumericRange, SampleValue, SortOrder, StrokeDashStyle};
+use ferroui_base::controls::ResourceKey;
+use ferroui_base::data::core::{ValueType, ValueTypes};
+use ferroui_base::media::immutable::{ImmutableDashStyle, ImmutablePen};
+use ferroui_base::media::text_formatting::{TextLayout, TextLayoutOptions};
+use ferroui_base::media::{BoxShadows, BrushExtensions, DrawingContext, Geometry, IBrush, IPen,
+    PenLineCap, PenLineJoin, StreamGeometry, Typeface};
+use ferroui_base::platform::IGeometryContext;
+use ferroui_base::styling::ThemeVariant;
+use ferroui_base::utilities::DateTimeOffset;
+use ferroui_base::{Matrix, Point, Rect, Ref, Size};
+use std::cell::OnceCell;
+use std::collections::HashMap;
+use std::rc::Rc;
+
+/// A source point after axis mapping. Indices refer to the original series and
+/// sample, including when a category axis changes the display order.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ChartPoint {
+    pub series_index: usize,
+    pub sample_index: usize,
+    pub position: Point,
+    pub bar_bounds: Option<Rect>,
+    pub value: f64,
+}
+
+/// A read-only snapshot of calculated chart geometry, useful for diagnostics,
+/// custom interactions and deterministic layout tests.
+#[derive(Clone, Debug, PartialEq)]
+pub struct ChartLayout {
+    pub size: Size,
+    pub plot_area: Rect,
+    pub points: Vec<ChartPoint>,
+    pub legend_items: Vec<String>,
+    pub axis_labels: Vec<String>,
+    pub data_labels: Vec<(usize, usize, String)>,
+    pub path_vertex_count: usize,
+}
+
+enum Draw {
+    Line(Point, Point, Rc<dyn IPen>),
+    Rectangle(Rect, Option<Rc<dyn IBrush>>, Option<Rc<dyn IPen>>),
+    Ellipse(Rect, Rc<dyn IBrush>, Option<Rc<dyn IPen>>),
+    Path { points: Vec<Point>, closed: bool, fill: Option<Rc<dyn IBrush>>, pen: Option<Rc<dyn IPen>>, geometry: OnceCell<Ref<Geometry>> },
+    Text(Rc<TextLayout>, Point, Option<Matrix>),
+}
+
+impl Draw {
+    fn draw(&self, context: &mut DrawingContext) {
+        match self {
+            Self::Line(a, b, pen) => context.draw_line(pen, *a, *b),
+            Self::Rectangle(rect, fill, pen) => context.draw_rectangle(fill.as_ref(), pen.as_ref(), *rect, 0.0, 0.0, &BoxShadows::default()),
+            Self::Ellipse(rect, fill, pen) => context.draw_ellipse(Some(fill), pen.as_ref(), *rect),
+            Self::Path { points, closed, fill, pen, geometry } => {
+                if points.len() < 2 { return; }
+                let geometry = geometry.get_or_init(|| {
+                    let geometry = StreamGeometry::new();
+                    {
+                        let mut path = geometry.open();
+                        path.begin_figure(points[0], fill.is_some());
+                        for point in &points[1..] { path.line_to(*point, true); }
+                        path.end_figure(*closed);
+                    }
+                    geometry.upcast()
+                });
+                context.draw_geometry(fill.as_ref(), pen.as_ref(), geometry);
+            }
+            Self::Text(layout, origin, transform) => {
+                if let Some(transform) = transform {
+                    let token = context.push_transform(*transform);
+                    layout.draw(context, *origin);
+                    context.pop(token);
+                } else { layout.draw(context, *origin); }
+            }
+        }
+    }
+}
+
+pub(crate) struct ChartScene {
+    pub(crate) layout: ChartLayout,
+    background: Vec<Draw>,
+    grid: Vec<Draw>,
+    series: Vec<Draw>,
+    foreground: Vec<Draw>,
+}
+
+struct SeriesData {
+    index: usize,
+    series: Ref<CartesianSeries>,
+    x: Rc<[Option<SampleValue>]>,
+    y: Rc<[Option<SampleValue>]>,
+    x_group: usize,
+    y_group: usize,
+    horizontal: bool,
+    bar: bool,
+    area: bool,
+}
+
+#[derive(Clone)]
+struct Category { key: String, label: String, numeric: Option<f64> }
+struct Tick { position: f64, text: String }
+enum Scale {
+    Numeric(NumericRange),
+    Category { indices: HashMap<String, usize>, count: usize, banded: bool },
+    Date(DateTimeOffset, DateTimeOffset),
+}
+struct AxisGroup {
+    key: Option<Ref<Axis>>,
+    axis: Ref<CartesianAxis>,
+    horizontal: bool,
+    numeric: bool,
+    numbers: Vec<f64>,
+    dates: Vec<DateTimeOffset>,
+    categories: Vec<Category>,
+    category_keys: HashMap<String, usize>,
+    banded: bool,
+    scale: Scale,
+    ticks: Vec<Tick>,
+}
+
+fn category(value: &SampleValue) -> Option<Category> {
+    match value {
+        SampleValue::Number(value) if value.is_finite() => Some(Category {
+            key: format!("n{:016x}", if *value == 0.0 { 0 } else { value.to_bits() }),
+            label: number(*value), numeric: Some(*value),
+        }),
+        SampleValue::Category(value) => Some(Category { key: format!("s{value}"), label: value.clone(), numeric: None }),
+        SampleValue::DateTime(value) => Some(Category { key: format!("d{}", value.utc_date_time().ticks()), label: value.to_string(), numeric: None }),
+        _ => None,
+    }
+}
+
+fn number(value: f64) -> String {
+    if value == 0.0 { "0".into() }
+    else if value.abs() >= 1e8 || value.abs() < 1e-5 { format!("{value:.3e}") }
+    else {
+        let text = format!("{value:.6}");
+        text.trim_end_matches('0').trim_end_matches('.').into()
+    }
+}
+
+fn group_for(groups: &mut Vec<AxisGroup>, key: Option<Ref<Axis>>, horizontal: bool, numeric: bool, dates: bool) -> usize {
+    if let Some(index) = groups.iter().position(|group| group.key == key && group.horizontal == horizontal
+        && group.numeric == numeric && (key.is_some() || group.axis.is::<DateTimeAxis>() == dates)) { return index; }
+    let axis: Ref<CartesianAxis> = key.as_ref().and_then(|axis| axis.cast()).unwrap_or_else(|| {
+        if numeric { crate::LinearAxis::new().upcast() }
+        else if dates { DateTimeAxis::new().upcast() }
+        else { CategoryAxis::new().upcast() }
+    });
+    groups.push(AxisGroup {
+        key, axis, horizontal, numeric, numbers: Vec::new(), dates: Vec::new(),
+        categories: Vec::new(), category_keys: HashMap::new(), banded: false,
+        scale: Scale::Numeric(NumericRange { minimum: 0.0, maximum: 1.0, spacing: 0.2 }), ticks: Vec::new(),
+    });
+    groups.len() - 1
+}
+
+impl AxisGroup {
+    fn resolve(&mut self, target: usize) {
+        if let Some(axis) = self.axis.cast::<crate::LinearAxis>() {
+            let range = axis.resolve_range(&self.numbers, target);
+            self.ticks = range.ticks().into_iter().map(|value| Tick { position: range.normalize(value), text: number(value) }).collect();
+            self.scale = Scale::Numeric(range);
+        } else if let Some(axis) = self.axis.cast::<DateTimeAxis>() {
+            let (minimum, maximum) = axis.resolve_range(&self.dates);
+            self.ticks = axis.ticks(minimum, maximum, target).into_iter().map(|value| Tick {
+                position: date_position(value, minimum, maximum), text: axis.format_tick(value),
+            }).collect();
+            self.scale = Scale::Date(minimum, maximum);
+        } else {
+            let axis = self.axis.cast::<CategoryAxis>();
+            if axis.as_ref().is_some_and(|axis| axis.sort_key() == CategorySortKey::Value) {
+                let descending = axis.as_ref().is_some_and(|axis| axis.sort_order() == SortOrder::Descending);
+                self.categories.sort_by(|a, b| {
+                    let order = match (a.numeric, b.numeric) { (Some(a), Some(b)) => a.total_cmp(&b), _ => a.label.cmp(&b.label) };
+                    if descending { order.reverse() } else { order }
+                });
+            } else if axis.as_ref().is_some_and(|axis| axis.sort_order() == SortOrder::Descending) { self.categories.reverse(); }
+            let count = self.categories.len();
+            let step = count.div_ceil(target.max(1)).max(1);
+            self.ticks = self.categories.iter().enumerate().filter(|(i, _)| i % step == 0).map(|(i, c)| Tick {
+                position: category_position(i, count, self.banded), text: c.label.clone(),
+            }).collect();
+            self.scale = Scale::Category { indices: self.categories.iter().enumerate().map(|(i, c)| (c.key.clone(), i)).collect(), count, banded: self.banded };
+        }
+    }
+    fn position(&self, value: &SampleValue) -> Option<f64> {
+        match (&self.scale, value) {
+            (Scale::Numeric(range), SampleValue::Number(value)) if value.is_finite() => Some(range.normalize(*value)),
+            (Scale::Date(min, max), SampleValue::DateTime(value)) => Some(date_position(*value, *min, *max)),
+            (Scale::Category { indices, count, banded }, value) => {
+                let key = category(value)?.key;
+                indices.get(&key).map(|i| category_position(*i, *count, *banded))
+            }
+            _ => None,
+        }
+    }
+}
+
+fn category_position(index: usize, count: usize, banded: bool) -> f64 {
+    if count <= 1 { 0.5 }
+    else if banded { (index as f64 + 0.5) / count as f64 }
+    else { index as f64 / (count - 1) as f64 }
+}
+fn date_position(value: DateTimeOffset, minimum: DateTimeOffset, maximum: DateTimeOffset) -> f64 {
+    let low = minimum.utc_date_time().ticks();
+    let span = maximum.utc_date_time().ticks() - low;
+    if span == 0 { 0.5 } else { (value.utc_date_time().ticks() - low) as f64 / span as f64 }
+}
+
+fn resource(chart: &Chart, name: &str) -> Option<Rc<dyn IBrush>> {
+    let value = chart.try_find_resource(&ResourceKey::from(name), chart.actual_theme_variant().as_ref())??;
+    let converted = ValueTypes::try_convert(Some(&value), ValueType::of::<Rc<dyn IBrush>>())??;
+    converted.downcast_ref::<Rc<dyn IBrush>>().cloned()
+}
+fn text(chart: &Chart, value: &str, brush: Rc<dyn IBrush>) -> Rc<TextLayout> {
+    Rc::new(TextLayout::new(value,
+        Typeface::with_style(chart.font_family(), chart.font_style(), chart.font_weight(), chart.font_stretch()),
+        TextLayoutOptions {
+            font_size: chart.font_size(), foreground: Some(brush), font_features: chart.font_features(),
+            letter_spacing: chart.letter_spacing(), ..Default::default()
+        }))
+}
+fn pen(brush: Rc<dyn IBrush>, thickness: f64, dash: StrokeDashStyle) -> Rc<dyn IPen> {
+    let dashes: Option<&[f64]> = match dash {
+        StrokeDashStyle::Solid => None, StrokeDashStyle::Dash => Some(&[4.0, 2.0]),
+        StrokeDashStyle::Dot => Some(&[1.0, 2.0]), StrokeDashStyle::DashDot => Some(&[4.0, 2.0, 1.0, 2.0]),
+        StrokeDashStyle::DashDotDot => Some(&[4.0, 2.0, 1.0, 2.0, 1.0, 2.0]),
+    };
+    Rc::new(ImmutablePen::new(Some(BrushExtensions::to_immutable(&brush)), thickness,
+        dashes.map(|values| Rc::new(ImmutableDashStyle::new(Some(values), 0.0))),
+        PenLineCap::Flat, PenLineJoin::Round, 10.0))
+}
+fn path(points: Vec<Point>, closed: bool, fill: Option<Rc<dyn IBrush>>, pen: Option<Rc<dyn IPen>>) -> Draw {
+    Draw::Path { points, closed, fill, pen, geometry: OnceCell::new() }
+}
+
+impl ChartScene {
+    pub(crate) fn build(chart: &Chart, size: Size) -> Self {
+        let size = Size::new(finite_size(size.width), finite_size(size.height));
+        let dark = chart.actual_theme_variant() == Some(ThemeVariant::dark());
+        let foreground = resource(chart, "ChartsControlForegroundBrush").or_else(|| chart.foreground())
+            .unwrap_or_else(|| solid(if dark { 0xfff3f3f3 } else { 0xff242424 }));
+        let mut scene = Self { layout: ChartLayout {
+            size, plot_area: Rect::new(0.0, 0.0, size.width, size.height), points: Vec::new(),
+            legend_items: Vec::new(), axis_labels: Vec::new(), data_labels: Vec::new(), path_vertex_count: 0,
+        }, background: Vec::new(), grid: Vec::new(), series: Vec::new(), foreground: Vec::new() };
+        if let Some(background) = chart.background().or_else(|| resource(chart, "ChartsControlBackgroundBrush")) {
+            scene.background.push(Draw::Rectangle(Rect::new(0.0, 0.0, size.width, size.height), Some(background), None));
+        }
+        if size.width <= 0.0 || size.height <= 0.0 { return scene; }
+        let mut groups = Vec::new();
+        let mut series_data = Vec::new();
+        for (index, series) in chart.series().snapshot().iter().enumerate().filter(|(_, s)| s.is_visible()) {
+            let bar = series.cast::<BarSeries>();
+            let horizontal = bar.as_ref().is_some_and(|bar| bar.orientation() == BarOrientation::Horizontal);
+            let x = series.x_values().map(|source| source.snapshot()).unwrap_or_default();
+            let y = series.y_values().map(|source| source.snapshot()).unwrap_or_default();
+            let dates = x.iter().flatten().next().is_some_and(|v| matches!(v, SampleValue::DateTime(_)));
+            let x_group = group_for(&mut groups, series.x_axis(), !horizontal, false, dates);
+            let y_group = group_for(&mut groups, series.y_axis(), horizontal, true, false);
+            groups[x_group].banded |= bar.is_some();
+            for value in x.iter().flatten() {
+                if let SampleValue::DateTime(date) = value { groups[x_group].dates.push(*date); }
+                if let Some(category) = category(value) {
+                    let group = &mut groups[x_group];
+                    if !group.category_keys.contains_key(&category.key) {
+                        group.category_keys.insert(category.key.clone(), group.categories.len());
+                        group.categories.push(category);
+                    }
+                }
+            }
+            // Missing X is a useful native collection convention: positions are
+            // source indices. A present, shorter X source is zipped with Y.
+            if series.x_values().is_none() {
+                for index in 0..y.len() {
+                    let c = category(&SampleValue::Number(index as f64)).expect("finite source index");
+                    let group = &mut groups[x_group];
+                    if !group.category_keys.contains_key(&c.key) {
+                        group.category_keys.insert(c.key.clone(), group.categories.len()); group.categories.push(c);
+                    }
+                }
+            }
+            for value in y.iter().flatten() {
+                if let SampleValue::Number(value) = value { if value.is_finite() { groups[y_group].numbers.push(*value); } }
+            }
+            let area = series.is::<AreaSeries>();
+            if bar.is_some() || area { groups[y_group].numbers.push(0.0); }
+            series_data.push(SeriesData { index, series: series.clone(), x, y, x_group, y_group, horizontal, bar: bar.is_some(), area });
+        }
+        for group in &mut groups {
+            group.resolve(if group.horizontal { (size.width / 90.0) as usize } else { (size.height / 55.0) as usize }.clamp(2, 100));
+        }
+        let font_size = chart.font_size();
+        let padding = chart.padding();
+        let mut margins = [padding.left + 8.0, padding.top + 8.0, padding.right + 8.0, padding.bottom + 8.0];
+        let mut lanes: Vec<(usize, f64)> = Vec::new();
+        let mut horizontal_count = 0;
+        let mut vertical_count = 0;
+        for group in &groups {
+            if !group.axis.is_visible() { lanes.push((0, 0.0)); continue; }
+            let side = if group.horizontal { let side = if horizontal_count % 2 == 0 { 3 } else { 1 }; horizontal_count += 1; side }
+                else { let side = if vertical_count % 2 == 0 { 0 } else { 2 }; vertical_count += 1; side };
+            let tick_size = if group.axis.show_tick_labels() {
+                group.ticks.iter().map(|tick| { let t = text(chart, &tick.text, foreground.clone()); if group.horizontal { t.height() } else { t.width() } }).fold(0.0, f64::max)
+            } else { 0.0 };
+            let lane = 8.0 + tick_size + if group.axis.label().is_empty() { 0.0 } else { font_size * 1.6 };
+            lanes.push((side, margins[side]));
+            margins[side] += lane;
+        }
+        let legend = if chart.show_legend() { legend_rows(chart, &series_data, size.width - padding.left - padding.right, foreground.clone()) } else { Vec::new() };
+        let legend_height = legend.iter().map(|(_, _, position)| position.y + font_size * 1.5).fold(0.0, f64::max);
+        margins[3] += legend_height;
+        let left = margins[0].min(size.width * 0.45);
+        let right = margins[2].min(size.width * 0.45);
+        let top = margins[1].min(size.height * 0.45);
+        let bottom = margins[3].min(size.height * 0.45);
+        let plot = Rect::new(left, top, (size.width - left - right).max(0.0), (size.height - top - bottom).max(0.0));
+        scene.layout.plot_area = plot;
+        for (group, &(side, offset)) in groups.iter().zip(&lanes) {
+            scene.axis(chart, group, side, offset, foreground.clone(), dark);
+        }
+        for data in &series_data { scene.plot_series(chart, data, &series_data, &groups, foreground.clone()); }
+        for (title, color, position) in legend {
+            let origin = Point::new(position.x + padding.left + 8.0, size.height - legend_height + position.y);
+            if let Some(color) = color {
+                scene.foreground.push(Draw::Rectangle(Rect::new(origin.x, origin.y + 3.0, 14.0, 10.0), Some(color), None));
+                scene.foreground.push(Draw::Text(title.clone(), Point::new(origin.x + 21.0, origin.y), None));
+            } else { scene.foreground.push(Draw::Text(title.clone(), origin, None)); }
+        }
+        scene.layout.legend_items = if chart.show_legend() { series_data.iter().map(|d| d.series.title()).collect() } else { Vec::new() };
+        scene
+    }
+
+    fn axis(&mut self, chart: &Chart, group: &AxisGroup, side: usize, offset: f64, foreground: Rc<dyn IBrush>, dark: bool) {
+        if !group.axis.is_visible() { return; }
+        let plot = self.layout.plot_area;
+        let axis = &group.axis;
+        let stroke = axis.axis_line_brush().or_else(|| resource(chart, "ChartsAxisLineBrush")).unwrap_or_else(|| solid(if dark { 0xff8a8a8a } else { 0xff777777 }));
+        let major = axis.grid_line_major_brush().or_else(|| resource(chart, "ChartsGridLineMajorBrush")).unwrap_or_else(|| solid(if dark { 0xff505050 } else { 0xffdedede }));
+        let minor = axis.grid_line_minor_brush().or_else(|| resource(chart, "ChartsGridLineMinorBrush")).unwrap_or_else(|| solid(if dark { 0xff383838 } else { 0xffeeeeee }));
+        let tick_brush = axis.tick_brush().or_else(|| resource(chart, "ChartsTickBrush")).unwrap_or_else(|| stroke.clone());
+        let label_brush = axis.tick_label_brush().or_else(|| resource(chart, "ChartsTickLabelBrush")).unwrap_or_else(|| foreground.clone());
+        let axis_pen = pen(stroke, 1.0, StrokeDashStyle::Solid);
+        let major_pen = pen(major, 1.0, StrokeDashStyle::Solid);
+        let minor_pen = pen(minor, 1.0, StrokeDashStyle::Solid);
+        let tick_pen = pen(tick_brush, 1.0, StrokeDashStyle::Solid);
+        let edge = match side { 0 => plot.x - offset + 8.0, 1 => plot.y - offset + 8.0,
+            2 => plot.x + plot.width + offset - 8.0, _ => plot.y + plot.height + offset - 8.0 };
+        let outward = if side == 0 || side == 1 { -1.0 } else { 1.0 };
+        let (a, b) = if group.horizontal { (Point::new(plot.x, edge), Point::new(plot.x + plot.width, edge)) }
+            else { (Point::new(edge, plot.y), Point::new(edge, plot.y + plot.height)) };
+        self.foreground.push(Draw::Line(a, b, axis_pen));
+        for tick in &group.ticks {
+            if !(0.0..=1.0).contains(&tick.position) { continue; }
+            let coordinate = if group.horizontal { plot.x + tick.position * plot.width } else { plot.y + (1.0 - tick.position) * plot.height };
+            if axis.grid_lines() != GridLines::None {
+                let (a, b) = if group.horizontal { (Point::new(coordinate, plot.y), Point::new(coordinate, plot.y + plot.height)) }
+                    else { (Point::new(plot.x, coordinate), Point::new(plot.x + plot.width, coordinate)) };
+                self.grid.push(Draw::Line(a, b, major_pen.clone()));
+            }
+            if axis.show_tick_marks() {
+                let (a, b) = if group.horizontal { (Point::new(coordinate, edge), Point::new(coordinate, edge + outward * 5.0)) }
+                    else { (Point::new(edge, coordinate), Point::new(edge + outward * 5.0, coordinate)) };
+                self.foreground.push(Draw::Line(a, b, tick_pen.clone()));
+            }
+            if axis.show_tick_labels() {
+                let label = text(chart, &tick.text, label_brush.clone());
+                let origin = if group.horizontal { Point::new(coordinate - label.width() * 0.5, edge + if outward < 0.0 { -label.height() - 7.0 } else { 7.0 }) }
+                    else { Point::new(edge + if outward < 0.0 { -label.width() - 7.0 } else { 7.0 }, coordinate - label.height() * 0.5) };
+                self.layout.axis_labels.push(tick.text.clone());
+                self.foreground.push(Draw::Text(label, origin, None));
+            }
+        }
+        if axis.grid_lines() == GridLines::Minor {
+            for ticks in group.ticks.windows(2) {
+                for fraction in 1..5 {
+                    let p = ticks[0].position + (ticks[1].position - ticks[0].position) * fraction as f64 / 5.0;
+                    if !(0.0..=1.0).contains(&p) { continue; }
+                    let (a, b) = if group.horizontal { let x = plot.x + p * plot.width; (Point::new(x, plot.y), Point::new(x, plot.y + plot.height)) }
+                        else { let y = plot.y + (1.0 - p) * plot.height; (Point::new(plot.x, y), Point::new(plot.x + plot.width, y)) };
+                    self.grid.push(Draw::Line(a, b, minor_pen.clone()));
+                }
+            }
+        }
+        let label_text = axis.label();
+        if !label_text.is_empty() {
+            let label = text(chart, &label_text, foreground);
+            self.layout.axis_labels.push(label_text);
+            if group.horizontal {
+                let y = if outward > 0.0 { edge + chart.font_size() * 1.9 } else { edge - chart.font_size() * 3.0 };
+                self.foreground.push(Draw::Text(label.clone(), Point::new(plot.x + (plot.width - label.width()) * 0.5, y), None));
+            } else {
+                let x = if outward < 0.0 { offset.max(0.0) } else { self.layout.size.width - offset - label.height() };
+                let y = plot.y + (plot.height + label.width()) * 0.5;
+                self.foreground.push(Draw::Text(label, Point::new(0.0, 0.0), Some(Matrix::new(0.0, -1.0, 1.0, 0.0, x, y))));
+            }
+        }
+    }
+
+    fn plot_series(&mut self, chart: &Chart, data: &SeriesData, all: &[SeriesData], groups: &[AxisGroup], foreground: Rc<dyn IBrush>) {
+        let series = &data.series;
+        let plot = self.layout.plot_area;
+        let palette = SERIES_COLORS[data.index % SERIES_COLORS.len()];
+        let stroke = series.stroke().unwrap_or_else(|| solid(palette));
+        let thickness = series.stroke_thickness();
+        let series_pen = if thickness.is_finite() && thickness > 0.0 { Some(pen(stroke.clone(), thickness.min(1024.0), series.stroke_dash_style())) } else { None };
+        let fill = if let Some(area) = series.cast::<AreaSeries>() { area.fill().unwrap_or_else(|| solid((palette & 0x00ff_ffff) | 0x5500_0000)) }
+            else if let Some(bar) = series.cast::<BarSeries>() { bar.fill().unwrap_or_else(|| stroke.clone()) }
+            else { stroke.clone() };
+        let x_group = &groups[data.x_group];
+        let y_group = &groups[data.y_group];
+        let baseline = match y_group.scale { Scale::Numeric(range) => range.normalize(0.0).clamp(0.0, 1.0), _ => 0.0 };
+        let peers: Vec<_> = all.iter().filter(|d| d.bar && d.x_group == data.x_group && d.y_group == data.y_group && d.horizontal == data.horizontal).collect();
+        let bar_index = peers.iter().position(|d| d.index == data.index).unwrap_or(0);
+        let count = if series.x_values().is_some() { data.x.len().min(data.y.len()) } else { data.y.len() };
+        let category_count = match &x_group.scale { Scale::Category { count, .. } => *count, _ => count }.max(1);
+        let band = 0.8 / category_count as f64;
+        let bar_width = band / peers.len().max(1) as f64;
+        let labels = series.data_label_overrides();
+        let markers = series.data_marker_overrides();
+        let mut segment = Vec::new();
+        let finish_segment = |scene: &mut Self, segment: &mut Vec<Point>| {
+            if segment.is_empty() { return; }
+            let mut points = decimate(std::mem::take(segment), plot.width.max(1.0) as usize);
+            if data.area {
+                let first = points[0]; let last = *points.last().expect("nonempty segment");
+                let y = plot.y + (1.0 - baseline) * plot.height;
+                let mut area = Vec::with_capacity(points.len() + 2);
+                area.push(Point::new(first.x, y)); area.extend_from_slice(&points); area.push(Point::new(last.x, y));
+                scene.layout.path_vertex_count += area.len();
+                scene.series.push(path(area, true, Some(fill.clone()), None));
+            }
+            scene.layout.path_vertex_count += points.len();
+            if series_pen.is_some() { scene.series.push(path(std::mem::take(&mut points), false, None, series_pen.clone())); }
+        };
+        for index in 0..count {
+            let x = if series.x_values().is_none() { Some(SampleValue::Number(index as f64)) } else { data.x[index].clone() };
+            let y = data.y[index].as_ref();
+            let mapped = x.as_ref().and_then(|x| x_group.position(x)).zip(y.and_then(|y| y_group.position(y)));
+            let Some((x, y)) = mapped.filter(|(x, y)| x.is_finite() && y.is_finite()) else { finish_segment(self, &mut segment); continue; };
+            let point = if data.horizontal { Point::new(plot.x + y * plot.width, plot.y + (1.0 - x) * plot.height) }
+                else { Point::new(plot.x + x * plot.width, plot.y + (1.0 - y) * plot.height) };
+            let value = match data.y[index] { Some(SampleValue::Number(value)) => value, _ => continue };
+            let bounds = if data.bar {
+                let start = x - band * 0.5 + bar_index as f64 * bar_width;
+                let rect = if data.horizontal {
+                    let zero = plot.x + baseline * plot.width;
+                    Rect::new(zero.min(point.x), plot.y + (1.0 - start - bar_width) * plot.height,
+                        (point.x - zero).abs(), bar_width * plot.height * 0.92)
+                } else {
+                    let zero = plot.y + (1.0 - baseline) * plot.height;
+                    Rect::new(plot.x + start * plot.width, zero.min(point.y), bar_width * plot.width * 0.92, (point.y - zero).abs())
+                };
+                self.series.push(Draw::Rectangle(rect, Some(fill.clone()), series_pen.clone())); Some(rect)
+            } else { segment.push(point); None };
+            self.layout.points.push(ChartPoint { series_index: data.index, sample_index: index, position: point, bar_bounds: bounds, value });
+            if series.show_data_markers() {
+                let over = markers.try_get_value(&(index as u32));
+                let shape = over.as_ref().map(|o| o.shape()).unwrap_or_else(|| series.marker_shape());
+                let brush = over.and_then(|o| o.brush()).or_else(|| series.data_marker_brush()).unwrap_or_else(|| stroke.clone());
+                marker(&mut self.series, point, shape, brush);
+            }
+            if series.show_data_labels() {
+                let over = labels.try_get_value(&(index as u32));
+                let value_text = over.as_ref().map(|o| o.text().to_owned()).unwrap_or_else(|| number(value));
+                if !value_text.is_empty() {
+                    let brush = over.and_then(|o| o.brush()).or_else(|| series.data_label_brush()).unwrap_or_else(|| foreground.clone());
+                    let label = text(chart, &value_text, brush);
+                    let origin = if data.horizontal { Point::new(point.x + 6.0, point.y - label.height() * 0.5) }
+                        else { Point::new(point.x - label.width() * 0.5, point.y - label.height() - 5.0) };
+                    self.series.push(Draw::Text(label, origin, None));
+                    self.layout.data_labels.push((data.index, index, value_text));
+                }
+            }
+        }
+        finish_segment(self, &mut segment);
+    }
+
+    pub(crate) fn draw(&self, context: &mut DrawingContext) {
+        let bounds = Rect::new(0.0, 0.0, self.layout.size.width, self.layout.size.height);
+        let control_clip = context.push_clip(bounds);
+        for draw in &self.background { draw.draw(context); }
+        let plot_clip = context.push_clip(self.layout.plot_area);
+        for draw in &self.grid { draw.draw(context); }
+        for draw in &self.series { draw.draw(context); }
+        context.pop(plot_clip);
+        for draw in &self.foreground { draw.draw(context); }
+        context.pop(control_clip);
+    }
+}
+
+fn finite_size(value: f64) -> f64 { if value.is_finite() { value.max(0.0) } else { 0.0 } }
+
+fn legend_rows(chart: &Chart, series: &[SeriesData], width: f64, foreground: Rc<dyn IBrush>) -> Vec<(Rc<TextLayout>, Option<Rc<dyn IBrush>>, Point)> {
+    let mut rows = Vec::new(); let mut x = 0.0; let mut y = 6.0;
+    if !chart.legend_title().is_empty() {
+        let title = text(chart, &chart.legend_title(), foreground.clone());
+        y += title.height() + 6.0;
+        rows.push((title, None, Point::new(0.0, 6.0)));
+    }
+    for data in series {
+        let title = text(chart, &data.series.title(), foreground.clone());
+        let item_width = title.width() + 42.0;
+        if x > 0.0 && x + item_width > width { x = 0.0; y += chart.font_size() * 1.7; }
+        let brush = data.series.stroke().unwrap_or_else(|| solid(SERIES_COLORS[data.index % SERIES_COLORS.len()]));
+        rows.push((title, Some(brush), Point::new(x, y))); x += item_width;
+    }
+    rows
+}
+
+fn marker(draws: &mut Vec<Draw>, p: Point, shape: MarkerShape, brush: Rc<dyn IBrush>) {
+    let r = 4.0;
+    let outline = Some(pen(brush.clone(), 1.5, StrokeDashStyle::Solid));
+    match shape {
+        MarkerShape::None => {},
+        MarkerShape::Circle => draws.push(Draw::Ellipse(Rect::new(p.x-r, p.y-r, 2.0*r, 2.0*r), brush, None)),
+        MarkerShape::Square => draws.push(Draw::Rectangle(Rect::new(p.x-r, p.y-r, 2.0*r, 2.0*r), Some(brush), None)),
+        MarkerShape::Diamond => draws.push(path(vec![Point::new(p.x,p.y-r), Point::new(p.x+r,p.y), Point::new(p.x,p.y+r), Point::new(p.x-r,p.y)], true, Some(brush), None)),
+        MarkerShape::Triangle => draws.push(path(vec![Point::new(p.x,p.y-r),Point::new(p.x+r,p.y+r),Point::new(p.x-r,p.y+r)], true, Some(brush), None)),
+        MarkerShape::ShortDash | MarkerShape::LongDash => {
+            let r = if shape == MarkerShape::LongDash { 7.0 } else { 3.0 };
+            draws.push(Draw::Line(Point::new(p.x-r,p.y),Point::new(p.x+r,p.y),outline.expect("marker pen")));
+        }
+        MarkerShape::Plus | MarkerShape::X | MarkerShape::Asterisk => {
+            let pen = outline.expect("marker pen");
+            if shape != MarkerShape::X {
+                draws.push(Draw::Line(Point::new(p.x-r,p.y),Point::new(p.x+r,p.y),pen.clone()));
+                draws.push(Draw::Line(Point::new(p.x,p.y-r),Point::new(p.x,p.y+r),pen.clone()));
+            }
+            if shape != MarkerShape::Plus {
+                draws.push(Draw::Line(Point::new(p.x-r,p.y-r),Point::new(p.x+r,p.y+r),pen.clone()));
+                draws.push(Draw::Line(Point::new(p.x-r,p.y+r),Point::new(p.x+r,p.y-r),pen));
+            }
+        }
+    }
+}
+
+/// Min/max envelope reduction preserves extrema in each pixel column and source
+/// traversal order. It is used only for monotone X line segments without a gap.
+fn decimate(points: Vec<Point>, width: usize) -> Vec<Point> {
+    if points.len() <= width.saturating_mul(4).max(16) || points.windows(2).any(|p| p[1].x < p[0].x) { return points; }
+    let mut result = Vec::with_capacity(width.saturating_mul(4).min(points.len()));
+    let mut start = 0;
+    while start < points.len() {
+        let bucket = points[start].x.floor();
+        let mut end = start + 1; let mut min = start; let mut max = start;
+        while end < points.len() && points[end].x.floor() == bucket {
+            if points[end].y < points[min].y { min = end; }
+            if points[end].y > points[max].y { max = end; }
+            end += 1;
+        }
+        let mut indices = [start, min, max, end - 1]; indices.sort_unstable();
+        for (i, index) in indices.iter().enumerate() { if i == 0 || *index != indices[i-1] { result.push(points[*index]); } }
+        start = end;
+    }
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn pixel_envelope_preserves_extrema_and_order() {
+        let points: Vec<_> = (0..10000).map(|i| Point::new(i as f64/100.0, if i==5001 { -1000.0 } else { (i%13) as f64 })).collect();
+        let reduced = decimate(points, 100);
+        assert!(reduced.len() <= 400);
+        assert!(reduced.iter().any(|p| p.y == -1000.0));
+        assert!(reduced.windows(2).all(|p| p[0].x <= p[1].x));
+    }
+    #[test]
+    fn category_layout_preserves_edge_and_band_positions() {
+        assert_eq!(category_position(0, 3, false), 0.0);
+        assert_eq!(category_position(2, 3, false), 1.0);
+        assert_eq!(category_position(0, 2, true), 0.25);
+        assert_eq!(category_position(1, 2, true), 0.75);
+    }
+}
