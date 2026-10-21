@@ -98,6 +98,44 @@ composition/TextEdit and context-flyout changes require their own recorded run.
 
 ## Implementation test map
 
+### Versioned native TOM observations
+
+The [first system MSFTEDIT run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39600670835/job/119224339597)
+at `eff6f53ade273677db8679d2c6089909fcf7a886` passed its Home/End probe:
+60 initial commands and 60 repeated no-ops, on Windows 10.0.26100 with
+`Msftedit.dll` 6.2.26100.33438. The exact fixture text, native story lengths,
+normalized and directed endpoints, flags, signed results and HRESULTs are retained
+in [native-msftedit-home-end.json](native-msftedit-home-end.json), together with
+the probe's Git blob and CI provenance. This is an observation of that system
+RichEdit version; it does not establish external WinUI engine equivalence.
+
+The recorded multiline fixture `abc\rdefg\rhij` demonstrates a concrete distinction:
+starting with anchor 1 and active end 6, collapsed Line Home reaches 0 and returns
+-6, while extended Line Home retains anchor 1, reaches 4 and returns -2. Collapsed
+Line End reaches 8 and returns 2. The native Story End extension can include the
+synthetic final paragraph mark; FerroUI's normalized model still excludes that
+mark under RT-I01/RT-I08. These facts guide the next implementation correction;
+the successful probe itself does not change the Rust behavior at its checkpoint.
+
+To retain a later completed observation, use the strict extractor with the exact
+tested commit, probe blob and run/job URLs:
+
+```sh
+python3 scripts/porting/rich-text-tom-observations.py \
+  --log /path/to/completed-windows-job.log \
+  --commit <tested-full-commit-id> --probe-blob <tested-probe-git-blob-id> \
+  --run-url <actions-run-url> --job-url <actions-job-url> \
+  --output /path/to/native-observations.json
+```
+
+The extractor rejects unknown probe rows, incomplete command/repeat totals,
+inconsistent engine identities, malformed fixture lengths and contradictory
+directed-state fields. It preserves observations without comparing them to the
+Rust implementation. The later vertical probe has its own execution record;
+adding its source does not make it part of this first native run.
+
+### Rust families
+
 | Rust family | Concrete evidence and current limits |
 |---|---|
 | [Document tests](../../../src/FerroUI.Controls/documents/rich_text_document_tests.rs) | UTF-16 surrogate rejection, grapheme/word boundaries, nested semantic containers, snapshot formatting, paragraph splicing, batched revisions, reentrancy, pointer gravity, weak ownership, hyperlink cancellation/release semantics and embedded controls. Native synthetic element markers and every upstream element type are not represented by this suite. |

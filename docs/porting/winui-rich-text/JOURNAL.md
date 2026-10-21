@@ -4,6 +4,33 @@ This journal records how the port is developed. [PROGRESS.md](PROGRESS.md) and
 the reviewed mapping remain the authority for implementation status; a checkpoint
 preserves work and does not establish complete parity.
 
+## First native selection observations — 2026-10-21
+
+The [Windows job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39600670835/job/119224339597)
+at `eff6f53ade273677db8679d2c6089909fcf7a886` completed successfully:
+native CoreText compilation, 35 WinUI contract tests, two exact counted-string
+tests, one system MSFTEDIT characterization test and 474 rich-control tests.
+The native probe performed 60 Home/End commands plus 60 repeated no-ops on
+Windows 10.0.26100 / `Msftedit.dll` 6.2.26100.33438. The observed values are
+preserved in [native-msftedit-home-end.json](native-msftedit-home-end.json),
+with exact tested source/CI provenance and a strict reusable log extractor.
+
+These observations exposed a real collapsed-Line mismatch in the preceding
+Rust checkpoint: native Home/End first selects the normalized range edge, while
+extension uses the directed active endpoint. Extended Line End also includes a
+real paragraph mark and retains line-end affinity for the repeated operation.
+Corrections and focused regressions are being developed from these values.
+Native extension can additionally select the synthetic terminal paragraph mark;
+the normalized Rust document still excludes that mark. The evidence records the
+system engine and does not claim equivalence with external WinUI RichEdit.
+
+The next native source checkpoint adds 264 MoveUp/MoveDown observations across
+Line/Paragraph, positive/negative/zero counts, directed selections, Unicode,
+empty stories and retained-column sequences. Its test definition is separate
+from the completed Home/End run. Linux Base, Controls and all theme steps had
+also passed at this point; their exact totals and the remaining generated-file
+gate require the completed Linux job log.
+
 ## Selection boundaries and focused input policies — 2026-10-21
 
 [`05050fa0`](https://github.com/wieslawsoltes/FerroUI/commit/05050fa0de090270ac2b8785874871743363c8ed)
