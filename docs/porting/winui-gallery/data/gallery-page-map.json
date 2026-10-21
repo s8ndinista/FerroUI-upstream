@@ -458,7 +458,7 @@
           "type": "Microsoft.UI.Xaml.Controls.ComboBox"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.FontIconSource"
         },
         {
@@ -478,7 +478,7 @@
           "type": "Microsoft.UI.Xaml.Controls.StackPanel"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.SymbolIconSource"
         },
         {
@@ -832,7 +832,7 @@
           "type": "Microsoft.UI.Xaml.Controls.ComboBox"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -893,7 +893,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Grid"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -1025,9 +1025,14 @@
       "id": "AutoSuggestBox",
       "implementation": [
         "samples/WinUIGallery/Pages/AutoSuggestBox.xaml",
-        "samples/WinUIGallery/examples.rs"
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/control_samples.rs",
+        "samples/WinUIGallery/cat_data.rs",
+        "samples/WinUIGallery/assets.rs",
+        "samples/WinUIGallery/assets_data.rs",
+        "samples/WinUIGallery/assets-manifest.json"
       ],
-      "notes": "Native AutoCompleteBox provides country suggestions; WinUI-specific event arguments remain a separate contract. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "notes": "Both examples use the opt-in AutoSuggestBox: 97 source cat names, user-only token filtering, chosen-item output and control search/query with original title/subtitle and embedded bitmap details. Catalog titles are explicit item values; CurrentCulture matching and full input/accessibility parity remain pending. Original images retain exact bytes and paths with explicit Windows case aliases; see assets-manifest.json. All acceptance statuses remain partial.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -1071,6 +1076,26 @@
         {
           "name": "all_reviewed_native_adaptations_load_real_controls",
           "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "autosuggest_filter_preserves_all_source_names_and_word_matching",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "autosuggest_example_filters_only_user_changes_and_reports_selected_cat",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "control_search_preserves_title_tokens_prefix_priority_and_unique_metadata",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "control_search_uses_chosen_suggestion_before_free_query_and_preserves_no_result",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "embedded_control_images_resolve_original_uri_paths_and_exact_bytes",
+          "path": "samples/WinUIGallery/tests.rs"
         }
       ],
       "title": "AutoSuggestBox"
@@ -1092,7 +1117,7 @@
           "type": "Microsoft.UI.Xaml.Controls.ComboBox"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -1152,7 +1177,7 @@
           "type": "Microsoft.UI.Xaml.Controls.HyperlinkButton"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -1696,9 +1721,10 @@
       "id": "CheckBox",
       "implementation": [
         "samples/WinUIGallery/Pages/CheckBox.xaml",
-        "samples/WinUIGallery/examples.rs"
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/input_samples.rs"
       ],
-      "notes": "Two-state and three-state inputs use native CheckBox; the output follows IsChecked. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "notes": "All three source compositions use native CheckBox with original two/three-state output and select-all synchronization. Keyboard, accessibility and exact rendering acceptance remain pending. All examples remain partial pending complete input, platform, accessibility and rendering acceptance.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -1730,6 +1756,10 @@
         {
           "name": "three_state_checkbox_preserves_null_and_reports_each_state",
           "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "checkbox_select_all_keeps_source_aggregate_and_user_cycle_behavior",
+          "path": "samples/WinUIGallery/tests.rs"
         }
       ],
       "title": "CheckBox"
@@ -1739,8 +1769,12 @@
       "examples_total": 6,
       "examples_verified": 0,
       "id": "Clipboard",
-      "implementation": [],
-      "notes": null,
+      "implementation": [
+        "samples/WinUIGallery/Pages/Clipboard.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/platform_samples.rs"
+      ],
+      "notes": "Text copy/paste, available formats and clear use the host clipboard service asynchronously. Bitmap/file operations, history/roaming, content-change notifications and original accessibility announcements remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -1795,8 +1829,21 @@
           "type": "WinUIGallery.Controls.ControlExample"
         }
       ],
-      "status": "pending",
-      "tests": [],
+      "status": "partial",
+      "tests": [
+        {
+          "name": "all_reviewed_native_adaptations_load_real_controls",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "clipboard_sample_uses_host_service_for_copy_paste_formats_and_clear",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "clipboard_sample_reports_missing_service_and_platform_failure",
+          "path": "samples/WinUIGallery/tests.rs"
+        }
+      ],
       "title": "Clipboard"
     },
     {
@@ -2354,7 +2401,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Button"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -3377,7 +3424,7 @@
           "type": "Microsoft.UI.Xaml.Controls.ComboBox"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.FontIconSource"
         },
         {
@@ -3446,8 +3493,12 @@
       "examples_total": 3,
       "examples_verified": 0,
       "id": "InfoBar",
-      "implementation": [],
-      "notes": null,
+      "implementation": [
+        "samples/WinUIGallery/Pages/InfoBar.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/control_samples.rs"
+      ],
+      "notes": "All three original compositions use the opt-in InfoBar with severity, short/long messages, optional button/hyperlink and visibility/closability options. x:Bind is explicitly adapted to ordinary TwoWay Binding; final layout, icons and live-region acceptance remain pending. This is bounded application behavior coverage, not complete source/API/render/accessibility acceptance.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -3462,7 +3513,7 @@
           "type": "Microsoft.UI.Xaml.Controls.ComboBoxItem"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -3486,8 +3537,17 @@
           "type": "{http://schemas.microsoft.com/winfx/2006/xaml}String"
         }
       ],
-      "status": "pending",
-      "tests": [],
+      "status": "partial",
+      "tests": [
+        {
+          "name": "all_reviewed_native_adaptations_load_real_controls",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "infobar_examples_keep_source_severity_message_action_and_options",
+          "path": "samples/WinUIGallery/tests.rs"
+        }
+      ],
       "title": "InfoBar"
     },
     {
@@ -3826,7 +3886,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Button"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -4724,9 +4784,10 @@
       "id": "PasswordBox",
       "implementation": [
         "samples/WinUIGallery/Pages/PasswordBox.xaml",
-        "samples/WinUIGallery/examples.rs"
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/input_samples.rs"
       ],
-      "notes": "Password entry uses TextBox.PasswordChar and RevealPassword; a distinct PasswordBox API is still required. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
+      "notes": "The three source examples and original validation/reveal handlers use TextBox.PasswordChar and RevealPassword with composed Header. A distinct PasswordBox API and full input/accessibility parity remain pending. All examples remain partial pending complete input, platform, accessibility and rendering acceptance.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -4760,7 +4821,7 @@
           "path": "samples/WinUIGallery/tests.rs"
         },
         {
-          "name": "textbox_counts_unicode_scalar_values_without_revealing_passwords",
+          "name": "password_examples_keep_source_validation_and_reveal_behavior",
           "path": "samples/WinUIGallery/tests.rs"
         }
       ],
@@ -4918,8 +4979,12 @@
       "examples_total": 1,
       "examples_verified": 0,
       "id": "Popup",
-      "implementation": [],
-      "notes": null,
+      "implementation": [
+        "samples/WinUIGallery/Pages/Popup.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/platform_samples.rs"
+      ],
+      "notes": "The source open/close handlers and offset/light-dismiss options use the native Popup. Placement is explicitly relative to its button; WinUI absolute-placement, acrylic and screen-edge parity remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -4962,8 +5027,17 @@
           "type": "WinUIGallery.Controls.ControlExampleSubstitution"
         }
       ],
-      "status": "pending",
-      "tests": [],
+      "status": "partial",
+      "tests": [
+        {
+          "name": "all_reviewed_native_adaptations_load_real_controls",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "popup_sample_opens_closes_and_observes_offset_options",
+          "path": "samples/WinUIGallery/tests.rs"
+        }
+      ],
       "title": "Popup"
     },
     {
@@ -5077,8 +5151,12 @@
       "examples_total": 2,
       "examples_verified": 0,
       "id": "PullToRefresh",
-      "implementation": [],
-      "notes": null,
+      "implementation": [
+        "samples/WinUIGallery/Pages/PullToRefresh.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/platform_samples.rs"
+      ],
+      "notes": "The source RefreshContainer request/deferral behavior inserts NewControl on the UI dispatcher. ListView is explicitly adapted to ListBox; the custom visualizer and full gesture/animation parity remain pending. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -5109,8 +5187,17 @@
           "type": "WinUIGallery.Controls.ControlExample"
         }
       ],
-      "status": "pending",
-      "tests": [],
+      "status": "partial",
+      "tests": [
+        {
+          "name": "all_reviewed_native_adaptations_load_real_controls",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "refresh_sample_inserts_source_item_and_completes_its_deferral",
+          "path": "samples/WinUIGallery/tests.rs"
+        }
+      ],
       "title": "PullToRefresh"
     },
     {
@@ -6521,7 +6608,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Image"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -6590,7 +6677,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Border"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.FontIconSource"
         },
         {
@@ -6792,7 +6879,7 @@
           "type": "Microsoft.UI.Xaml.Controls.StackPanel"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.SymbolIconSource"
         },
         {
@@ -6890,7 +6977,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Grid"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -6991,7 +7078,7 @@
           "type": "Microsoft.UI.Xaml.Controls.StackPanel"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.SymbolIconSource"
         },
         {
@@ -7240,7 +7327,7 @@
           "path": "samples/WinUIGallery/tests.rs"
         },
         {
-          "name": "textbox_counts_unicode_scalar_values_without_revealing_passwords",
+          "name": "textbox_counts_unicode_scalar_values",
           "path": "samples/WinUIGallery/tests.rs"
         }
       ],
@@ -8032,7 +8119,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Grid"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -8218,7 +8305,7 @@
           "type": "Microsoft.UI.Xaml.Controls.ColumnDefinition"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.FontIconSource"
         },
         {
@@ -8230,7 +8317,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Image"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBar"
         },
         {
@@ -8389,7 +8476,7 @@
           "type": "Microsoft.UI.Xaml.Controls.StackPanel"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.SymbolIconSource"
         },
         {

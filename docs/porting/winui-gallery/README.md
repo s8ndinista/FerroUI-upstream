@@ -61,7 +61,8 @@ in every generated inventory so that an upstream update cannot silently change t
 - [x] Implement the opt-in XAML projection and initial conflict-safe controls.
 - [x] Port the complete exported catalog, native shell and a documented interactive subset.
 - [x] Add deterministic API/usage maps and automated regression/completeness gates.
-- [ ] Validate runtime loading, interaction, rendering and platform behavior.
+- [x] Execute the implemented control, binding, migration and Gallery behavior tests.
+- [ ] Complete native rendering and platform comparison acceptance for every original example.
 - [ ] Reconcile every remaining requirement and publish a full parity report.
 
 ## Related framework work
@@ -79,22 +80,39 @@ established.** The PR remains draft until the complete requirement map has execu
 and all strict acceptance gates pass. Subsequent commits update this record with measured
 counts, commands, exact results and limitations.
 
-At the first native Gallery checkpoint the pinned source inventory contains **1,545 public-source
-types, 7,466 public-source members and 198 separately counted private-source types**. The Gallery
-has **126 catalog pages, 350 exported examples and 355 actual ControlExample instances**. All
-126 pages are searchable and navigable. The port records **63 partial pages** (62 markup
-adaptations plus the live ScratchPad editor) and **63 pending pages**. No complete page is yet
-claimed as behaviorally verified. The generated [report](data/REPORT.md) is the current ledger.
+The pinned source inventory contains **1,545 public-source types, 7,466 public-source
+members and 198 separately counted private-source types**. The Gallery has **126 catalog
+pages, 350 exported examples and 355 actual ControlExample instances**. All 126 pages are
+searchable and navigable. The port records **67 partial pages** (66 markup adaptations plus
+the live ScratchPad editor) and **59 pending pages**. No complete page is claimed as ported
+or behaviorally verified. The generated [report](data/REPORT.md) is the current ledger.
 
-The native Gallery's 21 integration tests and the XAML migration/runtime suite's 31 integration
-tests pass at this checkpoint. The offline scanner, glyph and namespace-builder regression
-suite has 33 passing tests. Native control-specific tests, desktop construction, rendering and
-platform comparisons are tracked separately; these counts do not certify all upstream behavior.
+Execution-backed API evidence currently covers **1 verified type, 26 partial types,
+202 verified members and 111 partial members**. The verified type is the complete `Symbol`
+enum. Its 197 numeric values account for 197 of the verified members; the remaining five
+are narrowly tested icon members. These figures do not imply that 202 independently
+implemented control operations or any complete Gallery page have been verified.
+
+| Validation | Current evidence | Boundary |
+| --- | --- | --- |
+| Existing FerroUI API | 3,170 namespaced types, 28,435 declared member names and 458 source registrations preserved against the starting commit | Source declarations; signature/default/behavior compatibility still needs review and runtime tests |
+| Native WinUI controls | 77 tests pass across navigation, NumberBox, RadioButtons, icons, reusable icon sources, AutoSuggestBox and InfoBar | Explicit tested subsets; the control types remain partial |
+| WinUI binding lifecycle | 13 tests pass | Root/named-element and typed-template property paths with explicit host initialization; unsupported expressions remain diagnosed |
+| XAML migration and runtime | 38 integration tests pass; three deferred-resource error-isolation tests pass | Opt-in policy; existing loading and binding defaults remain unchanged |
+| Compiled and interpreted XAML | Five focused tests pass, with one explicitly ignored regeneration task | Real emitted Rust compiles and agrees with interpreted root and typed-template property bindings; standalone DataTemplate document roots are outside the emitter contract |
+| Native Gallery | 33 tests pass | Catalog, native adaptations, source interactions, assets and mocked host-service contracts |
+| Native rendering and desktop | All 126 light-theme pages and five dark-theme pages render; the desktop application compiles | Real Skia/HarfBuzz rendering and original bitmap decoding; no upstream pixel, OS-input or screen-reader equivalence claim |
+| Source comparison | 44 scanner, glyph, namespace-builder and baseline regression tests pass | A source candidate is never automatically promoted to behavioral parity |
+
+The [Gallery validation ledger](../../../samples/WinUIGallery/VALIDATION.md) records exact
+commands, source hashes, assets, rendering evidence and platform limits. Durable native
+control executions are stored in [the execution records](data/executions/); any supplied
+execution record is checked for freshness even when its API entry is only partial.
 
 ## Review and run
 
 - [API design and remaining contract obligations](API-DESIGN.md)
-- [Selection and icon contract details](CONTROL-CONTRACTS.md)
+- [Native control contracts and execution boundaries](CONTROL-CONTRACTS.md)
 - [Native Gallery, run commands and page boundaries](../../../samples/WinUIGallery/README.md)
 - [Source scanner, evidence format and regeneration](../../../scripts/winui-gallery/README.md)
 - [Reviewed API mappings](data/api-mappings.json) and [generated use-site mappings](data/gallery-xaml-map.json)
@@ -102,16 +120,21 @@ platform comparisons are tracked separately; these counts do not certify all ups
 ```sh
 cargo run -p winui-gallery --features desktop -- --page=NumberBox
 cargo test -p winui-gallery --lib
+cargo test -p ferroui-markup-xaml --test winui_bindings
 cargo test -p ferroui-markup-xaml-loader --test winui_migration
+cargo test -p ferroui-markup-xaml-loader --features emitter --test winui_compiled
 cargo test -p ferroui-controls --features testing \
-  --test winui_navigation --test winui_number_box --test winui_icons --test winui_radio_buttons
+  --test winui_navigation --test winui_number_box --test winui_icons --test winui_radio_buttons \
+  --test winui_auto_suggest_box --test winui_icon_sources --test winui_info_bar
 python3 -m unittest discover -s scripts/winui-gallery -p 'test_*.py'
 python3 scripts/winui-gallery/scan.py --check
+python3 scripts/winui-gallery/existing_api.py --check
 python3 scripts/winui-gallery/event_targets.py --check
 python3 scripts/winui-gallery/symbol_map.py --check
 ```
 
-The `WinUI and Gallery parity` workflow runs freshness checks and native contract tests. Its
+The `WinUI and Gallery parity` workflow runs freshness, existing-API, native contract,
+compiled-binding and full-catalog rendering checks. Its
 separate `require_complete` workflow-dispatch option runs
 `python3 scripts/winui-gallery/scan.py --check --require-complete`; this gate intentionally
 fails while API contracts or complete Gallery pages lack current behavioral execution evidence.

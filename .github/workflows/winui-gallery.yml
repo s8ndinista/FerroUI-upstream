@@ -46,6 +46,8 @@ jobs:
         run: python3 -m unittest discover -s scripts/winui-gallery -p 'test_*.py'
       - name: Exact offline comparison
         run: python3 scripts/winui-gallery/scan.py --check
+      - name: Preserve the existing FerroUI declared API surface
+        run: python3 scripts/winui-gallery/existing_api.py --check
       - name: Exact inherited WinUI event targets
         run: python3 scripts/winui-gallery/event_targets.py --check
       - name: Complete Symbol enum and glyph map
@@ -74,12 +76,53 @@ jobs:
       - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
       - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
       - name: Native compatibility control behaviors
-        run: cargo test --locked -p ferroui-controls --features testing --test winui_navigation --test winui_number_box --test winui_icons --test winui_radio_buttons
+        run: >-
+          cargo test --locked -p ferroui-controls --features testing
+          --test winui_navigation --test winui_number_box --test winui_icons
+          --test winui_radio_buttons --test winui_auto_suggest_box
+          --test winui_icon_sources --test winui_info_bar
+      - name: WinUI binding initialization, tracking and source lifetime
+        run: cargo test --locked -p ferroui-markup-xaml --test winui_bindings
       - name: XAML migration and runtime diagnostics
         run: cargo test --locked -p ferroui-markup-xaml-loader --test winui_migration
+      - name: Compiled and interpreted WinUI binding agreement
+        run: cargo test --locked -p ferroui-markup-xaml-loader --features emitter --test winui_compiled
       - name: Deferred resource error isolation
         run: 'cargo test --locked -p ferroui-markup-xaml --lib xaml_error_scope::'
       - name: Gallery controls, interactions and original source catalog
         run: cargo test --locked -p winui-gallery --lib
       - name: Declarative API compilation
         run: cargo check --locked -p ferroui-view
+
+  rendering:
+    name: Native Gallery rendering
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CARGO_INCREMENTAL: 0
+      CARGO_PROFILE_DEV_DEBUG: 0
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - name: Native font dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libfontconfig1-dev libfreetype6-dev fonts-dejavu-core pkg-config
+      - name: Render every catalog page with Skia and HarfBuzz
+        run: >-
+          cargo run --locked -p winui-gallery --features capture
+          --bin winui-gallery-capture -- --all --output-dir=gallery-captures/light
+      - name: Render representative controls in the dark theme
+        run: >-
+          cargo run --locked -p winui-gallery --features capture
+          --bin winui-gallery-capture -- --pages=NumberBox,RadioButton,AutoSuggestBox,InfoBar
+          --dark --query=Button --output-dir=gallery-captures/dark
+      - name: Upload native rendering artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: winui-gallery-rendering
+          path: gallery-captures/
+          if-no-files-found: warn

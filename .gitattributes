@@ -17,3 +17,4 @@ samples/WinUIGallery/catalog_data.rs linguist-generated=true
 samples/WinUIGallery/cat_data.rs linguist-generated=true
 samples/WinUIGallery/assets_data.rs linguist-generated=true
 src/Markup/FerroUI.Markup.Xaml.Loader/winui/event_targets.rs linguist-generated=true
+src/Markup/FerroUI.Markup.Xaml.Loader/tests/fixtures/winui_bindings.generated.rs linguist-generated=true

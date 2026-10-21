@@ -964,17 +964,36 @@
     },
     {
       "behavior": "unverified",
-      "disposition": "rejected",
+      "disposition": "implemented-subset",
       "documents": 106,
       "feature": "markup:x:Bind",
       "implementation": [
-        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
+        "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs",
+        "src/Markup/FerroUI.Markup.Xaml/winui/binding.rs",
+        "src/Markup/FerroUI.Markup.Xaml/winui/bindings.rs",
+        "src/Markup/FerroUI.Markup.Xaml/winui/path_node.rs"
       ],
-      "notes": "Typed root/named-element sources, OneTime default, function expressions and generated lifecycle require a dedicated implementation. Migration emits a diagnostic rather than substituting Binding.",
+      "notes": "Rejected by default. Explicit PropertyPathsWithExplicitLifecycle policy preserves typed root/named-element sources, typed template item scopes, OneTime default, OneWay/TwoWay tracking, TextBox LostFocus writeback and explicit Initialize/Update/StopTracking lifecycle. Functions, events, casts, indexers, phased and deferred loading remain diagnosed. This is not complete compiled-binding parity.",
       "occurrences": 776,
       "tests": [
         {
           "name": "xbind_reports_root_source_semantics_even_with_an_alternative_xaml_prefix",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
+        },
+        {
+          "name": "property_path_xbind_is_a_separate_extension_with_original_location_and_explicit_scope",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
+        },
+        {
+          "name": "migrated_xbind_stays_dormant_until_the_host_initializes_the_document",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
+        },
+        {
+          "name": "migrated_template_xbind_uses_each_deferred_instance_and_typed_item",
+          "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
+        },
+        {
+          "name": "property_path_policy_still_rejects_functions_events_casts_indexers_and_unknown_parameters",
           "path": "src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs"
         }
       ],
@@ -2836,7 +2855,7 @@
       "implementation": [
         "src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs"
       ],
-      "notes": "Type references follow explicit alias mappings; this does not implement x:Bind expression semantics.",
+      "notes": "Type references follow explicit alias mappings. In the opt-in property-path x:Bind policy, each template instance validates its source item against its resolved native data type. Other compiled/deferred expression contracts remain unsupported.",
       "occurrences": 64,
       "tests": [
         {

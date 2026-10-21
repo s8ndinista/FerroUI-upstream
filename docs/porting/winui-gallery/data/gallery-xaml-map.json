@@ -2,8 +2,8 @@
   "meaning": "XAML member spellings joined through WinUI and FerroUI inheritance; candidates are not semantic compatibility.",
   "member_statuses": {
     "gallery-owned-contract": 102,
-    "missing-source-candidate": 588,
-    "source-candidate": 496,
+    "missing-source-candidate": 568,
+    "source-candidate": 516,
     "unresolved-upstream-member": 208
   },
   "members": [
@@ -1920,7 +1920,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "horizontal_alignment",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.HorizontalAlignment",
       "uses": [
@@ -1955,7 +1955,7 @@
       "declared_by": null,
       "rust_member": "keyboard_accelerator_placement_mode",
       "status": "unresolved-upstream-member",
-      "target": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "target_declared_by": null,
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.KeyboardAcceleratorPlacementMode",
       "uses": [
@@ -1970,7 +1970,7 @@
       "declared_by": null,
       "rust_member": "keyboard_accelerators",
       "status": "unresolved-upstream-member",
-      "target": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "target_declared_by": null,
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.KeyboardAccelerators",
       "uses": [
@@ -1985,7 +1985,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "margin",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.Margin",
       "uses": [
@@ -2000,7 +2000,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "max_width",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.MaxWidth",
       "uses": [
@@ -2031,7 +2031,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "min_width",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.MinWidth",
       "uses": [
@@ -2044,10 +2044,10 @@
     {
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.AutoSuggestBox",
-      "rust_member": "watermark",
+      "rust_member": "placeholder_text",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
-      "target_declared_by": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.PlaceholderText",
       "uses": [
         {
@@ -2084,9 +2084,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.AutoSuggestBox",
       "rust_member": "query_icon",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.QueryIcon",
       "uses": [
         {
@@ -2123,9 +2123,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.AutoSuggestBox",
       "rust_member": "query_submitted",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.QuerySubmitted",
       "uses": [
         {
@@ -2142,9 +2142,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.AutoSuggestBox",
       "rust_member": "suggestion_chosen",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.SuggestionChosen",
       "uses": [
         {
@@ -2158,8 +2158,8 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.AutoSuggestBox",
       "rust_member": "text_changed",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
-      "target_declared_by": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
+      "target_declared_by": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.TextChanged",
       "uses": [
         {
@@ -2181,7 +2181,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "vertical_alignment",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.VerticalAlignment",
       "uses": [
@@ -2208,7 +2208,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "width",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.AutoCompleteBox",
+      "target": "FerroUI.Controls.WinUI.AutoSuggestBox",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.AutoSuggestBox.Width",
       "uses": [
@@ -8902,9 +8902,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.FontIconSource",
       "rust_member": "font_family",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.FontIconSource",
+      "target_declared_by": "FerroUI.Controls.WinUI.FontIconSource",
       "upstream": "Microsoft.UI.Xaml.Controls.FontIconSource.FontFamily",
       "uses": [
         {
@@ -8917,9 +8917,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.FontIconSource",
       "rust_member": "glyph",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.FontIconSource",
+      "target_declared_by": "FerroUI.Controls.WinUI.FontIconSource",
       "upstream": "Microsoft.UI.Xaml.Controls.FontIconSource.Glyph",
       "uses": [
         {
@@ -13212,9 +13212,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBar",
       "rust_member": "action_button",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBar",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.ActionButton",
       "uses": [
         {
@@ -13227,9 +13227,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.Control",
       "rust_member": "border_thickness",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.BorderThickness",
       "uses": [
         {
@@ -13242,9 +13242,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBar",
       "rust_member": "content",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.ContentControl",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.Content",
       "uses": [
         {
@@ -13257,9 +13257,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.Control",
       "rust_member": "foreground",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.Foreground",
       "uses": [
         {
@@ -13272,9 +13272,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "horizontal_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.HorizontalAlignment",
       "uses": [
         {
@@ -13287,9 +13287,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBar",
       "rust_member": "icon_source",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBar",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.IconSource",
       "uses": [
         {
@@ -13306,9 +13306,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBar",
       "rust_member": "is_closable",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBar",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.IsClosable",
       "uses": [
         {
@@ -13377,9 +13377,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBar",
       "rust_member": "is_icon_visible",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBar",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.IsIconVisible",
       "uses": [
         {
@@ -13396,9 +13396,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBar",
       "rust_member": "is_open",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBar",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.IsOpen",
       "uses": [
         {
@@ -13467,9 +13467,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "margin",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.Margin",
       "uses": [
         {
@@ -13498,9 +13498,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "max_width",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.MaxWidth",
       "uses": [
         {
@@ -13513,9 +13513,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBar",
       "rust_member": "message",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBar",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.Message",
       "uses": [
         {
@@ -13564,9 +13564,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBar",
       "rust_member": "severity",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBar",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.Severity",
       "uses": [
         {
@@ -13623,9 +13623,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBar",
       "rust_member": "title",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBar",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBar",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.Title",
       "uses": [
         {
@@ -13687,7 +13687,7 @@
       "declared_by": "Microsoft.UI.Xaml.UIElement",
       "rust_member": "visibility",
       "status": "missing-source-candidate",
-      "target": null,
+      "target": "FerroUI.Controls.WinUI.InfoBar",
       "target_declared_by": null,
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBar.Visibility",
       "uses": [
@@ -24459,9 +24459,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.SymbolIconSource",
       "rust_member": "symbol",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.SymbolIconSource",
+      "target_declared_by": "FerroUI.Controls.WinUI.SymbolIconSource",
       "upstream": "Microsoft.UI.Xaml.Controls.SymbolIconSource.Symbol",
       "uses": [
         {
