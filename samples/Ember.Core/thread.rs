@@ -57,6 +57,26 @@ pub struct ThreadRow {
 /// collapsed branches without altering their persisted collapse state. Deleted
 /// and dead parents remain structural placeholders so descendants stay reachable.
 pub fn flatten_thread(snapshot: &ThreadSnapshot, options: &ThreadOptions) -> Vec<ThreadRow> {
+    flatten_thread_with_match(snapshot, options, |item, query| {
+        item.text
+            .as_deref()
+            .unwrap_or_default()
+            .to_lowercase()
+            .contains(query)
+            || item.author().to_lowercase().contains(query)
+    })
+}
+
+/// The same traversal with a host-provided text matcher. The query passed to the
+/// callback is trimmed and lowercased. A rich-content host can match decoded,
+/// visible text without requiring an HTML parser in the reader data layer.
+/// Deleted/hidden-dead items never reach the matcher, and returned items retain
+/// their original content for rendering.
+pub fn flatten_thread_with_match(
+    snapshot: &ThreadSnapshot,
+    options: &ThreadOptions,
+    mut matches: impl FnMut(&HnItem, &str) -> bool,
+) -> Vec<ThreadRow> {
     let query = options.query.trim().to_lowercase();
     let mut rows = Vec::new();
     let mut seen = BTreeSet::from([snapshot.root.id]);
@@ -73,15 +93,7 @@ pub fn flatten_thread(snapshot: &ThreadSnapshot, options: &ThreadOptions) -> Vec
         let collapsed = options.collapsed.contains(&id);
         let matches_query = !query.is_empty()
             && item.as_ref().is_some_and(|item| {
-                (!item.dead || options.show_dead)
-                    && !item.deleted
-                    && (item
-                        .text
-                        .as_deref()
-                        .unwrap_or_default()
-                        .to_lowercase()
-                        .contains(&query)
-                        || item.author().to_lowercase().contains(&query))
+                (!item.dead || options.show_dead) && !item.deleted && matches(item, &query)
             });
         let children = item
             .as_ref()

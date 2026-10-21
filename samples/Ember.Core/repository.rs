@@ -1,9 +1,10 @@
 use crate::*;
 use futures_util::{
-    future::{poll_fn, WeakShared},
-    stream, FutureExt, StreamExt,
+    FutureExt, StreamExt,
+    future::{WeakShared, poll_fn},
+    stream,
 };
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use std::{
     cell::{Cell, RefCell},
     collections::{BTreeMap, BTreeSet, HashMap, VecDeque},
@@ -15,6 +16,10 @@ use std::{
 };
 
 pub type BoxFuture<'a, T> = Pin<Box<dyn Future<Output = T> + 'a>>;
+
+/// Combined search-page/profile cache budget. Feed lists and local reading state
+/// are separate, and saved/downloaded item pinning does not use this budget.
+pub const METADATA_CACHE_LIMIT: usize = 256;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum ReaderError {
@@ -340,12 +345,20 @@ impl Repository {
                 };
                 let json = serde_json::to_string(&record)
                     .map_err(|e| ReaderError::InvalidData(e.to_string()))?;
-                let warning = self
-                    .store
-                    .put(key, &json)
-                    .await
+                let cached = self.store.put(key, &json).await;
+                let cleanup = if cached.is_ok()
+                    && (key.starts_with("cache:user:") || key.starts_with("cache:search:"))
+                {
+                    self.prune_metadata_cache().await.err()
+                } else {
+                    None
+                };
+                let warning = cached
                     .err()
                     .map(|e| format!("Loaded online; could not cache: {e}"))
+                    .or_else(|| {
+                        cleanup.map(|e| format!("Loaded online; cache cleanup failed: {e}"))
+                    })
                     .or(storage_warning);
                 Ok(Loaded {
                     value,
@@ -663,8 +676,8 @@ impl Repository {
         items
     }
 
-    /// Evicts oldest unpinned item payloads; reading state and saved/downloaded
-    /// content survive. Returns the number of removed records.
+    /// Evicts oldest unpinned items and excess search/profile records. Reading
+    /// state, feed lists and saved/downloaded content survive. Returns removals.
     pub async fn prune_cache(&self, state: &ReaderState) -> Result<usize, ReaderError> {
         let records = self.store.scan_prefix("cache:item:").await?;
         let mut pinned: BTreeSet<_> = state.saved_ids().into_iter().collect();
@@ -678,10 +691,7 @@ impl Repository {
             if id.is_some_and(|id| pinned.contains(&id)) {
                 continue;
             }
-            let fetched_at = serde_json::from_str::<serde_json::Value>(json)
-                .ok()
-                .and_then(|v| v.get("fetched_at").and_then(|v| v.as_u64()))
-                .unwrap_or(0);
+            let fetched_at = cache_record_time(json);
             candidates.push((fetched_at, key));
         }
         candidates.sort();
@@ -693,7 +703,27 @@ impl Repository {
             self.store.remove(key).await?;
             removed += 1;
         }
-        Ok(removed)
+        Ok(removed + self.prune_metadata_cache().await?)
+    }
+
+    async fn prune_metadata_cache(&self) -> Result<usize, ReaderError> {
+        // Scan only these two small namespaces, not thousands of item payloads.
+        // The six feed lists and versioned reader state cannot be evicted here.
+        let mut records = self.store.scan_prefix("cache:user:").await?;
+        records.extend(self.store.scan_prefix("cache:search:").await?);
+        let remove = records.len().saturating_sub(METADATA_CACHE_LIMIT);
+        if remove == 0 {
+            return Ok(0);
+        }
+        let mut candidates: Vec<_> = records
+            .iter()
+            .map(|(key, json)| (cache_record_time(json), key))
+            .collect();
+        candidates.sort();
+        for (_, key) in candidates.into_iter().take(remove) {
+            self.store.remove(key).await?;
+        }
+        Ok(remove)
     }
     pub async fn cache_stats(&self) -> Result<CacheStats, ReaderError> {
         let entries = self.store.scan_prefix("cache:").await?;
@@ -721,6 +751,13 @@ pub struct CacheStats {
     pub records: usize,
     pub items: usize,
     pub bytes: usize,
+}
+
+fn cache_record_time(json: &str) -> u64 {
+    serde_json::from_str::<serde_json::Value>(json)
+        .ok()
+        .and_then(|value| value.get("fetched_at").and_then(|value| value.as_u64()))
+        .unwrap_or(0)
 }
 
 fn combine_source(current: &mut DataSource, other: DataSource) {

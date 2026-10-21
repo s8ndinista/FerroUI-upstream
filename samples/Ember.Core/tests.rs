@@ -157,18 +157,20 @@ fn null_item_is_a_negative_cache_entry_not_transport_failure() {
     block_on(async {
         let (repo, http, _) = repository();
         http.item(1, "null");
-        assert!(repo
-            .load_item(1, 100, FetchMode::CacheFirst)
-            .await
-            .unwrap()
-            .value
-            .is_none());
-        assert!(repo
-            .load_item(1, 101, FetchMode::Offline)
-            .await
-            .unwrap()
-            .value
-            .is_none());
+        assert!(
+            repo.load_item(1, 100, FetchMode::CacheFirst)
+                .await
+                .unwrap()
+                .value
+                .is_none()
+        );
+        assert!(
+            repo.load_item(1, 101, FetchMode::Offline)
+                .await
+                .unwrap()
+                .value
+                .is_none()
+        );
         assert_eq!(http.calls.get(), 1);
     });
 }
@@ -287,6 +289,61 @@ fn collapse_and_search_keep_ancestor_context_without_mutating_state() {
 }
 
 #[test]
+fn custom_thread_matching_keeps_context_and_respects_visibility_guards() {
+    let mut snapshot = ThreadSnapshot {
+        root: item(1, &[2, 3, 5]),
+        ..ThreadSnapshot::default()
+    };
+    snapshot.items.insert(2, item(2, &[4]));
+    snapshot.items.insert(
+        4,
+        HnItem {
+            id: 4,
+            text: Some("<p>Don&#x27;t <b>lose</b> this text.</p>".into()),
+            ..HnItem::default()
+        },
+    );
+    snapshot.items.insert(
+        3,
+        HnItem {
+            deleted: true,
+            ..item(3, &[])
+        },
+    );
+    snapshot.items.insert(
+        5,
+        HnItem {
+            dead: true,
+            ..item(5, &[])
+        },
+    );
+    let mut options = ThreadOptions {
+        query: "  DON'T LOSE  ".into(),
+        ..ThreadOptions::default()
+    };
+    options.collapsed.insert(2);
+    let mut searched = Vec::new();
+    let rows = flatten_thread_with_match(&snapshot, &options, |item, query| {
+        searched.push(item.id);
+        assert_eq!(query, "don't lose");
+        item.id == 4 && "don't lose this text.".contains(query)
+    });
+    assert_eq!(searched, [2, 4]);
+    assert_eq!(rows.iter().map(|row| row.id).collect::<Vec<_>>(), [2, 4]);
+    assert!(!rows[0].matches_query);
+    assert!(rows[1].matches_query);
+    assert_eq!(rows[1].item.as_ref().unwrap().text, snapshot.items[&4].text);
+    assert!(options.collapsed.contains(&2));
+    options.show_dead = true;
+    searched.clear();
+    flatten_thread_with_match(&snapshot, &options, |item, _| {
+        searched.push(item.id);
+        true
+    });
+    assert_eq!(searched, [2, 4, 5]);
+}
+
+#[test]
 fn unsafe_navigation_urls_are_rejected() {
     for unsafe_url in [
         "javascript:alert(1)",
@@ -317,19 +374,23 @@ fn search_queries_encode_data_and_validate_filters() {
     assert_eq!(pairs["query"], "Rust & C# + λ");
     assert_eq!(pairs["tags"], "story,author_Case_Sensitive");
     assert!(pairs["numericFilters"].contains("points>=100"));
-    assert!(SearchQuery {
-        author: Some("x,(comment)".into()),
-        ..query.clone()
-    }
-    .url()
-    .is_err());
-    assert!(SearchQuery {
-        since: Some(4),
-        until: Some(3),
-        ..query
-    }
-    .url()
-    .is_err());
+    assert!(
+        SearchQuery {
+            author: Some("x,(comment)".into()),
+            ..query.clone()
+        }
+        .url()
+        .is_err()
+    );
+    assert!(
+        SearchQuery {
+            since: Some(4),
+            until: Some(3),
+            ..query
+        }
+        .url()
+        .is_err()
+    );
 }
 
 #[test]
@@ -406,6 +467,64 @@ fn cache_eviction_preserves_saved_and_downloaded_payloads_and_state() {
         assert_eq!(repo.cache_stats().await.unwrap().items, 3);
         repo.clear_cache().await.unwrap();
         assert!(repo.load_state().await.unwrap().is_saved(1));
+    });
+}
+
+#[test]
+fn metadata_cache_is_bounded_by_age_without_evicting_feeds_or_local_state() {
+    block_on(async {
+        let (repo, http, store) = repository();
+        let mut state = ReaderState::default();
+        state.toggle_saved(700, 1);
+        repo.save_state(&state).await.unwrap();
+        http.item(700, r#"{"id":700}"#);
+        repo.load_item(700, 0, FetchMode::Refresh).await.unwrap();
+        for feed in FeedKind::ALL {
+            store
+                .put(
+                    &format!("cache:feed:{}", feed.endpoint()),
+                    r#"{"fetched_at":0,"value":[700]}"#,
+                )
+                .await
+                .unwrap();
+        }
+        let mut keys = Vec::new();
+        for age in 0..(METADATA_CACHE_LIMIT + 4) {
+            let kind = if age % 2 == 0 { "user" } else { "search" };
+            let key = format!("cache:{kind}:record-{:03}", 1000 - age);
+            let json = serde_json::json!({"fetched_at":age, "value":null}).to_string();
+            store.put(&key, &json).await.unwrap();
+            keys.push(key);
+        }
+        assert_eq!(repo.prune_cache(&state).await.unwrap(), 4);
+        for (index, key) in keys.iter().enumerate() {
+            assert_eq!(store.get(key).await.unwrap().is_some(), index >= 4);
+        }
+        assert_eq!(
+            repo.cache_stats().await.unwrap().records,
+            METADATA_CACHE_LIMIT + 7
+        );
+        for feed in FeedKind::ALL {
+            assert!(
+                repo.load_feed(feed, 0, 1, 1, FetchMode::Offline)
+                    .await
+                    .is_ok()
+            );
+        }
+        assert!(repo.load_state().await.unwrap().is_saved(700));
+
+        // A standalone profile load enforces the same budget without requiring
+        // a later feed refresh or a UI-triggered pruning pass.
+        http.response(&format!("{HN_API}/user/recent.json"), r#"{"id":"recent"}"#);
+        repo.load_user("recent", 1000, FetchMode::Refresh)
+            .await
+            .unwrap();
+        assert!(store.get(&keys[4]).await.unwrap().is_none());
+        assert!(store.get("cache:user:recent").await.unwrap().is_some());
+        assert_eq!(
+            repo.cache_stats().await.unwrap().records,
+            METADATA_CACHE_LIMIT + 7
+        );
     });
 }
 
