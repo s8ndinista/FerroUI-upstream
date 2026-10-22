@@ -12,6 +12,7 @@ members = [
     "src/FerroUI.Base",
     "src/FerroUI.Controls",
     "src/FerroUI.Edit.Core",
+    "src/FerroUI.TextMate",
     "src/FerroUI.View",
     "src/FerroUI.View.Macros",
     "src/FerroUI.Controls.ColorPicker",
@@ -157,6 +158,7 @@ ferroui-reactiveui-controls = { version = "=0.4.0", path = "src/FerroUI.Reactive
 ferroui-base = { version = "=0.4.0", path = "src/FerroUI.Base" }
 ferroui-controls = { version = "=0.4.0", path = "src/FerroUI.Controls" }
 ferroui-edit-core = { version = "=0.4.0", path = "src/FerroUI.Edit.Core" }
+ferroui-textmate = { version = "=0.4.0", path = "src/FerroUI.TextMate" }
 ferroui-view = { version = "=0.4.0", path = "src/FerroUI.View" }
 ferroui-view-macros = { version = "=0.4.0", path = "src/FerroUI.View.Macros" }
 ferroui-controls-color-picker = { version = "=0.4.0", path = "src/FerroUI.Controls.ColorPicker" }

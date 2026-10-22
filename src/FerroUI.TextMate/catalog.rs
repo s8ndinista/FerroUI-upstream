@@ -1,0 +1,307 @@
+use crate::{read_json, Error, Registry, Result, Theme};
+use serde_json::Value;
+use std::collections::BTreeMap;
+
+include!(concat!(env!("OUT_DIR"), "/resources.rs"));
+
+#[derive(Clone, Debug)]
+pub struct LanguageConfiguration {
+    pub raw: Value,
+}
+impl LanguageConfiguration {
+    pub fn from_json(source: &str) -> Result<Self> {
+        Ok(Self {
+            raw: read_json(source)?,
+        })
+    }
+    pub fn line_comment(&self) -> Option<&str> {
+        self.raw.get("comments")?.get("lineComment")?.as_str()
+    }
+    pub fn block_comment(&self) -> Option<(&str, &str)> {
+        let pair = self.raw.get("comments")?.get("blockComment")?.as_array()?;
+        Some((pair.first()?.as_str()?, pair.get(1)?.as_str()?))
+    }
+    pub fn brackets(&self) -> Vec<(&str, &str)> {
+        self.raw
+            .get("brackets")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(|entry| Some((entry.get(0)?.as_str()?, entry.get(1)?.as_str()?)))
+            .collect()
+    }
+    pub fn word_pattern(&self) -> Option<&str> {
+        let value = self.raw.get("wordPattern")?;
+        value.as_str().or_else(|| value.get("pattern")?.as_str())
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Language {
+    pub id: String,
+    pub aliases: Vec<String>,
+    pub extensions: Vec<String>,
+    pub filenames: Vec<String>,
+    pub first_line: Option<String>,
+    pub scope_name: Option<String>,
+    pub configuration: Option<LanguageConfiguration>,
+    /// Snippet definitions retain prefix, body, description, and scope fields.
+    pub snippets: BTreeMap<String, Value>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ThemeName {
+    Abyss,
+    Dark,
+    DarkPlus,
+    DimmedMonokai,
+    KimbieDark,
+    Light,
+    LightPlus,
+    OneDark,
+    Monokai,
+    QuietLight,
+    Red,
+    SolarizedDark,
+    SolarizedLight,
+    TomorrowNightBlue,
+    HighContrastDark,
+    HighContrastLight,
+    Dracula,
+    AtomOneDark,
+    AtomOneLight,
+    VisualStudioDark,
+    VisualStudioLight,
+}
+
+impl ThemeName {
+    pub const ALL: &'static [Self] = &[
+        Self::Abyss,
+        Self::Dark,
+        Self::DarkPlus,
+        Self::DimmedMonokai,
+        Self::KimbieDark,
+        Self::Light,
+        Self::LightPlus,
+        Self::OneDark,
+        Self::Monokai,
+        Self::QuietLight,
+        Self::Red,
+        Self::SolarizedDark,
+        Self::SolarizedLight,
+        Self::TomorrowNightBlue,
+        Self::HighContrastDark,
+        Self::HighContrastLight,
+        Self::Dracula,
+        Self::AtomOneDark,
+        Self::AtomOneLight,
+        Self::VisualStudioDark,
+        Self::VisualStudioLight,
+    ];
+    pub fn resource_name(self) -> &'static str {
+        match self {
+            Self::Abyss => "abyss-color-theme.json",
+            Self::Dark => "dark_vs.json",
+            Self::DarkPlus => "dark_plus.json",
+            Self::DimmedMonokai => "dimmed-monokai-color-theme.json",
+            Self::KimbieDark => "kimbie-dark-color-theme.json",
+            Self::Light => "light_vs.json",
+            Self::LightPlus => "light_plus.json",
+            Self::OneDark => "onedark-color-theme.json",
+            Self::Monokai => "monokai-color-theme.json",
+            Self::QuietLight => "quietlight-color-theme.json",
+            Self::Red => "Red-color-theme.json",
+            Self::SolarizedDark => "solarized-dark-color-theme.json",
+            Self::SolarizedLight => "solarized-light-color-theme.json",
+            Self::TomorrowNightBlue => "tomorrow-night-blue-color-theme.json",
+            Self::HighContrastDark => "hc_black.json",
+            Self::HighContrastLight => "hc_light.json",
+            Self::Dracula => "dracula-color-theme.json",
+            Self::AtomOneDark => "atom-one-dark-color-theme.json",
+            Self::AtomOneLight => "atom-one-light-color-theme.json",
+            Self::VisualStudioDark => "visual-studio-dark-theme.json",
+            Self::VisualStudioLight => "visual-studio-light-theme.json",
+        }
+    }
+}
+
+/// Embedded grammar packages, themes, language configuration and snippets.
+pub struct BundledCatalog {
+    languages: Vec<Language>,
+    grammar_paths: Vec<String>,
+}
+impl BundledCatalog {
+    pub fn new() -> Result<Self> {
+        let mut languages = Vec::new();
+        let mut grammar_paths = Vec::new();
+        for (path, source) in RESOURCES {
+            if !path.starts_with("grammars/") || !path.ends_with("/package.json") {
+                continue;
+            }
+            let package = read_json(source)?;
+            let Some(contributes) = package.get("contributes") else {
+                continue;
+            };
+            let directory = path.rsplit_once('/').map_or("", |(p, _)| p);
+            let grammars = contributes.get("grammars").and_then(Value::as_array);
+            if let Some(grammars) = grammars {
+                for grammar in grammars {
+                    if let Some(path) = grammar.get("path").and_then(Value::as_str) {
+                        grammar_paths.push(normalize(&format!("{directory}/{path}")));
+                    }
+                }
+            }
+            if let Some(entries) = contributes.get("languages").and_then(Value::as_array) {
+                for entry in entries {
+                    let Some(id) = entry.get("id").and_then(Value::as_str) else {
+                        continue;
+                    };
+                    let scope_name = grammars
+                        .into_iter()
+                        .flatten()
+                        .find(|g| g.get("language").and_then(Value::as_str) == Some(id))
+                        .and_then(|g| g.get("scopeName"))
+                        .and_then(Value::as_str)
+                        .map(str::to_owned);
+                    let configuration = entry
+                        .get("configuration")
+                        .and_then(Value::as_str)
+                        .map(|name| {
+                            Self::resource(&format!("{directory}/{name}"))
+                                .and_then(LanguageConfiguration::from_json)
+                        })
+                        .transpose()?;
+                    let mut snippets = BTreeMap::new();
+                    for snippet in contributes
+                        .get("snippets")
+                        .and_then(Value::as_array)
+                        .into_iter()
+                        .flatten()
+                    {
+                        if snippet.get("language").and_then(Value::as_str) != Some(id) {
+                            continue;
+                        }
+                        if let Some(path) = snippet.get("path").and_then(Value::as_str) {
+                            if let Some(entries) =
+                                read_json(Self::resource(&format!("{directory}/{path}"))?)?
+                                    .as_object()
+                            {
+                                snippets
+                                    .extend(entries.iter().map(|(k, v)| (k.clone(), v.clone())));
+                            }
+                        }
+                    }
+                    languages.push(Language {
+                        id: id.into(),
+                        aliases: strings(entry.get("aliases")),
+                        extensions: strings(entry.get("extensions")),
+                        filenames: strings(entry.get("filenames")),
+                        first_line: entry
+                            .get("firstLine")
+                            .and_then(Value::as_str)
+                            .map(str::to_owned),
+                        scope_name,
+                        configuration,
+                        snippets,
+                    });
+                }
+            }
+        }
+        languages.sort_by(|a, b| a.id.cmp(&b.id));
+        grammar_paths.sort();
+        grammar_paths.dedup();
+        Ok(Self {
+            languages,
+            grammar_paths,
+        })
+    }
+    pub fn languages(&self) -> &[Language] {
+        &self.languages
+    }
+    pub fn language_by_id(&self, id: &str) -> Option<&Language> {
+        self.languages
+            .iter()
+            .find(|l| l.id.eq_ignore_ascii_case(id))
+    }
+    pub fn language_by_extension(&self, extension: &str) -> Option<&Language> {
+        let extension = if extension.starts_with('.') {
+            extension.to_owned()
+        } else {
+            format!(".{extension}")
+        };
+        self.languages.iter().find(|l| {
+            l.extensions
+                .iter()
+                .any(|e| e.eq_ignore_ascii_case(&extension))
+        })
+    }
+    pub fn language_by_filename(&self, filename: &str) -> Option<&Language> {
+        let name = filename.rsplit(['/', '\\']).next().unwrap_or(filename);
+        self.languages
+            .iter()
+            .find(|l| l.filenames.iter().any(|f| f.eq_ignore_ascii_case(name)))
+            .or_else(|| {
+                self.languages
+                    .iter()
+                    .filter_map(|l| {
+                        l.extensions
+                            .iter()
+                            .filter(|extension| {
+                                name.to_lowercase().ends_with(&extension.to_lowercase())
+                            })
+                            .map(|extension| (extension.len(), l))
+                            .max_by_key(|(length, _)| *length)
+                    })
+                    .max_by_key(|(length, _)| *length)
+                    .map(|(_, l)| l)
+            })
+    }
+    pub fn scope_by_extension(&self, extension: &str) -> Option<&str> {
+        self.language_by_extension(extension)?.scope_name.as_deref()
+    }
+    pub fn registry(&self) -> Result<Registry> {
+        let mut registry = Registry::new();
+        for path in &self.grammar_paths {
+            registry.add_grammar_json(Self::resource(path)?)?;
+        }
+        Ok(registry)
+    }
+    pub fn theme(&self, theme: ThemeName) -> Result<Theme> {
+        let source = Self::resource(&format!("themes/{}", theme.resource_name()))?;
+        Theme::from_json_with_resolver(source, &|name| {
+            Ok(Self::resource(&format!("themes/{name}"))?.into())
+        })
+    }
+    pub fn resource(path: &str) -> Result<&'static str> {
+        let path = normalize(path);
+        RESOURCES
+            .binary_search_by_key(&path.as_str(), |(name, _)| *name)
+            .map(|index| RESOURCES[index].1)
+            .map_err(|_| Error::MissingResource(path))
+    }
+    pub fn resource_names() -> impl Iterator<Item = &'static str> {
+        RESOURCES.iter().map(|(name, _)| *name)
+    }
+}
+fn normalize(path: &str) -> String {
+    let mut parts = Vec::new();
+    for part in path.split('/') {
+        match part {
+            "." | "" => {}
+            ".." => {
+                parts.pop();
+            }
+            _ => parts.push(part),
+        }
+    }
+    parts.join("/")
+}
+fn strings(value: Option<&Value>) -> Vec<String> {
+    value
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+        .filter_map(Value::as_str)
+        .map(str::to_owned)
+        .collect()
+}

@@ -1,0 +1,44 @@
+{
+  "textmate_sharp": {
+    "repository": "https://github.com/danipen/TextMateSharp",
+    "revision": "e0db45be30278c0f3f80302c31f498c8f8f1c4f2"
+  },
+  "bundled_resources": {
+    "packages": 51,
+    "language_contributions": 72,
+    "grammar_contributions": 79,
+    "theme_files": 21,
+    "declared_source_components": 58,
+    "component_manifest": "asset-licenses.json"
+  },
+  "native": {
+    "rust_binding": "onig",
+    "binding_version": "6.5.3",
+    "onig_sys_version": "69.9.3",
+    "oniguruma_version": "6.9.10"
+  },
+  "browser": {
+    "package": "vscode-oniguruma",
+    "version": "2.0.1",
+    "repository": "https://github.com/microsoft/vscode-oniguruma",
+    "oniguruma_version": "6.9.5_rev1",
+    "files": {
+      "browser/vendor/oniguruma.js": "sha256:d49f2bfcbffca8732aac82fb84db5aab2521bcf0acb612f27454dc75cab85b82",
+      "browser/vendor/onig.wasm": "sha256:76ebc1f0d87b2e7449a45ff3cd1a1546a9f05f54bdac44ee03e8a2b8348897be",
+      "browser/vendor/LICENSE.txt": "sha256:ddde8aba8fe72b4830e27901fc78733eb6db7b6c653161075de213a6adeda3fd",
+      "browser/vendor/NOTICES.txt": "sha256:615d94d89eacc046241518c247f6650a5df80d1adf4b284a756f500867620b35"
+    }
+  },
+  "conformance_oracle": {
+    "vscode-textmate": "9.3.2",
+    "vscode-oniguruma": "2.0.1",
+    "cases": 11,
+    "lines": 74,
+    "fixture": "tests/fixtures/upstream-tokens.json"
+  },
+  "portable_fallback": {
+    "package": "fancy-regex",
+    "version": "0.19.2",
+    "full_oniguruma_compatibility": false
+  }
+}
