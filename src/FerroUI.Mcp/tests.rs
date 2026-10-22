@@ -141,6 +141,40 @@ fn http_authentication_origin_sessions_and_protocol() {
     );
 }
 #[test]
+fn oversized_and_stalled_bodies_neither_allocate_nor_block_other_requests() {
+    let _scope = Dispatcher::unit_test_scope();
+    let server = serve(options()).unwrap();
+    let address = server.address.unwrap();
+    let token = server.token.as_ref().unwrap();
+    // A length beyond the message limit is refused from the head alone, before authentication.
+    let mut huge = TcpStream::connect(address).unwrap();
+    huge.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+    write!(
+        huge,
+        "POST /mcp HTTP/1.1\r\nHost: {address}\r\nContent-Length: 100000000000000\r\n\r\n"
+    )
+    .unwrap();
+    let mut response = String::new();
+    huge.read_to_string(&mut response).unwrap();
+    assert!(response.starts_with("HTTP/1.1 413"), "{response}");
+    // A body that never arrives holds only its own connection.
+    let mut stalled = TcpStream::connect(address).unwrap();
+    write!(
+        stalled,
+        "POST /mcp HTTP/1.1\r\nHost: {address}\r\nContent-Length: 2000\r\n\r\n"
+    )
+    .unwrap();
+    let started = Instant::now();
+    assert_eq!(request(address, "POST", "", "{}").0, 401);
+    let init=json!({"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":protocol::VERSION,"capabilities":{},"clientInfo":{"name":"test","version":"1"}}}).to_string();
+    assert_eq!(
+        request(address, "POST", &headers(token, None), &init).0,
+        200
+    );
+    assert!(started.elapsed() < Duration::from_secs(5));
+    drop(stalled);
+}
+#[test]
 fn rejects_non_loopback_and_invalid_configuration() {
     let _scope = Dispatcher::unit_test_scope();
     assert!(serve(Options {

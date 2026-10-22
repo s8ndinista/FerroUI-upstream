@@ -115,11 +115,8 @@ pub fn serve_with_inspector(
                     "MCP HTTP must bind to loopback",
                 ));
             }
-            let server = tiny_http::Server::http(address).map_err(io::Error::other)?;
-            let address = server
-                .server_addr()
-                .to_ip()
-                .ok_or_else(|| io::Error::other("No TCP address"))?;
+            let server = std::net::TcpListener::bind(address)?;
+            let address = server.local_addr()?;
             let mut bytes = [0u8; 32];
             getrandom::fill(&mut bytes).map_err(|e| io::Error::other(e.to_string()))?;
             let token = bytes.iter().map(|b| format!("{b:02x}")).collect::<String>();
@@ -248,16 +245,30 @@ impl Client {
 }
 
 /// Reserve stdout for MCP before application startup. Ordinary stdout is redirected to stderr
-/// for the rest of the process, including native/library output. Pass the returned file in Options.
+/// for the rest of the process, including native/library output on Unix (on Windows, output
+/// through the process's standard handle). Pass the returned file in Options.
 pub fn reserve_stdout() -> io::Result<std::fs::File> {
     use std::io::Write;
     std::io::stdout().flush()?;
-    filedescriptor::FileDescriptor::redirect_stdio(
+    let original = filedescriptor::FileDescriptor::redirect_stdio(
         &std::io::stderr(),
         filedescriptor::StdioDescriptor::Stdout,
     )
-    .and_then(|fd| fd.as_file())
-    .map_err(io::Error::other)
+    .map_err(io::Error::other)?;
+    // The original stdout changes owner instead of being duplicated: dropping it would close the
+    // handle that the C runtime of Windows still holds as its descriptor 1.
+    #[cfg(unix)]
+    {
+        use std::os::fd::{FromRawFd, IntoRawFd};
+        // SAFETY: `into_raw_fd` hands over the descriptor, which nothing else owns.
+        Ok(unsafe { std::fs::File::from_raw_fd(original.into_raw_fd()) })
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::io::{FromRawHandle, IntoRawHandle};
+        // SAFETY: `into_raw_handle` hands over the handle, which nothing else owns.
+        Ok(unsafe { std::fs::File::from_raw_handle(original.into_raw_handle()) })
+    }
 }
 
 #[cfg(test)]

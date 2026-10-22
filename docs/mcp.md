@@ -92,8 +92,10 @@ let mcp = ferroui_mcp::serve(ferroui_mcp::Options {
 })?;
 ```
 
-Reserving stdout redirects ordinary stdout (including native/library output) to stderr for the
-rest of the process and returns a private protocol writer. Without a supplied writer, `serve`
+Reserving stdout redirects ordinary stdout to stderr for the rest of the process and returns a
+private protocol writer. On Unix this includes native/library output (descriptor 1 is
+redirected); on Windows it covers output through the process's standard handle, such as Rust's
+`println!`, while the C runtime's descriptor 1 keeps the original handle. Without a supplied writer, `serve`
 reserves stdout when called. Start only one stdio server per process. Stdio EOF stops requests
 (and closes ControlCatalog in stdio mode);
 dropping the handle stops HTTP acceptance, invalidates queued operations, and releases inspection
@@ -148,7 +150,9 @@ thread-affine and the dispatcher already owns scheduling. The protocol version i
 with `2025-06-18` and `2025-03-26` accepted. Send `initialize`, then
 `notifications/initialized`, before tool/resource requests. HTTP initialization returns
 `Mcp-Session-Id`; include it and `MCP-Protocol-Version` on subsequent POST/GET/DELETE requests.
-Sessions expire after 30 minutes without HTTP activity. DELETE ends a session. GET streams log
+Sessions expire after 30 minutes without HTTP activity. Each HTTP connection carries one request
+(`Connection: close`); bodies need a `Content-Length` of at most 1 MiB, and a connection that
+stalls for 10 seconds is closed. DELETE ends a session. GET streams log
 notifications; POST returns JSON responses or 202 for accepted notifications. The service does
 not advertise resource subscriptions, resumable SSE, prompts, sampling, or tasks.
 

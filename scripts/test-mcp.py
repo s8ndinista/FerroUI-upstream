@@ -172,7 +172,8 @@ def exercise(binary, http=False, writable=True):
 
 
 if __name__ == "__main__":
-    binary = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else "target/debug/control-catalog-desktop")
+    target = os.environ.get("CARGO_TARGET_DIR", "target")
+    binary = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(target, "debug", "control-catalog-desktop"))
     exercise(binary)
     exercise(binary, http=True)
     exercise(binary, writable=False)

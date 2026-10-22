@@ -5,7 +5,8 @@ use crate::{
 use serde_json::Value;
 use std::{
     collections::HashMap,
-    io::{self, BufRead, Read, Write},
+    io::{self, BufRead, BufReader, Read, Write},
+    net::{TcpListener, TcpStream},
     sync::{
         atomic::{AtomicUsize, Ordering},
         Arc, Mutex,
@@ -105,87 +106,252 @@ pub fn stdio(client: Client, protocol_output: std::fs::File) -> io::Result<()> {
     client.stop.store(true, Ordering::Release);
     Ok(())
 }
-fn header<'a>(request: &'a tiny_http::Request, name: &str) -> Option<&'a str> {
-    request
-        .headers()
-        .iter()
-        .find(|h| h.field.as_str().as_str().eq_ignore_ascii_case(name))
-        .map(|h| h.value.as_str())
+// HTTP/1.1 on the standard library: one request per connection (`Connection: close`). The head is
+// read with a size limit and the body only after its Content-Length has been checked against the
+// message limit, on a worker thread with read timeouts, so no client can stall the accept loop or
+// make the server allocate more than a message.
+const MAX_HEAD: u64 = 16 * 1024;
+const MAX_SESSIONS: usize = 64;
+const SESSION_IDLE: Duration = Duration::from_secs(1800);
+const IO_TIMEOUT: Duration = Duration::from_secs(10);
+
+struct Request {
+    method: String,
+    target: String,
+    headers: Vec<(String, String)>,
+    body: Vec<u8>,
 }
-fn respond(request: tiny_http::Request, status: u16, body: String) {
-    let response = tiny_http::Response::from_string(body)
-        .with_status_code(status)
-        .with_header(tiny_http::Header::from_bytes("Content-Type", "application/json").unwrap());
-    let _ = request.respond(response);
+impl Request {
+    fn header(&self, name: &str) -> Option<&str> {
+        self.headers
+            .iter()
+            .find(|(field, _)| field.eq_ignore_ascii_case(name))
+            .map(|(_, value)| value.as_str())
+    }
+}
+/// A request that cannot be read is answered with the status of the error, if any (an I/O failure
+/// has none: the connection is closed).
+fn read_request(stream: &mut TcpStream) -> Result<Request, Option<u16>> {
+    let mut reader = BufReader::new(stream.try_clone().map_err(|_| None)?);
+    let mut head = (&mut reader).take(MAX_HEAD);
+    let mut line = Vec::new();
+    let mut read_line = |line: &mut Vec<u8>| -> Result<String, Option<u16>> {
+        line.clear();
+        match head.read_until(b'\n', line) {
+            Ok(_) if line.ends_with(b"\n") => String::from_utf8(std::mem::take(line))
+                .map(|text| text.trim_end_matches(['\r', '\n']).to_owned())
+                .map_err(|_| Some(400)),
+            // The limit ended the head before its end.
+            Ok(n) if n > 0 => Err(Some(431)),
+            _ => Err(None),
+        }
+    };
+    let request_line = read_line(&mut line)?;
+    let mut parts = request_line.split(' ');
+    let (Some(method), Some(target), Some(version), None) =
+        (parts.next(), parts.next(), parts.next(), parts.next())
+    else {
+        return Err(Some(400));
+    };
+    if version != "HTTP/1.1" && version != "HTTP/1.0" {
+        return Err(Some(400));
+    }
+    let mut headers = Vec::new();
+    loop {
+        let field = read_line(&mut line)?;
+        if field.is_empty() {
+            break;
+        }
+        let Some((name, value)) = field.split_once(':') else {
+            return Err(Some(400));
+        };
+        headers.push((name.trim().to_owned(), value.trim().to_owned()));
+    }
+    let mut request = Request {
+        method: method.to_owned(),
+        target: target.to_owned(),
+        headers,
+        body: Vec::new(),
+    };
+    if request.header("Transfer-Encoding").is_some() {
+        return Err(Some(411));
+    }
+    let length = match request.header("Content-Length") {
+        None => 0,
+        Some(value) => value.parse::<usize>().map_err(|_| Some(400))?,
+    };
+    if length > MAX_MESSAGE {
+        return Err(Some(413));
+    }
+    if length > 0 {
+        if request
+            .header("Expect")
+            .is_some_and(|e| e.eq_ignore_ascii_case("100-continue"))
+        {
+            let _ = stream.write_all(b"HTTP/1.1 100 Continue\r\n\r\n");
+        }
+        request.body = vec![0; length];
+        reader.read_exact(&mut request.body).map_err(|_| None)?;
+    }
+    Ok(request)
+}
+fn reason(status: u16) -> &'static str {
+    match status {
+        200 => "OK",
+        202 => "Accepted",
+        400 => "Bad Request",
+        401 => "Unauthorized",
+        403 => "Forbidden",
+        404 => "Not Found",
+        405 => "Method Not Allowed",
+        406 => "Not Acceptable",
+        409 => "Conflict",
+        411 => "Length Required",
+        413 => "Content Too Large",
+        415 => "Unsupported Media Type",
+        431 => "Request Header Fields Too Large",
+        503 => "Service Unavailable",
+        _ => "Internal Server Error",
+    }
+}
+fn respond_with(stream: &mut TcpStream, status: u16, extra: &[(&str, &str)], body: &str) {
+    let mut head = format!(
+        "HTTP/1.1 {status} {}\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n",
+        reason(status),
+        body.len()
+    );
+    for (name, value) in extra {
+        head.push_str(&format!("{name}: {value}\r\n"));
+    }
+    head.push_str("\r\n");
+    let _ = stream
+        .write_all(head.as_bytes())
+        .and_then(|_| stream.write_all(body.as_bytes()))
+        .and_then(|_| stream.flush());
+}
+fn respond(stream: &mut TcpStream, status: u16, body: String) {
+    if status == 401 {
+        respond_with(stream, status, &[("WWW-Authenticate", "Bearer")], &body);
+    } else {
+        respond_with(stream, status, &[], &body);
+    }
+}
+/// Compares the whole of both strings, so the time does not tell how much of a token matched.
+fn same_secret(a: &str, b: &str) -> bool {
+    a.len() == b.len() && a.bytes().zip(b.bytes()).fold(0u8, |d, (x, y)| d | (x ^ y)) == 0
+}
+struct Policy {
+    token: String,
+    hosts: Vec<String>,
+    origins: Vec<String>,
 }
 type Sessions = Arc<Mutex<HashMap<String, (Arc<Session>, Instant)>>>;
-pub fn http(server: tiny_http::Server, client: Client, token: String) {
+pub fn http(listener: TcpListener, client: Client, token: String) {
     let sessions: Sessions = Arc::new(Mutex::new(HashMap::new()));
     let workers = Arc::new(AtomicUsize::new(0));
-    let address = server.server_addr().to_ip().unwrap();
+    let Ok(address) = listener.local_addr() else {
+        return;
+    };
     let port = address.port();
-    let mut allowed_hosts = vec![address.to_string(), format!("localhost:{port}")];
+    let mut hosts = vec![address.to_string(), format!("localhost:{port}")];
     if port == 80 {
-        allowed_hosts.push(address.ip().to_string());
-        allowed_hosts.push("localhost".into());
+        hosts.push(address.ip().to_string());
+        hosts.push("localhost".into());
     }
-    let allowed_origins = allowed_hosts
-        .iter()
-        .map(|host| format!("http://{host}"))
-        .collect::<Vec<_>>();
+    let origins = hosts.iter().map(|host| format!("http://{host}")).collect();
+    let policy = Arc::new(Policy {
+        token,
+        hosts,
+        origins,
+    });
+    if listener.set_nonblocking(true).is_err() {
+        return;
+    }
     while !client.stop.load(Ordering::Acquire) {
-        let request = match server.recv_timeout(Duration::from_millis(100)) {
-            Ok(Some(r)) => r,
-            Ok(None) => continue,
+        let mut stream = match listener.accept() {
+            Ok((stream, _)) => stream,
+            Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                std::thread::sleep(Duration::from_millis(25));
+                continue;
+            }
+            Err(e) if e.kind() == io::ErrorKind::Interrupted => continue,
             Err(_) => break,
         };
-        if request.url() != "/mcp" {
-            respond(request, 404, String::new());
-            continue;
-        }
-        if !header(&request, "Host").is_some_and(|h| allowed_hosts.iter().any(|a| a == h))
-            || header(&request, "Origin").is_some_and(|o| !allowed_origins.iter().any(|a| a == o))
+        // An accepted socket inherits the non-blocking mode of the listener on some systems.
+        if stream.set_nonblocking(false).is_err()
+            || stream.set_read_timeout(Some(IO_TIMEOUT)).is_err()
+            || stream.set_write_timeout(Some(IO_TIMEOUT)).is_err()
         {
-            respond(request, 403, String::new());
-            continue;
-        }
-        if header(&request, "Authorization") != Some(format!("Bearer {token}").as_str()) {
-            respond(request, 401, String::new());
-            continue;
-        }
-        if header(&request, "MCP-Protocol-Version")
-            .is_some_and(|v| !protocol::VERSIONS.contains(&v))
-        {
-            respond(request, 400, String::new());
-            continue;
-        }
-        if request.method() != &tiny_http::Method::Post
-            && request.method() != &tiny_http::Method::Get
-            && request.method() != &tiny_http::Method::Delete
-        {
-            respond(request, 405, String::new());
             continue;
         }
         if workers.fetch_add(1, Ordering::AcqRel) >= MAX_WORKERS {
             workers.fetch_sub(1, Ordering::Release);
-            respond(request, 503, String::new());
+            respond(&mut stream, 503, String::new());
             continue;
         }
         let client = client.clone();
         let sessions = sessions.clone();
         let workers = workers.clone();
+        let policy = policy.clone();
         std::thread::spawn(move || {
-            handle_http(request, client, sessions);
+            handle_connection(stream, &client, &sessions, &policy);
             workers.fetch_sub(1, Ordering::Release);
         });
     }
 }
-fn handle_http(mut request: tiny_http::Request, client: Client, sessions: Sessions) {
-    let session_id = header(&request, "Mcp-Session-Id").map(str::to_owned);
+fn handle_connection(mut stream: TcpStream, client: &Client, sessions: &Sessions, policy: &Policy) {
+    let request = match read_request(&mut stream) {
+        Ok(request) => request,
+        Err(status) => {
+            if let Some(status) = status {
+                respond(&mut stream, status, String::new());
+            }
+            return;
+        }
+    };
+    if request.target != "/mcp" {
+        respond(&mut stream, 404, String::new());
+        return;
+    }
+    if !request
+        .header("Host")
+        .is_some_and(|h| policy.hosts.iter().any(|a| a == h))
+        || request
+            .header("Origin")
+            .is_some_and(|o| !policy.origins.iter().any(|a| a == o))
+    {
+        respond(&mut stream, 403, String::new());
+        return;
+    }
+    let authorized = request
+        .header("Authorization")
+        .and_then(|value| value.split_once(' '))
+        .is_some_and(|(scheme, token)| {
+            scheme.eq_ignore_ascii_case("Bearer") && same_secret(token.trim(), &policy.token)
+        });
+    if !authorized {
+        respond(&mut stream, 401, String::new());
+        return;
+    }
+    if request
+        .header("MCP-Protocol-Version")
+        .is_some_and(|v| !protocol::VERSIONS.contains(&v))
+    {
+        respond(&mut stream, 400, String::new());
+        return;
+    }
+    if !matches!(request.method.as_str(), "POST" | "GET" | "DELETE") {
+        respond(&mut stream, 405, String::new());
+        return;
+    }
+    handle_http(stream, request, client, sessions);
+}
+fn handle_http(mut stream: TcpStream, request: Request, client: &Client, sessions: &Sessions) {
+    let session_id = request.header("Mcp-Session-Id").map(str::to_owned);
     let session = {
         let mut sessions = sessions.lock().unwrap();
         sessions.retain(|_, (session, used)| {
-            let keep = used.elapsed() < Duration::from_secs(1800);
+            let keep = used.elapsed() < SESSION_IDLE;
             if !keep {
                 session.close();
             }
@@ -200,129 +366,112 @@ fn handle_http(mut request: tiny_http::Request, client: Client, sessions: Sessio
             })
     };
     if session_id.is_some() && session.is_none() {
-        respond(request, 404, String::new());
+        respond(&mut stream, 404, String::new());
         return;
     }
-    if request.method() == &tiny_http::Method::Delete {
+    if request.method == "DELETE" {
         if let Some(id) = session_id {
             if let Some((session, _)) = sessions.lock().unwrap().remove(&id) {
                 session.close();
             }
-            respond(request, 200, String::new());
+            respond(&mut stream, 200, String::new());
         } else {
-            respond(request, 400, String::new());
+            respond(&mut stream, 400, String::new());
         }
         return;
     }
-    if request.method() == &tiny_http::Method::Get {
+    if request.method == "GET" {
         let Some(session) = session else {
-            respond(request, 400, String::new());
+            respond(&mut stream, 400, String::new());
             return;
         };
-        if !header(&request, "Accept").is_some_and(|a| a.contains("text/event-stream")) {
-            respond(request, 406, String::new());
+        if !request
+            .header("Accept")
+            .is_some_and(|a| a.contains("text/event-stream"))
+        {
+            respond(&mut stream, 406, String::new());
             return;
         }
         if session.stream_open.swap(true, Ordering::AcqRel) {
-            respond(request, 409, String::new());
+            respond(&mut stream, 409, String::new());
             return;
         }
-        let _ = stream_logs(request, client, session.clone());
+        let _ = stream_logs(stream, client, &session);
         session.stream_open.store(false, Ordering::Release);
         return;
     }
-    if !header(&request, "Content-Type")
-        .is_some_and(|s| s.split(';').next() == Some("application/json"))
+    if !request
+        .header("Content-Type")
+        .and_then(|s| s.split(';').next())
+        .is_some_and(|media| media.trim().eq_ignore_ascii_case("application/json"))
     {
-        respond(request, 415, String::new());
+        respond(&mut stream, 415, String::new());
         return;
     }
-    if !header(&request, "Accept")
+    if !request
+        .header("Accept")
         .is_some_and(|s| s.contains("application/json") && s.contains("text/event-stream"))
     {
-        respond(request, 406, String::new());
+        respond(&mut stream, 406, String::new());
         return;
     }
-    if request.body_length().is_some_and(|n| n > MAX_MESSAGE) {
-        respond(request, 413, String::new());
-        return;
-    }
-    let mut bytes = Vec::new();
-    if request
-        .as_reader()
-        .take((MAX_MESSAGE + 1) as u64)
-        .read_to_end(&mut bytes)
-        .is_err()
-    {
-        respond(request, 400, String::new());
-        return;
-    }
-    if bytes.len() > MAX_MESSAGE {
-        respond(request, 413, String::new());
-        return;
-    }
-    match serde_json::from_slice(&bytes) {
-        Ok(message) => {
-            let message: Value = message;
-            if message["method"] == "initialize" && session.is_none() {
-                let mut bytes = [0u8; 24];
-                if getrandom::fill(&mut bytes).is_err() {
-                    respond(request, 500, String::new());
-                    return;
-                }
-                let id = bytes.iter().map(|b| format!("{b:02x}")).collect::<String>();
-                let session = Arc::new(Session::default());
-                let Some(response) = session.handle(&client, message) else {
-                    respond(request, 400, String::new());
-                    return;
-                };
-                if response.get("error").is_some() {
-                    respond(request, 400, response.to_string());
-                    return;
-                }
-                {
-                    let mut sessions = sessions.lock().unwrap();
-                    if sessions.len() >= 64 {
-                        respond(request, 503, String::new());
-                        return;
-                    }
-                    sessions.insert(id.clone(), (session, Instant::now()));
-                }
-                let response = tiny_http::Response::from_string(response.to_string())
-                    .with_header(
-                        tiny_http::Header::from_bytes("Content-Type", "application/json").unwrap(),
-                    )
-                    .with_header(tiny_http::Header::from_bytes("Mcp-Session-Id", id).unwrap());
-                let _ = request.respond(response);
-            } else if let Some(session) = session {
-                match session.handle(&client, message) {
-                    Some(response) => respond(request, 200, response.to_string()),
-                    None => respond(request, 202, String::new()),
-                }
-            } else {
-                respond(request, 400, String::new());
-            }
+    let message: Value = match serde_json::from_slice(&request.body) {
+        Ok(message) => message,
+        Err(_) => {
+            respond(
+                &mut stream,
+                400,
+                protocol::error(Value::Null, -32700, "Parse error").to_string(),
+            );
+            return;
         }
-        Err(_) => respond(
-            request,
-            400,
-            protocol::error(Value::Null, -32700, "Parse error").to_string(),
-        ),
+    };
+    if message["method"] == "initialize" && session.is_none() {
+        let mut bytes = [0u8; 24];
+        if getrandom::fill(&mut bytes).is_err() {
+            respond(&mut stream, 500, String::new());
+            return;
+        }
+        let id = bytes.iter().map(|b| format!("{b:02x}")).collect::<String>();
+        let session = Arc::new(Session::default());
+        let Some(response) = session.handle(client, message) else {
+            respond(&mut stream, 400, String::new());
+            return;
+        };
+        if response.get("error").is_some() {
+            respond(&mut stream, 400, response.to_string());
+            return;
+        }
+        {
+            let mut sessions = sessions.lock().unwrap();
+            if sessions.len() >= MAX_SESSIONS {
+                respond(&mut stream, 503, String::new());
+                return;
+            }
+            sessions.insert(id.clone(), (session, Instant::now()));
+        }
+        respond_with(
+            &mut stream,
+            200,
+            &[("Mcp-Session-Id", &id)],
+            &response.to_string(),
+        );
+    } else if let Some(session) = session {
+        match session.handle(client, message) {
+            Some(response) => respond(&mut stream, 200, response.to_string()),
+            None => respond(&mut stream, 202, String::new()),
+        }
+    } else {
+        respond(&mut stream, 400, String::new());
     }
 }
-// Flush every event: tiny_http's generic streaming response buffers chunks, which otherwise
-// delays small notifications for minutes. We keep HTTP chunk framing explicit here.
-fn stream_logs(
-    request: tiny_http::Request,
-    client: Client,
-    session: Arc<Session>,
-) -> io::Result<()> {
-    let mut writer = request.into_writer();
-    writer.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nTransfer-Encoding: chunked\r\n\r\n")?;
-    writer.flush()?;
+// Every event is written as its own chunk and flushed, so that small notifications arrive at once.
+fn stream_logs(mut stream: TcpStream, client: &Client, session: &Session) -> io::Result<()> {
+    stream.write_all(b"HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nConnection: close\r\nTransfer-Encoding: chunked\r\n\r\n")?;
+    stream.flush()?;
     let mut cursor = 0;
     while !client.stop.load(Ordering::Acquire) && !session.is_closed() {
-        let messages = session.logs(&client, &mut cursor);
+        let messages = session.logs(client, &mut cursor);
         let text = if messages.is_empty() {
             ": keepalive\n\n".into()
         } else {
@@ -331,10 +480,10 @@ fn stream_logs(
                 .map(|m| format!("event: message\ndata: {m}\n\n"))
                 .collect::<String>()
         };
-        write!(writer, "{:x}\r\n{}\r\n", text.len(), text)?;
-        writer.flush()?;
+        write!(stream, "{:x}\r\n{}\r\n", text.len(), text)?;
+        stream.flush()?;
         std::thread::sleep(Duration::from_millis(250));
     }
-    writer.write_all(b"0\r\n\r\n")?;
-    writer.flush()
+    stream.write_all(b"0\r\n\r\n")?;
+    stream.flush()
 }
