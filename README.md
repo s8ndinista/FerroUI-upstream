@@ -452,7 +452,7 @@ The layout follows the upstream project so that files can be compared side by si
 
 ## Contributing
 
-Please open an issue to discuss a change before sending a pull request. Contributions are expected to follow the [porting guide](docs/porting/PORTING-GUIDE.md): port files one to one with their tests, keep behaviour identical to the reference implementation (or record the difference in [DEVIATIONS.md](docs/porting/DEVIATIONS.md)), and keep `cargo test --workspace` green.
+Please open an issue to discuss a change before sending a pull request. Contributions are expected to follow the [porting guide](docs/porting/PORTING-GUIDE.md): port files one to one with their tests, keep behaviour identical to the reference implementation (or record the difference in [DEVIATIONS.md](docs/porting/DEVIATIONS.md)), and keep `cargo test --workspace` green. A large change can be sent as a [stack of pull requests](docs/stacked-pull-requests.md).
 
 ## License
 
