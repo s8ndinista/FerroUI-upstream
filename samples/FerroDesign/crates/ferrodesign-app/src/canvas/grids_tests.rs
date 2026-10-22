@@ -12,7 +12,7 @@ fn backend() -> Rc<dyn ferroui_base::reactive::IDisposable> {
 
 fn frame(document: &mut core::Document, parent: NodeId, x: f64, y: f64, width: f64, height: f64) -> NodeId {
     let mut node = Node::new(NodeKind::Frame, "Grid frame", x, y, width, height);
-    node.layout_grid = Some(LayoutGrid { size: 8.0, color: Color::rgba(255, 0, 0, 255), visible: true });
+    node.layout_grid = Some(LayoutGrid { size: 8.0, color: Color::rgba(255, 0, 0, 255), visible: true, ..LayoutGrid::default() });
     document.insert_node(parent, node).unwrap()
 }
 
@@ -160,4 +160,87 @@ fn grid_candidate_cache_reuses_camera_frames_and_scoped_edits_without_scanning_p
     overlay.refresh(&replacement);
     assert_eq!(overlay.examined, 1005);
     assert!(overlay.grids.is_empty());
+}
+
+fn column_grid(color: Color, alignment: core::LayoutGridAlignment, count: u32) -> LayoutGrid {
+    LayoutGrid { size: 10.0, color, pattern: core::LayoutGridPattern::Columns {
+        axis: core::LayoutGridAxis { alignment, count: Some(count), gutter: 10.0, offset: 10.0 }
+    }, ..LayoutGrid::default() }
+}
+
+fn rgba(image: &[u8], width: usize, x: usize, y: usize) -> &[u8] {
+    &image[(y * width + x) * 4..(y * width + x) * 4 + 4]
+}
+
+#[test]
+fn stacked_columns_and_rows_render_native_bands_in_authored_order_with_exact_gutters() {
+    let scope = backend();
+    let mut document = core::Document::new("Stacked guides");
+    let id = frame(&mut document, 1, 20.0, 20.0, 100.0, 100.0);
+    let columns = column_grid(Color::rgb(255, 0, 0), core::LayoutGridAlignment::Start, 3);
+    let rows = LayoutGrid { color: Color::rgb(0, 0, 255), pattern: core::LayoutGridPattern::Rows {
+        axis: columns.pattern.axis().unwrap()
+    }, ..columns };
+    document.nodes.get_mut(&id).unwrap().set_layout_guides(&[columns, rows]);
+    let mut editor = Editor::new(document);
+    let mut overlay = LayoutGridOverlay::default();
+    let (image, stats) = pixels(&mut overlay, &editor, viewport());
+    assert_eq!(stats.layers, 1); assert_eq!(stats.bands, 6); assert_eq!(stats.lines, 0);
+    assert_eq!(rgba(&image, 180, 35, 25), &[255, 0, 0, 255]);
+    assert_eq!(rgba(&image, 180, 25, 35), &[0, 0, 255, 255]);
+    assert_eq!(rgba(&image, 180, 35, 35), &[0, 0, 255, 255], "later guide paints over prior guide");
+    assert_eq!(rgba(&image, 180, 45, 45), &[0, 0, 0, 0], "gutters stay clear");
+    editor.edit_layout_guides(&[id], core::LayoutGuideEdit::Move { index: 1, to: 0 }).unwrap();
+    let (image, _) = pixels(&mut overlay, &editor, viewport());
+    assert_eq!(rgba(&image, 180, 35, 35), &[255, 0, 0, 255]);
+    editor.undo();
+    editor.edit_layout_guides(&[id], core::LayoutGuideEdit::Set { index: 1, property: core::LayoutGuideProperty::Visible(false) }).unwrap();
+    let (image, stats) = pixels(&mut overlay, &editor, viewport());
+    assert_eq!(stats.bands, 3); assert_eq!(rgba(&image, 180, 25, 35), &[0, 0, 0, 0]);
+    scope.dispose();
+}
+
+#[test]
+fn stretched_native_columns_resize_without_changing_authored_margin_or_gutter() {
+    let scope = backend();
+    let mut document = core::Document::new("Stretch guide pixels");
+    let id = frame(&mut document, 1, 10.0, 10.0, 100.0, 100.0);
+    document.nodes.get_mut(&id).unwrap().layout_grid = Some(column_grid(Color::rgb(0, 255, 0), core::LayoutGridAlignment::Stretch, 2));
+    let mut editor = Editor::new(document); let mut overlay = LayoutGridOverlay::default();
+    let (small, _) = pixels(&mut overlay, &editor, viewport());
+    assert_eq!(rgba(&small, 180, 25, 25), &[0, 255, 0, 255]);
+    assert_eq!(rgba(&small, 180, 58, 25), &[0, 0, 0, 0]);
+    assert_eq!(rgba(&small, 180, 104, 25), &[0, 0, 0, 0]);
+    editor.update_node(id, "Resize frame", |node| node.width = 140.0);
+    let (large, _) = pixels(&mut overlay, &editor, viewport());
+    assert_eq!(rgba(&large, 180, 58, 25), &[0, 255, 0, 255]);
+    assert_eq!(rgba(&large, 180, 78, 25), &[0, 0, 0, 0]);
+    assert_eq!(rgba(&large, 180, 145, 25), &[0, 0, 0, 0]);
+    scope.dispose();
+}
+
+#[test]
+fn million_column_guides_do_only_viewport_work_and_preserve_transformed_clips() {
+    let scope = backend();
+    let mut document = core::Document::new("Large guide stack");
+    let id = frame(&mut document, 1, 20.0, 20.0, 50_000_000.0, 100.0);
+    document.nodes.get_mut(&id).unwrap().layout_grid = Some(column_grid(Color::rgb(255, 0, 0), core::LayoutGridAlignment::Start, 1_000_000));
+    let mut editor = Editor::new(document); let mut overlay = LayoutGridOverlay::default();
+    let (_, stats) = pixels(&mut overlay, &editor, viewport());
+    assert!(stats.bands < 10); assert!(!stats.budget_exhausted);
+    editor.update_node(id, "Transform guide", |node| {
+        node.width = 90.0; node.height = 90.0; node.rotation = 35.0; node.corner_radius = 20.0;
+        node.affine_transform = Some(core::Transform { a: 1.0, b: 0.0, c: 0.25, d: 1.0, e: 0.0, f: 0.0 });
+    });
+    let inverse = editor.document.world_transform(id).unwrap().inverse().unwrap();
+    let (image, stats) = pixels(&mut overlay, &editor, viewport());
+    assert!(stats.bands < 8);
+    for (index, _) in image.chunks_exact(4).enumerate().filter(|(_, rgba)| rgba[3] > 16) {
+        let local = inverse.apply(Point::new((index % 180) as f64 + 0.5, (index / 180) as f64 + 0.5));
+        assert!(inside_rounded(local, 90.0, 90.0, 20.0));
+    }
+    let mut dense = viewport(); dense.zoom = 0.1;
+    let (_, stats) = pixels(&mut overlay, &editor, dense);
+    assert_eq!(stats.bands, 0); assert_eq!(stats.suppressed_axes, 1);
+    scope.dispose();
 }

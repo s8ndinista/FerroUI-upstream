@@ -128,7 +128,7 @@ impl StyleValue {
             Self::Fill { .. } => LocalStyleKind::Fill,
             Self::Text { .. } => LocalStyleKind::Text,
             Self::Effect { .. } => LocalStyleKind::Effect,
-            Self::Grid { .. } => LocalStyleKind::Grid,
+            Self::Grid { .. } | Self::GridStack { .. } => LocalStyleKind::Grid,
         }
     }
 
@@ -157,7 +157,11 @@ impl StyleValue {
             },
             LocalStyleKind::Grid => {
                 let grid = node.layout_grid.unwrap_or_default();
-                Self::Grid { size: grid.size, color: grid.color }
+                if node.layout_grid_overlays.is_empty() && grid.pattern.is_square() {
+                    Self::Grid { size: grid.size, color: grid.color }
+                } else {
+                    Self::GridStack { grids: grid_values(node) }
+                }
             }
         };
         value.validate()?;
@@ -233,6 +237,7 @@ impl StyleValue {
                 return Err(invalid("Grid style size must be positive and finite."))
             }
             Self::Grid { .. } => {}
+            Self::GridStack { grids } => crate::validate_layout_grids(grids)?,
         }
         Ok(())
     }
@@ -255,7 +260,8 @@ impl StyleValue {
                     && node.letter_spacing == *letter_spacing
             }
             Self::Effect { effects } => node.effects == *effects,
-            Self::Grid { size, color } => grid_values(node) == Some((*size, *color)),
+            Self::Grid { size, color } => grid_values(node) == vec![LayoutGrid { size: *size, color: *color, ..LayoutGrid::default() }],
+            Self::GridStack { grids } => grid_values(node) == normalized_grids(grids.iter().copied()),
         }
     }
 
@@ -278,14 +284,26 @@ impl StyleValue {
             Self::Effect { effects } => node.effects.clone_from(effects),
             Self::Grid { size, color } => {
                 let visible = node.layout_grid.map_or(true, |grid| grid.visible);
-                node.layout_grid = Some(LayoutGrid { size: *size, color: *color, visible });
+                node.layout_grid = Some(LayoutGrid { size: *size, color: *color, visible, ..LayoutGrid::default() });
+                node.layout_grid_overlays.clear();
+            }
+            Self::GridStack { grids } => {
+                let previous: Vec<_> = node.layout_guides().map(|grid| grid.visible).collect();
+                let effective: Vec<_> = grids.iter().enumerate().map(|(index, grid)| LayoutGrid {
+                    visible: previous.get(index).copied().unwrap_or(grid.visible), ..*grid
+                }).collect();
+                node.set_layout_guides(&effective);
             }
         }
     }
 }
 
-fn grid_values(node: &Node) -> Option<(f64, crate::Color)> {
-    node.layout_grid.map(|grid| (grid.size, grid.color))
+fn normalized_grids(grids: impl Iterator<Item = LayoutGrid>) -> Vec<LayoutGrid> {
+    grids.map(|grid| LayoutGrid { visible: true, ..grid }).collect()
+}
+
+fn grid_values(node: &Node) -> Vec<LayoutGrid> {
+    normalized_grids(node.layout_guides().copied())
 }
 
 fn style_definition(
@@ -381,7 +399,7 @@ impl Editor {
                 LayoutGridEdit::Size(value) => node.layout_grid.is_some_and(|grid| grid.size != value),
                 LayoutGridEdit::Color(value) => node.layout_grid.is_some_and(|grid| grid.color != value),
                 LayoutGridEdit::Visible(value) => node.layout_grid.is_some_and(|grid| grid.visible != value),
-                LayoutGridEdit::Remove => node.layout_grid.is_some() || node.grid_style.is_some(),
+                LayoutGridEdit::Remove => node.layout_grid.is_some() || !node.layout_grid_overlays.is_empty() || node.grid_style.is_some(),
             };
             if differs { changed.push(id); }
         }
@@ -392,7 +410,7 @@ impl Editor {
                 LayoutGridEdit::Size(value) => node.layout_grid.as_mut().unwrap().size = value,
                 LayoutGridEdit::Color(value) => node.layout_grid.as_mut().unwrap().color = value,
                 LayoutGridEdit::Visible(value) => node.layout_grid.as_mut().unwrap().visible = value,
-                LayoutGridEdit::Remove => { node.layout_grid = None; node.grid_style = None; }
+                LayoutGridEdit::Remove => { node.layout_grid = None; node.layout_grid_overlays.clear(); node.grid_style = None; }
             }
             node.overridden_properties.insert(
                 if matches!(edit, LayoutGridEdit::Visible(_)) { "layout_grid_visible" } else { "layout_grid" }.into()

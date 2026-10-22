@@ -4,7 +4,7 @@
 //! rescans ordinary layers, and scoped edits update membership only for changed
 //! IDs. Line counts follow the visible viewport, with dense axes suppressed.
 use super::*;
-use ferrodesign_core::{EditorRenderChanges, EditorRenderToken, LayoutGrid};
+use ferrodesign_core::{EditorRenderChanges, EditorRenderToken, LayoutGrid, LayoutGridPattern};
 use std::collections::BTreeSet;
 
 const MIN_GRID_SPACING: f64 = 4.0;
@@ -23,6 +23,7 @@ pub(super) struct LayoutGridOverlay {
 pub(super) struct GridOverlayStats {
     pub layers: usize,
     pub lines: usize,
+    pub bands: usize,
     pub suppressed_axes: usize,
     pub budget_exhausted: bool,
 }
@@ -37,13 +38,13 @@ impl LayoutGridOverlay {
                 self.grids.clear();
                 for node in editor.document.nodes.values() {
                     #[cfg(test)] { self.examined += 1; }
-                    if node.layout_grid.is_some() { self.grids.insert(node.id); }
+                    if node.layout_guide_count() != 0 { self.grids.insert(node.id); }
                 }
             }
             EditorRenderChanges::Nodes { nodes, ancestors } => {
                 for id in nodes.into_iter().chain(ancestors) {
                     #[cfg(test)] { self.examined += 1; }
-                    if editor.document.nodes.get(&id).is_some_and(|node| node.layout_grid.is_some()) {
+                    if editor.document.nodes.get(&id).is_some_and(|node| node.layout_guide_count() != 0) {
                         self.grids.insert(id);
                     } else { self.grids.remove(&id); }
                 }
@@ -65,7 +66,7 @@ impl LayoutGridOverlay {
         let document = &editor.document;
         for &id in &self.grids {
             let Some(node) = document.nodes.get(&id) else { continue; };
-            let Some(grid) = node.layout_grid.filter(|grid| grid.visible && grid.color.a > 0 && grid.validate().is_ok()) else { continue; };
+            if !node.layout_guides().any(|grid| grid.visible && grid.color.a > 0 && grid.validate().is_ok()) { continue; }
             if !LayoutGrid::supports(node.kind) || document.page_of(id) != Some(editor.active_page) || !document.effective_visible(id) { continue; }
             let Some(world) = document.world_transform(id) else { continue; };
             if !world.transform_rect(node.local_bounds()).intersects(visible) { continue; }
@@ -75,12 +76,6 @@ impl LayoutGridOverlay {
             let det = (world.a * world.d - world.b * world.c).abs();
             let sx = det / world.c.hypot(world.d) * viewport.zoom;
             let sy = det / world.a.hypot(world.b) * viewport.zoom;
-            let vertical = axis_lines(local.x, local.right(), grid.size, sx);
-            let horizontal = axis_lines(local.y, local.bottom(), grid.size, sy);
-            stats.suppressed_axes += usize::from(vertical.is_none()) + usize::from(horizontal.is_none());
-            let lines = vertical.map_or(0, |(_, count)| count) + horizontal.map_or(0, |(_, count)| count);
-            if lines == 0 { continue; }
-            if stats.lines + lines > MAX_FRAME_LINES { stats.budget_exhausted = true; break; }
             // Walk the actual ancestry, applying all authored local transforms
             // and rounded ancestor clips. Guide pixels cannot escape a clipped
             // rotated/sheared frame, or an ancestor that clips its descendants.
@@ -100,25 +95,62 @@ impl LayoutGridOverlay {
                     states.push(ctx.push_rounded_clip(crate::renderer::rounded_rect(ancestor)));
                 }
             }
-            let color = ((grid.color.a as u32) << 24) | ((grid.color.r as u32) << 16)
-                | ((grid.color.g as u32) << 8) | grid.color.b as u32;
-            if let Some((first, count)) = vertical {
-                let stroke = pen(color, 1.0 / sx);
-                for offset in 0..count {
-                    let x = (first + offset as f64) * grid.size;
-                    ctx.draw_line(&stroke, UiPoint::new(x, local.y), UiPoint::new(x, local.bottom()));
-                }
-            }
-            if let Some((first, count)) = horizontal {
-                let stroke = pen(color, 1.0 / sy);
-                for offset in 0..count {
-                    let y = (first + offset as f64) * grid.size;
-                    ctx.draw_line(&stroke, UiPoint::new(local.x, y), UiPoint::new(local.right(), y));
+            let mut painted = false;
+            for grid in node.layout_guides().filter(|grid| grid.visible && grid.color.a > 0 && grid.validate().is_ok()) {
+                let color = ((grid.color.a as u32) << 24) | ((grid.color.r as u32) << 16)
+                    | ((grid.color.g as u32) << 8) | grid.color.b as u32;
+                match grid.pattern {
+                    LayoutGridPattern::Square => {
+                        let vertical = axis_lines(local.x, local.right(), grid.size, sx);
+                        let horizontal = axis_lines(local.y, local.bottom(), grid.size, sy);
+                        stats.suppressed_axes += usize::from(vertical.is_none()) + usize::from(horizontal.is_none());
+                        let lines = vertical.map_or(0, |(_, count)| count) + horizontal.map_or(0, |(_, count)| count);
+                        if stats.lines + stats.bands + lines > MAX_FRAME_LINES { stats.budget_exhausted = true; break; }
+                        if let Some((first, count)) = vertical {
+                            let stroke = pen(color, 1.0 / sx);
+                            for offset in 0..count {
+                                let x = (first + offset as f64) * grid.size;
+                                ctx.draw_line(&stroke, UiPoint::new(x, local.y), UiPoint::new(x, local.bottom()));
+                            }
+                        }
+                        if let Some((first, count)) = horizontal {
+                            let stroke = pen(color, 1.0 / sy);
+                            for offset in 0..count {
+                                let y = (first + offset as f64) * grid.size;
+                                ctx.draw_line(&stroke, UiPoint::new(local.x, y), UiPoint::new(local.right(), y));
+                            }
+                        }
+                        stats.lines += lines;
+                        painted |= lines != 0;
+                    }
+                    LayoutGridPattern::Columns { .. } | LayoutGridPattern::Rows { .. } => {
+                        let columns = matches!(grid.pattern, LayoutGridPattern::Columns { .. });
+                        let (extent, start, end, scale) = if columns { (node.width, local.x, local.right(), sx) }
+                            else { (node.height, local.y, local.bottom(), sy) };
+                        let Some(bands) = grid.bands(extent) else { continue; };
+                        let range = bands.visible_range(start, end);
+                        let count = (range.end - range.start) as usize;
+                        if !scale.is_finite() || scale <= 0.0 || bands.step * scale < MIN_GRID_SPACING || count > MAX_AXIS_LINES {
+                            stats.suppressed_axes += 1; continue;
+                        }
+                        if stats.lines + stats.bands + count > MAX_FRAME_LINES { stats.budget_exhausted = true; break; }
+                        let fill: Rc<dyn ferroui_base::media::IBrush> = Rc::new(
+                            ferroui_base::media::immutable::ImmutableSolidColorBrush::new(
+                                ferroui_base::media::Color::from_argb(grid.color.a, grid.color.r, grid.color.g, grid.color.b)));
+                        for index in range {
+                            let position = bands.start + index as f64 * bands.step;
+                            let rect = if columns { UiRect::new(position, local.y, bands.size, local.height) }
+                                else { UiRect::new(local.x, position, local.width, bands.size) };
+                            ctx.draw_rectangle(Some(&fill), None, rect, 0.0, 0.0, &BoxShadows::default());
+                        }
+                        stats.bands += count;
+                        painted |= count != 0;
+                    }
                 }
             }
             for state in states.into_iter().rev() { ctx.pop(state); }
-            stats.layers += 1;
-            stats.lines += lines;
+            stats.layers += usize::from(painted);
+            if stats.budget_exhausted { break; }
         }
         ctx.pop(camera);
         ctx.pop(canvas_clip);

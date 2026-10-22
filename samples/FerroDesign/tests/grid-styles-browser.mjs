@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { PNG } from "pngjs";
 
-// Author square-grid guides and their shared ownership through FerroUI controls.
+// Author square, column and row guides and shared ownership through FerroUI controls.
 // Screenshots verify the editor overlay; the real PNG export must exclude it.
 export async function gridStyleRegressions(page, reference, check, helpers, output, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
@@ -175,4 +175,110 @@ export async function gridStyleRegressions(page, reference, check, helpers, outp
     await importFixture(page, independent);
     assert.deepEqual(await documentState(page), independent);
     check("The browser surface renders the linked grid at its authored spacing while actual PNG artwork excludes every guide pixel; grid definitions, local visibility and bindings survive document round-trip");
+
+    const stackFixture = structuredClone(independent);
+    stackFixture.name = "Native stacked layout guides";
+    stackFixture.styles = {};
+    for (const node of Object.values(stackFixture.nodes)) {
+        node.layout_grid = null;
+        node.layout_grid_overlays = [];
+        node.grid_style = null;
+    }
+    await importFixture(page, stackFixture);
+    await select([2, 3]);
+    await openGrid();
+    await clickNative(page, "LayoutGridAddSquare", "ModalViewport");
+    await clickNative(page, "LayoutGridVisible", "ModalViewport");
+    const beforeColumns = await documentState(page), columnDepth = (await state(page)).historyLength;
+    await clickNative(page, "LayoutGridAddColumns", "ModalViewport");
+    const columns = await documentState(page);
+    for (const node of [2, 3]) {
+        assert.equal(columns.nodes[node].layout_grid.visible, false);
+        assert.equal(columns.nodes[node].layout_grid_overlays.length, 1);
+        assert.equal(columns.nodes[node].layout_grid_overlays[0].pattern.type, "columns");
+    }
+    await closeGrid();
+    await history(beforeColumns, columns, columnDepth, "Add columns to the complete guide stack");
+    await openGrid();
+    await field("LayoutGridCount1", "3");
+    await field("LayoutGridGutter1", "8");
+    await field("LayoutGridOffset1", "12");
+    await field("LayoutGridColor1", "22C55E80");
+    const beforeRows = await documentState(page), rowDepth = (await state(page)).historyLength;
+    await clickNative(page, "LayoutGridAddRows", "ModalViewport");
+    const rows = await documentState(page);
+    assert.equal(rows.nodes[2].layout_grid_overlays[1].pattern.type, "rows");
+    assert.deepEqual(rows.nodes[2].layout_grid_overlays, rows.nodes[3].layout_grid_overlays);
+    await closeGrid();
+    await history(beforeRows, rows, rowDepth, "Add rows after square and column guides");
+    await openGrid();
+    await field("LayoutGridCount2", "2");
+    await field("LayoutGridGutter2", "6");
+    await field("LayoutGridOffset2", "10");
+    await field("LayoutGridColor2", "2563EB80");
+    const beforeMove = await documentState(page), moveDepth = (await state(page)).historyLength;
+    await clickNative(page, "LayoutGridUp2", "ModalViewport");
+    const moved = await documentState(page);
+    for (const node of [2, 3]) {
+        assert.deepEqual(moved.nodes[node].layout_grid_overlays,
+            [...beforeMove.nodes[node].layout_grid_overlays].reverse());
+        assert.deepEqual(moved.nodes[node].layout_grid, beforeMove.nodes[node].layout_grid);
+    }
+    await closeGrid();
+    await history(beforeMove, moved, moveDepth, "Reorder a row and column guide");
+    await openGrid();
+    await clickNative(page, "LayoutGridCreateStyle", "ModalActions");
+    const stacked = await documentState(page), stackId = stacked.nodes[2].grid_style;
+    assert.equal(stacked.nodes[3].grid_style, stackId);
+    assert.equal(stacked.styles[stackId].value.type, "grid_stack");
+    assert.deepEqual(stacked.styles[stackId].value.grids.map(grid => grid.pattern?.type || "square"),
+        ["square", "rows", "columns"]);
+    await clickNative(page, "StyleDone", "ModalActions");
+    check("Native guide controls create square, column and row stacks on multiple frames, edit count/gutter/margins/RGBA, reorder complete guides with exact one-step history, and publish the ordered stack as a shared style");
+
+    await select([2]);
+    await openGrid();
+    await clickNative(page, "LayoutGridVisible1", "ModalViewport");
+    await closeGrid();
+    const beforeStackEdit = await documentState(page), stackDepth = (await state(page)).historyLength;
+    assert.equal(beforeStackEdit.nodes[2].layout_grid_overlays[0].visible, false);
+    assert.equal(beforeStackEdit.nodes[3].layout_grid_overlays[0].visible, true);
+    await openStyle(stackId);
+    await field("StyleGridCount2", "4");
+    const propagated = await documentState(page);
+    for (const node of [2, 3]) {
+        assert.equal(propagated.nodes[node].grid_style, stackId);
+        assert.deepEqual(propagated.nodes[node].layout_grid_overlays[1].pattern,
+            { type: "columns", alignment: "stretch", count: 4, gutter: 8, offset: 12 });
+    }
+    assert.equal(propagated.nodes[2].layout_grid_overlays[0].visible, false);
+    assert.equal(propagated.nodes[3].layout_grid_overlays[0].visible, true);
+    await clickNative(page, "StyleDone", "ModalActions");
+    await history(beforeStackEdit, propagated, stackDepth, "Shared column count with local row visibility");
+    await select([]);
+    await page.mouse.move(4, 4);
+    const guideView = await state(page);
+    const guidePixels = PNG.sync.read(await captureNativeScreenshot(mode + "-stacked-layout-guides", { controls: ["CanvasHost"] }));
+    const sample = (x, y) => {
+        const px = Math.round(guideView.chrome.CanvasHost.x + guideView.pan.x + x * guideView.zoom);
+        const py = Math.round(guideView.chrome.CanvasHost.y + guideView.pan.y + y * guideView.zoom);
+        return [...guidePixels.data.subarray((py * guidePixels.width + px) * 4, (py * guidePixels.width + px) * 4 + 4)];
+    };
+    const band = sample(280, 100), gap = sample(304, 100);
+    assert.ok(band[1] > band[0] + 25 && band[1] > band[2] + 15,
+        "The actual surface contains the authored green column band: " + band);
+    assert.ok(gap.every(channel => channel >= 248), "The authored row/column gutter intersection remains white: " + gap);
+    await select([3]);
+    const [stackExport] = await Promise.all([
+        page.waitForEvent("download", { timeout: 60000 }),
+        clickNative(page, "ExportPngButton", "InspectorViewport"),
+    ]);
+    assert.equal(await stackExport.failure(), null);
+    const stackPath = resolve(output, mode + "-stacked-guides-free-artwork.png");
+    await stackExport.saveAs(stackPath);
+    const stackPng = PNG.sync.read(await readFile(stackPath));
+    assert.deepEqual([stackPng.width, stackPng.height], [160, 120]);
+    assert.ok(stackPng.data.every(channel => channel === 255), "Every square/row/column overlay stays out of artwork exports");
+    assert.deepEqual(await documentState(page), propagated);
+    check("Shared column edits retain each frame's row visibility and exact undo/redo; real browser pixels show band and gutter geometry while the downloaded PNG excludes the entire guide stack");
 }

@@ -241,6 +241,7 @@ impl Editor {
         result.font_features.clear();
         result.layout = None;
         result.layout_grid = None;
+        result.layout_grid_overlays.clear();
         result.grid_style = None;
         result.clip_content = false; // Any group/boolean clip is baked into the outline.
         result.corner_radius = 0.0;

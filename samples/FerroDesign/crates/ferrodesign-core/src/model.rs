@@ -695,7 +695,7 @@ impl VectorPath {
         }
     }
 }
-/// Editor-only square layout grid. Its effective values travel with the frame,
+/// Editor-only layout guide. Its effective values travel with the frame,
 /// so detaching or deleting a local grid style preserves the authored grid.
 /// Grid overlays do not enter artwork exports or prototype presentations.
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -704,10 +704,12 @@ pub struct LayoutGrid {
     pub size: f64,
     pub color: Color,
     pub visible: bool,
+    #[serde(default, skip_serializing_if = "crate::LayoutGridPattern::is_square")]
+    pub pattern: crate::LayoutGridPattern,
 }
 impl Default for LayoutGrid {
     fn default() -> Self {
-        Self { size: 8.0, color: Color::rgba(255, 0, 0, 26), visible: true }
+        Self { size: 8.0, color: Color::rgba(255, 0, 0, 26), visible: true, pattern: crate::LayoutGridPattern::Square }
     }
 }
 impl LayoutGrid {
@@ -718,6 +720,7 @@ impl LayoutGrid {
         if !self.size.is_finite() || self.size <= 0.0 {
             return Err(DocumentError::Invalid("Layout grid size must be positive and finite.".into()));
         }
+        self.pattern.validate()?;
         Ok(())
     }
 }
@@ -800,6 +803,10 @@ pub struct Node {
     pub grid_style: Option<StyleId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub layout_grid: Option<LayoutGrid>,
+    /// Additional guides, in paint order after the legacy primary guide. Keeping
+    /// the original field preserves existing square-grid documents verbatim.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub layout_grid_overlays: Vec<LayoutGrid>,
     pub variable_bindings: BTreeMap<String, VariableId>,
     pub interactions: Vec<Interaction>,
     pub export_settings: Vec<ExportSetting>,
@@ -868,6 +875,7 @@ impl Default for Node {
             effect_style: None,
             grid_style: None,
             layout_grid: None,
+            layout_grid_overlays: Vec::new(),
             variable_bindings: BTreeMap::new(),
             interactions: Vec::new(),
             export_settings: Vec::new(),
@@ -1145,6 +1153,9 @@ pub enum StyleValue {
     Grid {
         size: f64,
         color: Color,
+    },
+    GridStack {
+        grids: Vec<LayoutGrid>,
     },
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -1747,11 +1758,19 @@ impl Document {
                     "invalid geometry on node {id}"
                 )));
             }
-            if let Some(grid) = n.layout_grid {
+            if n.layout_grid.is_some() || !n.layout_grid_overlays.is_empty() {
                 if !LayoutGrid::supports(n.kind) {
                     return Err(DocumentError::Invalid(format!("Layout grids require a frame, component or instance on node {id}")));
                 }
-                grid.validate().map_err(|error| DocumentError::Invalid(format!("Node {id}: {error}")))?;
+                if n.layout_guide_count() > crate::MAX_LAYOUT_GUIDES {
+                    return Err(DocumentError::Invalid(format!("Too many layout guides on node {id}")));
+                }
+                for grid in n.layout_guides() {
+                    grid.validate().map_err(|error| DocumentError::Invalid(format!("Node {id}: {error}")))?;
+                }
+                if n.layout_grid.is_none() {
+                    return Err(DocumentError::Invalid(format!("Additional layout guides require a primary guide on node {id}")));
+                }
             }
             if let Some(grid) = n.layout_child.grid {
                 grid.validate().map_err(|error| DocumentError::Invalid(format!("Node {id}: {error}")))?;

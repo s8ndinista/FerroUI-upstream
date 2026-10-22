@@ -254,34 +254,8 @@ impl EditorShell {
                     },
                 ));
             }
-            StyleValue::Grid { size, color } => {
-                host.children().add(style_label("Square grid spacing and color update linked frames. Grid visibility remains a per-frame setting; overlays are excluded from exports and presentations."));
-                host.children().add(self.style_field(
-                    id,
-                    "Grid size",
-                    "StyleGridSize",
-                    &size.to_string(),
-                    |style, text| {
-                        let StyleValue::Grid { size, .. } = &mut style.value else {
-                            return Err(stale_style());
-                        };
-                        *size = style_number(text)?;
-                        Ok(())
-                    },
-                ));
-                host.children().add(self.style_field(
-                    id,
-                    "Color · RGBA hex",
-                    "StyleGridColor",
-                    &color.hex(),
-                    |style, text| {
-                        let StyleValue::Grid { color, .. } = &mut style.value else {
-                            return Err(stale_style());
-                        };
-                        *color = style_color(text)?;
-                        Ok(())
-                    },
-                ));
+            value @ (StyleValue::Grid { .. } | StyleValue::GridStack { .. }) => {
+                self.style_layout_guides(&host, id, value);
             }
         }
         let value_actions = style_row();
@@ -1024,7 +998,7 @@ impl EditorShell {
         toggle
     }
 
-    fn style_button(
+    pub(super) fn style_button(
         self: &Rc<Self>,
         caption: &str,
         name: &str,
@@ -1104,7 +1078,7 @@ fn style_default_stops(color: Color) -> Vec<GradientStop> {
         },
     ]
 }
-fn style_label(value: &str) -> Ref<TextBlock> {
+pub(super) fn style_label(value: &str) -> Ref<TextBlock> {
     let label = TextBlock::new();
     label.set_text(Some(value));
     label.set_font_size(11.0);
