@@ -13,6 +13,74 @@ revision and hashes are recorded separately in the
 [integration validation record](../data/integration-validation.json). These earlier
 PNGs and their manifest have not been relabeled or replaced by that CI run.
 
+## NavigationView checkpoint: all eight source compositions
+
+The native implementation is published at `9ce7530c`, its Gallery compositions at
+`31eba1b6`, and named-control capture support at
+[`8365ed0b`](https://github.com/wieslawsoltes/FerroUI/commit/8365ed0b33252c5169f48d56f0a9f3d511e53908).
+The new [navigation capture manifest](navigation-capture-manifest.json) records
+**151 actual outputs**: all **126 default light pages**, **nine default dark pages**,
+and the **eight NavigationView controls in both themes**. It retains every command,
+log hash, source/binary hash, PNG hash and decoded-pixel hash. Every image decoded
+as opaque, nonblank 1280 × 900 content. The eighteen reviewed images below were
+copied byte for byte from those runs; the earlier captures and manifest remain
+unchanged.
+
+Each of the four scopes has distinct PNG and decoded-pixel hashes internally.
+There are 150 distinct images across the 151 outputs: the default light
+NavigationView frame equals the named `nvSample4` frame byte for byte. The manifest
+records that cross-scope duplicate explicitly. All eighteen retained images are distinct.
+
+| Source composition | Light | Dark | Observed initial state and review boundary |
+| --- | --- | --- | --- |
+| Default/adaptive left, `nvSample5` | [Light](navigation/NavigationView--nvSample5-light.png) | [Dark](navigation/NavigationView--nvSample5-dark.png) | Compact rail, first-item selection, bottom Settings and SamplePage1 content. Hidden captions and missing icon glyphs limit visual identification of compact items. |
+| Top navigation, `nvSample6` | [Light](navigation/NavigationView--nvSample6-light.png) | [Dark](navigation/NavigationView--nvSample6-dark.png) | Four readable labels, selected underline, right-aligned Settings, header and destination tiles. Prose extends below the inner content viewport; the frame does not establish scrolling. |
+| Orientation switching, `nvSample2` | [Light](navigation/NavigationView--nvSample2-light.png) | [Dark](navigation/NavigationView--nvSample2-dark.png) | Wide-host Top state, four labels, first-item selection and Settings. The image does not establish the narrow-host transition. |
+| Focus-following tabs, `nvSample7` | [Light](navigation/NavigationView--nvSample7-light.png) | [Dark](navigation/NavigationView--nvSample7-dark.png) | Item1 selected, Settings, no back toolbar, destination tiles and readable body text. Focus-following and journal behavior have separate native tests. |
+| Data-bound categories, `nvSample4` | [Light](navigation/NavigationView--nvSample4-light.png) | [Dark](navigation/NavigationView--nvSample4-dark.png) | Compact first-item selection, grouping gaps, bottom Settings and destination. Category identity/template dispatch are established by tests; compact captions are hidden. |
+| Footer items, `nvSample9` | [Light](navigation/NavigationView--nvSample9-light.png) | [Dark](navigation/NavigationView--nvSample9-dark.png) | Browse selected; Track an Order and Order History; Account, Your Cart and Help in the footer; Settings absent as configured. Left/Top controls are readable. |
+| Hierarchy, `nvSample8` | [Light](navigation/NavigationView--nvSample8-light.png) | [Dark](navigation/NavigationView--nvSample8-dark.png) | Home selected, Account and Document options collapsed with chevrons, bottom Settings and pane-mode options. Expanded children and popup behavior are not shown. |
+| API options, `nvSample` | [Light](navigation/NavigationView--nvSample-light.png) | [Dark](navigation/NavigationView--nvSample-dark.png) | Pane title, search, Actions heading, menu labels, Header and Settings are visible. No initial selection and an empty Frame match the source page. |
+| InfoBadge native hosting | [Light](navigation/InfoBadge-light.png) | [Dark](navigation/InfoBadge-dark.png) | The native NavigationView composition hosts the first source badge example. This is a viewport of the page; tests separately cover all four native source compositions. |
+
+The sixteen NavigationView captures use native `BringIntoView` through ancestor
+scroll viewers. The executable checks and logs the actual control's visible
+intersection, bounds and scroll offsets after layout. Every requested NavigationView
+rectangle in this run lies fully within the captured viewport. Adjacent examples
+can appear above or below it because the Gallery remains a normally scrolled page.
+The API example's Settings row is visible near the bottom of both complete frames.
+
+Narrow destination gray tiles in the footer/hierarchy samples follow the preserved
+source `Auto,*,*` columns and the blue tile's 250-pixel minimum width beside the
+320-pixel open pane and options column. The destination's own ScrollViewer retains
+text below its viewport. These are observations of the source-constrained initial
+layout; a static image does not prove inner scrolling or interaction.
+
+Some menu, Settings, back, toggle and search symbols remain replacement rectangles
+because this host lacks the Segoe icon fonts. No font is redistributed. These
+captures do not establish WinUI template fidelity, upstream Windows pixels,
+animation, resizing, keyboard traversal or Windows accessibility. All page and
+control statuses remain partial.
+
+### Reproduce named captures
+
+```sh
+cargo build --locked --offline -p winui-gallery --features capture --bin winui-gallery-capture
+target/debug/winui-gallery-capture --all --query=Button --output-dir=gallery-captures/light
+target/debug/winui-gallery-capture \
+  --pages=NumberBox,RadioButton,AutoSuggestBox,InfoBar,InfoBadge,ProgressRing,RatingControl,CompactSizing,NavigationView \
+  --dark --query=Button --output-dir=gallery-captures/dark
+target/debug/winui-gallery-capture --pages=NavigationView --control=nvSample8 \
+  --dark --output-dir=gallery-captures/dark
+```
+
+Repeat the last command for all eight names above with and without `--dark`.
+Named captures require exactly one explicit page and cannot be combined with
+`--all`. The workflow now runs all sixteen named captures in addition to its
+default-page sweeps. These recorded local invocations used the isolated Rust 1.99.0
+toolchain and real renderer; their exact host paths and hashes are in the manifest
+and [checkpoint record](../data/navigation-validation.json).
+
 ## Retained checkpoint: native feedback controls and CompactSizing
 
 The Gallery sources for this checkpoint are published at
@@ -165,7 +233,7 @@ cargo run -p winui-gallery --features capture --bin winui-gallery-capture --offl
 
 ## Acceptance boundary
 
-Both checkpoints provide **construction/rendering evidence only**. They do not
+These checkpoints provide **construction/rendering evidence only**. They do not
 establish complete page acceptance, upstream Windows pixel parity, platform UIA or
 screen-reader interoperability. Rendering a pending page's source browser does not
 instantiate or implement its missing platform control. No page/API status is promoted
