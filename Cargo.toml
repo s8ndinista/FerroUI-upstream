@@ -39,6 +39,7 @@ members = [
     "src/Windows/FerroUI.WinUI",
     "src/FerroUI.Fonts.Inter",
     "src/FerroUI.Dialogs",
+    "src/FerroUI.Diagnostics",
     "src/FerroUI.Themes.Simple",
     "src/FerroUI.Themes.Fluent",
     "src/FerroUI.Themes.WinUI",
@@ -189,6 +190,7 @@ ferroui-linuxframebuffer = { version = "=0.4.0-preview.2", path = "src/Linux/Fer
 ferroui-winui = { version = "=0.4.0-preview.2", path = "src/Windows/FerroUI.WinUI" }
 ferroui-fonts-inter = { version = "=0.4.0-preview.2", path = "src/FerroUI.Fonts.Inter" }
 ferroui-dialogs = { version = "=0.4.0-preview.2", path = "src/FerroUI.Dialogs" }
+ferroui-diagnostics = { version = "=0.4.0-preview.2", path = "src/FerroUI.Diagnostics" }
 ferroui-themes-simple = { version = "=0.4.0-preview.2", path = "src/FerroUI.Themes.Simple" }
 ferroui-themes-fluent = { version = "=0.4.0-preview.2", path = "src/FerroUI.Themes.Fluent" }
 ferroui-themes-winui = { version = "=0.4.0-preview.2", path = "src/FerroUI.Themes.WinUI" }

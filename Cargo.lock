@@ -506,6 +506,7 @@ dependencies = [
  "ferroui-base",
  "ferroui-controls",
  "ferroui-desktop",
+ "ferroui-diagnostics",
  "ferroui-headless-vnc",
  "ferroui-linuxframebuffer",
  "ferroui-native",
@@ -851,6 +852,7 @@ dependencies = [
  "ferroui-controls-color-picker",
  "ferroui-controls-treedatagrid",
  "ferroui-desktop",
+ "ferroui-diagnostics",
  "ferroui-dialogs",
  "ferroui-dynamic-data",
  "ferroui-harfbuzz",
@@ -1037,6 +1039,22 @@ dependencies = [
  "ferroui-skia",
  "ferroui-win32",
  "ferroui-x11",
+]
+
+[[package]]
+name = "ferroui-diagnostics"
+version = "0.4.0-preview.2"
+dependencies = [
+ "ferroui-base",
+ "ferroui-build",
+ "ferroui-controls",
+ "ferroui-controls-color-picker",
+ "ferroui-controls-treedatagrid",
+ "ferroui-markup",
+ "ferroui-markup-xaml",
+ "ferroui-themes-simple",
+ "ferroui-treedatagrid-core",
+ "regex",
 ]
 
 [[package]]
