@@ -1,3 +1,14 @@
+    let provided_17 = rt::provide_value(&context, rt::setter_value_property(), &dynamic_resource_extension_16, ::ferroui_markup_xaml::markup_extensions::DynamicResourceExtension::__markup_ProvideValue_0);
+    rt::add_setter_value_with_parent(&context, style_15.upcast_ref::<::ferroui_base::styling::StyleBase>(), &setter_24, rt::to_object(::core::clone::Clone::clone(&provided_17)));
+    context.pop_parent();
+    ::ferroui_base::styling::StyleBase::__markup_Add_1(style_13.upcast_ref::<::ferroui_base::styling::StyleBase>(), rt::cast(style_15.clone(), 152, 8)?);
+    // Controls/WinUIControls.xaml(156,8) Content
+    // Controls/WinUIControls.xaml(156,8) Style
+    let style_16 = ::ferroui_base::styling::Style::new();
+    context.push_parent(rt::to_value(style_16.clone()));
+    // Controls/WinUIControls.xaml(156,8) Selector
+    let selector_56 = ::ferroui_base::styling::Selectors::nesting(::core::option::Option::None);
+    let selector_57 = ::ferroui_base::styling::Selectors::template(::core::option::Option::Some(selector_56));
     let selector_58 = ::ferroui_base::styling::Selectors::of_type_info(::core::option::Option::Some(selector_57), <::ferroui_controls::presenters::ContentPresenter as ::ferroui_base::StaticType>::TYPE);
     let selector_59 = ::ferroui_base::styling::Selectors::name(::core::option::Option::Some(selector_58), "PART_ContentPresenter");
     ::ferroui_base::styling::Style::__markup_set_Selector(&style_16, ::core::option::Option::Some(selector_59.clone()));

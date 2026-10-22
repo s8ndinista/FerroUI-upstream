@@ -380,6 +380,7 @@ ferroui_base::ferro_rust_paths! {
         crate::documents::TextHighlightRange,
         crate::documents::TextHighlighterCollection,
         crate::documents::TextRangeCollection,
+        crate::documents::Typography,
         crate::documents::UnderlineStyle,
         crate::platform::Win32HitTestValue,
         crate::platform::WindowCornerPreference,

@@ -1006,3 +1006,19 @@ lifecycle policy. Its actual private-bus and backend gates follow independently.
 The complete port remains a draft: candidate/proofing services, unimplemented
 API members, external engine contracts and native rendering/OS sessions remain
 visible in the source inventory and deviations.
+
+## 2026-10-22 — Merge shared TextLineBounds support
+
+Main `0ce4e90c20d89a03590ccdde555d5daa87e88ee6` brings PR #294's enum,
+cap-height metrics, formatter policy, TextBlock property and WinUI template
+changes. The merge combines those APIs with this branch's tab-stop properties,
+line-spacing copy behavior and typography. Registry accounting includes both the
+new enum and the rich value types. The generated Rust-path list also now includes
+the previously omitted Typography class.
+
+The authoritative WinUI reference was regenerated into the existing deterministic
+parts. Its regeneration test passed, followed by the full fresh theme suite:
+301 passed, two ignored. View-builder consistency passed. The pending rich-control
+layout implementation will consume this shared API; it does not introduce a
+second enum or duplicate the formatter. Native requested-family metrics, line-gap
+policy and fallback behavior remain independently reviewed contracts.

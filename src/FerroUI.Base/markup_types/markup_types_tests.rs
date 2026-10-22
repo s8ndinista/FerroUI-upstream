@@ -99,9 +99,9 @@ line.starts_with("ferro_markup_type!(") || line.starts_with("ferro_markup_enum!(
         })
         .count();
     let types = declared_types();
-    // `Decimal`, `NumberStyles` and the rich paragraph value types declare their
+    // `Decimal`, `NumberStyles`, `TextLineBounds`, and the rich paragraph value types declare their
     // metadata next to the type and are registered by this module.
-    assert_eq!(types.len(), declared + 2 + super::rich_text::TYPES.len());
+    assert_eq!(types.len(), declared + 3 + super::rich_text::TYPES.len());
 
     for type_ in &types {
         let found = MarkupType::find(type_.namespace(), type_.name)
@@ -180,9 +180,9 @@ fn content_properties_and_dependencies_name_existing_properties() {
 #[test]
 fn enumeration_members_are_found_by_name() {
     let enums: Vec<_> = declared_types().into_iter().filter(|t| t.kind == MarkupTypeKind::Enum).collect();
-    // `NumberStyles` and the tab enumerations are declared next to the type.
+    // `NumberStyles`, `TextLineBounds`, and the tab enumerations are declared next to the type.
     let rich_text_enums = super::rich_text::TYPES.iter().filter(|type_| type_.kind == MarkupTypeKind::Enum).count();
-    assert_eq!(enums.len(), super::enums::TYPES.len() + 1 + rich_text_enums);
+    assert_eq!(enums.len(), super::enums::TYPES.len() + 2 + rich_text_enums);
     for type_ in enums {
         assert!(!type_.enum_members.is_empty(), "{type_:?}");
         for member in type_.enum_members {

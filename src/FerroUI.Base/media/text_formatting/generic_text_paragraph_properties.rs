@@ -2,7 +2,7 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use crate::media::text_formatting::{TextParagraphProperties, TextRunProperties, TextTabStop, TextTabStops};
-use crate::media::{FlowDirection, TextAlignment, TextWrapping};
+use crate::media::{FlowDirection, TextAlignment, TextLineBounds, TextWrapping};
 
 /// Generic implementation of `TextParagraphProperties`.
 pub struct GenericTextParagraphProperties {
@@ -19,6 +19,7 @@ pub struct GenericTextParagraphProperties {
     tabs: Option<TextTabStops>,
     default_tab: f64,
     tab_origin: f64,
+    text_line_bounds: Cell<TextLineBounds>,
 }
 
 impl GenericTextParagraphProperties {
@@ -62,6 +63,7 @@ impl GenericTextParagraphProperties {
             tabs: None,
             default_tab: 0.0,
             tab_origin: 0.0,
+            text_line_bounds: Cell::new(TextLineBounds::Full),
         }
     }
 
@@ -92,6 +94,7 @@ impl GenericTextParagraphProperties {
             tabs: None,
             default_tab: 0.0,
             tab_origin: 0.0,
+            text_line_bounds: Cell::new(TextLineBounds::Full),
         }
     }
 
@@ -106,6 +109,12 @@ impl GenericTextParagraphProperties {
     /// Set line spacing: the additional space between lines.
     pub fn set_line_spacing(&self, line_spacing: f64) {
         self.line_spacing.set(line_spacing);
+    }
+
+    /// Sets how the box of each line is bounded (a FerroUI addition, docs/porting/DEVIATIONS.md,
+    /// Text block).
+    pub fn set_text_line_bounds(&self, text_line_bounds: TextLineBounds) {
+        self.text_line_bounds.set(text_line_bounds);
     }
 
     /// Creates a copy of other paragraph properties.
@@ -135,6 +144,7 @@ impl GenericTextParagraphProperties {
                 );
             }
         }
+        result.set_text_line_bounds(text_paragraph_properties.text_line_bounds());
         result
     }
 
@@ -174,6 +184,10 @@ impl TextParagraphProperties for GenericTextParagraphProperties {
 
     fn line_spacing(&self) -> f64 {
         self.line_spacing.get()
+    }
+
+    fn text_line_bounds(&self) -> TextLineBounds {
+        self.text_line_bounds.get()
     }
 
     fn first_line_in_paragraph(&self) -> bool {

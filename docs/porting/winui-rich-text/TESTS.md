@@ -68,7 +68,25 @@ Authoritative command/result records are stored in `mapping.json` under
 shows those records. A later test definition or source change is not implicitly
 covered by an earlier successful run.
 
-### Latest continuation: typography, input backends and snapshot restoration
+### Main TextLineBounds integration checkpoint
+
+Main `0ce4e90c20d89a03590ccdde555d5daa87e88ee6` adds the shared
+TextLineBounds enum, cap-height metrics, formatter support, TextBlock property,
+and corresponding WinUI theme changes. Merge resolution keeps the rich tab-stop
+configuration and line-spacing copy behavior alongside the new paragraph mode.
+The authoritative WinUI reference regeneration passed **one test**, then the
+fresh full WinUI theme binary passed **301 tests with two ignored**. This includes
+the updated templates, actual text bounds in themed controls, both emitter paths,
+and deterministic reference-part storage. The existing View-builder consistency
+check passed. Rust-path generation added a missing Typography class entry.
+
+The commands were `cargo test --locked --offline -p ferroui-themes-winui --lib
+tests::compiled_xaml_tests::regenerate_compiled_xaml -- --ignored --exact`, followed
+by the freshly built theme binary without a filter. These results cover the merge
+checkpoint, before the separate rich layout, requested-range geometry, namescope,
+and range-gravity tranches. They do not replace those tranches' runtime gates.
+
+### Typography, input backends and snapshot restoration
 
 The fresh core build after Typography and the registration repair passed **27
 Typography tests**: one Base, 21 Controls, two HarfBuzz and three XAML cases.
