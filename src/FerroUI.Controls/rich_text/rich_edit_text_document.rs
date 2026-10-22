@@ -37,8 +37,9 @@ use units::TextUnits;
 
 /// Implemented TOM units, with their native numeric values. Display lines use the
 /// editor's associated view and otherwise follow the native paragraph fallback.
-/// Character traverses Unicode scalars without splitting surrogate pairs; it is
-/// separate from the framework's grapheme-based caret and automation navigation.
+/// Range Character and selection MoveBy traverse Unicode scalars without
+/// splitting surrogate pairs. Selection MoveLeft/MoveRight follow grapheme
+/// boundaries, matching their arrow-command contract.
 /// Cluster uses the associated view's shaping output and requires a complete,
 /// untrimmed layout. It never substitutes Unicode grapheme boundaries.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

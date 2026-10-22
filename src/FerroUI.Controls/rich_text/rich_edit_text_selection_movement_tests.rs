@@ -136,6 +136,192 @@ fn rich_selection_vertical_keeps_desired_column_across_short_lines_and_facades()
 }
 
 #[test]
+fn rich_selection_vertical_extension_clamps_each_intermediate_line_in_one_command() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    // Fresh-control native rows from MSFTEDIT 6.2.26100.33648: collapsed Down2
+    // retains column 5 (15), extended Down2 clamps through "xy" to column 2 (12).
+    let (_view, document) = displayed("abcdef\nxy\nabcdef\npqrs");
+    for (down, count) in [(true, 2), (false, -2)] {
+        for (extend, expected) in [(false, 15), (true, 12)] {
+            document.selection().set_range(5, 5).unwrap();
+            let moved = if down {
+                document
+                    .selection()
+                    .move_down(TextRangeUnit::Line, count, extend)
+            } else {
+                document
+                    .selection()
+                    .move_up(TextRangeUnit::Line, count, extend)
+            };
+            assert_eq!(moved.unwrap(), count);
+            assert_eq!(
+                document.selection().selection(),
+                EditorSelection::new(if extend { 5 } else { expected }, expected)
+            );
+        }
+    }
+}
+
+#[test]
+fn rich_selection_vertical_extension_retains_reached_column_across_facades() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    // The fresh native sequence is Down1, Down1, Up1, Up1. Each operation uses
+    // one live editor; obtaining a new Rust facade does not reset its affinity.
+    let (_view, document) = displayed("aaaaaa\na\naaaaaa");
+    document.selection().set_range(5, 5).unwrap();
+    let snapshot = document.document().snapshot();
+    let revision = document.document().revision();
+    for (down, expected) in [(true, 8), (true, 10), (false, 8), (false, 1)] {
+        let selection = document.selection();
+        let moved = if down {
+            selection.move_down(TextRangeUnit::Line, 1, true)
+        } else {
+            selection.move_up(TextRangeUnit::Line, 1, true)
+        };
+        assert_eq!(moved.unwrap(), 1);
+        assert_eq!(selection.selection(), EditorSelection::new(5, expected));
+    }
+    assert_eq!(document.document().snapshot(), snapshot);
+    assert_eq!(document.document().revision(), revision);
+    assert!(!document.can_undo());
+}
+
+#[test]
+fn rich_selection_vertical_mixed_modes_preserve_collapsed_desired_column() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    // Exact four-step sequences from system MSFTEDIT run 39765696678, job
+    // 119780463926. Each sequence starts on a fresh native control at caret 5.
+    // The first preserves collapsed column 5 through extension and restores it
+    // on the last Up. The second starts extension without prior column affinity.
+    for steps in [
+        [
+            (true, false, 8, 8),
+            (true, true, 8, 14),
+            (false, true, 8, 8),
+            (false, false, 5, 5),
+        ],
+        [
+            (true, true, 5, 8),
+            (true, false, 10, 10),
+            (false, false, 8, 8),
+            (false, true, 8, 1),
+        ],
+    ] {
+        let (_view, document) = displayed("abcdef\nx\nabcdef");
+        document.selection().set_range(5, 5).unwrap();
+        let snapshot = document.document().snapshot();
+        let revision = document.document().revision();
+        for (down, extend, anchor, active) in steps {
+            let selection = document.selection();
+            let moved = if down {
+                selection.move_down(TextRangeUnit::Line, 1, extend)
+            } else {
+                selection.move_up(TextRangeUnit::Line, 1, extend)
+            };
+            assert_eq!(moved.unwrap(), 1);
+            assert_eq!(
+                selection.selection(),
+                EditorSelection::new(anchor, active),
+                "down={down}, extend={extend}"
+            );
+        }
+        assert_eq!(document.document().snapshot(), snapshot);
+        assert_eq!(document.document().revision(), revision);
+        assert!(!document.can_undo());
+    }
+}
+
+#[test]
+fn rich_selection_vertical_extension_clamps_upward_with_signed_counts() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let (_view, document) = displayed("aaaaaa\na\naaaaaa");
+    for (down, count) in [(false, 2), (true, -2)] {
+        document.selection().set_range(14, 14).unwrap();
+        let moved = if down {
+            document
+                .selection()
+                .move_down(TextRangeUnit::Line, count, true)
+        } else {
+            document
+                .selection()
+                .move_up(TextRangeUnit::Line, count, true)
+        };
+        assert_eq!(moved.unwrap(), count);
+        assert_eq!(
+            document.selection().selection(),
+            EditorSelection::new(14, 1)
+        );
+    }
+}
+
+#[test]
+fn rich_selection_vertical_extension_empty_lines_clamp_without_request_sized_iteration() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let (_view, document) = displayed("aaaaaa\n\naaaaaa");
+    document.selection().set_range(5, 5).unwrap();
+    assert_eq!(
+        document
+            .selection()
+            .move_down(TextRangeUnit::Line, 2, true)
+            .unwrap(),
+        2
+    );
+    assert_eq!(document.selection().selection(), EditorSelection::new(5, 8));
+    document.selection().set_range(13, 13).unwrap();
+    assert_eq!(
+        document
+            .selection()
+            .move_up(TextRangeUnit::Line, i32::MAX, true)
+            .unwrap(),
+        2
+    );
+    assert_eq!(
+        document.selection().selection(),
+        EditorSelection::new(13, 0)
+    );
+    document.selection().set_range(5, 5).unwrap();
+    assert_eq!(
+        document
+            .selection()
+            .move_up(TextRangeUnit::Line, i32::MIN, true)
+            .unwrap(),
+        -3
+    );
+    assert_eq!(
+        document.selection().selection(),
+        EditorSelection::new(5, 14)
+    );
+}
+
+#[test]
+fn rich_selection_vertical_extension_redirected_edge_uses_original_caret_projection() {
+    let _scope = test_scope();
+    let _text = TextTestScope::new();
+    let (owner, _view, document) = owner_with_view("aaaaaa\n\naaaaaa");
+    owner.select(5, 5);
+    let weak = owner.downgrade();
+    owner.selection_changing(move |_, args| {
+        weak.upgrade().unwrap().select(5, 0);
+        args.set_cancel(true);
+    });
+    // The requested next line clamps to x=0, but the callback's opposite edge
+    // movement starts from the original nonzero caret and still costs one unit.
+    assert_eq!(
+        document
+            .selection()
+            .move_down(TextRangeUnit::Line, 1, true)
+            .unwrap(),
+        -1
+    );
+    assert_eq!(document.selection().selection(), EditorSelection::new(5, 0));
+}
+
+#[test]
 fn rich_selection_vertical_counts_actual_adjacent_lines_with_mixed_heights() {
     let _scope = test_scope();
     let _text = TextTestScope::new();

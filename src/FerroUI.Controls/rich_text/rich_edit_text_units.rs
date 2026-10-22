@@ -87,14 +87,7 @@ impl TextUnits {
             return Err(EditError::ReentrantEdit);
         }
         let ranges = ranges?;
-        let mut boundaries: Vec<_> = ranges
-            .iter()
-            .flat_map(|range| [range.start, range.end])
-            .collect();
-        boundaries.push(0);
-        boundaries.push(length);
-        boundaries.sort_unstable();
-        boundaries.dedup();
+        let boundaries = unit_boundaries(&ranges, length);
         Ok(Self {
             ranges,
             line_caret_ends,
@@ -108,6 +101,45 @@ impl TextUnits {
                     | TextRangeUnit::Line
                     | TextRangeUnit::Story
             ),
+        })
+    }
+
+    /// Selection-arrow Character units follow text-element boundaries, unlike
+    /// ITextRange's scalar Character units and shaped Cluster units. Preserve
+    /// those three contracts independently; no text view is needed for arrows.
+    pub(super) fn resolve_horizontal(
+        editor: &RichTextEditor,
+        unit: TextRangeUnit,
+    ) -> Result<Self, EditError> {
+        if unit == TextRangeUnit::Word {
+            return Self::resolve(editor, unit);
+        }
+        if unit != TextRangeUnit::Character {
+            return Err(DocumentError::InvalidFormat(
+                "Horizontal selection navigation supports Character and Word units.",
+            )
+            .into());
+        }
+        let document = editor.document();
+        let mutation = document.mutation_version();
+        let text = document.text();
+        let length = text.encode_utf16().count();
+        let ranges = unit_ranges(&text, UnicodeTextUnit::Character);
+        let boundaries = unit_boundaries(&ranges, length);
+        // A dirty document can read custom block/inline text while a model
+        // batch is still open. Preserve the same mutation fence as resolve();
+        // deferred public revisions must not conceal callback-owned edits.
+        if document.mutation_version() != mutation {
+            editor.observe_external_document_change();
+            return Err(EditError::ReentrantEdit);
+        }
+        Ok(Self {
+            ranges,
+            boundaries,
+            line_caret_ends: None,
+            line_paragraph_ends: None,
+            length,
+            terminal_caret_in_last_unit: false,
         })
     }
 
@@ -233,11 +265,17 @@ impl TextUnits {
     }
 
     pub(super) fn move_range(&self, range: Range<usize>, count: i32) -> (usize, i32) {
+        let (position, moved) = self.move_range_wide(range, i64::from(count));
+        // The accepted count cannot exceed the original i32 request.
+        (position, moved as i32)
+    }
+
+    pub(super) fn move_range_wide(&self, range: Range<usize>, count: i64) -> (usize, i64) {
         if count == 0 {
             return (range.start, 0);
         }
         if range.is_empty() {
-            return self.move_position(range.start, count);
+            return self.move_position_wide(range.start, count);
         }
         let (position, remaining, collapse) = if count > 0 {
             let next = self
@@ -250,7 +288,7 @@ impl TextUnits {
                 .partition_point(|boundary| *boundary <= range.start);
             (self.boundaries[previous - 1], count + 1, -1)
         };
-        let (position, moved) = self.move_position(position, remaining);
+        let (position, moved) = self.move_position_wide(position, remaining);
         (position, moved + collapse)
     }
 
@@ -302,6 +340,18 @@ impl TextUnits {
                 - self.boundaries.partition_point(|boundary| *boundary < to)) as i128)
         }
     }
+}
+
+fn unit_boundaries(ranges: &[Range<usize>], length: usize) -> Vec<usize> {
+    let mut boundaries: Vec<_> = ranges
+        .iter()
+        .flat_map(|range| [range.start, range.end])
+        .collect();
+    boundaries.push(0);
+    boundaries.push(length);
+    boundaries.sort_unstable();
+    boundaries.dedup();
+    boundaries
 }
 
 pub(super) fn signed_displacement(to: usize, from: usize) -> Result<isize, EditError> {
