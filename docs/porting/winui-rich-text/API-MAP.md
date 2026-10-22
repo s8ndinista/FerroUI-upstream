@@ -16,7 +16,7 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Text.ITextCharacterFormat` | 28 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
 | `Microsoft.UI.Text.ITextParagraphFormat` | 32 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
 | `Microsoft.UI.Text.ITextRange` | 44 | 38 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
-| `Microsoft.UI.Text.ITextSelection` | 10 | 6 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
+| `Microsoft.UI.Text.ITextSelection` | 10 | 8 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.LetterCase` | 3 | 0 / 3 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.LineSpacingRule` | 9 | 0 / 9 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.LinkType` | 10 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
@@ -109,9 +109,16 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Xaml.Documents.Typography` | 173 | 0 / 0 | R6 | `src/FerroUI.Controls/documents/text_element.rs`, `src/FerroUI.Base/media/text_formatting/text_shaper.rs` |
 | `Microsoft.UI.Xaml.Documents.Underline` | 2 | 2 / 0 | R1/R2 | `src/FerroUI.Controls/documents/underline.rs` |
 | `Microsoft.UI.Xaml.Documents.UnderlineStyle` | 3 | 3 / 0 | R1/R5 | `src/FerroUI.Controls/documents/hyperlink.rs` |
-| `Microsoft.UI.Xaml.Input.InputScope` | 3 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
-| `Microsoft.UI.Xaml.Input.InputScopeName` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
-| `Microsoft.UI.Xaml.Input.InputScopeNameValue` | 44 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.FontCapitals` | 8 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.FontEastAsianLanguage` | 11 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.FontEastAsianWidths` | 7 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.FontFraction` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.FontNumeralAlignment` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.FontNumeralStyle` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.FontVariants` | 7 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.Input.InputScope` | 3 | 3 / 0 | R5/R8 | `src/FerroUI.Base/input/input_scope.rs`, `src/FerroUI.Base/input/input_scope_name_value.rs`, `src/FerroUI.Base/input/text_input/text_input_options.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
+| `Microsoft.UI.Xaml.Input.InputScopeName` | 4 | 4 / 0 | R5/R8 | `src/FerroUI.Base/input/input_scope.rs`, `src/FerroUI.Base/input/input_scope_name_value.rs`, `src/FerroUI.Base/input/text_input/text_input_options.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
+| `Microsoft.UI.Xaml.Input.InputScopeNameValue` | 44 | 0 / 44 | R5/R8 | `src/FerroUI.Base/input/input_scope.rs`, `src/FerroUI.Base/input/input_scope_name_value.rs`, `src/FerroUI.Base/input/text_input/text_input_options.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
 | `Microsoft.UI.Xaml.LineStackingStrategy` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
 | `Microsoft.UI.Xaml.OpticalMarginAlignment` | 3 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
 | `Microsoft.UI.Xaml.TextAlignment` | 8 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
@@ -1415,7 +1422,7 @@ State: **partial**. Line/Story Home/End now uses the normalized first/last selec
 
 #### `M:Microsoft.UI.Text.ITextSelection.MoveDown(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)`
 
-State: **partial**. Rust MoveUp/MoveDown accept Line and Paragraph. Line uses actual complete untrimmed shaped display lines, caret hit testing and a retained physical horizontal coordinate across short lines, mixed heights, bidi text and linked overflow. Paragraph uses logical boundaries without requiring a view. Negative counts reverse the command and extreme signed counts saturate without iteration or negation overflow. A nonempty collapse chooses the directional normalized edge and then applies the full requested distance; collapse alone counts as one unit if no further movement occurs. Return values count accepted units in the command direction; cancellation returns zero and callback redirection is measured by actual crossed boundaries/line indices. Shared publication fences preserve external model edits, nested navigation and newer view-affinity ownership; explicit selection/edit changes invalidate cached navigation, while reassociating the same validated live view retains it. Extended first/last-line moves count a real story-edge unit, including accepted callback redirection. Unsupported exposed units reject before side effects; Screen/Window units are not represented by the current enum. The recorded 264-command system MSFTEDIT run supplies collapse/count and story-edge observations. A separately versioned 282-command run adds 18 fresh-control/sequence observations: the original 264 rows and Home/End rows match across DLL versions 6.2.26100.33648 and 6.2.26100.33438. Fresh controls confirm ordinary collapse retains the desired column while extension clamps its column after each intervening short line; the current Rust extension retains the original column and requires a further correction. Fresh final-empty-line Up1 and Down(-1) both reach offset 4, resolving the reused-control difference. Observed native terminal EOP and extended geometry remain distinct from implemented Rust behavior. Native terminal EOP, general caret Gravity, selection Options/Type and external WinUI engine equivalence remain pending. A shared formatter prerequisite keeps structural EOL/EOP markers out of RTL glyph groups and anchors their caret/bounds to the preceding logical run; direct LTR/RTL inverse-geometry coverage is included.
+State: **partial**. Rust MoveUp/MoveDown accept Line and Paragraph. Line uses complete untrimmed shaped display lines, caret hit testing and linked-overflow geometry; Paragraph uses logical boundaries without a view. Collapsed movement retains the desired physical column across short lines. Extension projects from each actual reached caret and clamps through intervening short/empty lines, while preserving an earlier collapsed desired column for later collapsed movement. Signed counts widen and saturate; work is bounded by actual crossed lines. A nonempty collapse starts at the directional edge and applies the full distance; collapse alone counts once. Accepted units account for cancellation, redirection and real story-edge units. Mutation, selection, view and navigation generations protect callback-owned state; same-view reassociation preserves affinity. The 290-command native record adds eight mixed-mode observations to the unchanged previous 282. Literal mixed-mode, geometry-cost and ownership fixtures executed in the 70-test focused selection gate published at f10fb838. Additional edge projection runs only after accepted edge redirection. Screen/Window, synthetic terminal EOP, general Gravity and external WinUI engine equivalence remain pending. Shared formatter marker geometry is independently tested; this is not pixel parity.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `pub fn move_down(`.
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `impl RichEditTextSelection`.
@@ -1423,6 +1430,7 @@ State: **partial**. Rust MoveUp/MoveDown accept Line and Paragraph. Line uses ac
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `pub(super) fn resolve_display_lines(`.
 - Target: [src/FerroUI.Controls/rich_text/rich_text_editor.rs](../../../src/FerroUI.Controls/rich_text/rich_text_editor.rs) — `struct NavigationAffinity`.
 - Target: [src/FerroUI.Base/media/text_formatting/text_line_impl.rs](../../../src/FerroUI.Base/media/text_formatting/text_line_impl.rs) — `fn get_distance_from_character_hit(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `fn project_extension(`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_same_view_callback_retains_desired_column`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_presenter_scroll_retains_desired_column`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_keeps_desired_column_across_short_lines_and_facades`.
@@ -1452,11 +1460,59 @@ State: **partial**. Rust MoveUp/MoveDown accept Line and Paragraph. Line uses ac
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_move_by_external_model_write_survives_deferred_model_publication`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_move_by_external_editor_publication_preserves_handler_state`.
 - Test: [src/FerroUI.Base/media/text_formatting/text_line_tests.rs](../../../src/FerroUI.Base/media/text_formatting/text_line_tests.rs) — `structural_terminators_preserve_bidi_caret_and_range_geometry`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_clamps_each_intermediate_line_in_one_command`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_retains_reached_column_across_facades`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_clamps_upward_with_signed_counts`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_empty_lines_clamp_without_request_sized_iteration`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_redirected_edge_uses_original_caret_projection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs) — `rich_selection_vertical_extension_geometry_work_is_independent_of_story_size`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs) — `rich_selection_vertical_redirected_edge_geometry_preserves_newer_callback_state`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_mixed_modes_preserve_collapsed_desired_column`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I21](DEVIATIONS.md), [RT-I23](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.ITextSelection.MoveLeft(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)`
+
+State: **partial**. Rust MoveLeft/MoveRight accept Character and Word without a view. Keyboard Character uses FerroUI GraphemeEnumerator boundaries independently of scalar range Character. Word uses the reviewed logical boundaries. Signed counts reverse, zero validates units, and widened extreme counts saturate without request-sized iteration. Nonextended Character collapses to its directional exact edge and consumes one unit; Word aligns the edge to its directional boundary and consumes one. Extension retains the anchor. The logical source-offset policy matches observed default and RTL-reading fixtures, without claiming visual bidi or general Gravity parity. Literal regressions replay 294 of 300 native rows, including 78 new aligned-word/grapheme-interior observations; six synthetic terminal-EOP rows remain outside normalized Rust coordinates. Publication preserves callback cancellation/redirection, external edits and nested navigation, reports accepted counts and clears old vertical affinity. The completed 70-test focused selection gate at f10fb838 executes these fixtures. Synthetic terminal EOP and external WinUI engine parity remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `pub fn move_left(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `fn move_horizontally(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `pub(super) fn publish_navigation(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `pub(super) fn resolve_horizontal(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_matches_216_system_msftedit_observations`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_has_no_synthetic_terminal_eop`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_character_keeps_scalar_range_contract_independent`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_validates_units_before_zero_and_preserves_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_extreme_counts_saturate_to_real_boundaries`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_cancellation_preserves_selection_document_and_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_redirection_counts_graphemes_and_command_direction`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_callback_model_edit_rejects_stale_count`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_nested_boundary_command_owns_vertical_affinity`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_matches_78_native_boundary_observations`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I21](DEVIATIONS.md), [RT-I23](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Text.ITextSelection.MoveRight(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)`
+
+State: **partial**. Rust MoveLeft/MoveRight accept Character and Word without a view. Keyboard Character uses FerroUI GraphemeEnumerator boundaries independently of scalar range Character. Word uses the reviewed logical boundaries. Signed counts reverse, zero validates units, and widened extreme counts saturate without request-sized iteration. Nonextended Character collapses to its directional exact edge and consumes one unit; Word aligns the edge to its directional boundary and consumes one. Extension retains the anchor. The logical source-offset policy matches observed default and RTL-reading fixtures, without claiming visual bidi or general Gravity parity. Literal regressions replay 294 of 300 native rows, including 78 new aligned-word/grapheme-interior observations; six synthetic terminal-EOP rows remain outside normalized Rust coordinates. Publication preserves callback cancellation/redirection, external edits and nested navigation, reports accepted counts and clears old vertical affinity. The completed 70-test focused selection gate at f10fb838 executes these fixtures. Synthetic terminal EOP and external WinUI engine parity remain pending.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `pub fn move_right(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `fn move_horizontally(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `pub(super) fn publish_navigation(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `pub(super) fn resolve_horizontal(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_matches_216_system_msftedit_observations`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_has_no_synthetic_terminal_eop`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_character_keeps_scalar_range_contract_independent`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_validates_units_before_zero_and_preserves_history`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_extreme_counts_saturate_to_real_boundaries`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_cancellation_preserves_selection_document_and_redo`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_redirection_counts_graphemes_and_command_direction`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_callback_model_edit_rejects_stale_count`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_nested_boundary_command_owns_vertical_affinity`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) — `rich_selection_horizontal_matches_78_native_boundary_observations`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I21](DEVIATIONS.md), [RT-I23](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.ITextSelection.MoveUp(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)`
 
-State: **partial**. Rust MoveUp/MoveDown accept Line and Paragraph. Line uses actual complete untrimmed shaped display lines, caret hit testing and a retained physical horizontal coordinate across short lines, mixed heights, bidi text and linked overflow. Paragraph uses logical boundaries without requiring a view. Negative counts reverse the command and extreme signed counts saturate without iteration or negation overflow. A nonempty collapse chooses the directional normalized edge and then applies the full requested distance; collapse alone counts as one unit if no further movement occurs. Return values count accepted units in the command direction; cancellation returns zero and callback redirection is measured by actual crossed boundaries/line indices. Shared publication fences preserve external model edits, nested navigation and newer view-affinity ownership; explicit selection/edit changes invalidate cached navigation, while reassociating the same validated live view retains it. Extended first/last-line moves count a real story-edge unit, including accepted callback redirection. Unsupported exposed units reject before side effects; Screen/Window units are not represented by the current enum. The recorded 264-command system MSFTEDIT run supplies collapse/count and story-edge observations. A separately versioned 282-command run adds 18 fresh-control/sequence observations: the original 264 rows and Home/End rows match across DLL versions 6.2.26100.33648 and 6.2.26100.33438. Fresh controls confirm ordinary collapse retains the desired column while extension clamps its column after each intervening short line; the current Rust extension retains the original column and requires a further correction. Fresh final-empty-line Up1 and Down(-1) both reach offset 4, resolving the reused-control difference. Observed native terminal EOP and extended geometry remain distinct from implemented Rust behavior. Native terminal EOP, general caret Gravity, selection Options/Type and external WinUI engine equivalence remain pending. A shared formatter prerequisite keeps structural EOL/EOP markers out of RTL glyph groups and anchors their caret/bounds to the preceding logical run; direct LTR/RTL inverse-geometry coverage is included.
+State: **partial**. Rust MoveUp/MoveDown accept Line and Paragraph. Line uses complete untrimmed shaped display lines, caret hit testing and linked-overflow geometry; Paragraph uses logical boundaries without a view. Collapsed movement retains the desired physical column across short lines. Extension projects from each actual reached caret and clamps through intervening short/empty lines, while preserving an earlier collapsed desired column for later collapsed movement. Signed counts widen and saturate; work is bounded by actual crossed lines. A nonempty collapse starts at the directional edge and applies the full distance; collapse alone counts once. Accepted units account for cancellation, redirection and real story-edge units. Mutation, selection, view and navigation generations protect callback-owned state; same-view reassociation preserves affinity. The 290-command native record adds eight mixed-mode observations to the unchanged previous 282. Literal mixed-mode, geometry-cost and ownership fixtures executed in the 70-test focused selection gate published at f10fb838. Additional edge projection runs only after accepted edge redirection. Screen/Window, synthetic terminal EOP, general Gravity and external WinUI engine equivalence remain pending. Shared formatter marker geometry is independently tested; this is not pixel parity.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `pub fn move_up(`.
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `impl RichEditTextSelection`.
@@ -1464,6 +1520,7 @@ State: **partial**. Rust MoveUp/MoveDown accept Line and Paragraph. Line uses ac
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_units.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units.rs) — `pub(super) fn resolve_display_lines(`.
 - Target: [src/FerroUI.Controls/rich_text/rich_text_editor.rs](../../../src/FerroUI.Controls/rich_text/rich_text_editor.rs) — `struct NavigationAffinity`.
 - Target: [src/FerroUI.Base/media/text_formatting/text_line_impl.rs](../../../src/FerroUI.Base/media/text_formatting/text_line_impl.rs) — `fn get_distance_from_character_hit(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs) — `fn project_extension(`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_same_view_callback_retains_desired_column`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_presenter_scroll_retains_desired_column`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_keeps_desired_column_across_short_lines_and_facades`.
@@ -1493,6 +1550,14 @@ State: **partial**. Rust MoveUp/MoveDown accept Line and Paragraph. Line uses ac
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_move_by_external_model_write_survives_deferred_model_publication`.
 - Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_move_by_external_editor_publication_preserves_handler_state`.
 - Test: [src/FerroUI.Base/media/text_formatting/text_line_tests.rs](../../../src/FerroUI.Base/media/text_formatting/text_line_tests.rs) — `structural_terminators_preserve_bidi_caret_and_range_geometry`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_clamps_each_intermediate_line_in_one_command`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_retains_reached_column_across_facades`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_clamps_upward_with_signed_counts`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_empty_lines_clamp_without_request_sized_iteration`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_extension_redirected_edge_uses_original_caret_projection`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs) — `rich_selection_vertical_extension_geometry_work_is_independent_of_story_size`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs) — `rich_selection_vertical_redirected_edge_geometry_preserves_newer_callback_state`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) — `rich_selection_vertical_mixed_modes_preserve_collapsed_desired_column`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I08](DEVIATIONS.md), [RT-I21](DEVIATIONS.md), [RT-I23](DEVIATIONS.md).
 
 #### `M:Microsoft.UI.Text.ITextSelection.TypeText(System.String)`
@@ -4737,7 +4802,7 @@ State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persisten
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.InputScope`
 
-State: **partial**. The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The supported scope subset now includes verified PersonalFullName and PinNumeric mappings for existing Name/Pin content types; other native policies and real OS sessions need separate evidence.
+State: **partial**. RichEditBox.InputScope is a nullable styled Option<Ref<InputScope>> property. It observes scope replacement, ordered Names mutations and shared NameValue changes through weak disposable subscriptions, publishing immutable complete enum snapshots to inherited TextInputOptions.InputScopeNames. Clearing or emptying the scope restores the independently configured legacy content hint without overwriting it. The semantic owner retains live policy delivery during owned flyout focus; policy changes preserve the client, connection, composition and history. Effective changes to all ten attached options, including inherited/cleared values, are generation-fenced and reentrant same-transport setters reapply the latest policy. Platform APIs currently use the first name; the snapshot retains every name for future richer consumers. CoreText maps all 43 exact names, preserving its lazy creation, nested-setter serialization and retry behavior; other hosts use their supported purpose/keyboard hints. Native multi-name negotiation, candidate-window services, proofing/prediction execution and native WinUI/WinRT equivalence remain partial. Actual runtime gates are recorded separately from these source mappings. Android installs the current EditorInfo closure before restarting active input; iOS reloads current responder input views after a policy change. These host calls and deterministic policy fixtures still require device/OS execution. Native and IBus set_options remain no-op boundaries, while Browser consumes supported inputmode/enterkeyhint/capitalization/language attributes on the existing text element, keeping input type and composition state. Reentrant browser setters retain the newest options. Browser correction, spellcheck and writing suggestions remain disabled until non-composition DOM replacement events are delivered through the framework connection. Browser Rust/JavaScript and device/OS runtime gates remain separate.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn input_scope(`.
 - Target: [src/FerroUI.Base/input/text_input/input_method_manager.rs](../../../src/FerroUI.Base/input/text_input/input_method_manager.rs) — `fn update_input_options(`.
@@ -4745,6 +4810,25 @@ State: **partial**. The rich control registers and consumes this input/presentat
 - Target: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `pub(crate) struct CoreTextInputOptions`.
 - Target: [src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs](../../../src/Windows/FerroUI.WinUI/win_ui_text_input_method.rs) — `fn apply_input_options(`.
 - Target: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `pub(crate) fn update(`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub struct InputScope {`.
+- Target: [src/FerroUI.Base/input/text_input/text_input_options.rs](../../../src/FerroUI.Base/input/text_input/text_input_options.rs) — `pub fn input_scope_names_property()`.
+- Target: [src/FerroUI.Base/input/text_input/text_input_options.rs](../../../src/FerroUI.Base/input/text_input/text_input_options.rs) — `pub fn effective_input_scope(`.
+- Target: [src/FerroUI.Base/input/text_input/text_input_options.rs](../../../src/FerroUI.Base/input/text_input/text_input_options.rs) — `pub fn effective_content_type(`.
+- Target: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `fn native_scope(`.
+- Target: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `pub(crate) fn apply<`.
+- Target: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `fn input_type_for_scope(`.
+- Target: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `pub(crate) fn fill_editor_info(`.
+- Target: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `fn set_options(`.
+- Target: [src/iOS/FerroUI.iOS/text_input_responder.rs](../../../src/iOS/FerroUI.iOS/text_input_responder.rs) — `pub fn keyboard_type_of(`.
+- Target: [src/iOS/FerroUI.iOS/text_input_responder.rs](../../../src/iOS/FerroUI.iOS/text_input_responder.rs) — `pub fn suggestions_trait_of(`.
+- Target: [src/FerroUI.Wayland/text_input_options_converter.rs](../../../src/FerroUI.Wayland/text_input_options_converter.rs) — `fn convert_scope(`.
+- Target: [src/FerroUI.Wayland/text_input_options_converter.rs](../../../src/FerroUI.Wayland/text_input_options_converter.rs) — `pub fn convert(`.
+- Target: [src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs](../../../src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs) — `fn scope_flags(`.
+- Target: [src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs](../../../src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs) — `pub(crate) fn option_flags(`.
+- Target: [src/iOS/FerroUI.iOS/ferro_view.rs](../../../src/iOS/FerroUI.iOS/ferro_view.rs) — `fn set_options(`.
+- Target: [src/Browser/FerroUI.Browser/browser_text_input_options.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_options.rs) — `pub(crate) fn from_options(`.
+- Target: [src/Browser/FerroUI.Browser/browser_text_input_method.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_method.rs) — `fn set_options(`.
+- Target: [src/Browser/FerroUI.Browser/webapp/modules/ferroui/inputOptions.ts](../../../src/Browser/FerroUI.Browser/webapp/modules/ferroui/inputOptions.ts) — `export function applyTextInputOptions(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_input_policy_maps_to_platform_options_and_enforces_casing`.
 - Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_change_without_replacing_the_client_or_connection`.
 - Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_follow_inheritance_and_clearing_local_values`.
@@ -4759,15 +4843,64 @@ State: **partial**. The rich control registers and consumes this input/presentat
 - Test: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `core_text_options_reentrant_replacement_wins_after_the_old_native_setter`.
 - Test: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `core_text_failed_option_application_preserves_the_latest_value_for_retry`.
 - Test: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `core_text_content_types_preserve_native_name_and_numeric_pin_semantics`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_live_names_reach_the_backend_as_immutable_snapshots`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_replacement_and_removal_stop_old_scope_updates`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_clear_restores_legacy_hints_without_overwriting_them`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_shared_objects_update_each_owner_without_owning_it`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_live_names_remain_with_the_owner_during_flyout_focus`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_transport_preserves_legacy_hints_and_first_name_precedence`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_transport_is_inherited_without_retaining_live_objects`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_markup_preserves_objects_order_and_live_name_changes`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_markup_accepts_every_defined_name_and_rejects_invalid_text`.
+- Test: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `core_text_input_scope_preserves_all_43_native_values`.
+- Test: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `core_text_input_scope_distinguishes_empty_names_from_explicit_default`.
+- Test: [src/Windows/FerroUI.WinUI/core_text_input_options.rs](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) — `core_text_input_scope_reentry_applies_updated_names_with_the_same_content_type`.
+- Test: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `input_scope_distinguishes_numeric_components_phones_and_alphanumeric_pins`.
+- Test: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `input_scope_first_name_and_clear_update_the_android_editor_callback`.
+- Test: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `input_scope_numeric_pads_do_not_get_text_flags_and_secrets_disable_learning`.
+- Test: [src/iOS/FerroUI.iOS/text_input_responder.rs](../../../src/iOS/FerroUI.iOS/text_input_responder.rs) — `input_scope_chooses_numeric_components_phone_and_alphanumeric_keyboards`.
+- Test: [src/iOS/FerroUI.iOS/text_input_responder.rs](../../../src/iOS/FerroUI.iOS/text_input_responder.rs) — `input_scope_names_do_not_replace_the_existing_secure_entry_policy`.
+- Test: [src/iOS/FerroUI.iOS/text_input_responder.rs](../../../src/iOS/FerroUI.iOS/text_input_responder.rs) — `input_scope_semantic_content_does_not_misidentify_components_or_pin_codes`.
+- Test: [src/FerroUI.Wayland/text_input_options_converter.rs](../../../src/FerroUI.Wayland/text_input_options_converter.rs) — `input_scope_maps_components_phones_names_and_secrets_to_distinct_purposes`.
+- Test: [src/FerroUI.Wayland/text_input_options_converter.rs](../../../src/FerroUI.Wayland/text_input_options_converter.rs) — `input_scope_default_and_empty_names_have_distinct_fallback_and_privacy`.
+- Test: [src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs](../../../src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs) — `input_scope_separates_numeric_phone_name_and_alphanumeric_pin_capabilities`.
+- Test: [src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs](../../../src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs) — `input_scope_default_and_empty_names_preserve_explicit_and_legacy_fcitx_policy`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `input_scope_snapshot_setter_reentry_keeps_latest_names_and_connection`.
+- Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `input_scope_snapshot_inheritance_and_clear_reach_the_focused_backend`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs) — `"rich_input_scope.xaml"`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_options.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_options.rs) — `browser_scope_distinguishes_numeric_telephone_decimal_and_text_keyboards`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_options.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_options.rs) — `browser_scope_order_and_empty_fallback_preserve_legacy_content_hints`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_options.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_options.rs) — `browser_sensitive_input_suppresses_correction_and_capitalization_without_changing_keyboard`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_options.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_options.rs) — `browser_return_key_and_language_hints_are_explicit_and_owned`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_options.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_options.rs) — `browser_capitalization_and_suggestions_use_framework_policy`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_method.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_method.rs) — `changing_input_options_preserves_active_composition_text_selection_and_focus`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_method.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_method.rs) — `unchanged_input_hints_do_not_rewrite_page_attributes`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_method.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_method.rs) — `input_options_changed_during_page_callback_win_over_a_late_old_write`.
+- Test: [src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs](../../../src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs) — `keyboard and action hints preserve the composing input and its UTF-16 selection`.
+- Test: [src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs](../../../src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs) — `clearing a scope and locale resets stale hints on the same input`.
+- Test: [src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs](../../../src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs) — `sensitive hints suppress browser suggestions even if requested by a caller`.
+- Test: [src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs](../../../src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs) — `unchanged attributes do not generate repeated DOM mutations`.
+- Test: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `input_scope_restart_preserves_the_same_clients_composing_region`.
+- Test: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `input_scope_restart_does_not_carry_composition_across_a_client_assignment`.
+- Test: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `input_scope_override_preserves_independently_configured_privacy`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.InputScopeProperty`
 
-State: **partial**. The registered FerroUI property supplies metadata and invalidation for this mapped value. The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate.
+State: **partial**. The registered nullable FerroUI styled InputScope property stores shared InputScope objects and drives weak scope/list/item subscriptions and immutable input-option snapshots. Runtime and compiled markup accept the native named shortcut, explicit Names objects and x:Null. Clearing restores existing independently configured content hints. FerroUI property metadata/ownership replace the dependency-property ABI; actual OS keyboard policy and complete native property semantics remain partial under RT-I20.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `input_scope_property`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub struct InputScope {`.
+- Target: [src/FerroUI.Base/input/text_input/text_input_options.rs](../../../src/FerroUI.Base/input/text_input/text_input_options.rs) — `pub fn input_scope_names_property()`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_input_policy_maps_to_platform_options_and_enforces_casing`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md).
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_live_names_reach_the_backend_as_immutable_snapshots`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_replacement_and_removal_stop_old_scope_updates`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_clear_restores_legacy_hints_without_overwriting_them`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_shared_objects_update_each_owner_without_owning_it`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_live_names_remain_with_the_owner_during_flyout_focus`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_markup_preserves_objects_order_and_live_name_changes`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs) — `"rich_input_scope.xaml"`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.IsReadOnly`
 
@@ -4787,11 +4920,13 @@ State: **partial**. The registered FerroUI property supplies metadata and invali
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.IsTextPredictionEnabled`
 
-State: **partial**. The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics.
+State: **partial**. The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all ten attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. The immutable ordered InputScope.Names snapshot now accompanies existing option transport; native prediction/proofing and multi-name negotiation remain separate.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn is_text_prediction_enabled(`.
 - Target: [src/FerroUI.Base/input/text_input/input_method_manager.rs](../../../src/FerroUI.Base/input/text_input/input_method_manager.rs) — `fn update_input_options(`.
 - Target: [src/FerroUI.Base/input/text_input/input_method_manager.rs](../../../src/FerroUI.Base/input/text_input/input_method_manager.rs) — `fn is_input_options_property(`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub struct InputScope {`.
+- Target: [src/FerroUI.Base/input/text_input/text_input_options.rs](../../../src/FerroUI.Base/input/text_input/text_input_options.rs) — `pub fn effective_input_scope(`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_input_policy_maps_to_platform_options_and_enforces_casing`.
 - Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_change_without_replacing_the_client_or_connection`.
 - Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_follow_inheritance_and_clearing_local_values`.
@@ -4802,6 +4937,8 @@ State: **partial**. The rich control registers and consumes this input/presentat
 - Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `disposing_the_input_manager_releases_the_owner_option_subscription`.
 - Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_and_prediction_changes_reach_the_focused_backend_without_resetting_composition`.
 - Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_transport_preserves_legacy_hints_and_first_name_precedence`.
+- Test: [src/FerroUI.Controls/rich_edit_input_options_tests.rs](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) — `rich_input_scope_live_names_reach_the_backend_as_immutable_snapshots`.
 - Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.IsTextPredictionEnabledProperty`
@@ -7110,23 +7247,503 @@ State: **partial**. The None/Single hyperlink decoration choice is represented b
 - Test: [src/FerroUI.Controls/rich_text_block_tests.rs](../../../src/FerroUI.Controls/rich_text_block_tests.rs) — `rich_hyperlink_hit_testing_keyboard_focus_and_cancellation_use_the_host`.
 - Differences: [RT-I05](DEVIATIONS.md).
 
-### `Microsoft.UI.Xaml.Input.InputScope`
+### `Microsoft.UI.Xaml.FontCapitals`
 
 Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
 
 All retained members remain pending.
+
+### `Microsoft.UI.Xaml.FontEastAsianLanguage`
+
+Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.FontEastAsianWidths`
+
+Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.FontFraction`
+
+Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.FontNumeralAlignment`
+
+Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.FontNumeralStyle`
+
+Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.FontVariants`
+
+Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+
+All retained members remain pending.
+
+### `Microsoft.UI.Xaml.Input.InputScope`
+
+The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts.
+
+#### `M:Microsoft.UI.Xaml.Input.InputScope.#ctor`
+
+State: **partial**. The Rust new/construct path creates an InputScope with a persistent empty Names collection, following CInputScope::Create and CInputScopeNameCollection::Create. Rust parse/with_name_value conveniences create one wrapped name without treating a content hint as the object itself. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.
+
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `impl InputScope {`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn construct() -> Self`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn new() -> Ref<Self>`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_defaults_and_string_conversion_match_native_object_creation`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_names_are_shared_ordered_and_snapshots_are_immutable`.
+- Differences: [RT-A04](DEVIATIONS.md), [RT-P04](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Input.InputScope.Names`
+
+State: **partial**. Names returns the same ordered FerroList identity, preserving shared InputScopeName identity and live changes. Repeated wrapper objects are observed once, removal disposes unused subscriptions, callback mutation is allowed without holding a list borrow, and snapshots freeze enum values for backend delivery. Names is declared as the markup content collection. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.
+
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn names(`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn snapshot(`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn as_add_child(`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_defaults_and_string_conversion_match_native_object_creation`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_names_are_shared_ordered_and_snapshots_are_immutable`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_observes_duplicate_names_once_and_unsubscribes_removed_names`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_callbacks_can_mutate_the_list_and_shared_name`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_list_and_items_do_not_retain_the_owner`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_metadata_converts_to_real_objects_and_checked_enum_values`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_markup_preserves_objects_order_and_live_name_changes`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_name_markup_supports_native_enum_constructor_and_content`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs) — `"rich_input_scope.xaml"`.
+- Differences: [RT-A04](DEVIATIONS.md), [RT-P04](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.Input.InputScope`
+
+State: **partial**. InputScope is a real shared FerroObject with a live ordered FerroList of shared InputScopeName objects, empty default Names and string conversion to one named item. Weak list/item subscriptions observe mutation without retaining the owner, deduplicate repeated item identity and release removed subscriptions. Immutable snapshots preserve the full order for inherited input transport; metadata supports Names content and runtime/compiled markup. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.
+
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub struct InputScope {`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn names(`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn snapshot(`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_defaults_and_string_conversion_match_native_object_creation`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_names_are_shared_ordered_and_snapshots_are_immutable`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_observes_duplicate_names_once_and_unsubscribes_removed_names`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_callbacks_can_mutate_the_list_and_shared_name`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_list_and_items_do_not_retain_the_owner`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_metadata_converts_to_real_objects_and_checked_enum_values`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_markup_preserves_objects_order_and_live_name_changes`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_name_markup_supports_native_enum_constructor_and_content`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs) — `"rich_input_scope.xaml"`.
+- Differences: [RT-A04](DEVIATIONS.md), [RT-P04](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Input.InputScopeName`
 
-Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts.
 
-All retained members remain pending.
+#### `M:Microsoft.UI.Xaml.Input.InputScopeName.#ctor`
+
+State: **partial**. The default Rust name wrapper owns a styled NameValue whose metadata default is InputScopeNameValue::Default, following the non-string CInputScopeName::Create path. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.
+
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `impl InputScopeName {`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn construct() -> Self`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn name_value_property()`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_defaults_and_string_conversion_match_native_object_creation`.
+- Differences: [RT-A04](DEVIATIONS.md), [RT-P04](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Input.InputScopeName.#ctor(Microsoft.UI.Xaml.Input.InputScopeNameValue)`
+
+State: **partial**. The Rust with_name_value constructor creates a real name wrapper and assigns its styled NameValue, matching InputScopeNameFactory::CreateInstanceImpl. Metadata exposes the typed enum constructor for x:Arguments; Rust prevents undefined enum values rather than accepting unchecked WinRT integers. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.
+
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn with_name_value(name_value: InputScopeNameValue)`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_defaults_and_string_conversion_match_native_object_creation`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_name_markup_supports_native_enum_constructor_and_content`.
+- Differences: [RT-A04](DEVIATIONS.md), [RT-P04](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Input.InputScopeName.NameValue`
+
+State: **partial**. NameValue is a typed styled property with Default metadata and checked conversion. Mutating a shared wrapper notifies each live owning scope and produces a new immutable backend snapshot without modifying earlier snapshots or retaining discarded owners. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.
+
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn name_value_property()`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn name_value(&self)`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn set_name_value(`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_names_are_shared_ordered_and_snapshots_are_immutable`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_observes_duplicate_names_once_and_unsubscribes_removed_names`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_markup_preserves_objects_order_and_live_name_changes`.
+- Differences: [RT-A04](DEVIATIONS.md), [RT-P04](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.Input.InputScopeName`
+
+State: **partial**. InputScopeName is a shared FerroObject with a styled NameValue property defaulting to the exact Default enum value. Rust default/enum constructors and checked conversion supply the native wrapper role. Runtime metadata supports property assignment, scalar content and the enum constructor. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.
+
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub struct InputScopeName {`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn name_value_property()`.
+- Target: [src/FerroUI.Base/input/input_scope.rs](../../../src/FerroUI.Base/input/input_scope.rs) — `pub fn with_name_value(name_value: InputScopeNameValue)`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_defaults_and_string_conversion_match_native_object_creation`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_metadata_converts_to_real_objects_and_checked_enum_values`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_name_markup_supports_native_enum_constructor_and_content`.
+- Differences: [RT-A04](DEVIATIONS.md), [RT-P04](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Input.InputScopeNameValue`
 
-Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.AlphanumericFullWidth`
+
+State: **complete**. The Rust AlphanumericFullWidth discriminant is exactly 41, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `AlphanumericFullWidth = 41`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.AlphanumericHalfWidth`
+
+State: **complete**. The Rust AlphanumericHalfWidth discriminant is exactly 40, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `AlphanumericHalfWidth = 40`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.AlphanumericPin`
+
+State: **complete**. The Rust AlphanumericPin discriminant is exactly 65, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `AlphanumericPin = 65`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Chat`
+
+State: **complete**. The Rust Chat discriminant is exactly 58, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Chat = 58`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.ChatWithoutEmoji`
+
+State: **complete**. The Rust ChatWithoutEmoji discriminant is exactly 68, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `ChatWithoutEmoji = 68`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.ChineseFullWidth`
+
+State: **complete**. The Rust ChineseFullWidth discriminant is exactly 54, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `ChineseFullWidth = 54`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.ChineseHalfWidth`
+
+State: **complete**. The Rust ChineseHalfWidth discriminant is exactly 53, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `ChineseHalfWidth = 53`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.CurrencyAmount`
+
+State: **complete**. The Rust CurrencyAmount discriminant is exactly 21, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `CurrencyAmount = 21`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.CurrencyAmountAndSymbol`
+
+State: **complete**. The Rust CurrencyAmountAndSymbol discriminant is exactly 20, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `CurrencyAmountAndSymbol = 20`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.DateDayNumber`
+
+State: **complete**. The Rust DateDayNumber discriminant is exactly 24, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `DateDayNumber = 24`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.DateMonthNumber`
+
+State: **complete**. The Rust DateMonthNumber discriminant is exactly 23, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `DateMonthNumber = 23`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.DateYear`
+
+State: **complete**. The Rust DateYear discriminant is exactly 25, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `DateYear = 25`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Default`
+
+State: **complete**. The Rust Default discriminant is exactly 0, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Default = 0`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Digits`
+
+State: **complete**. The Rust Digits discriminant is exactly 28, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Digits = 28`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.EmailNameOrAddress`
+
+State: **complete**. The Rust EmailNameOrAddress discriminant is exactly 60, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `EmailNameOrAddress = 60`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.EmailSmtpAddress`
+
+State: **complete**. The Rust EmailSmtpAddress discriminant is exactly 5, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `EmailSmtpAddress = 5`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Formula`
+
+State: **complete**. The Rust Formula discriminant is exactly 51, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Formula = 51`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.FormulaNumber`
+
+State: **complete**. The Rust FormulaNumber discriminant is exactly 67, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `FormulaNumber = 67`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.HangulFullWidth`
+
+State: **complete**. The Rust HangulFullWidth discriminant is exactly 49, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `HangulFullWidth = 49`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.HangulHalfWidth`
+
+State: **complete**. The Rust HangulHalfWidth discriminant is exactly 48, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `HangulHalfWidth = 48`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Hanja`
+
+State: **complete**. The Rust Hanja discriminant is exactly 47, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Hanja = 47`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Hiragana`
+
+State: **complete**. The Rust Hiragana discriminant is exactly 44, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Hiragana = 44`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.KatakanaFullWidth`
+
+State: **complete**. The Rust KatakanaFullWidth discriminant is exactly 46, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `KatakanaFullWidth = 46`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.KatakanaHalfWidth`
+
+State: **complete**. The Rust KatakanaHalfWidth discriminant is exactly 45, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `KatakanaHalfWidth = 45`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Maps`
+
+State: **complete**. The Rust Maps discriminant is exactly 62, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Maps = 62`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.NameOrPhoneNumber`
+
+State: **complete**. The Rust NameOrPhoneNumber discriminant is exactly 59, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `NameOrPhoneNumber = 59`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.NativeScript`
+
+State: **complete**. The Rust NativeScript discriminant is exactly 55, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `NativeScript = 55`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Number`
+
+State: **complete**. The Rust Number discriminant is exactly 29, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Number = 29`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.NumberFullWidth`
+
+State: **complete**. The Rust NumberFullWidth discriminant is exactly 39, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `NumberFullWidth = 39`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.NumericPassword`
+
+State: **complete**. The Rust NumericPassword discriminant is exactly 63, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `NumericPassword = 63`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.NumericPin`
+
+State: **complete**. The Rust NumericPin discriminant is exactly 64, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `NumericPin = 64`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Password`
+
+State: **complete**. The Rust Password discriminant is exactly 31, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Password = 31`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.PersonalFullName`
+
+State: **complete**. The Rust PersonalFullName discriminant is exactly 7, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `PersonalFullName = 7`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Search`
+
+State: **complete**. The Rust Search discriminant is exactly 50, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Search = 50`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.SearchIncremental`
+
+State: **complete**. The Rust SearchIncremental discriminant is exactly 52, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `SearchIncremental = 52`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.TelephoneAreaCode`
+
+State: **complete**. The Rust TelephoneAreaCode discriminant is exactly 34, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `TelephoneAreaCode = 34`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.TelephoneCountryCode`
+
+State: **complete**. The Rust TelephoneCountryCode discriminant is exactly 33, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `TelephoneCountryCode = 33`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.TelephoneLocalNumber`
+
+State: **complete**. The Rust TelephoneLocalNumber discriminant is exactly 35, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `TelephoneLocalNumber = 35`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.TelephoneNumber`
+
+State: **complete**. The Rust TelephoneNumber discriminant is exactly 32, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `TelephoneNumber = 32`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Text`
+
+State: **complete**. The Rust Text discriminant is exactly 57, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Text = 57`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.TimeHour`
+
+State: **complete**. The Rust TimeHour discriminant is exactly 37, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `TimeHour = 37`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.TimeMinutesOrSeconds`
+
+State: **complete**. The Rust TimeMinutesOrSeconds discriminant is exactly 38, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `TimeMinutesOrSeconds = 38`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.Url`
+
+State: **complete**. The Rust Url discriminant is exactly 1, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `Url = 1`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Differences: [RT-I20](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.Input.InputScopeNameValue`
+
+State: **complete**. All 43 symbolic names and repr(i32) discriminants match the pinned Microsoft.UI.Xaml.Input model. ALL, name, checked from_raw and parse cover every defined value and reject holes; markup registers the exact enum family. This complete state covers enum identity and values only. Object lifetime, Names behavior, native input policies and OS execution have independent partial mappings under RT-I20.
+
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `pub enum InputScopeNameValue`.
+- Target: [src/FerroUI.Base/input/input_scope_name_value.rs](../../../src/FerroUI.Base/input/input_scope_name_value.rs) — `pub const ALL: [Self; 43]`.
+- Test: [src/FerroUI.Base/input/input_scope_tests.rs](../../../src/FerroUI.Base/input/input_scope_tests.rs) — `input_scope_enum_preserves_every_native_value_and_rejects_gaps`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) — `rich_input_scope_markup_accepts_every_defined_name_and_rejects_invalid_text`.
+- Differences: [RT-I20](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.LineStackingStrategy`
 

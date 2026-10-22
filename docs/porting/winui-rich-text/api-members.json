@@ -795,29 +795,91 @@
       ],
       "remaining_review": "Review hyperlink presentation, shared handled arguments, activation and navigation behavior."
     },
-    "Microsoft.UI.Xaml.Input.InputScope": {
+    "Microsoft.UI.Xaml.FontCapitals": {
       "batch": "R2/R6",
       "candidate_paths": [
         "src/FerroUI.Base/media/",
         "src/FerroUI.Controls/rich_text_layout.rs"
       ],
       "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.FontEastAsianLanguage": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.FontEastAsianWidths": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.FontFraction": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.FontNumeralAlignment": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.FontNumeralStyle": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.FontVariants": {
+      "batch": "R2/R6",
+      "candidate_paths": [
+        "src/FerroUI.Base/media/",
+        "src/FerroUI.Controls/rich_text_layout.rs"
+      ],
+      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+    },
+    "Microsoft.UI.Xaml.Input.InputScope": {
+      "batch": "R5/R8",
+      "candidate_paths": [
+        "src/FerroUI.Base/input/input_scope.rs",
+        "src/FerroUI.Base/input/input_scope_name_value.rs",
+        "src/FerroUI.Base/input/text_input/text_input_options.rs",
+        "src/FerroUI.Controls/rich_edit_box.rs"
+      ],
+      "remaining_review": "The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts."
     },
     "Microsoft.UI.Xaml.Input.InputScopeName": {
-      "batch": "R2/R6",
+      "batch": "R5/R8",
       "candidate_paths": [
-        "src/FerroUI.Base/media/",
-        "src/FerroUI.Controls/rich_text_layout.rs"
+        "src/FerroUI.Base/input/input_scope.rs",
+        "src/FerroUI.Base/input/input_scope_name_value.rs",
+        "src/FerroUI.Base/input/text_input/text_input_options.rs",
+        "src/FerroUI.Controls/rich_edit_box.rs"
       ],
-      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+      "remaining_review": "The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts."
     },
     "Microsoft.UI.Xaml.Input.InputScopeNameValue": {
-      "batch": "R2/R6",
+      "batch": "R5/R8",
       "candidate_paths": [
-        "src/FerroUI.Base/media/",
-        "src/FerroUI.Controls/rich_text_layout.rs"
+        "src/FerroUI.Base/input/input_scope.rs",
+        "src/FerroUI.Base/input/input_scope_name_value.rs",
+        "src/FerroUI.Base/input/text_input/text_input_options.rs",
+        "src/FerroUI.Controls/rich_edit_box.rs"
       ],
-      "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."
+      "remaining_review": "The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts."
     },
     "Microsoft.UI.Xaml.LineStackingStrategy": {
       "batch": "R2/R6",
@@ -7314,17 +7376,367 @@
       ]
     },
     {
+      "id": "F:Microsoft.UI.Xaml.FontCapitals.AllPetiteCaps",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontCapitals",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontCapitals.AllSmallCaps",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontCapitals",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontCapitals.Normal",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontCapitals",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontCapitals.PetiteCaps",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontCapitals",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontCapitals.SmallCaps",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontCapitals",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontCapitals.Titling",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontCapitals",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontCapitals.Unicase",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontCapitals",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.HojoKanji",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.Jis04",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.Jis78",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.Jis83",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.Jis90",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.NlcKanji",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.Normal",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.Simplified",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.Traditional",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianLanguage.TraditionalNames",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianWidths.Full",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianWidths",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianWidths.Half",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianWidths",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianWidths.Normal",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianWidths",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianWidths.Proportional",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianWidths",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianWidths.Quarter",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianWidths",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontEastAsianWidths.Third",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianWidths",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontFraction.Normal",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontFraction",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontFraction.Slashed",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontFraction",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontFraction.Stacked",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontFraction",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontNumeralAlignment.Normal",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontNumeralAlignment",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontNumeralAlignment.Proportional",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontNumeralAlignment",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontNumeralAlignment.Tabular",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontNumeralAlignment",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontNumeralStyle.Lining",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontNumeralStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontNumeralStyle.Normal",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontNumeralStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontNumeralStyle.OldStyle",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontNumeralStyle",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontVariants.Inferior",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontVariants",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontVariants.Normal",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontVariants",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontVariants.Ordinal",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontVariants",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontVariants.Ruby",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontVariants",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontVariants.Subscript",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontVariants",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "F:Microsoft.UI.Xaml.FontVariants.Superscript",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontVariants",
+      "kind": "F",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
       "id": "F:Microsoft.UI.Xaml.Input.InputScopeNameValue.AlphanumericFullWidth",
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "AlphanumericFullWidth = 41"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust AlphanumericFullWidth discriminant is exactly 41, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7333,13 +7745,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "AlphanumericHalfWidth = 40"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust AlphanumericHalfWidth discriminant is exactly 40, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7348,13 +7768,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "AlphanumericPin = 65"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust AlphanumericPin discriminant is exactly 65, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7363,13 +7791,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Chat = 58"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Chat discriminant is exactly 58, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7378,13 +7814,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "ChatWithoutEmoji = 68"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust ChatWithoutEmoji discriminant is exactly 68, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7393,13 +7837,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "ChineseFullWidth = 54"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust ChineseFullWidth discriminant is exactly 54, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7408,13 +7860,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "ChineseHalfWidth = 53"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust ChineseHalfWidth discriminant is exactly 53, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7423,13 +7883,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "CurrencyAmount = 21"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust CurrencyAmount discriminant is exactly 21, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7438,13 +7906,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "CurrencyAmountAndSymbol = 20"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust CurrencyAmountAndSymbol discriminant is exactly 20, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7453,13 +7929,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "DateDayNumber = 24"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust DateDayNumber discriminant is exactly 24, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7468,13 +7952,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "DateMonthNumber = 23"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust DateMonthNumber discriminant is exactly 23, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7483,13 +7975,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "DateYear = 25"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust DateYear discriminant is exactly 25, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7498,13 +7998,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Default = 0"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Default discriminant is exactly 0, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7513,13 +8021,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Digits = 28"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Digits discriminant is exactly 28, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7528,13 +8044,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "EmailNameOrAddress = 60"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust EmailNameOrAddress discriminant is exactly 60, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7543,13 +8067,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "EmailSmtpAddress = 5"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust EmailSmtpAddress discriminant is exactly 5, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7558,13 +8090,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Formula = 51"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Formula discriminant is exactly 51, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7573,13 +8113,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "FormulaNumber = 67"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust FormulaNumber discriminant is exactly 67, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7588,13 +8136,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "HangulFullWidth = 49"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust HangulFullWidth discriminant is exactly 49, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7603,13 +8159,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "HangulHalfWidth = 48"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust HangulHalfWidth discriminant is exactly 48, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7618,13 +8182,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Hanja = 47"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Hanja discriminant is exactly 47, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7633,13 +8205,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Hiragana = 44"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Hiragana discriminant is exactly 44, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7648,13 +8228,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "KatakanaFullWidth = 46"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust KatakanaFullWidth discriminant is exactly 46, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7663,13 +8251,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "KatakanaHalfWidth = 45"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust KatakanaHalfWidth discriminant is exactly 45, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7678,13 +8274,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Maps = 62"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Maps discriminant is exactly 62, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7693,13 +8297,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "NameOrPhoneNumber = 59"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust NameOrPhoneNumber discriminant is exactly 59, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7708,13 +8320,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "NativeScript = 55"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust NativeScript discriminant is exactly 55, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7723,13 +8343,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Number = 29"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Number discriminant is exactly 29, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7738,13 +8366,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "NumberFullWidth = 39"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust NumberFullWidth discriminant is exactly 39, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7753,13 +8389,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "NumericPassword = 63"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust NumericPassword discriminant is exactly 63, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7768,13 +8412,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "NumericPin = 64"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust NumericPin discriminant is exactly 64, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7783,13 +8435,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Password = 31"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Password discriminant is exactly 31, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7798,13 +8458,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "PersonalFullName = 7"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust PersonalFullName discriminant is exactly 7, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7813,13 +8481,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Search = 50"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Search discriminant is exactly 50, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7828,13 +8504,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "SearchIncremental = 52"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust SearchIncremental discriminant is exactly 52, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7843,13 +8527,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "TelephoneAreaCode = 34"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust TelephoneAreaCode discriminant is exactly 34, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7858,13 +8550,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "TelephoneCountryCode = 33"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust TelephoneCountryCode discriminant is exactly 33, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7873,13 +8573,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "TelephoneLocalNumber = 35"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust TelephoneLocalNumber discriminant is exactly 35, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7888,13 +8596,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "TelephoneNumber = 32"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust TelephoneNumber discriminant is exactly 32, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7903,13 +8619,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Text = 57"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Text discriminant is exactly 57, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7918,13 +8642,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "TimeHour = 37"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust TimeHour discriminant is exactly 37, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7933,13 +8665,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "TimeMinutesOrSeconds = 38"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust TimeMinutesOrSeconds discriminant is exactly 38, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -7948,13 +8688,21 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "F",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "Url = 1"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        }
+      ],
+      "reason": "The Rust Url discriminant is exactly 1, matching the pinned WinUI enum. The complete mapping is for this constant only; its platform hint behavior is reviewed separately under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },
@@ -11006,6 +11754,10 @@
         {
           "path": "src/FerroUI.Base/media/text_formatting/text_line_impl.rs",
           "symbol": "fn get_distance_from_character_hit("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "fn project_extension("
         }
       ],
       "tests": [
@@ -11124,10 +11876,42 @@
         {
           "path": "src/FerroUI.Base/media/text_formatting/text_line_tests.rs",
           "symbol": "structural_terminators_preserve_bidi_caret_and_range_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_clamps_each_intermediate_line_in_one_command"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_retains_reached_column_across_facades"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_clamps_upward_with_signed_counts"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_empty_lines_clamp_without_request_sized_iteration"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_redirected_edge_uses_original_caret_projection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs",
+          "symbol": "rich_selection_vertical_extension_geometry_work_is_independent_of_story_size"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs",
+          "symbol": "rich_selection_vertical_redirected_edge_geometry_preserves_newer_callback_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_mixed_modes_preserve_collapsed_desired_column"
         }
       ],
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
-      "reason": "Rust MoveUp/MoveDown accept Line and Paragraph. Line uses actual complete untrimmed shaped display lines, caret hit testing and a retained physical horizontal coordinate across short lines, mixed heights, bidi text and linked overflow. Paragraph uses logical boundaries without requiring a view. Negative counts reverse the command and extreme signed counts saturate without iteration or negation overflow. A nonempty collapse chooses the directional normalized edge and then applies the full requested distance; collapse alone counts as one unit if no further movement occurs. Return values count accepted units in the command direction; cancellation returns zero and callback redirection is measured by actual crossed boundaries/line indices. Shared publication fences preserve external model edits, nested navigation and newer view-affinity ownership; explicit selection/edit changes invalidate cached navigation, while reassociating the same validated live view retains it. Extended first/last-line moves count a real story-edge unit, including accepted callback redirection. Unsupported exposed units reject before side effects; Screen/Window units are not represented by the current enum. The recorded 264-command system MSFTEDIT run supplies collapse/count and story-edge observations. A separately versioned 282-command run adds 18 fresh-control/sequence observations: the original 264 rows and Home/End rows match across DLL versions 6.2.26100.33648 and 6.2.26100.33438. Fresh controls confirm ordinary collapse retains the desired column while extension clamps its column after each intervening short line; the current Rust extension retains the original column and requires a further correction. Fresh final-empty-line Up1 and Down(-1) both reach offset 4, resolving the reused-control difference. Observed native terminal EOP and extended geometry remain distinct from implemented Rust behavior. Native terminal EOP, general caret Gravity, selection Options/Type and external WinUI engine equivalence remain pending. A shared formatter prerequisite keeps structural EOL/EOP markers out of RTL glyph groups and anchors their caret/bounds to the preceding logical run; direct LTR/RTL inverse-geometry coverage is included.",
+      "reason": "Rust MoveUp/MoveDown accept Line and Paragraph. Line uses complete untrimmed shaped display lines, caret hit testing and linked-overflow geometry; Paragraph uses logical boundaries without a view. Collapsed movement retains the desired physical column across short lines. Extension projects from each actual reached caret and clamps through intervening short/empty lines, while preserving an earlier collapsed desired column for later collapsed movement. Signed counts widen and saturate; work is bounded by actual crossed lines. A nonempty collapse starts at the directional edge and applies the full distance; collapse alone counts once. Accepted units account for cancellation, redirection and real story-edge units. Mutation, selection, view and navigation generations protect callback-owned state; same-view reassociation preserves affinity. The 290-command native record adds eight mixed-mode observations to the unchanged previous 282. Literal mixed-mode, geometry-cost and ownership fixtures executed in the 70-test focused selection gate published at f10fb838. Additional edge projection runs only after accepted edge redirection. Screen/Window, synthetic terminal EOP, general Gravity and external WinUI engine equivalence remain pending. Shared formatter marker geometry is independently tested; this is not pixel parity.",
       "deviations": [
         "RT-I01",
         "RT-I08",
@@ -11140,20 +11924,150 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Text.xml",
       "owner": "Microsoft.UI.Text.ITextSelection",
       "kind": "M",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub fn move_left("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "fn move_horizontally("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub(super) fn publish_navigation("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_units.rs",
+          "symbol": "pub(super) fn resolve_horizontal("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_matches_216_system_msftedit_observations"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_has_no_synthetic_terminal_eop"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_character_keeps_scalar_range_contract_independent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_validates_units_before_zero_and_preserves_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_extreme_counts_saturate_to_real_boundaries"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_cancellation_preserves_selection_document_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_redirection_counts_graphemes_and_command_direction"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_callback_model_edit_rejects_stale_count"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_nested_boundary_command_owns_vertical_affinity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_matches_78_native_boundary_observations"
+        }
+      ],
+      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
+      "reason": "Rust MoveLeft/MoveRight accept Character and Word without a view. Keyboard Character uses FerroUI GraphemeEnumerator boundaries independently of scalar range Character. Word uses the reviewed logical boundaries. Signed counts reverse, zero validates units, and widened extreme counts saturate without request-sized iteration. Nonextended Character collapses to its directional exact edge and consumes one unit; Word aligns the edge to its directional boundary and consumes one. Extension retains the anchor. The logical source-offset policy matches observed default and RTL-reading fixtures, without claiming visual bidi or general Gravity parity. Literal regressions replay 294 of 300 native rows, including 78 new aligned-word/grapheme-interior observations; six synthetic terminal-EOP rows remain outside normalized Rust coordinates. Publication preserves callback cancellation/redirection, external edits and nested navigation, reports accepted counts and clears old vertical affinity. The completed 70-test focused selection gate at f10fb838 executes these fixtures. Synthetic terminal EOP and external WinUI engine parity remain pending.",
+      "deviations": [
+        "RT-I01",
+        "RT-I08",
+        "RT-I21",
+        "RT-I23"
+      ]
     },
     {
       "id": "M:Microsoft.UI.Text.ITextSelection.MoveRight(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)",
       "source": "packaging/Intellisense/generated/Microsoft.UI.Text.xml",
       "owner": "Microsoft.UI.Text.ITextSelection",
       "kind": "M",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation"
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub fn move_right("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "fn move_horizontally("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "pub(super) fn publish_navigation("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_units.rs",
+          "symbol": "pub(super) fn resolve_horizontal("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_matches_216_system_msftedit_observations"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_has_no_synthetic_terminal_eop"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_character_keeps_scalar_range_contract_independent"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_validates_units_before_zero_and_preserves_history"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_extreme_counts_saturate_to_real_boundaries"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_cancellation_preserves_selection_document_and_redo"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_redirection_counts_graphemes_and_command_direction"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_callback_model_edit_rejects_stale_count"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_nested_boundary_command_owns_vertical_affinity"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs",
+          "symbol": "rich_selection_horizontal_matches_78_native_boundary_observations"
+        }
+      ],
+      "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
+      "reason": "Rust MoveLeft/MoveRight accept Character and Word without a view. Keyboard Character uses FerroUI GraphemeEnumerator boundaries independently of scalar range Character. Word uses the reviewed logical boundaries. Signed counts reverse, zero validates units, and widened extreme counts saturate without request-sized iteration. Nonextended Character collapses to its directional exact edge and consumes one unit; Word aligns the edge to its directional boundary and consumes one. Extension retains the anchor. The logical source-offset policy matches observed default and RTL-reading fixtures, without claiming visual bidi or general Gravity parity. Literal regressions replay 294 of 300 native rows, including 78 new aligned-word/grapheme-interior observations; six synthetic terminal-EOP rows remain outside normalized Rust coordinates. Publication preserves callback cancellation/redirection, external edits and nested navigation, reports accepted counts and clears old vertical affinity. The completed 70-test focused selection gate at f10fb838 executes these fixtures. Synthetic terminal EOP and external WinUI engine parity remain pending.",
+      "deviations": [
+        "RT-I01",
+        "RT-I08",
+        "RT-I21",
+        "RT-I23"
+      ]
     },
     {
       "id": "M:Microsoft.UI.Text.ITextSelection.MoveUp(Microsoft.UI.Text.TextRangeUnit,System.Int32,System.Boolean)",
@@ -11185,6 +12099,10 @@
         {
           "path": "src/FerroUI.Base/media/text_formatting/text_line_impl.rs",
           "symbol": "fn get_distance_from_character_hit("
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement.rs",
+          "symbol": "fn project_extension("
         }
       ],
       "tests": [
@@ -11303,10 +12221,42 @@
         {
           "path": "src/FerroUI.Base/media/text_formatting/text_line_tests.rs",
           "symbol": "structural_terminators_preserve_bidi_caret_and_range_geometry"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_clamps_each_intermediate_line_in_one_command"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_retains_reached_column_across_facades"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_clamps_upward_with_signed_counts"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_empty_lines_clamp_without_request_sized_iteration"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_extension_redirected_edge_uses_original_caret_projection"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs",
+          "symbol": "rich_selection_vertical_extension_geometry_work_is_independent_of_story_size"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs",
+          "symbol": "rich_selection_vertical_redirected_edge_geometry_preserves_newer_callback_state"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs",
+          "symbol": "rich_selection_vertical_mixed_modes_preserve_collapsed_desired_column"
         }
       ],
       "implementation_source": "external WinUIEdit/Microsoft.UI.Text implementation",
-      "reason": "Rust MoveUp/MoveDown accept Line and Paragraph. Line uses actual complete untrimmed shaped display lines, caret hit testing and a retained physical horizontal coordinate across short lines, mixed heights, bidi text and linked overflow. Paragraph uses logical boundaries without requiring a view. Negative counts reverse the command and extreme signed counts saturate without iteration or negation overflow. A nonempty collapse chooses the directional normalized edge and then applies the full requested distance; collapse alone counts as one unit if no further movement occurs. Return values count accepted units in the command direction; cancellation returns zero and callback redirection is measured by actual crossed boundaries/line indices. Shared publication fences preserve external model edits, nested navigation and newer view-affinity ownership; explicit selection/edit changes invalidate cached navigation, while reassociating the same validated live view retains it. Extended first/last-line moves count a real story-edge unit, including accepted callback redirection. Unsupported exposed units reject before side effects; Screen/Window units are not represented by the current enum. The recorded 264-command system MSFTEDIT run supplies collapse/count and story-edge observations. A separately versioned 282-command run adds 18 fresh-control/sequence observations: the original 264 rows and Home/End rows match across DLL versions 6.2.26100.33648 and 6.2.26100.33438. Fresh controls confirm ordinary collapse retains the desired column while extension clamps its column after each intervening short line; the current Rust extension retains the original column and requires a further correction. Fresh final-empty-line Up1 and Down(-1) both reach offset 4, resolving the reused-control difference. Observed native terminal EOP and extended geometry remain distinct from implemented Rust behavior. Native terminal EOP, general caret Gravity, selection Options/Type and external WinUI engine equivalence remain pending. A shared formatter prerequisite keeps structural EOL/EOP markers out of RTL glyph groups and anchors their caret/bounds to the preceding logical run; direct LTR/RTL inverse-geometry coverage is included.",
+      "reason": "Rust MoveUp/MoveDown accept Line and Paragraph. Line uses complete untrimmed shaped display lines, caret hit testing and linked-overflow geometry; Paragraph uses logical boundaries without a view. Collapsed movement retains the desired physical column across short lines. Extension projects from each actual reached caret and clamps through intervening short/empty lines, while preserving an earlier collapsed desired column for later collapsed movement. Signed counts widen and saturate; work is bounded by actual crossed lines. A nonempty collapse starts at the directional edge and applies the full distance; collapse alone counts once. Accepted units account for cancellation, redirection and real story-edge units. Mutation, selection, view and navigation generations protect callback-owned state; same-view reassociation preserves affinity. The 290-command native record adds eight mixed-mode observations to the unchanged previous 282. Literal mixed-mode, geometry-cost and ownership fixtures executed in the 70-test focused selection gate published at f10fb838. Additional edge projection runs only after accepted edge redirection. Screen/Window, synthetic terminal EOP, general Gravity and external WinUI engine equivalence remain pending. Shared formatter marker geometry is independently tested; this is not pixel parity.",
       "deviations": [
         "RT-I01",
         "RT-I08",
@@ -17470,10 +18420,32 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScope",
       "kind": "M",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "impl InputScope {"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn construct() -> Self"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn new() -> Ref<Self>"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_defaults_and_string_conversion_match_native_object_creation"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_names_are_shared_ordered_and_snapshots_are_immutable"
+        }
+      ],
+      "reason": "The Rust new/construct path creates an InputScope with a persistent empty Names collection, following CInputScope::Create and CInputScopeNameCollection::Create. Rust parse/with_name_value conveniences create one wrapped name without treating a content hint as the object itself. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.",
       "deviations": [
         "RT-A04",
         "RT-P04",
@@ -17485,10 +18457,28 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeName",
       "kind": "M",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "impl InputScopeName {"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn construct() -> Self"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn name_value_property()"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_defaults_and_string_conversion_match_native_object_creation"
+        }
+      ],
+      "reason": "The default Rust name wrapper owns a styled NameValue whose metadata default is InputScopeNameValue::Default, following the non-string CInputScopeName::Create path. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.",
       "deviations": [
         "RT-A04",
         "RT-P04",
@@ -17500,10 +18490,24 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeName",
       "kind": "M",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn with_name_value(name_value: InputScopeNameValue)"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_defaults_and_string_conversion_match_native_object_creation"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_name_markup_supports_native_enum_constructor_and_content"
+        }
+      ],
+      "reason": "The Rust with_name_value constructor creates a real name wrapper and assigns its styled NameValue, matching InputScopeNameFactory::CreateInstanceImpl. Metadata exposes the typed enum constructor for x:Arguments; Rust prevents undefined enum values rather than accepting unchecked WinRT integers. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.",
       "deviations": [
         "RT-A04",
         "RT-P04",
@@ -21480,6 +22484,82 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "pub(crate) fn update("
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub struct InputScope {"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_options.rs",
+          "symbol": "pub fn input_scope_names_property()"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_options.rs",
+          "symbol": "pub fn effective_input_scope("
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_options.rs",
+          "symbol": "pub fn effective_content_type("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "fn native_scope("
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "pub(crate) fn apply<"
+        },
+        {
+          "path": "src/Android/FerroUI.Android/platform/input/android_input_method.rs",
+          "symbol": "fn input_type_for_scope("
+        },
+        {
+          "path": "src/Android/FerroUI.Android/platform/input/android_input_method.rs",
+          "symbol": "pub(crate) fn fill_editor_info("
+        },
+        {
+          "path": "src/Android/FerroUI.Android/platform/input/android_input_method.rs",
+          "symbol": "fn set_options("
+        },
+        {
+          "path": "src/iOS/FerroUI.iOS/text_input_responder.rs",
+          "symbol": "pub fn keyboard_type_of("
+        },
+        {
+          "path": "src/iOS/FerroUI.iOS/text_input_responder.rs",
+          "symbol": "pub fn suggestions_trait_of("
+        },
+        {
+          "path": "src/FerroUI.Wayland/text_input_options_converter.rs",
+          "symbol": "fn convert_scope("
+        },
+        {
+          "path": "src/FerroUI.Wayland/text_input_options_converter.rs",
+          "symbol": "pub fn convert("
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs",
+          "symbol": "fn scope_flags("
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs",
+          "symbol": "pub(crate) fn option_flags("
+        },
+        {
+          "path": "src/iOS/FerroUI.iOS/ferro_view.rs",
+          "symbol": "fn set_options("
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_options.rs",
+          "symbol": "pub(crate) fn from_options("
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_method.rs",
+          "symbol": "fn set_options("
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/webapp/modules/ferroui/inputOptions.ts",
+          "symbol": "export function applyTextInputOptions("
         }
       ],
       "tests": [
@@ -21538,9 +22618,169 @@
         {
           "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
           "symbol": "core_text_content_types_preserve_native_name_and_numeric_pin_semantics"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_live_names_reach_the_backend_as_immutable_snapshots"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_replacement_and_removal_stop_old_scope_updates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_clear_restores_legacy_hints_without_overwriting_them"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_shared_objects_update_each_owner_without_owning_it"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_live_names_remain_with_the_owner_during_flyout_focus"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_transport_preserves_legacy_hints_and_first_name_precedence"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_transport_is_inherited_without_retaining_live_objects"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_markup_preserves_objects_order_and_live_name_changes"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_markup_accepts_every_defined_name_and_rejects_invalid_text"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_input_scope_preserves_all_43_native_values"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_input_scope_distinguishes_empty_names_from_explicit_default"
+        },
+        {
+          "path": "src/Windows/FerroUI.WinUI/core_text_input_options.rs",
+          "symbol": "core_text_input_scope_reentry_applies_updated_names_with_the_same_content_type"
+        },
+        {
+          "path": "src/Android/FerroUI.Android/platform/input/android_input_method.rs",
+          "symbol": "input_scope_distinguishes_numeric_components_phones_and_alphanumeric_pins"
+        },
+        {
+          "path": "src/Android/FerroUI.Android/platform/input/android_input_method.rs",
+          "symbol": "input_scope_first_name_and_clear_update_the_android_editor_callback"
+        },
+        {
+          "path": "src/Android/FerroUI.Android/platform/input/android_input_method.rs",
+          "symbol": "input_scope_numeric_pads_do_not_get_text_flags_and_secrets_disable_learning"
+        },
+        {
+          "path": "src/iOS/FerroUI.iOS/text_input_responder.rs",
+          "symbol": "input_scope_chooses_numeric_components_phone_and_alphanumeric_keyboards"
+        },
+        {
+          "path": "src/iOS/FerroUI.iOS/text_input_responder.rs",
+          "symbol": "input_scope_names_do_not_replace_the_existing_secure_entry_policy"
+        },
+        {
+          "path": "src/iOS/FerroUI.iOS/text_input_responder.rs",
+          "symbol": "input_scope_semantic_content_does_not_misidentify_components_or_pin_codes"
+        },
+        {
+          "path": "src/FerroUI.Wayland/text_input_options_converter.rs",
+          "symbol": "input_scope_maps_components_phones_names_and_secrets_to_distinct_purposes"
+        },
+        {
+          "path": "src/FerroUI.Wayland/text_input_options_converter.rs",
+          "symbol": "input_scope_default_and_empty_names_have_distinct_fallback_and_privacy"
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs",
+          "symbol": "input_scope_separates_numeric_phone_name_and_alphanumeric_pin_capabilities"
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs",
+          "symbol": "input_scope_default_and_empty_names_preserve_explicit_and_legacy_fcitx_policy"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_scope_snapshot_setter_reentry_keeps_latest_names_and_connection"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs",
+          "symbol": "input_scope_snapshot_inheritance_and_clear_reach_the_focused_backend"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs",
+          "symbol": "\"rich_input_scope.xaml\""
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_options.rs",
+          "symbol": "browser_scope_distinguishes_numeric_telephone_decimal_and_text_keyboards"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_options.rs",
+          "symbol": "browser_scope_order_and_empty_fallback_preserve_legacy_content_hints"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_options.rs",
+          "symbol": "browser_sensitive_input_suppresses_correction_and_capitalization_without_changing_keyboard"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_options.rs",
+          "symbol": "browser_return_key_and_language_hints_are_explicit_and_owned"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_options.rs",
+          "symbol": "browser_capitalization_and_suggestions_use_framework_policy"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_method.rs",
+          "symbol": "changing_input_options_preserves_active_composition_text_selection_and_focus"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_method.rs",
+          "symbol": "unchanged_input_hints_do_not_rewrite_page_attributes"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_method.rs",
+          "symbol": "input_options_changed_during_page_callback_win_over_a_late_old_write"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs",
+          "symbol": "keyboard and action hints preserve the composing input and its UTF-16 selection"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs",
+          "symbol": "clearing a scope and locale resets stale hints on the same input"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs",
+          "symbol": "sensitive hints suppress browser suggestions even if requested by a caller"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs",
+          "symbol": "unchanged attributes do not generate repeated DOM mutations"
+        },
+        {
+          "path": "src/Android/FerroUI.Android/platform/input/android_input_method.rs",
+          "symbol": "input_scope_restart_preserves_the_same_clients_composing_region"
+        },
+        {
+          "path": "src/Android/FerroUI.Android/platform/input/android_input_method.rs",
+          "symbol": "input_scope_restart_does_not_carry_composition_across_a_client_assignment"
+        },
+        {
+          "path": "src/Android/FerroUI.Android/platform/input/android_input_method.rs",
+          "symbol": "input_scope_override_preserves_independently_configured_privacy"
         }
       ],
-      "reason": "The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics. CoreText retains options received before lazy context creation, applies the latest scope before focus entry, serializes nested setters and retains desired state after failure for retry. The supported scope subset now includes verified PersonalFullName and PinNumeric mappings for existing Name/Pin content types; other native policies and real OS sessions need separate evidence.",
+      "reason": "RichEditBox.InputScope is a nullable styled Option<Ref<InputScope>> property. It observes scope replacement, ordered Names mutations and shared NameValue changes through weak disposable subscriptions, publishing immutable complete enum snapshots to inherited TextInputOptions.InputScopeNames. Clearing or emptying the scope restores the independently configured legacy content hint without overwriting it. The semantic owner retains live policy delivery during owned flyout focus; policy changes preserve the client, connection, composition and history. Effective changes to all ten attached options, including inherited/cleared values, are generation-fenced and reentrant same-transport setters reapply the latest policy. Platform APIs currently use the first name; the snapshot retains every name for future richer consumers. CoreText maps all 43 exact names, preserving its lazy creation, nested-setter serialization and retry behavior; other hosts use their supported purpose/keyboard hints. Native multi-name negotiation, candidate-window services, proofing/prediction execution and native WinUI/WinRT equivalence remain partial. Actual runtime gates are recorded separately from these source mappings. Android installs the current EditorInfo closure before restarting active input; iOS reloads current responder input views after a policy change. These host calls and deterministic policy fixtures still require device/OS execution. Native and IBus set_options remain no-op boundaries, while Browser consumes supported inputmode/enterkeyhint/capitalization/language attributes on the existing text element, keeping input type and composition state. Reentrant browser setters retain the newest options. Browser correction, spellcheck and writing suggestions remain disabled until non-composition DOM replacement events are delivered through the framework connection. Browser Rust/JavaScript and device/OS runtime gates remain separate.",
       "deviations": [
         "RT-I01",
         "RT-I06",
@@ -21558,18 +22798,55 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_box.rs",
           "symbol": "input_scope_property"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub struct InputScope {"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_options.rs",
+          "symbol": "pub fn input_scope_names_property()"
         }
       ],
       "tests": [
         {
           "path": "src/FerroUI.Controls/rich_edit_box_tests.rs",
           "symbol": "rich_edit_control_input_policy_maps_to_platform_options_and_enforces_casing"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_live_names_reach_the_backend_as_immutable_snapshots"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_replacement_and_removal_stop_old_scope_updates"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_clear_restores_legacy_hints_without_overwriting_them"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_shared_objects_update_each_owner_without_owning_it"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_live_names_remain_with_the_owner_during_flyout_focus"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_markup_preserves_objects_order_and_live_name_changes"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs",
+          "symbol": "\"rich_input_scope.xaml\""
         }
       ],
-      "reason": "The registered FerroUI property supplies metadata and invalidation for this mapped value. The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate.",
+      "reason": "The registered nullable FerroUI styled InputScope property stores shared InputScope objects and drives weak scope/list/item subscriptions and immutable input-option snapshots. Runtime and compiled markup accept the native named shortcut, explicit Names objects and x:Null. Clearing restores existing independently configured content hints. FerroUI property metadata/ownership replace the dependency-property ABI; actual OS keyboard policy and complete native property semantics remain partial under RT-I20.",
       "deviations": [
         "RT-I01",
-        "RT-I06"
+        "RT-I06",
+        "RT-I20"
       ]
     },
     {
@@ -21674,6 +22951,14 @@
         {
           "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
           "symbol": "fn is_input_options_property("
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub struct InputScope {"
+        },
+        {
+          "path": "src/FerroUI.Base/input/text_input/text_input_options.rs",
+          "symbol": "pub fn effective_input_scope("
         }
       ],
       "tests": [
@@ -21716,9 +23001,17 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
           "symbol": "rich_input_options_follow_the_semantic_owner_while_its_flyout_has_keyboard_focus"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_transport_preserves_legacy_hints_and_first_name_precedence"
+        },
+        {
+          "path": "src/FerroUI.Controls/rich_edit_input_options_tests.rs",
+          "symbol": "rich_input_scope_live_names_reach_the_backend_as_immutable_snapshots"
         }
       ],
-      "reason": "The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all nine attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. This is shared option transport, not native prediction/proofing behavior or complete InputScope.Names semantics.",
+      "reason": "The rich control registers and consumes this input/presentation value through FerroUI. Backend capabilities, complete native presentation and every platform edge case remain separate. Effective changes to all ten attached TextInputOptions are observed on the semantic owner, including inherited/cleared values, without resetting composition or replacing the client/connection. Weak subscriptions survive reset and are disposed on owner replacement/teardown. Reentrant same-transport setter completion reapplies the newest owner policies; initial client installation retains its generation fence. The immutable ordered InputScope.Names snapshot now accompanies existing option transport; native prediction/proofing and multi-name negotiation remain separate.",
       "deviations": [
         "RT-I01",
         "RT-I06",
@@ -28139,10 +29432,60 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScope",
       "kind": "P",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn names("
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn snapshot("
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn as_add_child("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_defaults_and_string_conversion_match_native_object_creation"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_names_are_shared_ordered_and_snapshots_are_immutable"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_observes_duplicate_names_once_and_unsubscribes_removed_names"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_callbacks_can_mutate_the_list_and_shared_name"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_list_and_items_do_not_retain_the_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_metadata_converts_to_real_objects_and_checked_enum_values"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_markup_preserves_objects_order_and_live_name_changes"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_name_markup_supports_native_enum_constructor_and_content"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs",
+          "symbol": "\"rich_input_scope.xaml\""
+        }
+      ],
+      "reason": "Names returns the same ordered FerroList identity, preserving shared InputScopeName identity and live changes. Repeated wrapper objects are observed once, removal disposes unused subscriptions, callback mutation is allowed without holding a list borrow, and snapshots freeze enum values for backend delivery. Names is declared as the markup content collection. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.",
       "deviations": [
         "RT-A04",
         "RT-P04",
@@ -28154,10 +29497,36 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeName",
       "kind": "P",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn name_value_property()"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn name_value(&self)"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn set_name_value("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_names_are_shared_ordered_and_snapshots_are_immutable"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_observes_duplicate_names_once_and_unsubscribes_removed_names"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_markup_preserves_objects_order_and_live_name_changes"
+        }
+      ],
+      "reason": "NameValue is a typed styled property with Default metadata and checked conversion. Mutating a shared wrapper notifies each live owning scope and produces a new immutable backend snapshot without modifying earlier snapshots or retaining discarded owners. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.",
       "deviations": [
         "RT-A04",
         "RT-P04",
@@ -31186,14 +32555,127 @@
       ]
     },
     {
+      "id": "T:Microsoft.UI.Xaml.FontCapitals",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontCapitals",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianLanguage",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.FontEastAsianWidths",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontEastAsianWidths",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.FontFraction",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontFraction",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.FontNumeralAlignment",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontNumeralAlignment",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.FontNumeralStyle",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontNumeralStyle",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
+      "id": "T:Microsoft.UI.Xaml.FontVariants",
+      "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
+      "owner": "Microsoft.UI.Xaml.FontVariants",
+      "kind": "T",
+      "state": "pending",
+      "targets": [],
+      "tests": []
+    },
+    {
       "id": "T:Microsoft.UI.Xaml.Input.InputScope",
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScope",
       "kind": "T",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub struct InputScope {"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn names("
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn snapshot("
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_defaults_and_string_conversion_match_native_object_creation"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_names_are_shared_ordered_and_snapshots_are_immutable"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_observes_duplicate_names_once_and_unsubscribes_removed_names"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_callbacks_can_mutate_the_list_and_shared_name"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_list_and_items_do_not_retain_the_owner"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_metadata_converts_to_real_objects_and_checked_enum_values"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_markup_preserves_objects_order_and_live_name_changes"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_name_markup_supports_native_enum_constructor_and_content"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs",
+          "symbol": "\"rich_input_scope.xaml\""
+        }
+      ],
+      "reason": "InputScope is a real shared FerroObject with a live ordered FerroList of shared InputScopeName objects, empty default Names and string conversion to one named item. Weak list/item subscriptions observe mutation without retaining the owner, deduplicate repeated item identity and release removed subscriptions. Immutable snapshots preserve the full order for inherited input transport; metadata supports Names content and runtime/compiled markup. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.",
       "deviations": [
         "RT-A04",
         "RT-P04",
@@ -31205,10 +32687,36 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeName",
       "kind": "T",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "partial",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub struct InputScopeName {"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn name_value_property()"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope.rs",
+          "symbol": "pub fn with_name_value(name_value: InputScopeNameValue)"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_defaults_and_string_conversion_match_native_object_creation"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_metadata_converts_to_real_objects_and_checked_enum_values"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_name_markup_supports_native_enum_constructor_and_content"
+        }
+      ],
+      "reason": "InputScopeName is a shared FerroObject with a styled NameValue property defaulting to the exact Default enum value. Rust default/enum constructors and checked conversion supply the native wrapper role. Runtime metadata supports property assignment, scalar content and the enum constructor. This is the FerroObject/FerroList projection of the reviewed pinned source. Native WinRT identity, collection ABI, native multi-name negotiation and actual OS keyboard/prediction behavior remain separate; source-defined regressions and completed runtime gates are recorded independently.",
       "deviations": [
         "RT-A04",
         "RT-P04",
@@ -31220,13 +32728,29 @@
       "source": "packaging/Intellisense/generated/Microsoft.UI.Xaml.xml",
       "owner": "Microsoft.UI.Xaml.Input.InputScopeNameValue",
       "kind": "T",
-      "state": "pending",
-      "targets": [],
-      "tests": [],
-      "reason": "The native InputScope Names collection, InputScopeName constructors/NameValue and 43 InputScopeNameValue constants are not implemented by the single-valued FerroUI TextInputContentType transport. Shared input-option infrastructure is a reuse boundary, not native collection or enum parity. Backend policy delivery is reviewed independently; these exact public contracts remain pending.",
+      "state": "complete",
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "pub enum InputScopeNameValue"
+        },
+        {
+          "path": "src/FerroUI.Base/input/input_scope_name_value.rs",
+          "symbol": "pub const ALL: [Self; 43]"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/input/input_scope_tests.rs",
+          "symbol": "input_scope_enum_preserves_every_native_value_and_rejects_gaps"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs",
+          "symbol": "rich_input_scope_markup_accepts_every_defined_name_and_rejects_invalid_text"
+        }
+      ],
+      "reason": "All 43 symbolic names and repr(i32) discriminants match the pinned Microsoft.UI.Xaml.Input model. ALL, name, checked from_raw and parse cover every defined value and reject holes; markup registers the exact enum family. This complete state covers enum identity and values only. Object lifetime, Names behavior, native input policies and OS execution have independent partial mappings under RT-I20.",
       "deviations": [
-        "RT-A04",
-        "RT-P04",
         "RT-I20"
       ]
     },

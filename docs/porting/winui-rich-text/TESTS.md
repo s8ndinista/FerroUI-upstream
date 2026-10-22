@@ -70,6 +70,116 @@ covered by an earlier successful run.
 
 ### Current integration checkpoints
 
+The latest completed [rich-text workflow at d148193d](https://github.com/wieslawsoltes/FerroUI/actions/runs/39618880985)
+passed both jobs. The [Linux job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39618880985/job/119286684017)
+passed Base **4,413**, Controls **5,002**, Win32 **308**, WinUI host **39**,
+Fluent **210** (2 ignored), Simple **213** (3 ignored), WinUI theme **296**
+(2 ignored), and XAML **611** (17 ignored), with zero failures. The separate
+doctest had no executed tests and one ignored. All five explicit reference
+generators and the exact checked-in output comparison passed.
+
+The matching [Windows job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39618880985/job/119286684228)
+passed native adapter compilation, **49 WinUI tests**, **2 exact HSTRING tests**,
+**3 native TOM probes** and **561 rich Controls tests**, with zero failures or
+ignored tests in those suites. The [new immutable native record](native-msftedit-navigation-horizontal.json)
+contains 60 Home/End + 60 repeats + 282 vertical + 220 horizontal commands on
+MSFTEDIT 6.2.26100.33648 / Windows 10.0.26100. All earlier Home/End and vertical
+observations are unchanged. This successful workflow covers focus handoff and
+independent TOM clipboard work, and precedes the current InputScope object,
+backend, horizontal movement and extended-column changes.
+
+The separate [broader workflow](https://github.com/wieslawsoltes/FerroUI/actions/runs/39618880971)
+had one macOS ControlCatalog failure: its expected page count was still 75
+after adding RichText, while the actual collection had 76. That fixture result
+does not make the dedicated rich-text workflow fail, and the passing dedicated
+workflow does not imply that every repository job passed.
+
+At the [probe/extractor checkpoint 4c0bae3](https://github.com/wieslawsoltes/FerroUI/commit/4c0bae33e9d1d1564cd1bfd0ff2d4c2f13133b75),
+`python3 scripts/porting/test_rich_text_tom_observations.py -v` passed **7 tests**.
+The historical records round-trip unchanged, including a byte-identical
+re-extraction of the actual d148193d log. This gate validates parser behavior,
+not the newly added native commands.
+
+In the uncommitted feature working tree after merge `1f79352`,
+`cargo test --locked --offline -p ferroui-base --lib input_scope` passed
+**11 tests**, with zero failures and 4,413 filtered out. Those are nine
+InputScope object/value cases and two immutable snapshot manager cases.
+Browser webapp dependency installation, type checking, lint and production
+build also exited zero. `npm run test:input-options` passed **4 tests** against
+the actual TypeScript attribute bridge with guarded input test doubles. These
+cover composing value/selection/type/focus preservation, cleared hints,
+sensitive options and unnecessary DOM writes. They do not exercise a real
+browser virtual keyboard or OS composition session. These results belong to the
+pending feature source, not the clean merge commit; committed provenance will
+be added after publication.
+
+The focused Controls gate (`cargo test --locked --offline -p ferroui-controls
+--lib rich_edit`) subsequently passed **414 tests**, with zero failures/ignored
+and 4,609 filtered out. This includes current rich owner InputScope integration,
+216 native horizontal observations and geometry/callback safeguards. It precedes
+the final mixed-mode column correction and its additional native replay cases.
+
+The [Windows job at the main merge1f793521](https://github.com/wieslawsoltes/FerroUI/actions/runs/39765696678/job/119780463926)
+passed native compilation, **49 WinUI**, **2 exact UTF-16**, **4 native probes**
+and **561 rich Controls** tests. Its [immutable record](native-msftedit-navigation-options.json)
+contains 300 horizontal, 290 vertical and 140 options/typing commands, plus the
+60 Home/End commands and60 repeats. All previous movement rows match. This
+completed job covers the published merge; it predates the uncommitted features.
+The subsequent [Windows job at 394c11ab](https://github.com/wieslawsoltes/FerroUI/actions/runs/39768437133/job/119789629660)
+also completed successfully: 49 WinUI tests, two exact UTF-16 tests, four native
+probes and 561 rich Controls tests passed after native adapter compilation.
+Its [316-case typing record](native-msftedit-typing.json) adds 176 Unicode and
+paragraph typing observations; all earlier options and movement rows match.
+The matching Linux job passed Base, Controls and host bridge steps before a
+subsequent push cancelled it during theme testing; this is not a full green run.
+
+Native provenance now distinguishes the workflow head from the checkout that
+actually ran. The earlier immutable JSON files' `provenance.commit` records the
+workflow head; those runs did not independently capture the synthetic pull-request
+merge checkout. Their verified probe blobs and observations remain valid.
+The new typing artifact captures checkout `dfc982dfdb88de5a02e8f531b639e12f56031eed`,
+workflow head `394c11ab1d7767d563c79eff8951adf895c3876b`, probe blob
+`059c06f53b18b2c2b7d9242b49ef70720abecd65`, and artifact ID 12421956538. The
+downloaded archive SHA-256 matches GitHub's published digest. Future CI uploads
+the raw log and measured checkout/probe metadata before the full control suite.
+
+The first full XAML feature gate had **611 passes, 3 failures and17 ignored**.
+The failures exposed a stale combined-corpus count, the framework's ignored
+empty-attribute behavior, and an unnecessary InputScopeName type-converter hook
+that broke root text content. The fixes are published in
+[`e02522cb`](https://github.com/wieslawsoltes/FerroUI/commit/e02522cb8b5ba6e4b6412afd7ffdfe6df4dd3273).
+After correction, all three InputScope runtime XAML tests, the differential
+transform across all 129 corpus inputs, reference regeneration, and the
+checked-in freshness test passed. The two View InputScope builder tests and
+11 Base InputScope tests also passed. These focused repair gates do not replace
+a new full XAML or Base run.
+
+The final movement source published in
+[`f10fb838`](https://github.com/wieslawsoltes/FerroUI/commit/f10fb8381e78eb581edc2fe4ba192179f5969a80)
+passed `cargo test --locked --offline -p ferroui-controls --lib rich_selection_`:
+**70 passed, zero failures/ignored, 4,955 filtered out**. It includes 294 literal
+horizontal native observations, six explicit terminal-EOP differences, eight
+mixed vertical steps, geometry cost checks and reentrant callback safeguards.
+
+The subsequent [full Base CI gate at 01d06a36](https://github.com/wieslawsoltes/FerroUI/actions/runs/39770623181/job/119797112590)
+reported **4,423 passes and one failure**: the new InputScope Names list metadata
+does not yet expose the common list `Capacity` property. Full Controls passed
+5,007 tests and the host bridge steps passed 308 Win32 and 42 WinUI tests. The
+collection metadata correction is published in `182a7e04` using the standard
+checked list-capacity helpers; its runtime validation is still pending. Browser Rust and
+the other platform policy/runtime gates remain separate.
+
+The broader CI run at the same source passed 164 Android host tests, including
+all six new InputScope tests, and failed one legacy Password expectation. The
+expected value omitted the privacy hint now retained independently of keyboard
+purpose. Its iOS simulator compile separately found an early return inside an
+Objective-C retained-return getter. Commit `1be7f087` corrects the expectation
+and uses the required tail expression; their next runtime/native compile gates
+remain pending. The local combined backend gate reached Skia's locked binary
+download before sandbox networking stopped it; no backend test pass is inferred.
+
+The earlier checkpoints below retain their original scope and chronology.
+
 The [completed full workflow at 41ea4f1b](https://github.com/wieslawsoltes/FerroUI/actions/runs/39604251320)
 passed both Linux and Windows. Linux totals were Base 4,412; Controls 4,915;
 Win32 308; WinUI 31; Fluent 210 with two ignored; Simple 213 with three ignored;
@@ -85,8 +195,8 @@ and was stopped before downstream compilation. It is not a full Cargo no-run
 claim. Exactly three existing private startup tests remain excluded whole from
 the local harness and retained in repository CI.
 
-The coordinated CoreText gate passed **15 portable tests**. Six new Windows-only
-layout-adapter tests still require a successful native run. The full XAML suite
+The coordinated CoreText gate passed **15 portable tests**. At that checkpoint,
+six new Windows-only layout-adapter tests still required a native run. The full XAML suite
 passed **611 tests with 17 ignored** before the final runtime geometry changes;
 after rebuilding that graph, **18 relevant XAML checks passed**. Rust-path and
 View-builder generation checks and Simple/Fluent reference comparisons passed.
@@ -102,14 +212,14 @@ a public regression and is repaired in the later 235-case checkpoint below.
 The [new full workflow at 92140e7c](https://github.com/wieslawsoltes/FerroUI/actions/runs/39612123175)
 is separate. Its Windows job finished with two compile errors: the native
 LayoutRequest.IsCanceled getter returns ABI `u8`, and two new predicates expected
-Rust `bool`. The narrow fix uses explicit nonzero/zero comparisons and awaits a
-new native run. Independent later steps passed two exact HSTRING, two native
+Rust `bool`. The narrow fix used explicit nonzero/zero comparisons and was
+validated by the later 17a84805 run below. Independent later steps passed two exact HSTRING, two native
 probe and **529 rich Controls tests**, with no failures/ignored in those tests.
 The Linux job completed successfully: Base 4,413, Controls 4,970, Win32 308,
 WinUI host 39, Fluent 210/2 ignored, Simple 213/3, WinUI theme 296/2, XAML
 611/17, and the separate ignored doctest. All five reference generators and
 exact checked-in-file comparisons passed. Neither this Windows job nor the six
-new Windows-only layout tests are recorded as passing.
+new Windows-only layout tests passed at 92140e7c.
 
 The subsequent [focus handoff](https://github.com/wieslawsoltes/FerroUI/commit/b16a5ce14a7bdebfed0752254f5b5d2eb9c3db42)
 and [TOM clipboard](https://github.com/wieslawsoltes/FerroUI/commit/132c7853a17553e475e842d8c7c3327a60a37e6e)
@@ -232,8 +342,8 @@ reaches 15 for collapse but 12 for extension; Up(-2) agrees. In the isolated
 long/short/long sequence collapse visits 5→8→14→8→5, while extension visits
 5→8→10→8→1 with anchor 5 retained. Fresh final-empty-line Up1 and Down(-1)
 both reach 4; Up2 and Down(-2) reach 3. Thus the earlier negative-direction
-difference was reused state, but extended-column behavior is a real remaining
-Rust correction. The two native probe tests passed; this does not turn the
+difference was reused state, while extended-column behavior required a Rust
+correction now defined in the source and awaiting its runtime gate. The two native probe tests passed; this does not turn the
 separate failing CoreText compilation into a passing Windows job.
 
 The [fourth record](native-msftedit-navigation-confirmed.json) is the successful
@@ -241,21 +351,44 @@ The [fourth record](native-msftedit-navigation-confirmed.json) is the successful
 fixtures and all 60 Home/End + 60 repeat + 282 vertical rows equal the previous
 6.2.26100.33438 record, including the 18 isolated observations.
 
-The next source probe defines **220 fresh-control horizontal commands**:
-88 ASCII, 20 UTF-16/combining/ZWJ, 24 word-boundary, 40 mixed-bidi default-window,
-40 mixed-bidi RTL-reading-window and 8 empty-story cases. It records native
-selection type with both directed states and the actual window extended style.
-Slots 60/61/62 and Character/Word constants are checked against the SDK
-projection. The source asserts setup, direction, bounds and unchanged content;
-first-run destinations, deltas and types remain observations. These 220 commands
-have not yet executed at this checkpoint.
+The [fifth record](native-msftedit-navigation-horizontal.json) comes from the
+successful d148193d Windows job above. It adds **220 fresh-control horizontal
+commands**: 88 ASCII, 20 UTF-16/combining/ZWJ, 24 word-boundary, 40 mixed-bidi
+default-window, 40 mixed-bidi RTL-reading-window and 8 empty-story cases. It
+records native selection type with both directed states and the actual extended
+window style. Slots 60/61/62 and Character/Word constants are checked against the
+SDK projection. Its 60 Home/End, 60 repeats and 282 vertical observations all
+match the preceding record.
 
-The extractor now accepts that optional horizontal family and strictly decodes
-Rust Debug Unicode scalar escapes, including ZWJ, while retaining literal
-escaped backslash sequences. Both earlier 264/282 records re-extract unchanged.
-Parser-only checks covered three literal escape examples, six invalid Unicode/
-escape examples, one synthetic horizontal row, and nine invalid horizontal
-records. This validates extraction behavior and is not native execution.
+Keyboard Character moves graphemes, including combining and joined-emoji
+sequences, independently of scalar range Character. The recorded mixed-bidi
+fixtures move in logical source order in both window styles. A Rust regression
+now replays 216 horizontal rows; four synthetic terminal-EOP cases remain
+explicitly outside the normalized model. These observations establish only the
+recorded system MSFTEDIT behavior, not external WinUI engine conformance.
+
+The current source expands the probe to **300 horizontal**, **290 vertical** and
+**140 SetFlags/TypeText scenarios**, in addition to the unchanged Home/End and
+repeat families. The 80 new horizontal commands cover aligned/reversed Word
+selections and grapheme-interior endpoints; eight new vertical commands mix
+collapsed and extended navigation across short lines. The options matrix covers
+all 32 combinations of the five declared selection bits across collapsed,
+forward and reverse ASCII selections, plus Unicode, paragraph and empty-typing
+fixtures. It records requested flags, accepted post-SetFlags flags/type,
+post-TypeText flags/type, HRESULTs, exact changed story text and UTF-16 length.
+These additional commands remain unexecuted at this checkpoint. A hidden
+MSFTEDIT HWND is not a focused WinUI control; its options observations will not
+by themselves implement or close Selection.Options/Type.
+
+The extractor decodes Rust Debug Unicode scalar escapes exactly, including ZWJ,
+while preserving literal escaped backslashes. Native BSTR text uses its counted
+UTF-16 length and rejects malformed scalar sequences instead of decoding
+lossily. Every declared family must finish, and every declared fixture must have
+observations; a completed early family cannot hide a later failing probe. The
+**seven completed Python regression tests** cover historical byte-for-byte
+round trips, Unicode escapes, changed-story phase/length handling and malformed
+flags, types, fixtures and declared counts. This is parser execution evidence;
+the native matrices have separate versioned results.
 
 ### Rust families
 
@@ -268,15 +401,21 @@ records. This validates extraction behavior and is not native execution.
 | [TOM unit tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_units_tests.rs) | Native values for eight units, scalar Character, actual shaped Cluster, Word/Sentence distinctions, soft/hard paragraphs, CRLF, native collapse counts, one-based/end-relative indices, saturation and nonmutation, weak measured Line association and overflow/trimmed coverage. Cluster requires complete untrimmed layout and tests ligatures, scripts, bidi, wrapped origins, omitted glyphs and reentrancy. |
 | [TOM Delete/Character tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_range_operations_tests.rs) | Signed deletion, selected-span counts, paragraph joins, shaped reflow after first deletion, inherited formatting, scalar-safe Character replacement, independent directed selection and live range rebasing. Callback tests distinguish ordinary rollback from proven external model writes during layout, document publication and editor publication, including nested groups and held outer document batches. |
 | [Selection Home/End tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_navigation_tests.rs) | Twenty-two cases cover directed UTF-16 movement/extension, shaped and headless lines, CRLF/soft breaks, wrapping/RTL/overflow, layout rejection, read-only/composition/history retention, cancellation and selection/model reentry. Six native-derived cases add normalized collapse edges, real paragraph marks, repeated End affinity, empty paragraphs, cancellation and nested/view ownership. Synthetic terminal EOP and further engine affinity remain separate in RT-I21. |
-| [Selection vertical and accepted-movement tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) | Shaped Line and headless Paragraph fixtures cover directed collapse/extension, accepted unit counts, negative/extreme/zero requests, short-line column retention, mixed heights, bidi/UTF-16, wrapping, empty lines, overflow and stale/trimmed layout rejection. Callback cancellation/redirection, nested same-offset navigation, view replacement and external document/publication edits preserve accepted state. Read-only, preview, redo and logical move_by regressions share the publication path. Runtime execution records remain separate from test definitions. |
-| [Input policy manager tests](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs), [rich owner tests](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) and [CoreText cache tests](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs) | Seven Base lifecycle/inheritance/disposal/reentrancy cases, two focused/flyout semantic-owner cases, and three lazy-context/nested-setter/retry cases. These distinguish shared policy delivery from native OS prediction behavior. Each suite has its own actual execution record. |
+| [Selection vertical and accepted-movement tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_movement_tests.rs) and [geometry ownership tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_geometry_tests.rs) | Shaped Line and headless Paragraph fixtures cover directed collapse/extension, accepted counts, signed/extreme/zero requests, mixed heights, bidi/UTF-16, wrapping, empty lines, overflow and unavailable layout. Five new extension fixtures distinguish retained collapsed columns from stepwise extension clamping, including upward, repeated-facade, empty-line and redirected-edge cases. Two formatter-instrumented definitions compare geometry work for 8/1,024-line stories and protect callback-owned state during redirected-edge queries. Callback cancellation/redirection, nested navigation, view replacement and external publication preserve accepted state. New tests require their own runtime gate; the instrumentation is not an executed performance result. |
+| [Selection horizontal tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_horizontal_tests.rs) | Nine source definitions replay 216 recorded native Character/Word commands and separately cover four unsupported terminal-EOP outcomes, scalar range independence, unsupported/zero units, extreme counts, cancellation/redirection, model mutation and nested navigation affinity. Mixed-bidi offsets follow the observed logical policy. Native-aligned word and grapheme-interior probe additions and Rust runtime execution remain separate gates. |
+| [InputScope object and value tests](../../../src/FerroUI.Base/input/input_scope_tests.rs) | Nine object/value tests passed in the filtered Base input_scope gate. They cover every exact native enum value and gaps, object/default/checked-string construction, ordered shared Names and immutable snapshots, duplicate item subscriptions, callback list mutation, disposal/weak lifetime, legacy hint precedence, inherited transport and metadata. Exact constant mappings are complete; full object/native platform equivalence remains partial. |
+| [InputScope runtime XAML](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/rich_text_tests.rs) and [compiled corpus](../../../tests/FerroUI.Markup.Xaml.UnitTests/emitter/corpus.rs) | The rich_input_scope.xaml fixture and three runtime definitions cover named shortcuts, ordered object content, live NameValue changes, null values, all 43 names, undefined input rejection and typed constructor arguments. Compiled/runtime tree comparisons require their own generated source and execution gate. |
+| [CoreText policies](../../../src/Windows/FerroUI.WinUI/core_text_input_options.rs), [Android policies](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs), [iOS policies](../../../src/iOS/FerroUI.iOS/text_input_responder.rs), [Wayland policies](../../../src/FerroUI.Wayland/text_input_options_converter.rs) and [Fcitx policies](../../../src/FerroUI.FreeDesktop/dbus_ime/fcitx/fcitx_x11_text_input_method.rs) | Thirteen new source-defined cases cover exact 43-value CoreText mapping, first-name/default/empty precedence, same-content-type name replacement, numeric versus telephone/alphanumeric PIN hints, privacy flags, Android editor callback refresh, iOS unchanged secure-entry policy and semantic autofill distinctions. Existing CoreText lazy/nested/retry fixtures remain. Real mobile keyboards, candidate windows, native session ordering and device execution remain open. |
+| [Browser policy tests](../../../src/Browser/FerroUI.Browser/browser_text_input_options.rs), [method tests](../../../src/Browser/FerroUI.Browser/browser_text_input_method.rs) and [TypeScript bridge tests](../../../src/Browser/FerroUI.Browser/webapp/tests/input-options.test.mjs) | Five Rust policy definitions cover HTML input modes, first-name/legacy fallback, sensitivity, capitalization/suggestions, return-key and locale hints; three method definitions cover active composition, duplicate hints and callback reentry. Those Rust tests await runtime. Four completed Node tests execute the actual TypeScript bridge with guarded input doubles, preserving value/type/focus/UTF-16 selection, clearing stale attributes, suppressing sensitive suggestions and avoiding repeated writes. Typecheck, lint and production build passed. Real browser keyboards/OS composition remain separate gates. |
+| [Input policy manager tests](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) and [rich owner tests](../../../src/FerroUI.Controls/rich_edit_input_options_tests.rs) | Existing lifecycle/inheritance/disposal/reentrancy and focused/flyout-owner cases now include immutable scope snapshot reentry and inherited clearing, live ordered names, item mutation, replacement/removal, shared scope lifetime, preserved legacy hints and owned-flyout delivery. Current source preserves connection/composition while updating the semantic owner. The two new Base manager snapshot cases passed in the 11-case input_scope gate; current rich owner additions passed in the 414-case focused Controls gate. |
 | [TOM clipboard tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_clipboard_tests.rs) | Twenty-eight public cases cover copy permission, exact representation policies, metadata-only CanPaste, rich/plain formatting, one-group undo, UTF-16 limits, preview ordering, delayed target ownership, held batches, independent clones, read-only completion, retrieved-transfer disposal and callback publication. Real pending futures exercise cancellation rather than immediately ready test doubles. Defined source and completed execution are tracked separately; native protection, formats and ABI remain partial under RT-I24. |
 | [Focus handoff tests](../../../src/FerroUI.Controls/rich_edit_input_focus_tests.rs) | Four public cases cover actual template replacement during native/overlay popup focus return, nested Lost/Got redirection and same-owner return, canceled focus and ordinary post-event client installation. Two remount regressions failed against pre-fix libraries while both cancellation cases passed. All four pass in the 235-case source-identical gate; arbitrary asynchronous platform focus order remains open. |
 | [Context-menu tests](../../../src/FerroUI.Controls/rich_edit_context_menu_tests.rs) | Eighteen cases drive real pointer, Apps/Shift+F10 and holding requests, shared arguments, root DIPs at 2x scale, normalized/RTL/collapsed/wrapped selection anchors and actual popup positioner calls. Cancellation/precedence, menu installation/replacement/removal, nested requests, detach/reattach, weak anchor ownership, repeated positioning, reflection-correct point transforms and live IME/focus before/after native/overlay popup dismissal have explicit coverage. A separate focus-redirection fixture verifies retirement of the original composition. Native automatic selection floaties and legacy asynchronous PopupMenu are separate under RT-I22. |
 | [Cursor publication tests](../../../src/FerroUI.Controls/rich_edit_input_geometry_tests.rs) | Three public input-manager cases deliberately return an old rectangle after getter callbacks change owner/client, reset, leave/return, or publish newer geometry for the same client. The accepted backend rectangle, connection and history are asserted without exposing private manager APIs. |
 | [CoreText geometry tests](../../../src/Windows/FerroUI.WinUI/core_text_layout.rs) and [native adapter tests](../../../src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs) | Seven portable geometry cases cover complete rectangle transforms, reflection/rotation, scaling/origin, caret-only minimum, unavailable geometry, cancellation/reentry and native setter failure. Six Windows-only cases cover semantic ownership, accessor/revision replacement, deferred mutation, nested/focus/reset invalidation and a real attached owner resized by the final revision callback. Arbitrary requested-range and candidate-window geometry remain pending; native execution is recorded separately. |
 | [Shared formatter marker regression](../../../src/FerroUI.Base/media/text_formatting/text_line_tests.rs) | The direct structural-terminator case covers LTR/RTL caret-distance/hit inverses, selected fragment bounds, nonzero source starts, one/two-unit line/paragraph markers and trailing marker positions. It failed against the preceding Base library and passed after the shared correction. |
-| [System MSFTEDIT probe](../../../src/Windows/FerroUI.Win32/rich_text_tom_oracle_tests.rs) | Windows-only native TOM setup, 60 Home/End commands plus 60 repeated no-ops, and 282 Line/Paragraph MoveUp/MoveDown commands in the current source. The versioned records contain 264 and then 282 vertical commands; both recorded DLL versions agree on all 282. A further 220 fresh-window horizontal commands are defined but not yet executed at this checkpoint. The vertical matrix includes directed selections, zero/positive/negative counts, empty and UTF-16 stories, boundary no-ops and retained-column sequences. Logs Windows/DLL versions, exact UTF-16 fixture text, native story length, directed endpoints/flags, HRESULT and signed deltas. Initial destination/count rows are observations; the probe is not a WinUI-engine conformance fixture. |
+| [System MSFTEDIT probe](../../../src/Windows/FerroUI.Win32/rich_text_tom_oracle_tests.rs) | The latest completed record contains 60 Home/End commands, 60 repeats, 282 vertical and 220 horizontal commands. Current source defines 290 vertical, 300 horizontal and 140 SetFlags/TypeText scenarios; the additions await Windows execution. Captures exact counted UTF-16 text, Windows/DLL versions, window style, directed endpoints, selection flags/type, HRESULT and signed deltas. Options scenarios preserve before/after-set/after-type phases and changed native story lengths. This is system MSFTEDIT characterization, not a focused WinUI or external-engine conformance fixture. |
+| [Native observation extractor tests](../../../scripts/porting/test_rich_text_tom_observations.py) | Seven Python tests passed at 4c0bae3. Exact historical replay, Unicode escaping and strict family/fixture/phase/type/flag/count validation protect immutable native evidence; this pass does not execute the new native commands. |
 | [Text stream tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) | UTF-8/UTF-16 and BOM handling, raw RTF, validation before I/O/mutation, exact byte bounds, interrupted and partial I/O, prefix failure, caller position/ownership, transactional range replacement and reentrant output snapshots. |
 | [Language tests](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) | Source validation grammar, inheritance into shaping, local overrides, snapshots/history, RTF default/scope/plain reset, representability errors and owner/presenter identity. |
 | [Inherited presentation tests](../../../src/FerroUI.Controls/documents/rich_presentation_invalidation_tests.rs) | Theme/owner presentation preserves semantic revision, mutation identity, undo and active composition; font/language/flow and inherited mutable collections still invalidate layout. Explicit local formatting and clearing to inheritance remain semantic changes. The Base inheritance tests distinguish actual notification origin from the resulting inherited priority and preserve it in owned event arguments. |

@@ -911,3 +911,48 @@ page total still included only the TreeDataGrid addition, omitting this branch's
 Rich Text page. The corrected assertion includes both additions and verifies
 that Rich Text is available in the Text section. Runtime verification of this
 correction and all new implementation follows in subsequent checkpoints.
+
+## 2026-10-22 — Live input scopes, navigation and measured typing evidence
+
+The working branch merged current main at `1f793521`; its sole generated XAML
+conflict was resolved by regeneration. Subsequent commits publish the live
+InputScope object model and XAML/View integration (`e02522cb`), platform input
+hints (`01d06a36`), and horizontal plus mixed vertical selection movement
+(`f10fb838`). These changes use FerroObject, shared FerroList collections,
+inherited TextInputOptions snapshots, existing platform adapters, and the
+document/editor's directed selection and geometry APIs.
+
+Final focused gates passed 11 Base InputScope tests, two View builder tests,
+three runtime XAML InputScope tests, all 129 differential corpus inputs, XAML
+regeneration/freshness, and 70 selection tests. The selection gate executes 294
+literal native horizontal observations, six explicitly different terminal-EOP
+cases and eight mixed vertical steps. The earlier full XAML feature run exposed
+three issues; the focused repair results and original failures are both retained.
+Later full CI found a further shared-list metadata contract: InputScope Names
+must expose Capacity alongside Count and Add. That failure remains visible until
+its correction receives a separate gate. The narrow fix is published in
+`182a7e04`, using the same checked Capacity metadata as other FerroUI lists.
+
+The expanded system MSFTEDIT probe at workflow head `394c11ab` completed all
+four native tests. Its Windows job also passed 49 WinUI, two exact UTF-16 and 561
+rich Controls tests. The new immutable `native-msftedit-typing.json` records 316
+options/typing commands. Each typed Unicode scalar consumes one target grapheme
+in overtype mode; CR and LF insert paragraphs independently without consuming
+target text. This includes the observed two-paragraph result for TypeText CRLF,
+which must remain distinct from ordinary text-loading normalization.
+
+The raw artifact now records the actual synthetic merge checkout and probe blob
+before the full Controls gate. Its measured checkout is `dfc982df`, separately
+from workflow head `394c11ab`; the downloaded archive digest matches GitHub's
+published SHA-256. Earlier immutable records used `provenance.commit` for the
+workflow head and did not measure the checkout. Their observations and verified
+probe blobs remain unchanged. TESTS.md and mapping.json preserve this provenance
+distinction and do not infer a full Linux pass from the successful Windows job.
+
+The source inventory now includes the pinned InputScope XamlOM declaration file
+alongside its implementation, generated IDL and documentation. It also includes
+the seven typography enum declarations and 45 additional public identifiers,
+retained as pending until implementation and verification are mapped. The
+regenerated inventory and check pass with 640 files, 1,362 public API entries,
+938 framework dependencies and 827 include boundaries. Counts describe
+mapped source and member coverage; they do not establish functional parity.

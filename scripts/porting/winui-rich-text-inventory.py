@@ -47,6 +47,8 @@ XAML_CONTROL_TYPES = {
     "TextTrimming", "TextAlignment", "LineStackingStrategy", "OpticalMarginAlignment",
     "CandidateWindowAlignment", "ContextMenuEventArgs", "ContextMenuOpeningEventHandler",
     "InputScope", "InputScopeName", "InputScopeNameValue",
+    "FontCapitals", "FontEastAsianLanguage", "FontEastAsianWidths", "FontFraction",
+    "FontNumeralAlignment", "FontNumeralStyle", "FontVariants",
 }
 XAML_TEXT_AUTOMATION_TYPES = {
     "ITextProvider", "ITextProvider2", "ITextRangeProvider", "ITextRangeProvider2",
@@ -92,6 +94,8 @@ EXPLICIT_REFERENCES = {
     "dxaml/xcp/pal/inc/paltext.h",
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Documents.cs",
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Controls.cs",
+    "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Input.cs",
+    "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.cs",
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Peers.cs",
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Provider.cs",
     "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Automation.Text.cs",
@@ -326,6 +330,12 @@ def api_type_plan(owner: str) -> dict:
         return {"batch": "R1/R2", "candidate_paths": [DOCUMENT_ROOT + stem + ".rs"], "remaining_review": "Review each document property, collection identity, inherited formatting, invalidation, markup and observable edge case against the pinned source."}
     if name.startswith("RichTextBlock"):
         return {"batch": "R2/R7", "candidate_paths": ["src/FerroUI.Controls/rich_text_block.rs", "src/FerroUI.Controls/rich_text_block_overflow.rs", "src/FerroUI.Controls/rich_text_layout.rs"], "remaining_review": "Review document ownership, line/overflow continuation, selection, rendering, input, property notifications and accessibility. Existing formatter output is not exact native engine or pixel parity."}
+    if owner.startswith("Microsoft.UI.Xaml.Input.") and name in {"InputScope", "InputScopeName", "InputScopeNameValue"}:
+        return {
+            "batch": "R5/R8",
+            "candidate_paths": ["src/FerroUI.Base/input/input_scope.rs", "src/FerroUI.Base/input/input_scope_name_value.rs", "src/FerroUI.Base/input/text_input/text_input_options.rs", "src/FerroUI.Controls/rich_edit_box.rs"],
+            "remaining_review": "The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts.",
+        }
     if ".Controls." in owner:
         return {"batch": "R5/R7", "candidate_paths": ["src/FerroUI.Controls/rich_edit_box.rs", "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"], "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."}
     if name in {"RichEditTextDocument", "RichEditTextRange", "ITextRange", "ITextSelection"}:

@@ -353,15 +353,22 @@ external WinUI engine equivalence are still open under RT-I21.
 
 `move_up(unit, count, extend)` and `move_down(unit, count, extend)` accept
 `Line` and `Paragraph`. Line movement uses actual shaped lines and hit testing
-from a complete, untrimmed associated view. It retains the physical horizontal
-position across short lines, mixed line heights, bidi text and linked overflow.
+from a complete, untrimmed associated view. Collapsed movement retains its desired
+physical horizontal position across short lines, mixed line heights, bidi text
+and linked overflow. Extension projects through each actual crossed line from
+the reached caret position. A short or empty intervening line therefore clamps
+subsequent extension, including within a single multi-line command. An earlier
+collapsed desired column survives temporary extension: nonempty extension uses
+the actual active caret, while returning to a collapsed caret can resume that
+earlier column.
 Paragraph movement uses logical boundaries and needs no view. Screen and Window
 are absent from the current `TextRangeUnit`; other exposed units reject before
 side effects.
 
 Negative counts reverse the command. A zero count does not need layout.
 Extreme counts widen before negation and saturate by index, avoiding signed
-overflow and iteration proportional to the request. A nonempty collapsed move
+overflow and iteration proportional to the request. Extended Line traversal is
+bounded by actual crossed display lines. A nonempty collapsed move
 chooses the normalized edge in the direction of travel and applies the full
 requested distance from that edge. If collapsing is the only accepted change,
 it counts as one unit. This vertical rule differs from ordinary range Move's
@@ -384,14 +391,28 @@ additional unit. Accepted redirection counts the same unit, including an edge
 on the original line. The [264-command native record](native-msftedit-navigation.json)
 supplies collapse/count and edge observations. The later [282-command record](native-msftedit-navigation-isolated.json)
 adds 18 fresh-control/sequence observations; all original rows match across the
-two recorded DLL versions. It confirms a remaining Rust difference: native
+two recorded DLL versions. It established the required distinction: native
 extension clamps its physical column after crossing a short line, whereas
 ordinary caret movement retains the desired column. In the isolated sequence,
 collapse visits 5→8→14→8→5, while extension visits 5→8→10→8→1 with anchor 5.
-The current Rust extension still retains the original column and needs a
-further correction. Fresh final-empty-line Up1 and Down(-1) both reach 4,
-resolving the previous reused-state difference. Synthetic terminal EOP and the
-remaining Gravity/Options/Type contracts remain explicit under RT-I23.
+The Rust `project_extension` path now implements that stepwise projection;
+five new regression definitions cover downward/upward motion, repeated facades,
+empty lines, extreme counts and redirected story edges. Two additional
+formatter-instrumented definitions compare geometry queries for 8/1,024-line
+stories and fence newer callback state during redirected-edge projection.
+Additional edge geometry is requested only for an accepted edge redirection;
+ordinary projection work is bounded by crossed lines. The later
+[290-command record](native-msftedit-navigation-options.json) adds eight mixed
+collapse/extension commands. Starting at offset 5 in `abcdef\rx\rabcdef`,
+collapse Down reaches 8, extension Down reaches `(8,14)`, extension Up reaches
+`(8,8)`, and collapse Up restores 5. Starting again at 5, extension Down reaches
+`(5,8)`, collapse Down reaches 10, collapse Up reaches 8, and extension Up reaches
+`(8,1)`. Literal fixtures preserve both sequences. The final focused Rust
+selection gate passed all 70 tests, including these mixed-mode, geometry-cost
+and callback-ownership regressions.
+Fresh final-empty-line Up1 and Down(-1) both reach 4, resolving the previous
+reused-state difference. Synthetic terminal EOP and the remaining
+Gravity/Options/Type contracts remain explicit under RT-I23.
 
 Validation also exposed an existing shared formatter prerequisite: structural
 EOL/EOP markers were entering RTL directional glyph groups, causing every caret
@@ -401,6 +422,50 @@ formatter fixture checks LTR/RTL inverse hit testing, nonzero source starts,
 one/two-unit markers, and selected ranges; it first failed against the old
 library and passed after the correction. This changes geometry bookkeeping,
 not glyph shaping or native pixel parity.
+
+### Selection horizontal movement
+
+`move_left(unit, count, extend)` and `move_right(unit, count, extend)` accept
+`Character` and `Word` without requiring a layout view. Keyboard `Character`
+uses the existing FerroUI `GraphemeEnumerator`, so a surrogate pair, combining
+sequence or joined emoji moves as one grapheme. Ordinary range
+`TextRangeUnit::Character` remains scalar-based; its separate contract is not
+changed by keyboard navigation. `Word` reuses the reviewed word boundaries,
+including the documented trailing ASCII blank policy.
+
+For a nonextended selection, Character movement collapses to the directional
+edge and consumes one requested unit. Word movement aligns that edge to the
+directional word boundary and consumes one unit. Extension preserves the
+directed anchor. Negative requests reverse direction, unsupported units reject
+even for zero, and widened counts saturate at the real document edges. The
+shared publication path accounts for accepted units after cancellation or
+redirection, rejects stale document results, protects newer nested navigation
+and clears old vertical affinity after an accepted horizontal command.
+
+The completed [300-command horizontal record](native-msftedit-navigation-options.json)
+contains ASCII, combining/ZWJ, word punctuation, mixed Hebrew/LTR and empty-story
+fixtures. Its default and RTL-reading windows use the same logical source
+offsets for the recorded left/right commands. That is the current Rust policy;
+visual bidi left/right and arbitrary Gravity behavior remain separate contracts.
+For example, in `A😀é👩‍👩‍👦B`, Character Right moves UTF-16 offsets 1→3,
+3→5 and 5→13. Literal Rust regressions replay 294 recorded rows, including 78
+additional aligned-word and grapheme-interior cases. Six synthetic terminal-EOP
+rows remain explicitly outside normalized Rust coordinates. Separate fixtures
+cover scalar independence, unit validation, extreme counts,
+cancellation/redirection, mutation and affinity ownership. These execute in the
+completed 70-test focused selection gate at the published navigation checkpoint.
+
+The system MSFTEDIT observations retain the exact text, engine version, window
+style, directed selection flags/type and signed native delta. They do not
+establish the behavior of the external WinUI text engine. The later
+[316-case SetFlags/TypeText record](native-msftedit-typing.json) preserves requested
+and accepted flags, typed text, selection phases and exact changed UTF-16
+stories. Overtype consumes one existing grapheme for each typed Unicode scalar;
+a nonempty selection is consumed by the first scalar. Typed CR and LF each
+insert a paragraph without consuming the next target, so TypeText with CRLF
+inserts two paragraphs. Paragraph boundaries are protected from overtype.
+This recorded behavior guides the next Selection.Options/TypeText implementation;
+the observation artifact alone does not implement those contracts.
 
 ### Editor template, viewport and focus
 
@@ -695,8 +760,65 @@ the group settles and discard them on rollback. Preview-only groups create no
 undo entry. An independently held model batch can defer public model Changed
 beyond the cause callback; that event-order difference is recorded explicitly.
 
-Input scope and prediction settings are passed to existing backend options.
-The manager observes effective changes to all nine attached `TextInputOptions`
+### InputScope objects and platform policies
+
+`InputScope`, `InputScopeName` and `InputScopeNameValue` live in
+`ferroui_base::input`. Their object construction follows the pinned
+[`InputScope.cpp`](https://github.com/microsoft/microsoft-ui-xaml/blob/fe244ca6ac4d482712b234a9de3cf771cc6481de/dxaml/xcp/core/core/elements/InputScope.cpp)
+and
+[`InputScopeNameFactory.cpp`](https://github.com/microsoft/microsoft-ui-xaml/blob/fe244ca6ac4d482712b234a9de3cf771cc6481de/dxaml/xcp/dxaml/lib/InputScopeNameFactory.cpp).
+The exact 43 enum names and `repr(i32)` values come from the pinned
+[`Microsoft.UI.Xaml.Input` model](https://github.com/microsoft/microsoft-ui-xaml/blob/fe244ca6ac4d482712b234a9de3cf771cc6481de/dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Input.cs).
+Checked `from_raw` and parsing reject undefined numeric gaps. The enum type and
+constants have complete value mappings; object behavior and platform consumers
+retain their partial states.
+
+An `InputScope` owns a persistent ordered `FerroList<Ref<InputScopeName>>` and
+starts with an empty Names collection. An `InputScopeName` is a FerroObject with
+a typed styled `NameValue` property defaulting to `Default`. Enum construction
+creates a real name wrapper; converting one named string creates a scope with
+one wrapper. Runtime metadata and compiled markup support the native shortcut,
+explicit Names objects, scalar name content, the enum constructor and `x:Null`.
+InputScopeName uses its actual NameValue content property, without a separate
+object type converter. The XAML compiler ignores an empty or whitespace-only
+InputScope attribute as an empty non-string assignment; use `x:Null` to clear
+an existing scope. The explicit Rust string parser rejects empty names.
+For example, the explicit collection form is:
+
+```xml
+<RichEditBox xmlns="https://github.com/ferroui">
+  <RichEditBox.InputScope>
+    <InputScope>
+      <InputScope.Names>
+        <InputScopeName NameValue="Hiragana" />
+        <InputScopeName>KatakanaFullWidth</InputScopeName>
+      </InputScope.Names>
+    </InputScope>
+  </RichEditBox.InputScope>
+</RichEditBox>
+```
+
+Names preserves list identity, order and shared wrapper identity. Weak
+subscriptions observe collection changes and NameValue changes, subscribe once
+to repeated instances of the same wrapper, dispose unused subscriptions when
+items leave, and allow callbacks to mutate the list. Shared scopes update every
+live owning RichEditBox without retaining an owner or removed item. Each update
+captures an immutable `Rc<[InputScopeNameValue]>`; a backend never receives live
+FerroObjects, and an earlier option snapshot cannot change under a callback.
+
+`RichEditBox.InputScope` is now a nullable styled `Option<Ref<InputScope>>`.
+The complete ordered snapshot flows through the new inherited attached
+`TextInputOptions.InputScopeNames` property. `effective_input_scope()` chooses
+the first name for current single-purpose platform APIs.
+`effective_content_type()` supplies a narrower existing content hint when a
+host has no exact representation. An absent or empty scope falls back to the
+independently configured legacy content type; setting or clearing a scope does
+not overwrite that value. An explicit first `Default` supplies the default
+keyboard purpose instead of exposing the legacy hint. Legacy Rust content-hint setters remain convenient
+through conversion to a real scope object. View builders accept native enum
+names, legacy content hints, shared scope objects and nullable reactive signals.
+
+The manager observes effective changes to all ten attached `TextInputOptions`
 properties on the semantic owner, including inherited values and cleared local
 overrides. Updating a policy preserves the current client, connection and
 composition. The binding owns a weak property subscription that survives reset
@@ -707,16 +829,29 @@ same-transport values after the older call returns.
 CoreText caches the latest options before its lazy native context exists and
 applies that scope before the first focus notification. Nested native scope
 writes are serialized; a failed setter leaves the desired options available for
-retry. The cache retains the existing Email, Number, Password, Digits, Url,
-Search and default Text mappings. Shared prediction-option delivery is covered
-by a backend fixture; OS prediction behavior is not implemented by that test.
+retry. Its exact name translation covers all 43 public scope values, including
+the distinct XAML/CoreText names for numeric/alphanumeric PINs. Existing legacy
+content-hint behavior remains separately covered.
 
-These shared policies do not implement native proofing, dictionary prediction, handwriting or
-candidate-window services. The native `InputScope.Names` collection, its name
-wrappers and complete `InputScopeNameValue` family are separately inventoried;
-the single framework content type does not provide those public APIs. Native
-context-menu coordinates/cancellation now have the partial request bridge below;
-candidate-window alignment retains its pending mapping (RT-I20). Real platform composition, cancellation and focus
+| Backend | Current scope consumer and boundary |
+|---|---|
+| Windows CoreText | Uses the first exact native scope, including script/full-width values, with the established lazy-context and reentrant setter rules. |
+| Android | Converts the first name to EditorInfo keyboard/input flags. Explicit digits and date/time components use numeric hints; telephone scopes retain telephone hints. Unsupported script/full-width distinctions use supported fallback hints. Installing changed options updates the EditorInfo callback before restarting active input. An options-only restart transfers the current composing region to the replacement connection; client reassignment retires that handoff. |
+| iOS | Converts the first name to supported keyboard and suggestion traits. Scope selection does not change document masking; secure entry retains the established content-type/sensitivity policy. Changed options reload the current responder's input views; actual UIKit execution remains a native gate. |
+| Wayland | Converts the first name to the supported text-input purpose and hint flags, including telephone, date/time and password/PIN purposes. The protocol has fewer purposes than WinUI. |
+| Fcitx | Converts the first name to its supported capability flags, retaining existing independent sensitivity and suggestion options. Unsupported distinctions use narrower flags. |
+| Native and IBus | Their current `set_options` paths are no-op boundaries; transporting the snapshot does not imply host consumption. |
+| Browser | Maps the first name to supported `inputmode` hints, with framework return-key, capitalization, suggestion, sensitivity and language options. The DOM bridge changes attributes on the existing text input, retaining its type, value, selection and composition; reentrant updates keep the latest options. Correction, spellcheck and writing suggestions remain disabled until non-composition DOM replacement events are applied through the framework connection. Browser/device execution remains a separate gate. |
+
+The full ordered snapshot is retained even though these current consumers use
+one name. Native multi-name negotiation remains pending. Input scopes are
+keyboard/input-method hints: they do not filter rich-document text, mask its
+rendering or enforce PIN length. Shared prediction-option delivery tests do not
+establish OS prediction, proofing, handwriting or candidate-window behavior.
+Native collection/activation ABI, actual OS sessions and complete platform
+policy behavior remain under RT-I20. Native context-menu coordinates and
+cancellation have the partial request bridge below; candidate-window alignment
+retains its pending mapping. Real platform composition, cancellation and focus
 flows remain separate tests from the deterministic control suite. Synchronous TextChanging, deferred TextChanged and cancellable/reentrant
 SelectionChanging now follow the mapped native host contracts. Real platform
 input ordering still requires separate backend verification.
@@ -856,8 +991,10 @@ without exposing private manager internals.
 
 Existing `Name` and `Pin` content hints now map to CoreText
 `PersonalFullName` and `PinNumeric`. These are input hints and impose no text
-validation or PIN length. The full InputScope object/Names/enum family remains
-pending. Actual candidate-window observations/alignment are separate services;
+validation or PIN length. The InputScope object and ordered Names snapshot now
+also carry exact enum hints as described above; native multi-name negotiation
+and OS keyboard behavior retain their partial mappings. Actual candidate-window
+observations/alignment are separate services;
 neither caret nor control layout bounds establish the candidate window's bounds.
 
 ## Text accessibility
