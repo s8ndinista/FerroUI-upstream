@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 // reached through real native FerroUI controls or the canvas keyboard route.
 export async function matchingRegressions(page, reference, check, helpers, output, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, waitForNativeFrame, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, waitForNativeFrame, waitForNativeScene, captureNativeScreenshot } = helpers;
     const fill = (r, g, b) => ({ paint: { type: "solid", r, g, b, a: 255 }, opacity: 1, visible: true });
     const blue = fill(40, 100, 220), red = fill(220, 50, 60);
     const stroke = { paint: { type: "solid", r: 0, g: 0, b: 0, a: 255 }, width: 2,
@@ -37,6 +37,9 @@ export async function matchingRegressions(page, reference, check, helpers, outpu
     };
     const same = async (control, expected) => {
         await clickNative(page, "SelectMatchingButton", "InspectorViewport");
+        await page.waitForFunction(() =>
+            JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome.ModalBackdrop?.visible === true,
+        null, { timeout: 10000 });
         await clickNative(page, control, "ModalViewport");
         // Appearance matching may retain the already-selected source. Require
         // the native command's dialog closure as well as its exact selection.
@@ -48,8 +51,19 @@ export async function matchingRegressions(page, reference, check, helpers, outpu
     const selectSource = async (x = 80, y = 70) => {
         // Clicking inside an existing multi-selection preserves it for drag.
         // Clear through the native canvas before choosing a new source layer.
-        await page.keyboard.press("Escape");
+        const beforeClear = await state(page);
+        if (beforeClear.selection.length > 0) await page.keyboard.press("Escape");
         await selected([]);
+        if (beforeClear.selection.length > 0) {
+            // Escape swaps the inspector. Publish that transition separately
+            // before clickWorld establishes its next selection-frame floor.
+            await waitForNativeFrame(page, beforeClear.renderedFrames, "Clear matching source selection");
+            await waitForNativeScene(page, beforeClear.sceneFrames, "Clear matching source selection");
+        }
+        const cleared = await state(page);
+        assert.equal(cleared.chrome.PageInspector?.visible, true, "Clearing the matching source shows the page inspector");
+        assert.equal(cleared.chrome.DesignInspector?.visible, false, "Clearing the matching source hides the layer inspector");
+        assert.equal(cleared.chrome.SelectMatchingButton?.visible, false, "Clearing the matching source hides its native action");
         await clickWorld(page, x, y);
         await selected([2]);
     };
