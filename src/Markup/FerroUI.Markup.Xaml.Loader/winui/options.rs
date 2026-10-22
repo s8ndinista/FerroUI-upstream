@@ -133,6 +133,22 @@ impl WinUIXamlOptions {
                 "TitleTextBlockStyle",
                 "TitleLargeTextBlockStyle",
                 "DisplayTextBlockStyle",
+                "DefaultInfoBadgeStyle",
+                "AttentionDotInfoBadgeStyle",
+                "AttentionValueInfoBadgeStyle",
+                "AttentionIconInfoBadgeStyle",
+                "InformationalDotInfoBadgeStyle",
+                "InformationalValueInfoBadgeStyle",
+                "InformationalIconInfoBadgeStyle",
+                "SuccessDotInfoBadgeStyle",
+                "SuccessValueInfoBadgeStyle",
+                "SuccessIconInfoBadgeStyle",
+                "CautionDotInfoBadgeStyle",
+                "CautionValueInfoBadgeStyle",
+                "CautionIconInfoBadgeStyle",
+                "CriticalDotInfoBadgeStyle",
+                "CriticalValueInfoBadgeStyle",
+                "CriticalIconInfoBadgeStyle",
             ]
             .into_iter()
             .map(str::to_string)

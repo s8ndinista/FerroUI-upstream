@@ -67,6 +67,52 @@ fn behaviorally_distinct_new_controls_use_the_compatibility_namespace() {
 }
 
 #[test]
+fn feedback_controls_and_item_descriptions_migrate_without_global_type_replacement() {
+    let result = migrate("<InfoBadge Value='7'><InfoBadge.IconSource><FontIconSource Glyph='A'/></InfoBadge.IconSource></InfoBadge><ProgressRing IsIndeterminate='False' Value='42'/><RatingControl PlaceholderValue='2.5'><RatingControl.ItemInfo><RatingItemFontInfo Glyph='B' UnsetGlyph='C'/></RatingControl.ItemInfo></RatingControl><RatingItemImageInfo/><RatingItemInfo/><InfoBadgeTemplateSettings/><ProgressRingTemplateSettings/>");
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    let document = Document::parse(&result.xaml).unwrap();
+    for element in document.descendants().filter(Node::is_element).skip(1) {
+        assert_eq!(element.tag_name().namespace(), Some(COMPAT_NAMESPACE));
+    }
+    assert_eq!(migrate_winui_xaml(&result.xaml, &WinUIXamlOptions::default()).unwrap().xaml, result.xaml);
+}
+
+#[test]
+fn info_badge_style_keys_are_audited_only_when_the_winui_theme_policy_is_selected() {
+    for severity in ["Attention", "Informational", "Success", "Caution", "Critical"] {
+        for kind in ["Dot", "Value", "Icon"] {
+            let input = source(&format!("<InfoBadge Style='{{StaticResource {severity}{kind}InfoBadgeStyle}}'/>"));
+            assert!(migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap().has_errors());
+            let mapped = migrate_winui_xaml(&input, &WinUIXamlOptions::for_winui_theme()).unwrap();
+            assert!(!mapped.has_errors(), "{:?}", mapped.diagnostics);
+            assert!(mapped.xaml.contains(&format!("Theme='{{StaticResource {severity}{kind}InfoBadgeStyle}}'")));
+        }
+    }
+}
+
+#[cfg(feature = "runtime")]
+#[test]
+fn feedback_control_xaml_constructs_live_native_contracts_and_item_info() {
+    use ferroui_base::Ref;
+    use ferroui_controls::winui::{FontIconSource, InfoBadge, ProgressRing, RatingControl, RatingItemFontInfo};
+    use ferroui_controls::Control;
+    use ferroui_markup_xaml_loader::FerroRuntimeXamlLoader;
+    let input = source("<InfoBadge x:Name='Badge' Value='7'><InfoBadge.IconSource><FontIconSource Glyph='A'/></InfoBadge.IconSource></InfoBadge><ProgressRing x:Name='Progress' IsIndeterminate='False' Maximum='200' Value='42'/><RatingControl x:Name='Rating' Caption='Ratings' PlaceholderValue='2.5'><RatingControl.ItemInfo><RatingItemFontInfo Glyph='B' UnsetGlyph='C'/></RatingControl.ItemInfo></RatingControl>");
+    let root: Ref<Control> = FerroRuntimeXamlLoader::parse_winui_as(&input, None, &WinUIXamlOptions::default()).unwrap();
+    let badge = root.get_control::<InfoBadge>("Badge");
+    assert_eq!(badge.value(), 7);
+    assert_eq!(badge.icon_source().unwrap().cast::<FontIconSource>().unwrap().glyph(), "A");
+    let ring = root.get_control::<ProgressRing>("Progress");
+    assert_eq!((ring.minimum(), ring.maximum(), ring.value()), (0.0, 200.0, 42.0));
+    assert!(!ring.is_indeterminate());
+    let rating = root.get_control::<RatingControl>("Rating");
+    assert_eq!(rating.placeholder_value(), 2.5);
+    let info = rating.item_info().unwrap().cast::<RatingItemFontInfo>().unwrap();
+    assert_eq!(info.glyph(), "B");
+    assert_eq!(info.unset_glyph(), "C");
+}
+
+#[test]
 fn info_bar_primitives_and_close_button_theme_require_explicit_mappings() {
     let input = format!("<Grid xmlns='{WINUI_PRESENTATION_NAMESPACE}' xmlns:p='using:Microsoft.UI.Xaml.Controls.Primitives'><p:InfoBarPanel/><InfoBar CloseButtonStyle='{{StaticResource Custom}}'/></Grid>");
     let rejected = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
