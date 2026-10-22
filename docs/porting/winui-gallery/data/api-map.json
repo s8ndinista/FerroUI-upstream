@@ -92374,13 +92374,13 @@
         {
           "audience": "public-source",
           "behavior": "unverified",
-          "declaring_type": null,
+          "declaring_type": "FerroUI.Controls.TextBlock",
           "id": "Microsoft.UI.Xaml.Controls.TextBlock::property:public Microsoft.UI.Xaml.TextLineBounds TextLineBounds { get; set }",
           "kind": "property",
           "name": "TextLineBounds",
           "rust_member": "text_line_bounds",
           "signature": "public Microsoft.UI.Xaml.TextLineBounds TextLineBounds { get; set }",
-          "status": "missing-source-candidate"
+          "status": "source-candidate"
         },
         {
           "audience": "public-source",

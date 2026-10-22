@@ -2,8 +2,8 @@
   "meaning": "XAML member spellings joined through WinUI and FerroUI inheritance; candidates are not semantic compatibility.",
   "member_statuses": {
     "gallery-owned-contract": 102,
-    "missing-source-candidate": 523,
-    "source-candidate": 561,
+    "missing-source-candidate": 522,
+    "source-candidate": 562,
     "unresolved-upstream-member": 208
   },
   "members": [
@@ -27836,9 +27836,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.TextBlock",
       "rust_member": "text_line_bounds",
-      "status": "missing-source-candidate",
+      "status": "source-candidate",
       "target": "FerroUI.Controls.TextBlock",
-      "target_declared_by": null,
+      "target_declared_by": "FerroUI.Controls.TextBlock",
       "upstream": "Microsoft.UI.Xaml.Controls.TextBlock.TextLineBounds",
       "uses": [
         {
