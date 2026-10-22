@@ -7,6 +7,9 @@
 //!   [`PENDING_CONTROLS`]; the pending ones are reported, not failed, and a
 //!   control of the list that has a theme fails the test, so that the list is
 //!   emptied as the batches port the controls.
+//! - Opt-in `FerroUI.Controls.WinUI` controls may supply a real native template
+//!   in property metadata. A control without a dictionary theme must instantiate
+//!   and apply that template; ordinary controls still require their theme.
 //! - The default control themes of the port are based on the keyed theme of
 //!   the WinUI style (`{x:Type Button}` on `DefaultButtonStyle`), so the
 //!   template of a theme is looked for in its base before the default template
@@ -123,6 +126,22 @@ fn should_define_control_theme_for_built_in_templated_controls() {
     let mut pending = Vec::new();
     for control in &templated_controls {
         let has_theme = themed.iter().any(|themed| std::ptr::eq(*themed, *control));
+        if !has_theme && control.namespace() == "FerroUI.Controls.WinUI" {
+            assert!(
+                TemplatedControl::template_property().get_default_value(control).is_some(),
+                "{} has neither a control theme nor a metadata template",
+                control.full_name()
+            );
+            let instance = control.create_instance().expect("a default constructor");
+            let templated = instance.cast::<TemplatedControl>().expect("a templated control");
+            templated.apply_template();
+            assert!(
+                templated.visual_children_count() > 0,
+                "{} metadata template did not build a native visual",
+                control.full_name()
+            );
+            continue;
+        }
         match (has_theme, is_pending(control.name())) {
             (true, true) => panic!("{} has a control theme: remove it from PENDING_CONTROLS", control.name()),
             (false, true) => pending.push(control.name()),
@@ -184,6 +203,11 @@ fn resolve_template(style: &Ref<StyleBase>, target_type: &'static TypeInfo) -> O
         if let Some(template) = resolve_template(&based_on.upcast(), target_type) {
             return Some(template);
         }
+    }
+
+    if target_type.namespace() == "FerroUI.Controls.WinUI" {
+        let default_template = TemplatedControl::template_property().get_default_value(target_type)?;
+        return into_markup_value(default_template);
     }
 
     // ContentControl derived controls inherit its template.
