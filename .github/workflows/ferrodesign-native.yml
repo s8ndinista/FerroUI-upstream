@@ -1,0 +1,69 @@
+name: FerroDesign native feedback
+
+on:
+  push:
+    branches: [feat/ferrodesign-editor]
+    paths:
+      - samples/FerroDesign/crates/**
+      - samples/FerroDesign/Cargo.toml
+      - samples/FerroDesign/Cargo.lock
+      - src/Vello/FerroUI.Vello/**
+      - .github/workflows/ferrodesign-native.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Keep native compiler/pixel feedback independent of the complete browser run.
+# The full browser workflow is still the source of browser validation evidence.
+concurrency:
+  group: ferrodesign-native-feedback-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      CARGO_BUILD_JOBS: 1
+      CARGO_TERM_COLOR: always
+      CARGO_HOME: ${{ runner.temp }}/ferrodesign-tools/cargo
+      RUSTUP_HOME: ${{ runner.temp }}/ferrodesign-tools/rustup
+      CARGO_TARGET_DIR: ${{ github.workspace }}/samples/FerroDesign/target
+      CARGO_PROFILE_TEST_DEBUG: 0
+      CARGO_PROFILE_TEST_CODEGEN_UNITS: 16
+    defaults:
+      run:
+        shell: bash
+        working-directory: samples/FerroDesign
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+      - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/cargo/registry
+            ${{ runner.temp }}/ferrodesign-tools/cargo/git
+            samples/FerroDesign/target
+          key: ferrodesign-native-feedback-${{ runner.os }}-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock', 'Cargo.lock') }}-${{ github.sha }}
+          restore-keys: |
+            ferrodesign-native-feedback-${{ runner.os }}-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock', 'Cargo.lock') }}-
+            ferrodesign-build-${{ runner.os }}-v3-native-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock') }}-
+      - name: Install pinned Rust and native font dependencies
+        run: |
+          rustup toolchain install 1.99.0 --profile minimal --no-self-update
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y pkg-config libfontconfig1-dev libfreetype6-dev
+      - name: Validate public unhinted glyph geometry and pixels
+        run: cargo +1.99.0 test --locked --manifest-path ../../Cargo.toml -p ferroui-vello --lib unhinted_ --jobs 1 -- --test-threads=1
+      - name: Validate native editor and public renderer pixels
+        run: cargo +1.99.0 test --locked -p ferrodesign-app --lib --jobs 1 -- --test-threads=1
+      - uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        if: success()
+        with:
+          path: |
+            ${{ runner.temp }}/ferrodesign-tools/cargo/registry
+            ${{ runner.temp }}/ferrodesign-tools/cargo/git
+            samples/FerroDesign/target
+          key: ferrodesign-native-feedback-${{ runner.os }}-${{ hashFiles('samples/FerroDesign/**/Cargo.toml', 'samples/FerroDesign/Cargo.lock', 'Cargo.lock') }}-${{ github.sha }}

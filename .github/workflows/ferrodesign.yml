@@ -76,8 +76,11 @@ jobs:
           node --check web/main.js
           node --check tests/browser.mjs
           node --check tests/text-render-benchmark.mjs
+          node --check tests/input-observations.mjs
+          node --check tests/input-observations.test.mjs
           for file in tests/*-browser.mjs; do node --check "$file"; done
           node --test tests/document-store.test.mjs
+          node tests/input-observations.test.mjs 2>&1 | tee native-report/input-observation-tests.log
           cargo metadata --locked --no-deps --format-version 1 > native-report/cargo-metadata.json
           cargo test --locked -p ferrodesign-core --jobs 1 2>&1 | tee native-report/core-tests.log
 

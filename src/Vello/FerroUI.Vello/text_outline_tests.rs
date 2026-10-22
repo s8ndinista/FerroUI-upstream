@@ -494,3 +494,82 @@ fn unhinted_outline_cache_keeps_sub_float_shaping_offsets_and_invalidates_with_t
     assert!((moved.y - displaced.y - 6.25).abs() < 1e-11);
     scope.dispose();
 }
+
+#[test]
+fn unhinted_preparation_cache_preserves_pixels_clip_paints_and_separate_glyph_composition() {
+    let scope = start();
+    let face = VelloTypeface::from_bytes(INTER.to_vec(), FontSimulations::Bold | FontSimulations::Oblique).unwrap();
+    let run = glyph_run_of(face, "oo", 34.25, Point::new(31.125, 80.375));
+    let mut infos = run.glyph_infos().borrow().to_vec();
+    infos[0].glyph_advance = 8.000000123;
+    infos[1].glyph_offset = Vector::new(0.123456789, -0.234567891);
+    run.set_glyph_infos(GlyphInfoList::from(infos));
+    let platform = run.platform_impl();
+    let native = platform.as_any().downcast_ref::<GlyphRunImpl>().unwrap();
+    let solid = ImmutableSolidColorBrush::with_opacity(Colors::RED, 0.47);
+    let gradient = ImmutableLinearGradientBrush::new(
+        &[ImmutableGradientStop::new(0.0, Colors::RED), ImmutableGradientStop::new(1.0, Colors::BLUE)],
+        0.63, Some(Rc::new(ImmutableTransform::new(Matrix::create_translation(2.75, -1.125)))),
+        None, GradientSpreadMethod::Pad,
+        Some(RelativePoint::new(0.0, 0.0, RelativeUnit::Relative)),
+        Some(RelativePoint::new(1.0, 0.6, RelativeUnit::Relative)), None,
+    );
+    let interface = FerroLocator::current().get_service::<dyn IPlatformRenderInterface>().unwrap();
+    let bitmap = Rc::new(Bitmap::from_impl(interface.load_bitmap_from_pixels(
+        PixelFormat::RGBA8888, AlphaFormat::Premul,
+        &[255, 0, 0, 255, 0, 0, 255, 255, 0, 0, 255, 255, 255, 0, 0, 255],
+        PixelSize::new(2, 2), Vector::new(96.0, 96.0), 8,
+    )));
+    let image = ImmutableImageBrush::new(Some(bitmap), AlignmentX::Center, AlignmentY::Center,
+        None, 0.71, Some(Rc::new(ImmutableTransform::new(Matrix::create_translation(-1.25, 3.375)))),
+        RelativePoint::default(), None, Stretch::Fill, TileMode::None, None);
+    let clip = kurbo::Rect::new(35.375, 34.125, 91.625, 102.75).to_path(0.05);
+    let mut last_misses = None;
+    for view in [
+        Matrix::new(0.95, 0.08, 0.12, 0.9, 2.25, 1.75),
+        Matrix::new(0.95, 0.08, 0.12, 0.9, 7.625, -2.125),
+        Matrix::new(1.125, 0.08, 0.12, 0.9, 7.625, -2.125),
+    ] {
+        for brush in [&solid as &dyn IBrush, &gradient as &dyn IBrush, &image as &dyn IBrush] {
+            let recorded = record(&run, brush, scalable_options(), view);
+            assert_eq!(recorded.fills.len(), 2);
+            assert!(recorded.fills.iter().any(|(path, ..)| path.elements().iter()
+                .any(|item| matches!(item, kurbo::PathEl::QuadTo(..) | kurbo::PathEl::CurveTo(..)))),
+                "Default recording must retain the canonical curves");
+            let render = |cached: bool| {
+                let mut sink = crate::scene::VelloCpuSceneSink::new(160, 120);
+                sink.push_clip(&clip, Fill::NonZero, Affine::IDENTITY, true);
+                for (index, (path, transform, paint, blend, aa)) in recorded.fills.iter().enumerate() {
+                    if cached {
+                        sink.fill_glyph_outline(path, *transform, paint, *aa,
+                            &|transform| native.prepared_outline(index, transform));
+                    } else {
+                        sink.fill(path, Fill::NonZero, *transform, paint, *blend, *aa);
+                    }
+                }
+                sink.pop_clip();
+                let mut pixels = vec![0; 160 * 120 * 4];
+                sink.render_to_pixels(&mut pixels);
+                pixels
+            };
+            let canonical = render(false);
+            let cached = render(true);
+            assert!(cached.iter().any(|value| *value != 0));
+            let difference = cached.iter().zip(&canonical).map(|(a, b)| a.abs_diff(*b)).max().unwrap();
+            assert!(difference <= 1, "Cached glyph coverage/paint differs by {difference}/255 at {view:?}");
+        }
+        let (_, bytes, hits, misses) = native.outline_cache_stats();
+        assert!(bytes > 0 && bytes <= 128 * 1024);
+        assert!(hits >= 2, "Changing only paint must reuse glyph geometry");
+        if view.m11 == 0.95 {
+            if let Some(previous) = last_misses { assert_eq!(misses, previous, "Panning must not flatten again"); }
+            last_misses = Some(misses);
+        } else { assert!(misses > last_misses.unwrap(), "Changing scale must prepare a fresh contour"); }
+    }
+    run.set_font_rendering_em_size(41.375);
+    let replacement = run.platform_impl();
+    assert!(!std::sync::Arc::ptr_eq(&platform, &replacement));
+    assert_eq!(replacement.as_any().downcast_ref::<GlyphRunImpl>().unwrap().outline_cache_stats(), (0, 0, 0, 0),
+        "An edited text run cannot inherit another run's device geometry");
+    scope.dispose();
+}

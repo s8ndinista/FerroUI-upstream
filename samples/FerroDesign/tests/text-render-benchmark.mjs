@@ -13,6 +13,7 @@ import { createServer } from "node:http";
 import { dirname, extname, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { startInputObservation, stopInputObservation } from "./input-observations.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const output = resolve(process.env.FERRODESIGN_REPORT || resolve(root, "text-benchmark-report"));
@@ -31,6 +32,8 @@ const frameCounters = ["visibleNodes", "culledNodes", "cachedNodes", "preparedNo
     "fullPrepares", "incrementalPrepares", "rootBoundsTests", "rootCandidates", "rootQueryReused"];
 const hash = (value) => createHash("sha256").update(value).digest("hex");
 const state = (page) => page.evaluate(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()));
+const frameState = (page) => page.evaluate(() => JSON.parse((globalThis.ferroDesign.ferroDesignFrameState ||
+    globalThis.ferroDesign.ferroDesignState)()));
 const frames = (page) => page.evaluate(() => new Promise(done => requestAnimationFrame(() => requestAnimationFrame(done))));
 const pick = (value, keys) => Object.fromEntries(keys.map(key => [key, value[key] ?? null]));
 const delta = (before, after) => Object.fromEntries(totalCounters.map(key => [key,
@@ -101,11 +104,13 @@ async function identifyBuild(build) {
 }
 
 const report = {
-    schemaVersion: 1, created: new Date().toISOString(), benchmark: "native-text-pan-v1", viewport, seed,
+    schemaVersion: 2, created: new Date().toISOString(), benchmark: "native-text-pan-v2", viewport, seed,
     warmupCount, measuredCount, motions, builds: [], results: [],
-    method: "Host input dispatch to observed native renderedFrames advance at the expected camera position. Two subsequent animation callbacks are recorded separately as a settling observation.",
+    method: "Host input dispatch to observed native renderedFrames advance at the expected camera. Record dispatch, frame observation, native presentation and two subsequent animation callbacks separately. Timed polls use the constant-size frame bridge; trusted browser input and long tasks are bounded read-only observations.",
     limitations: [
-        "Primary timings include Playwright dispatch, bridge-state serialization and browser scheduling; they are not isolated renderer timings or GPU completion timestamps. Settling timings also include two subsequent animation callbacks.",
+        "Primary timings still include Playwright dispatch, compact bridge serialization and browser scheduling; they are not isolated renderer timings. Native presentation is the public FerroUI surface counter, not a GPU completion timestamp. Settling includes two subsequent animation callbacks.",
+        "Browser event timestamps and performance/long-task observations use the page clock; host phase durations use the Node clock. They are reported separately and must not be subtracted across clock origins.",
+        "An explicitly requested historical baseline without the compact frame bridge is marked legacy; timing comparisons across different bridge methods are suppressed.",
         "Native label visibility/preparation counters are observed. The bridge does not expose actual shaped/drawn glyph totals; exact input character counts describe the workload instead.",
         "The WebGL2 launch requests SwiftShader; the actual renderer string is recorded when available. This is not a hardware-GPU throughput measurement. No speed threshold or FPS assertion is made.",
         "Baseline/current order is sequential and not randomized; machine load and thermal/order effects can affect a paired comparison.",
@@ -179,6 +184,16 @@ try {
             for (const key of ["invalidNodes", "unsupportedEffects", "missingImages"]) assert.equal(prepared[key], 0, key);
             result.imported = { renderedFrames: prepared.renderedFrames, zoom: prepared.zoom, pan: prepared.pan,
                 canvas: prepared.chrome.CanvasHost, counters: pick(prepared, [...frameCounters, ...totalCounters]) };
+            result.metricBridge = await page.evaluate(() => ({
+                kind: typeof globalThis.ferroDesign.ferroDesignFrameState === "function" ? "compact-v1" : "full-state-legacy",
+            }));
+            if (build.id === "current") assert.equal(result.metricBridge.kind, "compact-v1",
+                "The current build must expose the compact, read-only frame sampler");
+            const compact = await frameState(page);
+            for (const key of ["documentRevision", "zoom", "pan", "visibleNodes", "invalidNodes"])
+                assert.deepEqual(compact[key], prepared[key], `Compact metrics must agree with full state for ${key}`);
+            if (result.metricBridge.kind === "compact-v1") assert.ok(Number.isSafeInteger(compact.presentedFrames),
+                "The browser sampler must expose FerroUI's actual presentation counter");
             const canonical = await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson());
             result.documentSha256 = hash(canonical);
             await page.screenshot({ path: resolve(output, build.id + "-" + mode + "-text.png"), timeout: 60000 });
@@ -187,37 +202,106 @@ try {
             await page.mouse.move(pointer.x, pointer.y);
             await page.mouse.down({ button: "middle" });
             await frames(page);
-            const original = await state(page);
+            const original = await frameState(page);
+            await startInputObservation(page, ["pointermove"], 256);
             const panStep = async (index) => {
-                const [dx, dy] = motions[index % motions.length], before = await state(page);
+                const [dx, dy] = motions[index % motions.length];
+                const before = await page.evaluate(() => {
+                    const readStarted = performance.now();
+                    const raw = (globalThis.ferroDesign.ferroDesignFrameState || globalThis.ferroDesign.ferroDesignState)();
+                    const view = JSON.parse(raw);
+                    globalThis.__ferroDesignPanObservation = {
+                        startedAtMs: performance.now(), initialReadMs: performance.now() - readStarted,
+                        pollCount: 0, pollReadMs: 0, maxPollReadMs: 0, maxPayloadCharacters: raw.length,
+                    };
+                    return view;
+                });
                 const expected = { x: original.pan.x + dx, y: original.pan.y + dy };
                 const started = performance.now();
                 await page.mouse.move(pointer.x + dx, pointer.y + dy, { steps: 1 });
-                await page.waitForFunction(({ after, x, y }) => {
-                    const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
-                    return view.renderedFrames > after && Math.abs(view.pan.x - x) < 0.01 && Math.abs(view.pan.y - y) < 0.01;
+                const dispatched = performance.now();
+                const observedHandle = await page.waitForFunction(({ after, x, y }) => {
+                    const readStarted = performance.now();
+                    const raw = (globalThis.ferroDesign.ferroDesignFrameState || globalThis.ferroDesign.ferroDesignState)();
+                    const view = JSON.parse(raw), readMs = performance.now() - readStarted;
+                    const probe = globalThis.__ferroDesignPanObservation;
+                    probe.pollCount++; probe.pollReadMs += readMs;
+                    probe.maxPollReadMs = Math.max(probe.maxPollReadMs, readMs);
+                    probe.maxPayloadCharacters = Math.max(probe.maxPayloadCharacters, raw.length);
+                    if (view.renderedFrames <= after || Math.abs(view.pan.x - x) >= 0.01 || Math.abs(view.pan.y - y) >= 0.01) return false;
+                    probe.frameObservedAtMs = performance.now();
+                    return view;
                 }, { after: before.renderedFrames, ...expected }, { timeout: 30000 });
                 const durationMs = performance.now() - started;
+                const observed = await observedHandle.jsonValue();
+                await observedHandle.dispose();
+                let presentationMs = null;
+                if (Number.isSafeInteger(before.presentedFrames)) {
+                    if (observed.presentedFrames <= before.presentedFrames) {
+                        // This is a distinct real outcome, using the remainder
+                        // of the original observation budget, never a retry.
+                        await page.waitForFunction((after) => JSON.parse(globalThis.ferroDesign.ferroDesignFrameState()).presentedFrames > after,
+                            before.presentedFrames, { timeout: Math.max(1, 30000 - (performance.now() - dispatched)) });
+                    }
+                    presentationMs = performance.now() - started;
+                }
                 await frames(page);
-                const settledObservationMs = performance.now() - started, after = await state(page);
+                const settledObservationMs = performance.now() - started, after = await frameState(page);
+                const browserObservation = await page.evaluate(() => {
+                    const result = { ...globalThis.__ferroDesignPanObservation, endedAtMs: performance.now() };
+                    delete globalThis.__ferroDesignPanObservation;
+                    return result;
+                });
                 assert.equal(after.documentRevision, original.documentRevision, "Panning must not edit the document");
                 assert.equal(after.visibleNodes, 150, "Every text label must remain visible throughout the workload");
                 assert.equal(after.invalidNodes, 0);
-                return { index, durationMs, settledObservationMs, pointerDelta: { x: dx, y: dy }, frameDelta: after.renderedFrames - before.renderedFrames,
+                return { index, durationMs, dispatchMs: dispatched - started, frameObservationMs: durationMs - (dispatched - started),
+                    presentationMs, settledObservationMs, browserObservation, pointerDelta: { x: dx, y: dy },
+                    frameDelta: after.renderedFrames - before.renderedFrames,
+                    presentedFrameDelta: Number.isSafeInteger(before.presentedFrames) ? after.presentedFrames - before.presentedFrames : null,
                     zoom: after.zoom, pan: after.pan, preparationDelta: delta(before, after), frameCounters: pick(after, frameCounters) };
             };
             try {
                 const warmStart = performance.now();
                 for (let index = 0; index < warmupCount; index++) await panStep(index);
                 result.warmupMs = performance.now() - warmStart;
-                const before = await state(page);
+                const before = await frameState(page);
                 for (let index = 0; index < measuredCount; index++) result.samples.push(await panStep(warmupCount + index));
-                const after = await state(page);
+                const after = await frameState(page);
                 result.timing = statistics(result.samples.map(sample => sample.durationMs));
                 result.settlingTiming = statistics(result.samples.map(sample => sample.settledObservationMs));
+                result.dispatchTiming = statistics(result.samples.map(sample => sample.dispatchMs));
+                result.frameObservationTiming = statistics(result.samples.map(sample => sample.frameObservationMs));
+                if (result.samples.every(sample => sample.presentationMs !== null))
+                    result.presentationTiming = statistics(result.samples.map(sample => sample.presentationMs));
                 result.preparationDelta = delta(before, after);
                 result.nativeFrameDelta = after.renderedFrames - before.renderedFrames;
-            } finally { await page.mouse.up({ button: "middle" }); }
+            } finally {
+                result.inputObservation = await stopInputObservation(page);
+                result.lastIncompleteFrameObservation = await page.evaluate(() => {
+                    const probe = globalThis.__ferroDesignPanObservation ?? null;
+                    delete globalThis.__ferroDesignPanObservation;
+                    return probe;
+                });
+                await page.mouse.up({ button: "middle" });
+            }
+            assert.equal(result.inputObservation.droppedEvents, 0, "The bounded input record must retain every measured motion");
+            for (const sample of result.samples) {
+                assert.ok(result.inputObservation.events.some(event => event.type === "pointermove" &&
+                    event.phase === "capture" && event.trusted &&
+                    event.observedAtMs >= sample.browserObservation.startedAtMs &&
+                    event.observedAtMs <= sample.browserObservation.endedAtMs &&
+                    event.x === pointer.x + sample.pointerDelta.x && event.y === pointer.y + sample.pointerDelta.y),
+                    "Each timed sample must contain its actual trusted pointer motion");
+                if (result.metricBridge.kind === "compact-v1") {
+                    assert.ok(sample.browserObservation.maxPayloadCharacters <= 4096,
+                        "The timed bridge must remain a small scalar projection");
+                    assert.ok(sample.presentedFrameDelta > 0, "Every motion must reach native surface presentation");
+                }
+            }
+            const fullAfter = await state(page), compactAfter = await frameState(page);
+            for (const key of ["documentRevision", "zoom", "pan", "visibleNodes", "invalidNodes"])
+                assert.deepEqual(compactAfter[key], fullAfter[key], `Compact final metrics must agree for ${key}`);
             assert.equal(hash(await page.evaluate(() => globalThis.ferroDesign.ferroDesignExportJson())), result.documentSha256);
             result.renderPanics = await page.evaluate(() => globalThis.ferroDesignRenderPanics?.() || []);
             assert.deepEqual(result.renderPanics, []);
@@ -225,6 +309,23 @@ try {
             assert.deepEqual(result.consoleErrors, []);
             result.status = "passed";
             console.log(`${build.label} ${mode}: ${result.timing.medianMs.toFixed(2)} ms median / ${result.timing.p95Ms.toFixed(2)} ms p95 (${measuredCount} native pan observations)`);
+            console.log(`${build.label} ${mode}: dispatch p95 ${result.dispatchTiming.p95Ms.toFixed(2)} ms; frame-observation p95 ${result.frameObservationTiming.p95Ms.toFixed(2)} ms; native-presentation p95 ${result.presentationTiming?.p95Ms.toFixed(2) ?? "unavailable"} ms (${result.metricBridge.kind})`);
+            // Keep decisive timing evidence in decoded CI logs as well as the
+            // full artifact; downloading an artifact is not always available.
+            console.log(JSON.stringify({ benchmark: report.benchmark, label: build.label, mode,
+                metricBridge: result.metricBridge, dispatch: result.dispatchTiming,
+                frameObservation: result.frameObservationTiming, nativePresentation: result.presentationTiming,
+                longTaskSupported: result.inputObservation.longTaskSupported,
+                recordedLongTasks: result.inputObservation.longTasks.length,
+                droppedLongTasks: result.inputObservation.droppedLongTasks,
+                slowestSamples: [...result.samples].sort((a, b) => b.durationMs - a.durationMs).slice(0, 3).map(sample => ({
+                    ...sample,
+                    input: result.inputObservation.events.filter(event => event.observedAtMs >= sample.browserObservation.startedAtMs &&
+                        event.observedAtMs <= sample.browserObservation.endedAtMs),
+                    longTasks: result.inputObservation.longTasks.filter(task => task.startTimeMs <= sample.browserObservation.endedAtMs &&
+                        task.startTimeMs + task.durationMs >= sample.browserObservation.startedAtMs),
+                })),
+            }));
         } catch (error) {
             result.status = "failed"; result.error = error.stack || String(error); process.exitCode = 1;
             console.error(`${build.label} ${mode}: ${result.error}`);
@@ -245,6 +346,7 @@ try {
             canvasBounds: ["x", "y", "width", "height"].every(key => current.imported.canvas[key] === baseline.imported.canvas[key]),
             surface: current.environment.surface === baseline.environment.surface
                 && current.environment.device === baseline.environment.device,
+            metricBridge: current.metricBridge.kind === baseline.metricBridge.kind,
         };
         const mismatches = Object.keys(consistency).filter(key => !consistency[key]);
         return [{ mode, baseline: baseline.timing, current: current.timing, consistency,

@@ -3,13 +3,17 @@ use ferroui_base::media::text_formatting::GlyphInfo;
 use ferroui_base::media::GlyphTypeface;
 use ferroui_base::platform::IGlyphRunImpl;
 use ferroui_base::{Point, Rect, Vector};
-use kurbo::{BezPath, Line, ParamCurve, ParamCurveExtrema, PathSeg, Shape};
+use kurbo::{Affine, BezPath, Line, ParamCurve, ParamCurveExtrema, PathSeg, Shape};
 use skrifa::instance::{LocationRef, Size};
 use skrifa::raw::types::Tag;
 use skrifa::raw::TableProvider;
 use skrifa::MetadataProvider;
 use std::any::Any;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
+
+#[path = "glyph_outline_cache.rs"]
+mod outline_cache;
+use outline_cache::GlyphOutlineCache;
 
 /// The Vello implementation of a glyph run: glyph indices and positions
 /// that a scene draws with the font of the run.
@@ -30,6 +34,7 @@ pub struct GlyphRunImpl {
     /// origin: what the intersections are computed from.
     glyph_paths: OnceLock<Vec<Option<BezPath>>>,
     complete_monochrome_outlines: OnceLock<bool>,
+    flattened_outlines: Mutex<GlyphOutlineCache>,
     font_rendering_em_size: f64,
     baseline_origin: Point,
     bounds: Rect,
@@ -116,6 +121,7 @@ impl GlyphRunImpl {
             outline_positions,
             glyph_paths: OnceLock::new(),
             complete_monochrome_outlines: OnceLock::new(),
+            flattened_outlines: Mutex::new(GlyphOutlineCache::default()),
             font_rendering_em_size,
             baseline_origin,
             bounds: run_bounds.translate(Vector::new(baseline_origin.x, baseline_origin.y)),
@@ -172,6 +178,21 @@ impl GlyphRunImpl {
                 && self.outline_paths().iter().all(Option::is_some)
         });
         complete.then(|| self.outline_paths())
+    }
+
+    /// Reuse the same device-tolerance lines while only the camera translation
+    /// changes. The immutable run owns this bounded cache, so replacing its
+    /// text, font, variations, em size or precise shaped positions replaces it.
+    /// The public geometry and canonical recording paths stay untouched.
+    pub(crate) fn prepared_outline(&self, index: usize, transform: Affine) -> Option<(Arc<BezPath>, Affine)> {
+        let path = self.try_outline_paths()?.get(index)?.as_ref()?;
+        self.flattened_outlines.lock().unwrap_or_else(|error| error.into_inner())
+            .prepare(index, path, transform)
+    }
+
+    #[cfg(test)]
+    pub(crate) fn outline_cache_stats(&self) -> (usize, usize, u64, u64) {
+        self.flattened_outlines.lock().unwrap_or_else(|error| error.into_inner()).stats()
     }
 }
 

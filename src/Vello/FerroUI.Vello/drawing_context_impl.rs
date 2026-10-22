@@ -1459,7 +1459,7 @@ impl IDrawingContextImpl for DrawingContextImpl {
                 self.draw_with(paint_wrapper, &|sink, paint, transform, _| {
                     let _perf = crate::perf::scope(crate::perf::Phase::GlyphRun, paths.len() as u64);
                     let mut glyph_paint = paint.clone();
-                    for (path, (x, _)) in paths.iter().zip(glyph_run_impl.outline_positions()) {
+                    for (index, (path, (x, _))) in paths.iter().zip(glyph_run_impl.outline_positions()).enumerate() {
                         let Some(path) = path.as_ref().filter(|path| !path.elements().is_empty()) else {
                             continue;
                         };
@@ -1471,9 +1471,9 @@ impl IDrawingContextImpl for DrawingContextImpl {
                         glyph_paint.transform = placement.inverse() * paint.transform;
                         // Keep each glyph a separate source-over draw: merging
                         // their contours would change translucent overlaps.
-                        sink.fill(
-                            path, Fill::NonZero, transform * placement, &glyph_paint,
-                            BlendMode::default(), anti_alias,
+                        sink.fill_glyph_outline(
+                            path, transform * placement, &glyph_paint, anti_alias,
+                            &|device_transform| glyph_run_impl.prepared_outline(index, device_transform),
                         );
                     }
                 });
