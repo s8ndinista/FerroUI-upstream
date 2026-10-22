@@ -137,3 +137,27 @@ fn failed_sync_rebuild_preserves_provider_for_async_cleanup() {
     assert!(r.dispose_async().is_completed_successfully());
     assert_eq!(count.get(), 1);
 }
+#[test]
+fn lazy_singletons_survive_rebuilds_and_dispose_with_the_resolver() {
+    struct Counted(Rc<Cell<usize>>);
+    impl ferroui_system::IDisposable for Counted {
+        fn dispose(&self) {
+            self.0.set(self.0.get() + 1);
+        }
+    }
+    let created = Rc::new(Cell::new(0));
+    let disposed = Rc::new(Cell::new(0));
+    let r = MicrosoftDependencyResolver::default();
+    let (c, d) = (created.clone(), disposed.clone());
+    r.register_lazy_singleton_disposable::<Counted>(move || {
+        c.set(c.get() + 1);
+        Some(Rc::new(Counted(d.clone())))
+    });
+    let first = r.get_service::<Counted>().unwrap();
+    r.register_constant(Rc::new(1usize));
+    let second = r.get_service::<Counted>().unwrap();
+    assert!(Rc::ptr_eq(&first, &second));
+    assert_eq!((created.get(), disposed.get()), (1, 0));
+    r.dispose().unwrap();
+    assert_eq!(disposed.get(), 1);
+}

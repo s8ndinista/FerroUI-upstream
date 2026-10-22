@@ -68,6 +68,8 @@ The first preview added the five other names of section 2.2 as placeholders (37 
 
 `ferroui-diagnostics` (`src/FerroUI.Diagnostics`, Controls and themes; the developer tools) joined on 2026-10-22. It compiles its markup in its build script (`links = "ferroui_diagnostics_xaml"`) and depends on the simple theme, the colour picker and the TreeDataGrid, so it is published after them; it is an optional part of the facade (`diagnostics`).
 
+`ferroui-dependency-injection` (`src/FerroUI.DependencyInjection`, Core; the port of Microsoft.Extensions.DependencyInjection, docs/porting/dependency-injection.md) joined on 2026-10-22. It does not depend on the framework; its optional feature `splat` adds the adapter to Splat's resolver. Its unit tests are the unpublished crate `ferroui-dependency-injection-tests`.
+
 Every crate was checked in the same way: packaged, and built from its package, by `scripts/release/publish.sh --dry-run` (section 8). `cargo publish --dry-run -p <crate>` cannot be used for this before the first release: it resolves the dependencies of the package in the registry, where the other crates of the workspace are not yet. `cargo package --workspace` (Cargo 1.90 and later) resolves them among the packages it has just assembled instead, which is what the dry run uses, and so every crate got the full check, not only the ones without dependencies in the workspace.
 
 ### 1.2 The crates that are never published

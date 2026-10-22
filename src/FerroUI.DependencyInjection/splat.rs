@@ -9,7 +9,7 @@ use ferroui_splat::{
     ServiceFactory, ServiceType as SplatType,
 };
 use ferroui_system::{threading::tasks::Task, IDisposable};
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, OnceCell, RefCell};
 use std::rc::Rc;
 
 struct NullService;
@@ -227,19 +227,26 @@ impl IMutableDependencyResolver for MicrosoftDependencyResolver {
         service_type: SplatType,
         contract: Option<&str>,
     ) {
-        let mut d = ServiceDescriptor::from_erased(
+        // As upstream's shared `Lazy<T>`: the value outlives the providers that a later
+        // registration rebuilds, and is disposed with the resolver, once, if it was created.
+        let value: Rc<OnceCell<ErasedService>> = Rc::new(OnceCell::new());
+        let cell = value.clone();
+        self.add(ServiceDescriptor::from_erased(
             identifier(service_type, contract),
             ServiceLifetime::Singleton,
-            move |_, _| Ok(factory().unwrap_or_else(|| Rc::new(NullService))),
-        );
-        d.dispose = disposal.map(|dispose| {
-            Rc::new(move |value: &ErasedService| {
-                if !value.is::<NullService>() {
+            move |_, _| {
+                Ok(cell
+                    .get_or_init(|| factory().unwrap_or_else(|| Rc::new(NullService)))
+                    .clone())
+            },
+        ));
+        if let Some(dispose) = disposal {
+            self.constants.borrow_mut().push(Rc::new(move || {
+                if let Some(value) = value.get().filter(|v| !v.is::<NullService>()) {
                     dispose(value);
                 }
-            }) as crate::service_descriptor::Dispose
-        });
-        self.add(d);
+            }));
+        }
     }
     fn unregister_current_erased(&self, service_type: SplatType, contract: Option<&str>) {
         self.invalidate();
