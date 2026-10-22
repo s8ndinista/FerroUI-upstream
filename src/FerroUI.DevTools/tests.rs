@@ -33,7 +33,7 @@ fn fixture() -> (
     button.set_height(40.0);
     let text = TextBox::new();
     text.set_name(Some("editor".into()));
-    text.set_text(Some("initial".into()));
+    text.set_text(Some("initial"));
     panel.children().add(button.clone());
     panel.children().add(text.clone());
     window.set_content(Some(Rc::new(panel.clone())));

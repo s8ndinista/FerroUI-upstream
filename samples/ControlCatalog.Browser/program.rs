@@ -601,6 +601,6 @@ mod tests {
 }
 
 #[cfg(all(feature = "cdp", target_arch = "wasm32"))]
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static CDP_BRIDGE: RefCell<Option<ferroui_devtools::BrowserBridge>> = const { RefCell::new(None) };
 }

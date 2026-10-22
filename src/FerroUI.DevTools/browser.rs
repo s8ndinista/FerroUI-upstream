@@ -295,7 +295,9 @@ impl Browser {
                 if auto_attach && p["flatten"] != true {
                     return Err(Error::params("Only flattened sessions are supported"));
                 }
-                c.auto_attach = auto_attach;
+                // On the socket of one page, auto-attach is about that page's own sub-targets,
+                // which a window does not have; only the browser socket attaches the windows.
+                c.auto_attach = auto_attach && c.direct.is_none();
                 self.update_connection(c);
                 Ok(json!({}))
             }

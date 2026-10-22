@@ -136,9 +136,18 @@ impl Input {
                     } else {
                         name
                     };
-                    let key = Key::parse(name)
-                        .or_else(|_| Key::parse(&name.to_uppercase()))
-                        .map_err(|_| Error::params("Unsupported key"))?;
+                    // The text a key produces: a control character (Enter's "\r", Tab, Backspace)
+                    // is the key's own action, not text input, as the platform backends treat it.
+                    let text = p["text"]
+                        .as_str()
+                        .filter(|s| !s.is_empty() && !s.chars().any(char::is_control));
+                    // A key with no name of its own (punctuation of the layout, `,` or `!`) is
+                    // `Key::None`, and its key down still delivers its text.
+                    let key = match Key::parse(name).or_else(|_| Key::parse(&name.to_uppercase())) {
+                        Ok(key) => key,
+                        Err(_) if text.is_some() || name.chars().count() == 1 => Key::None,
+                        Err(_) => return Err(Error::params("Unsupported key")),
+                    };
                     let physical = p["code"]
                         .as_str()
                         .and_then(|s| PhysicalKey::parse(s.strip_prefix("Key").unwrap_or(s)).ok())
@@ -153,11 +162,11 @@ impl Input {
                         key,
                         modifiers,
                         physical,
-                        Some(name.into()),
+                        text.map(str::to_owned),
                         KeyDeviceType::Keyboard,
                     )));
                     if type_ == "keyDown" {
-                        if let Some(text) = p["text"].as_str().filter(|s| !s.is_empty()) {
+                        if let Some(text) = text {
                             self.text(root, text, timestamp)?;
                         }
                     }

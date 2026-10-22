@@ -1430,7 +1430,7 @@ mod tests {
 }
 
 #[cfg(feature = "cdp")]
-thread_local! {
+ferroui_base::ferro_thread_local! {
     static CDP_SERVER: std::cell::RefCell<Option<ferroui_devtools::DevToolsServer>> = const { std::cell::RefCell::new(None) };
 }
 

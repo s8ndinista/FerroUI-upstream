@@ -90,12 +90,16 @@ impl DevToolsServer {
                 let Some(browser) = weak.upgrade() else {
                     return false;
                 };
+                // A command that runs a nested dispatcher frame (a modal drag loop, a synchronous
+                // wait) lets this timer tick again inside it: the requests then stay queued.
+                let Ok(mut browser) = browser.try_borrow_mut() else {
+                    return true;
+                };
                 // Bound work per tick so requests cannot starve layout and input.
                 for request in receiver.try_iter().take(32) {
                     if Instant::now() >= request.deadline {
                         continue;
                     }
-                    let mut browser = browser.borrow_mut();
                     let value = match request.operation {
                         Operation::List => browser.discovery(address.port()),
                         Operation::Connect(target) => match browser.connect(target.as_deref()) {
@@ -159,10 +163,9 @@ impl DevToolsServer {
                                 active.lock().unwrap().remove(&id);
                             }));
                         }
-                        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                            thread::sleep(Duration::from_millis(10))
-                        }
-                        Err(_) => break,
+                        // A connection reset before it was accepted, or descriptors running out,
+                        // fails this accept only; the listener stays.
+                        Err(_) => thread::sleep(Duration::from_millis(10)),
                     }
                 }
                 for worker in workers {
@@ -227,9 +230,17 @@ fn serve(mut stream: TcpStream, port: u16, transport: &Transport) -> io::Result<
     stream.set_write_timeout(Some(Duration::from_secs(2)))?;
     let mut header = Vec::new();
     let mut byte = [0];
+    // The whole head within a deadline, not only each byte, so slow clients cannot hold the slots.
+    let started = Instant::now();
     while !header.ends_with(b"\r\n\r\n") {
         if header.len() >= 16 * 1024 {
             return http(&mut stream, 431, json!({"error":"Headers too large"}));
+        }
+        if started.elapsed() > Duration::from_secs(5) {
+            return Err(io::Error::new(
+                io::ErrorKind::TimedOut,
+                "Request head too slow",
+            ));
         }
         stream.read_exact(&mut byte)?;
         header.push(byte[0]);
