@@ -22,6 +22,7 @@ import { localStyleRegressions } from "./styles-browser.mjs";
 import { gridStyleRegressions } from "./grid-styles-browser.mjs";
 import { regionPaintRegressions } from "./region-paints-browser.mjs";
 import { compactAutosaveRegressions } from "./serialization-browser.mjs";
+import { boundedHistoryRegressions } from "./history-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -34,6 +35,14 @@ import { PNG } from "pngjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = resolve(process.env.FERRODESIGN_DIST || resolve(root, "dist"));
 const output = resolve(process.env.FERRODESIGN_REPORT || resolve(root, "browser-report"));
+const selectedScenarios = process.env.FERRODESIGN_SCENARIOS
+    ? new Set(process.env.FERRODESIGN_SCENARIOS.split(",").map(value => value.trim()).filter(Boolean)) : null;
+const selectedModes = process.env.FERRODESIGN_MODES
+    ? [...new Set(process.env.FERRODESIGN_MODES.split(",").map(value => value.trim()).filter(Boolean))]
+    : ["Software2D", "WebGL2"];
+assert.ok(selectedModes.length && selectedModes.every(mode => ["Software2D", "WebGL2"].includes(mode)),
+    "FERRODESIGN_MODES accepts Software2D and WebGL2 only");
+assert.ok(!selectedScenarios || selectedScenarios.size, "FERRODESIGN_SCENARIOS cannot be empty");
 await mkdir(output, { recursive: true });
 const types = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".wasm": "application/wasm", ".json": "application/json", ".png": "image/png", ".svg": "image/svg+xml" };
 const server = createServer(async (request, response) => {
@@ -48,7 +57,11 @@ const server = createServer(async (request, response) => {
 });
 await new Promise((done) => server.listen(0, "127.0.0.1", done));
 const base = "http://127.0.0.1:" + server.address().port;
-const report = { created: new Date().toISOString(), browser: "", results: [] };
+const report = {
+    created: new Date().toISOString(), browser: "", results: [],
+    scope: { full: !selectedScenarios && selectedModes.length === 2,
+        modes: selectedModes, scenarios: selectedScenarios ? [...selectedScenarios] : "all" },
+};
 let browser;
 let failed = false;
 const state = (page) => page.evaluate(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()));
@@ -149,7 +162,7 @@ async function waitForReload(page) {
     await page.waitForFunction(() => {
         if (!globalThis.ferroDesignReady || !globalThis.ferroDesign?.ferroDesignState) return false;
         const data = JSON.parse(globalThis.ferroDesign.ferroDesignState());
-        return data?.renderedFrames > 0;
+        return data?.renderedFrames > 0 && data?.sceneFrames > 0;
     }, undefined, { timeout: 120000 });
     await page.locator(".ferroui-splash").waitFor({ state: "hidden", timeout: 120000 });
     await frames(page);
@@ -198,6 +211,19 @@ async function waitForNativeFrame(page, afterFrame, label) {
         }), { cause: error });
     }
 }
+async function waitForNativeScene(page, afterScene, label) {
+    try {
+        await page.waitForFunction((afterScene) =>
+            JSON.parse(globalThis.ferroDesign.ferroDesignState()).sceneFrames > afterScene,
+        afterScene, { timeout: 10000 });
+    } catch (error) {
+        const view = await state(page);
+        throw new Error(label + " did not publish a native hit-test scene: " + JSON.stringify({
+            afterScene, renderedFrames: view.renderedFrames, sceneFrames: view.sceneFrames,
+            selection: view.selection, documentRevision: view.documentRevision, chrome: view.chrome,
+        }), { cause: error });
+    }
+}
 async function clickWorld(page, x, y, options) {
     const before = await state(page), point = worldPoint(before, x, y);
     await page.mouse.click(point.x, point.y, options);
@@ -213,21 +239,28 @@ async function clickWorld(page, x, y, options) {
         // The canvas counter advances inside the render pass. FerroUI's
         // scene-invalidated notification follows the completed compositor
         // render, when the new inspector hit-test scene is available.
-        await page.waitForFunction((afterScene) =>
-            JSON.parse(globalThis.ferroDesign.ferroDesignState()).sceneFrames > afterScene,
-        before.sceneFrames, { timeout: 10000 });
+        await waitForNativeScene(page, before.sceneFrames, "Canvas selection");
     }
 }
 async function clickNative(page, name, scrollContainer) {
     // Model transactions can finish before FerroUI arranges a rebuilt modal.
     // Wait for the actual native control to be visible and laid out before
     // deriving pointer coordinates; a DOM animation frame alone is not proof.
-    await page.waitForFunction((name) => {
-        const bounds = JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome[name];
-        return bounds?.visible === true && bounds?.enabled === true &&
-            bounds?.measureValid === true && bounds?.arrangeValid === true && bounds?.width > 0 && bounds?.height > 0 &&
-            [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite);
-    }, name, { timeout: 10000 });
+    try {
+        await page.waitForFunction((name) => {
+            const bounds = JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome[name];
+            return bounds?.visible === true && bounds?.enabled === true &&
+                bounds?.measureValid === true && bounds?.arrangeValid === true && bounds?.width > 0 && bounds?.height > 0 &&
+                [bounds.x, bounds.y, bounds.width, bounds.height].every(Number.isFinite);
+        }, name, { timeout: 10000 });
+    } catch (error) {
+        const view = await state(page);
+        throw new Error(name + " is not ready for native pointer input: " + JSON.stringify({
+            bounds: view.chrome[name], scrollContainer: view.chrome[scrollContainer],
+            modal: view.chrome.ModalBackdrop, selection: view.selection,
+            renderedFrames: view.renderedFrames, sceneFrames: view.sceneFrames,
+        }), { cause: error });
+    }
     for (let attempt = 0; attempt < 16; attempt++) {
         const view = await state(page), bounds = view.chrome[name];
         assert.ok(bounds && bounds.visible !== false && bounds.width > 0 && bounds.height > 0, name + " must exist in the native visual tree");
@@ -757,7 +790,7 @@ try {
         args: ["--use-gl=angle", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
     });
     report.browser = browser.version();
-    for (const mode of ["Software2D", "WebGL2"]) {
+    for (const mode of selectedModes) {
         const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, deviceScaleFactor: 1, acceptDownloads: true });
         await context.tracing.start({ screenshots: true, snapshots: true, sources: true });
         const page = await context.newPage();
@@ -913,51 +946,112 @@ try {
             // below intentionally keep their existing timing-sensitive path.
             const nativeHelpers = {
                 fixtureNode, isolatedDocument, importFixture, documentState, state,
-                clickWorld, clickNative, chooseNative, moveWorld, frames, waitForNativeFrame,
+                clickWorld, clickNative, chooseNative, moveWorld, frames, waitForNativeFrame, waitForNativeScene,
                 captureNativeScreenshot: (name, options) => captureNativeScreenshot(page, result, name, options),
             };
-            await vectorNetworkRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await nativeAuthoringRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await typographyRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await componentAuthoringRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await imageCropRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await compositingRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await svgCompositingRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await maskAuthoringRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await effectAuthoringRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await inspectorLifecycleRegressions(page, svgDocument, check,
-                { ...nativeHelpers, flushStorage, waitForReload });
-            await floatingPanelRegressions(page, svgDocument, check, nativeHelpers, mode);
-            await pageInspectorRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await layoutAuthoringRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await layoutDragRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await layoutTransferRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await selectionRegressions(page, svgDocument, check,
-                nativeHelpers, output, mode);
-            await geometryAuthoringRegressions(page, svgDocument, check, nativeHelpers, mode);
-            await flattenRegressions(page, svgDocument, check, nativeHelpers, mode);
-            await localStyleRegressions(page, svgDocument, check, nativeHelpers, mode);
-            await angularPaintRegressions(page, svgDocument, check, nativeHelpers, output, mode);
-            await gridStyleRegressions(page, svgDocument, check, nativeHelpers, output, mode);
-            await regionPaintRegressions(page, svgDocument, check, nativeHelpers, output, mode);
-            await compactAutosaveRegressions(page, svgDocument, check,
-                { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, flushStorage }, output, mode);
-            await prototypeInputRegressions(page, svgDocument, check);
-            await prototypeMotionRegressions(page, svgDocument, check,
-                { fixtureNode, isolatedDocument, importFixture, documentState, state, moveWorld, frames }, output, mode);
+            // Each feature owns a real application session. The production
+            // undo history is deliberately bounded at 100 entries; accumulating
+            // unrelated feature edits in one editor makes depth + 1 assertions
+            // invalid at that boundary. Flush the actual native draft/storage
+            // lifecycle, verify durable content, then reload without clearing
+            // editor state through a test-only mutation or raising its limit.
+            const scenario = async (name, run) => {
+                const entry = { name, status: "running", checksBefore: result.checks.length };
+                (result.scenarios ||= []).push(entry);
+                if (selectedScenarios && !selectedScenarios.has(name)) {
+                    entry.status = "not-requested";
+                    return;
+                }
+                console.log(mode + ": starting " + name);
+                const started = performance.now();
+                try {
+                    const before = await documentState(page);
+                    assert.equal(await page.evaluate(() => globalThis.ferroDesign.ferroDesignCommand("commit-edit")), true,
+                        name + " requires a successful native draft flush");
+                    assert.deepEqual(await documentState(page), before,
+                        name + " must not inherit an uncommitted edit from the previous scenario");
+                    const saved = await flushStorage(page);
+                    assert.equal(saved.saved, true, name + " requires durable storage before reload");
+                    assert.equal(saved.dirty, false);
+                    await committedDocumentInfo(page);
+                    const previousPanics = await page.evaluate(() => ({
+                        startup: globalThis.ferroDesignErrors || [],
+                        render: globalThis.ferroDesignRenderPanics?.() || [],
+                    }));
+                    assert.deepEqual(previousPanics, { startup: [], render: [] },
+                        "Reload cannot hide a previous scenario's native panic");
+                    await page.reload({ waitUntil: "domcontentloaded", timeout: 120000 });
+                    await waitForReload(page);
+                    assert.deepEqual(await documentState(page), before,
+                        name + " reload must preserve every committed document field");
+                    const reloaded = await state(page);
+                    assert.equal(reloaded.historyLength, 0, "A new application session starts with empty undo history");
+                    assert.equal(reloaded.canRedo, false);
+                    await run();
+                    entry.status = "passed";
+                    entry.checks = result.checks.length - entry.checksBefore;
+                } catch (error) {
+                    entry.status = "failed";
+                    throw error;
+                } finally {
+                    entry.durationMs = Math.round(performance.now() - started);
+                }
+            };
+            await scenario("vector-network", () => vectorNetworkRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("native-authoring", () => nativeAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("typography", () => typographyRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("components", () => componentAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("image-crop", () => imageCropRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("compositing", () => compositingRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("svg-compositing", () => svgCompositingRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("masks", () => maskAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("effects", () => effectAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("inspector-lifecycle", () => inspectorLifecycleRegressions(page, svgDocument, check,
+                { ...nativeHelpers, flushStorage, waitForReload }));
+            await scenario("floating-panels", () => floatingPanelRegressions(page, svgDocument, check,
+                nativeHelpers, mode));
+            await scenario("page-inspector", () => pageInspectorRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("auto-layout", () => layoutAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("layout-drag", () => layoutDragRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("layout-transfer", () => layoutTransferRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("selection", () => selectionRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("geometry-authoring", () => geometryAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, mode));
+            await scenario("flatten", () => flattenRegressions(page, svgDocument, check,
+                nativeHelpers, mode));
+            await scenario("local-styles", () => localStyleRegressions(page, svgDocument, check,
+                nativeHelpers, mode));
+            await scenario("angular-paints", () => angularPaintRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("grid-styles", () => gridStyleRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("region-paints", () => regionPaintRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("compact-autosave", () => compactAutosaveRegressions(page, svgDocument, check,
+                { ...nativeHelpers, flushStorage }, output, mode));
+            await scenario("prototype-input", () => prototypeInputRegressions(page, svgDocument, check));
+            await scenario("prototype-motion", () => prototypeMotionRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("bounded-history", () => boundedHistoryRegressions(page, svgDocument, check,
+                nativeHelpers));
+            if (selectedScenarios) {
+                for (const name of selectedScenarios) assert.ok(result.scenarios.some(item => item.name === name),
+                    "Unknown FERRODESIGN_SCENARIOS entry: " + name);
+            }
             assert.equal(await page.evaluate((json) => globalThis.ferroDesign.ferroDesignImportJson(json), svgJson), true);
             await frames(page);
 
@@ -1207,6 +1301,6 @@ try {
     const escape = (text) => String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
     const body = report.results.map((item) => "<section><h2>" + escape(item.requestedMode + ": " + item.status) + "</h2><p>Actual surface: " + escape(item.surface?.kind || "not initialized") + "</p><ul>" + item.checks.map((check) => "<li>" + escape(check) + "</li>").join("") + "</ul><img src='" + item.requestedMode + (item.status === "passed" ? "-edited.png" : "-failure.png") + "' alt='Actual browser screenshot'>" + (item.svgImport ? "<h3>Imported SVG in the application</h3><img src='" + item.requestedMode + "-svg.png' alt='SVG imported and rendered by FerroUI'>" : "") + (item.pngExport ? "<h3>Actual PNG download</h3><img class='export' src='" + item.requestedMode + "-export.png' alt='PNG exported by the application'>" : "") + "<pre>" + escape(item.error || JSON.stringify(item, null, 2)) + "</pre></section>").join("");
     await writeFile(resolve(output, "index.html"), "<!doctype html><meta charset='utf-8'><title>FerroDesign browser validation</title><style>body{font:15px system-ui;margin:32px;background:#f6f6f6;color:#222}section{background:white;padding:24px;margin:24px 0;border-radius:12px}img{width:100%;border:1px solid #ddd}pre{overflow:auto;font-size:12px;white-space:pre-wrap}</style><h1>FerroDesign browser validation</h1><p>Chromium " + escape(report.browser) + ". Each explicit rendering mode must match its observed canvas context. This harness uses SwiftShader for WebGL2 and does not measure hardware-GPU throughput.</p>" + body);
-    console.log(JSON.stringify({ passed: report.passed, browser: report.browser, results: report.results.map(({requestedMode,status,surface,checks}) => ({requestedMode,status,surface,checks})) }, null, 2));
+    console.log(JSON.stringify({ passed: report.passed, scope: report.scope, browser: report.browser, results: report.results.map(({requestedMode,status,surface,checks}) => ({requestedMode,status,surface,checks})) }, null, 2));
 }
 if (failed) process.exitCode = 1;

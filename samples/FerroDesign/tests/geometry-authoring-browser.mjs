@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 export async function geometryAuthoringRegressions(page, reference, check, helpers, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, frames, waitForNativeScene, captureNativeScreenshot } = helpers;
     const near = (a, b, label) => assert.ok(Math.abs(a - b) < 1e-7, label + ": " + a + " != " + b);
     const edit = async (name, value, container = "ModalViewport") => {
         await clickNative(page, name, container);
@@ -99,8 +99,13 @@ export async function geometryAuthoringRegressions(page, reference, check, helpe
     check("Native graphical edge and center constraints drive actual parent resizing: opposing horizontal pins stretch the child and vertical centering preserves its size");
 
     await clickWorld(page, 80, 95);
+    const selectedScene = (await state(page)).sceneFrames;
     await page.keyboard.press("Escape");
     await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selectionCount === 0);
+    // Escape replaces the selected-layer inspector with the page inspector.
+    // Published native layout bounds alone can precede the compositor's new
+    // hit-test scene; clicking those bounds early can hit the old inspector.
+    await waitForNativeScene(page, selectedScene, "Page inspector after Escape");
     const beforePreset = await documentState(page), presetDepth = (await state(page)).historyLength;
     await clickNative(page, "PageFramePresetsButton", "InspectorViewport");
     await clickNative(page, "FramePreset1", "ModalViewport");
