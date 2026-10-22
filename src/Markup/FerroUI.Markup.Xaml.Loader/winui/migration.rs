@@ -212,6 +212,22 @@ impl Migration<'_, '_> {
                         name,
                         "Page"
                             | "Frame"
+                            | "NavigationView"
+                            | "NavigationViewItemBase"
+                            | "NavigationViewItem"
+                            | "NavigationViewItemHeader"
+                            | "NavigationViewItemSeparator"
+                            | "NavigationViewDisplayMode"
+                            | "NavigationViewBackButtonVisible"
+                            | "NavigationViewPaneDisplayMode"
+                            | "NavigationViewSelectionFollowsFocus"
+                            | "NavigationViewDisplayModeChangedEventArgs"
+                            | "NavigationViewSelectionChangedEventArgs"
+                            | "NavigationViewItemInvokedEventArgs"
+                            | "NavigationViewPaneClosingEventArgs"
+                            | "NavigationViewBackRequestedEventArgs"
+                            | "NavigationViewItemExpandingEventArgs"
+                            | "NavigationViewItemCollapsedEventArgs"
                             | "NumberBox"
                             | "NumberBoxSpinButtonPlacementMode"
                             | "NumberBoxValidationMode"
@@ -254,6 +270,11 @@ impl Migration<'_, '_> {
                             | "AutoSuggestBoxQuerySubmittedEventArgs"
                     ))
                 .then(|| (COMPAT_NAMESPACE.to_string(), name.to_string()))
+            })
+            .or_else(|| {
+                (namespace == "using:Microsoft.UI.Xaml.Automation.Peers"
+                    && matches!(name, "NavigationViewAutomationPeer" | "NavigationViewItemAutomationPeer"))
+                    .then(|| ("using:FerroUI.Controls.WinUI.Automation.Peers".to_string(), name.to_string()))
             })
             .or_else(|| {
                 (namespace == "using:Microsoft.UI.Xaml.Controls.Primitives"
@@ -384,6 +405,12 @@ impl Migration<'_, '_> {
         attribute: &LexicalAttribute,
         value: &str,
     ) {
+        // WinUI's icon shorthand creates a fresh SymbolIcon. Expand only these audited
+        // opt-in members; adding a parser to the shared IconElement would also change
+        // existing Avalonia-style documents. Property elements work with both back ends.
+        if self.symbol_icon_attribute(node, namespace, owner, attribute_namespace, local, attribute, value) {
+            return;
+        }
         let original_name = &self.source[attribute.name.clone()];
         let mut name = original_name.to_string();
         let mut result = value.to_string();
@@ -538,6 +565,53 @@ impl Migration<'_, '_> {
         if result != value {
             self.edit(attribute.value.clone(), escape_attribute(&result));
         }
+    }
+
+    fn symbol_icon_attribute(
+        &mut self,
+        node: Node<'_, '_>,
+        namespace: &str,
+        owner: &str,
+        attribute_namespace: Option<&str>,
+        local: &str,
+        attribute: &LexicalAttribute,
+        value: &str,
+    ) -> bool {
+        if !is_control_namespace(namespace)
+            || attribute_namespace.is_some()
+            || !matches!((owner, local), ("NavigationViewItem", "Icon") | ("AutoSuggestBox", "QueryIcon"))
+            || self.explicit_type(namespace, owner)
+            || self.options.members.iter().any(|mapping| {
+                mapping.source_namespace == namespace
+                    && mapping.source_type == owner
+                    && mapping.source_member == local
+            })
+            || value.trim_start().starts_with('{')
+        {
+            return false;
+        }
+        let opening = opening_name(self.source, node.range().start);
+        let tag = start_tag(self.source, opening.end);
+        let mapped_owner = self.type_name(namespace, owner, &self.source[opening.clone()]);
+        let icon_name = self.type_name(namespace, "SymbolIcon", "SymbolIcon");
+        let symbol_member = self.member_name(namespace, "SymbolIcon", "Symbol");
+        let child = format!(
+            "<{mapped_owner}.{local}><{icon_name} {symbol_member}=\"{}\"/></{mapped_owner}.{local}>",
+            escape_attribute(value)
+        );
+        self.edit(attribute.name.start..attribute.value.end + 1, String::new());
+        if self.source.as_bytes().get(tag.end.wrapping_sub(1)) == Some(&b'/') {
+            self.edit(tag.end - 1..tag.end + 1, format!(">{child}</{mapped_owner}>"));
+        } else {
+            self.edit(tag.end + 1..tag.end + 1, child);
+        }
+        self.diagnostic(
+            "WXAML2005",
+            false,
+            attribute.value.clone(),
+            "An icon literal becomes an instance-owned SymbolIcon; the native Symbol parser validates the literal. Resource and binding values retain their native icon-object contract.",
+        );
+        true
     }
 
     fn qualified_type(&mut self, node: Node<'_, '_>, value: &str) -> String {

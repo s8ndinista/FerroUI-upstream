@@ -78,6 +78,94 @@ fn feedback_controls_and_item_descriptions_migrate_without_global_type_replaceme
 }
 
 #[test]
+fn navigation_view_item_collections_and_badges_keep_their_property_element_owners() {
+    let result = migrate("<NavigationView PaneDisplayMode='Left'><NavigationView.MenuItems><NavigationViewItem Content='Inbox'><NavigationViewItem.InfoBadge><InfoBadge Value='5'/></NavigationViewItem.InfoBadge><NavigationViewItem.MenuItems><NavigationViewItemHeader Content='Folders'/><NavigationViewItemSeparator/><NavigationViewItem Content='Archive'/></NavigationViewItem.MenuItems></NavigationViewItem></NavigationView.MenuItems><NavigationView.FooterMenuItems><NavigationViewItem Content='Help'/></NavigationView.FooterMenuItems><Frame/></NavigationView>");
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    let document = Document::parse(&result.xaml).unwrap();
+    for node in document.descendants().filter(Node::is_element).skip(1) {
+        assert_eq!(node.tag_name().namespace(), Some(COMPAT_NAMESPACE));
+    }
+    for member in ["NavigationView.MenuItems", "NavigationView.FooterMenuItems", "NavigationViewItem.MenuItems", "NavigationViewItem.InfoBadge"] {
+        assert!(document.descendants().any(|node| node.has_tag_name((COMPAT_NAMESPACE, member))));
+    }
+    assert_eq!(migrate_winui_xaml(&result.xaml, &WinUIXamlOptions::default()).unwrap().xaml, result.xaml);
+    for name in ["NavigationViewAutomationPeer", "NavigationViewItemAutomationPeer"] {
+        let result = migrate(&format!("<Grid xmlns:a='using:Microsoft.UI.Xaml.Automation.Peers' Tag='{{x:Type a:{name}}}'/>"));
+        assert!(!result.has_errors(), "{:?}", result.diagnostics);
+        let document = Document::parse(&result.xaml).unwrap();
+        let node = document.root_element().first_element_child().unwrap();
+        let literal = node.attribute("Tag").unwrap().strip_prefix("{x:Type ").unwrap().strip_suffix('}').unwrap();
+        let (prefix, local) = literal.split_once(':').unwrap();
+        assert_eq!(local, name);
+        assert_eq!(node.lookup_namespace_uri(Some(prefix)), Some("using:FerroUI.Controls.WinUI.Automation.Peers"));
+    }
+
+}
+
+#[test]
+fn symbol_icon_literals_expand_for_empty_and_content_elements_without_touching_original_text() {
+    let input = source("<!-- 海 Icon='Home' café --><NavigationViewItem Icon = 'Home' Content='A &amp; B — café'/><NavigationViewItem Icon='Mail' Tag='keep&gt;value'><NavigationViewItem.InfoBadge><InfoBadge Value='5'/></NavigationViewItem.InfoBadge>Inbox</NavigationViewItem><AutoSuggestBox QueryIcon='Find'/>");
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    assert!(result.xaml.contains("<!-- 海 Icon='Home' café -->"));
+    assert!(result.xaml.contains("Content='A &amp; B — café'"));
+    assert!(result.xaml.contains("Tag='keep&gt;value'"));
+    let document = Document::parse(&result.xaml).unwrap();
+    let icons: Vec<_> = document.descendants().filter(|node| node.has_tag_name((COMPAT_NAMESPACE, "SymbolIcon"))).collect();
+    assert_eq!(icons.iter().map(|node| node.attribute("Symbol").unwrap()).collect::<Vec<_>>(), ["Home", "Mail", "Find"]);
+    assert_eq!(icons[0].parent_element().unwrap().tag_name().name(), "NavigationViewItem.Icon");
+    assert_eq!(icons[2].parent_element().unwrap().tag_name().name(), "AutoSuggestBox.QueryIcon");
+    assert_eq!(result.diagnostics.iter().filter(|diagnostic| diagnostic.code == "WXAML2005").count(), 3);
+    assert_eq!(result.diagnostics.iter().filter(|diagnostic| diagnostic.code == "WXAML2005")
+        .map(|diagnostic| &input[diagnostic.span.bytes.clone()]).collect::<Vec<_>>(), ["Home", "Mail", "Find"]);
+    for edit in &result.edits {
+        assert!(input.is_char_boundary(edit.span.bytes.start));
+        assert!(input.is_char_boundary(edit.span.bytes.end));
+    }
+    assert!(migrate_winui_xaml(&result.xaml, &WinUIXamlOptions::default()).unwrap().edits.is_empty());
+}
+
+#[test]
+fn symbolic_icons_respect_explicit_namespace_prefixes_resources_and_custom_type_policies() {
+    let input = format!("<c:NavigationViewItem xmlns:c='using:Microsoft.UI.Xaml.Controls' xmlns:x='{XAML_NAMESPACE}' Icon='Play' Content='menu'/>");
+    let result = migrate_winui_xaml(&input, &WinUIXamlOptions::default()).unwrap();
+    assert!(!result.has_errors(), "{:?}", result.diagnostics);
+    let document = Document::parse(&result.xaml).unwrap();
+    assert_eq!(document.root_element().tag_name().namespace(), Some(COMPAT_NAMESPACE));
+    assert!(document.descendants().any(|node| node.has_tag_name((COMPAT_NAMESPACE, "SymbolIcon")) && node.attribute("Symbol") == Some("Play")));
+
+    let source = source("<NavigationViewItem Icon='{StaticResource SharedIcon}'/><AutoSuggestBox QueryIcon='{Binding SearchIcon}'/>");
+    let result = migrate_winui_xaml(&source, &WinUIXamlOptions::default()).unwrap();
+    assert!(result.xaml.contains("Icon='{StaticResource SharedIcon}'"));
+    assert!(result.xaml.contains("QueryIcon='{Binding SearchIcon, Mode=OneWay}'"));
+    assert!(!result.diagnostics.iter().any(|diagnostic| diagnostic.code == "WXAML2005"));
+
+    let mut options = WinUIXamlOptions::default();
+    options.types.push(WinUIXamlTypeMapping::new("using:Microsoft.UI.Xaml.Controls", "NavigationViewItem", "using:My.Controls", "NavigationEntry"));
+    let result = migrate_winui_xaml(&input, &options).unwrap();
+    assert!(result.xaml.contains("Icon='Play'"));
+    assert!(!result.diagnostics.iter().any(|diagnostic| diagnostic.code == "WXAML2005"));
+
+    let mut options = WinUIXamlOptions::default();
+    options.types.push(WinUIXamlTypeMapping::new("using:Microsoft.UI.Xaml.Controls", "SymbolIcon", "using:My.Controls", "CustomIcon"));
+    options.members.push(WinUIXamlMemberMapping::new("using:Microsoft.UI.Xaml.Controls", "SymbolIcon", "Symbol", "Glyph"));
+    let result = migrate_winui_xaml(&input, &options).unwrap();
+    let document = Document::parse(&result.xaml).unwrap();
+    let custom = document.descendants().find(|node| node.has_tag_name(("using:My.Controls", "CustomIcon"))).unwrap();
+    assert_eq!(custom.attribute("Glyph"), Some("Play"));
+    assert!(custom.attribute("Symbol").is_none());
+
+    let mut options = WinUIXamlOptions::default();
+    options.members.push(WinUIXamlMemberMapping::new("using:Microsoft.UI.Xaml.Controls", "NavigationViewItem", "Icon", "Decoration"));
+    let result = migrate_winui_xaml(&input, &options).unwrap();
+    assert!(result.xaml.contains("Decoration='Play'"));
+    assert!(!result.diagnostics.iter().any(|diagnostic| diagnostic.code == "WXAML2005"));
+
+    let native = "<w:NavigationViewItem xmlns:w='using:FerroUI.Controls.WinUI' Icon='Mail'/>";
+    assert!(migrate_winui_xaml(native, &WinUIXamlOptions::default()).unwrap().edits.is_empty());
+}
+
+#[test]
 fn info_badge_style_keys_are_audited_only_when_the_winui_theme_policy_is_selected() {
     for severity in ["Attention", "Informational", "Success", "Caution", "Critical"] {
         for kind in ["Dot", "Value", "Icon"] {

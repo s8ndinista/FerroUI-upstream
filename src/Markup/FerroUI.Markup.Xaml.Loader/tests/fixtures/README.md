@@ -12,6 +12,13 @@ ContentControl.ContentTemplate, its normal compiled use. Two built instances tes
 item isolation, explicit PropertyChanged source updates, DataContext recycling,
 detachment of the previous item and independent stopping.
 
+`winui_navigation.xaml` exercises the additive NavigationView family through the
+same two backends: original property-element owners, nested and footer collections,
+header/separator types, embedded InfoBadge, Frame content and literal Symbol icons.
+The opt-in migration expands `Icon="Mail"` and `QueryIcon="Find"` into separate
+SymbolIcon objects. Selection, nonselecting footer invocation, ancestor state,
+removal and instance ownership are checked on the constructed native controls.
+
 The test first migrates the original WinUI namespace and x:Bind syntax using
 `PropertyPathsWithExplicitLifecycle`. The generated file is the output of
 `rust_emitter::generate_file`; rustc compiles that file as part of the integration

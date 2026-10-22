@@ -6,10 +6,15 @@
 //! regenerate_winui_binding_fixture -- --ignored --exact`
 
 use ferroui_base::controls::NameScope;
-use ferroui_base::input::{FocusChangedEventArgs, InputElement};
+use ferroui_base::input::{FocusChangedEventArgs, InputElement, Key, KeyEventArgs};
 use ferroui_base::Ref;
 use ferroui_controls::templates::IDataTemplate;
 use ferroui_controls::testing::{TestServices, UnitTestApplication, UnitTestApplicationScope};
+use ferroui_controls::winui::{
+    Frame, NavigationView, NavigationViewBackButtonVisible, NavigationViewItem,
+    NavigationViewItemHeader, NavigationViewItemSeparator, NavigationViewPaneDisplayMode, Symbol,
+    SymbolIcon,
+};
 use ferroui_controls::{Button, ContentControl, Control, StackPanel, TextBlock, TextBox};
 use ferroui_markup_xaml::winui::WinUIBindings;
 use ferroui_markup_xaml::xaml_il::runtime::XamlIlRuntimeHelpers;
@@ -26,6 +31,7 @@ mod generated;
 
 const ROOT: &str = include_str!("fixtures/winui_root.xaml");
 const TEMPLATE: &str = include_str!("fixtures/winui_template.xaml");
+const NAVIGATION: &str = include_str!("fixtures/winui_navigation.xaml");
 
 fn options() -> WinUIXamlOptions {
     WinUIXamlOptions {
@@ -168,6 +174,114 @@ fn assert_template_behavior(template: Rc<dyn IDataTemplate>) {
     assert_eq!(second_mirror.text().as_deref(), Some("second remains live"));
 }
 
+fn assert_navigation_behavior(build: impl Fn() -> Ref<NavigationView>) {
+    let weak = {
+        let root = build();
+        let second = build();
+        let scope = NameScope::get_name_scope(&root).unwrap();
+        let inbox = scope.find_as::<NavigationViewItem>("Inbox").unwrap();
+        let archive = scope.find_as::<NavigationViewItem>("Archive").unwrap();
+        let help = scope.find_as::<NavigationViewItem>("Help").unwrap();
+        assert_eq!(
+            root.pane_display_mode(),
+            NavigationViewPaneDisplayMode::Left
+        );
+        assert_eq!(
+            root.is_back_button_visible(),
+            NavigationViewBackButtonVisible::Visible
+        );
+        assert!(root.is_back_enabled());
+        assert_eq!(root.menu_items().count(), 3);
+        assert_eq!(root.footer_menu_items().count(), 1);
+        assert_eq!(inbox.menu_items().count(), 1);
+        assert!(Control::from_boxed(&root.menu_items().get_at(1).unwrap())
+            .unwrap()
+            .cast::<NavigationViewItemHeader>()
+            .is_some());
+        assert!(Control::from_boxed(&root.menu_items().get_at(2).unwrap())
+            .unwrap()
+            .cast::<NavigationViewItemSeparator>()
+            .is_some());
+        assert!(Control::from_boxed(&root.content().unwrap())
+            .unwrap()
+            .cast::<Frame>()
+            .is_some());
+        let icon = inbox.icon().unwrap().cast::<SymbolIcon>().unwrap();
+        assert_eq!(icon.symbol(), Symbol::Mail);
+        assert_eq!(
+            archive
+                .icon()
+                .unwrap()
+                .cast::<SymbolIcon>()
+                .unwrap()
+                .symbol(),
+            Symbol::Save
+        );
+        assert_eq!(
+            root.auto_suggest_box()
+                .unwrap()
+                .query_icon()
+                .unwrap()
+                .cast::<SymbolIcon>()
+                .unwrap()
+                .symbol(),
+            Symbol::Find
+        );
+        assert_eq!(inbox.info_badge().unwrap().value(), 5);
+        let other_inbox = NameScope::get_name_scope(&second)
+            .unwrap()
+            .find_as::<NavigationViewItem>("Inbox")
+            .unwrap();
+        assert!(!icon.ptr_eq(&other_inbox.icon().unwrap()));
+        assert!(!inbox
+            .info_badge()
+            .unwrap()
+            .ptr_eq(&other_inbox.info_badge().unwrap()));
+        root.apply_template();
+        let invoke = |item: &NavigationViewItem| {
+            let mut event = KeyEventArgs::new();
+            event.key = Key::Enter;
+            event.set_routed_event(Some(InputElement::key_down_event()));
+            item.raise_event(&event);
+            assert!(event.handled());
+        };
+        invoke(&archive);
+        assert!(archive.is_selected());
+        assert!(inbox.is_child_selected());
+        assert!(Control::from_boxed(&root.selected_item().unwrap())
+            .unwrap()
+            .ptr_eq(&archive));
+        assert!(second.selected_item().is_none());
+        invoke(&help);
+        assert!(!help.selects_on_invoked());
+        assert!(archive.is_selected());
+        root.menu_items().remove_at(0);
+        assert!(root.selected_item().is_none());
+        root.downgrade()
+    };
+    assert!(
+        weak.upgrade().is_none(),
+        "markup, selection and template subscriptions release the root"
+    );
+}
+
+#[test]
+fn interpreted_navigation_preserves_collections_icons_selection_and_instance_lifetimes() {
+    let _app = start();
+    assert_navigation_behavior(|| {
+        FerroRuntimeXamlLoader::parse_winui_as(NAVIGATION, None, &options()).unwrap()
+    });
+}
+
+#[test]
+fn compiled_navigation_preserves_collections_icons_selection_and_instance_lifetimes() {
+    let _app = start();
+    assert_navigation_behavior(|| {
+        let provider = XamlIlRuntimeHelpers::create_root_service_provider_v3(None);
+        generated::build_navigation_xaml(Some(provider)).unwrap()
+    });
+}
+
 #[test]
 fn interpreted_root_defers_initialization_and_tracks_live_source_and_target_changes() {
     let _app = start();
@@ -208,16 +322,20 @@ fn generated_winui_binding_fixture_matches_the_current_compiler() {
 
 fn emitted_fixture() -> String {
     ferroui_markup_xaml::register_types();
-    let documents: Vec<_> = [("root.xaml", ROOT), ("template.xaml", TEMPLATE)]
-        .into_iter()
-        .map(|(name, source)| {
-            let native = migrate_winui_xaml(source, &options())
-                .unwrap()
-                .into_xaml()
-                .unwrap();
-            (name, native)
-        })
-        .collect();
+    let documents: Vec<_> = [
+        ("root.xaml", ROOT),
+        ("template.xaml", TEMPLATE),
+        ("navigation.xaml", NAVIGATION),
+    ]
+    .into_iter()
+    .map(|(name, source)| {
+        let native = migrate_winui_xaml(source, &options())
+            .unwrap()
+            .into_xaml()
+            .unwrap();
+        (name, native)
+    })
+    .collect();
     let borrowed: Vec<_> = documents
         .iter()
         .map(|(name, native)| (*name, native.as_str()))

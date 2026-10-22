@@ -31,6 +31,13 @@ const XML_NAMESPACES_1: rt::XmlNamespaceTable = &[
     ("x", &[]),
 ];
 
+/// The XML namespaces of documents of this file, as the compiler resolved them.
+const XML_NAMESPACES_2: rt::XmlNamespaceTable = &[
+    ("", &[("FerroUI", "FerroUI.Base"), ("FerroUI.Animation", "FerroUI.Base"), ("FerroUI.Animation.Easings", "FerroUI.Base"), ("FerroUI.Controls", "FerroUI.Base"), ("FerroUI.Data", "FerroUI.Base"), ("FerroUI.Data.Converters", "FerroUI.Base"), ("FerroUI.Input", "FerroUI.Base"), ("FerroUI.Input.GestureRecognizers", "FerroUI.Base"), ("FerroUI.Input.TextInput", "FerroUI.Base"), ("FerroUI.Layout", "FerroUI.Base"), ("FerroUI.LogicalTree", "FerroUI.Base"), ("FerroUI.Media", "FerroUI.Base"), ("FerroUI.Media.Imaging", "FerroUI.Base"), ("FerroUI.Media.Transformation", "FerroUI.Base"), ("FerroUI.Styling", "FerroUI.Base"), ("FerroUI", "FerroUI.Controls"), ("FerroUI.Automation", "FerroUI.Controls"), ("FerroUI.Controls", "FerroUI.Controls"), ("FerroUI.Controls.Embedding", "FerroUI.Controls"), ("FerroUI.Controls.Presenters", "FerroUI.Controls"), ("FerroUI.Controls.Primitives", "FerroUI.Controls"), ("FerroUI.Controls.Shapes", "FerroUI.Controls"), ("FerroUI.Controls.Templates", "FerroUI.Controls"), ("FerroUI.Controls.Notifications", "FerroUI.Controls"), ("FerroUI.Controls.Chrome", "FerroUI.Controls"), ("FerroUI.Controls.Documents", "FerroUI.Controls"), ("FerroUI.Markup.Xaml.MarkupExtensions", "FerroUI.Markup.Xaml"), ("FerroUI.Markup.Xaml.Styling", "FerroUI.Markup.Xaml"), ("FerroUI.Markup.Xaml.Templates", "FerroUI.Markup.Xaml")]),
+    ("fui0", &[("FerroUI.Controls.WinUI", "")]),
+    ("x", &[]),
+];
+
 /// The base URI and the XML namespaces of `root.xaml`.
 static BUILD_ROOT_XAML_DOCUMENT: rt::DocumentInfo = rt::DocumentInfo { base_uri: ::core::option::Option::Some("ferres://FerroUI.WinUI.BindingFixture/root.xaml"), namespaces: XML_NAMESPACES_0 };
 
@@ -275,10 +282,165 @@ fn build_template_xaml_untyped(
     ::core::result::Result::Ok(::std::rc::Rc::new(root) as ::ferroui_base::BoxedValue)
 }
 
+/// The base URI and the XML namespaces of `navigation.xaml`.
+static BUILD_NAVIGATION_XAML_DOCUMENT: rt::DocumentInfo = rt::DocumentInfo { base_uri: ::core::option::Option::Some("ferres://FerroUI.WinUI.BindingFixture/navigation.xaml"), namespaces: XML_NAMESPACES_2 };
+
+/// Generated from `navigation.xaml`.
+pub fn build_navigation_xaml(
+    service_provider: ::core::option::Option<::std::rc::Rc<dyn ::ferroui_base::metadata::IServiceProvider>>,
+) -> ::core::result::Result<::ferroui_base::Ref<::ferroui_controls::winui::NavigationView>, ::ferroui_markup_xaml::XamlLoadException> {
+    // navigation.xaml(1,2) NavigationView
+    let navigation_view_0 = ::ferroui_controls::winui::NavigationView::new();
+    let context = rt::populate_context(service_provider, &BUILD_NAVIGATION_XAML_DOCUMENT, rt::to_value(navigation_view_0.clone()));
+    let name_scope = context.name_scope_field();
+    navigation_view_0.begin_init();
+    // navigation.xaml(3,17) Name
+    navigation_view_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("Navigation")));
+    rt::register_name(name_scope.as_ref(), "Navigation", ::core::clone::Clone::clone(&navigation_view_0).upcast::<::ferroui_base::FerroObject>(), 3, 17)?;
+    // navigation.xaml(1,2) PaneDisplayMode
+    navigation_view_0.set_value(::ferroui_controls::winui::NavigationView::pane_display_mode_property(), ::ferroui_controls::winui::NavigationViewPaneDisplayMode::Left);
+    // navigation.xaml(3,60) Header
+    navigation_view_0.set_value(::ferroui_controls::winui::NavigationView::header_property(), rt::to_object(::std::string::String::from("Messages")));
+    // navigation.xaml(1,2) IsBackButtonVisible
+    navigation_view_0.set_value(::ferroui_controls::winui::NavigationView::is_back_button_visible_property(), ::ferroui_controls::winui::NavigationViewBackButtonVisible::Visible);
+    // navigation.xaml(1,2) IsBackEnabled
+    navigation_view_0.set_value(::ferroui_controls::winui::NavigationView::is_back_enabled_property(), ::core::clone::Clone::clone(&true));
+    // navigation.xaml(6,6) AutoSuggestBox
+    // navigation.xaml(6,6) AutoSuggestBox
+    let auto_suggest_box_0 = ::ferroui_controls::winui::AutoSuggestBox::new();
+    auto_suggest_box_0.begin_init();
+    navigation_view_0.set_value(::ferroui_controls::winui::NavigationView::auto_suggest_box_property(), ::core::option::Option::Some(::core::clone::Clone::clone(&auto_suggest_box_0)));
+    // navigation.xaml(6,26) Name
+    auto_suggest_box_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("Search")));
+    rt::register_name(name_scope.as_ref(), "Search", ::core::clone::Clone::clone(&auto_suggest_box_0).upcast::<::ferroui_base::FerroObject>(), 6, 26)?;
+    // navigation.xaml(6,43) PlaceholderText
+    auto_suggest_box_0.set_value(::ferroui_controls::winui::AutoSuggestBox::placeholder_text_property(), ::std::string::String::from("Search messages"));
+    // navigation.xaml(6,110) QueryIcon
+    // navigation.xaml(6,110) SymbolIcon
+    let symbol_icon_0 = ::ferroui_controls::winui::SymbolIcon::new();
+    symbol_icon_0.begin_init();
+    auto_suggest_box_0.set_value(::ferroui_controls::winui::AutoSuggestBox::query_icon_property(), ::core::option::Option::Some(::core::clone::Clone::clone(&symbol_icon_0).upcast::<::ferroui_controls::IconElement>()));
+    // navigation.xaml(6,110) Symbol
+    symbol_icon_0.set_value(::ferroui_controls::winui::SymbolIcon::symbol_property(), ::ferroui_controls::winui::Symbol::Find);
+    rt::invoked(symbol_icon_0.try_end_init(), 6, 110)?;
+    rt::invoked(auto_suggest_box_0.try_end_init(), 6, 6)?;
+    // navigation.xaml(9,6) MenuItems
+    let menu_items_collection_0 = navigation_view_0.get_direct_value(::ferroui_controls::winui::NavigationView::menu_items_property());
+    // navigation.xaml(9,6) NavigationViewItem
+    let navigation_view_item_0 = ::ferroui_controls::winui::NavigationViewItem::new();
+    navigation_view_item_0.begin_init();
+    ::ferroui_controls::ItemCollection::__markup_Add_0(&menu_items_collection_0, rt::to_object(::core::clone::Clone::clone(&navigation_view_item_0)));
+    // navigation.xaml(9,30) Name
+    navigation_view_item_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("Inbox")));
+    rt::register_name(name_scope.as_ref(), "Inbox", ::core::clone::Clone::clone(&navigation_view_item_0).upcast::<::ferroui_base::FerroObject>(), 9, 30)?;
+    // navigation.xaml(9,45) Content
+    navigation_view_item_0.set_value(::ferroui_controls::ContentControl::content_property(), rt::to_object(::std::string::String::from("Inbox")));
+    // navigation.xaml(9,6) IsExpanded
+    navigation_view_item_0.set_value(::ferroui_controls::winui::NavigationViewItem::is_expanded_property(), ::core::clone::Clone::clone(&true));
+    // navigation.xaml(9,111) Icon
+    // navigation.xaml(9,111) SymbolIcon
+    let symbol_icon_1 = ::ferroui_controls::winui::SymbolIcon::new();
+    symbol_icon_1.begin_init();
+    navigation_view_item_0.set_value(::ferroui_controls::winui::NavigationViewItem::icon_property(), ::core::option::Option::Some(::core::clone::Clone::clone(&symbol_icon_1).upcast::<::ferroui_controls::IconElement>()));
+    // navigation.xaml(9,111) Symbol
+    symbol_icon_1.set_value(::ferroui_controls::winui::SymbolIcon::symbol_property(), ::ferroui_controls::winui::Symbol::Mail);
+    rt::invoked(symbol_icon_1.try_end_init(), 9, 111)?;
+    // navigation.xaml(11,10) InfoBadge
+    // navigation.xaml(11,10) InfoBadge
+    let info_badge_0 = ::ferroui_controls::winui::InfoBadge::new();
+    info_badge_0.begin_init();
+    navigation_view_item_0.set_value(::ferroui_controls::winui::NavigationViewItem::info_badge_property(), ::core::option::Option::Some(::core::clone::Clone::clone(&info_badge_0)));
+    // navigation.xaml(11,25) Name
+    info_badge_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("Badge")));
+    rt::register_name(name_scope.as_ref(), "Badge", ::core::clone::Clone::clone(&info_badge_0).upcast::<::ferroui_base::FerroObject>(), 11, 25)?;
+    // navigation.xaml(11,10) Value
+    info_badge_0.set_value(::ferroui_controls::winui::InfoBadge::value_property(), 5_i32);
+    rt::invoked(info_badge_0.try_end_init(), 11, 10)?;
+    // navigation.xaml(14,10) MenuItems
+    let menu_items_collection_1 = navigation_view_item_0.get_direct_value(::ferroui_controls::winui::NavigationViewItem::menu_items_property());
+    // navigation.xaml(14,10) NavigationViewItem
+    let navigation_view_item_1 = ::ferroui_controls::winui::NavigationViewItem::new();
+    navigation_view_item_1.begin_init();
+    ::ferroui_controls::ItemCollection::__markup_Add_0(&menu_items_collection_1, rt::to_object(::core::clone::Clone::clone(&navigation_view_item_1)));
+    // navigation.xaml(14,34) Name
+    navigation_view_item_1.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("Archive")));
+    rt::register_name(name_scope.as_ref(), "Archive", ::core::clone::Clone::clone(&navigation_view_item_1).upcast::<::ferroui_base::FerroObject>(), 14, 34)?;
+    // navigation.xaml(14,51) Content
+    navigation_view_item_1.set_value(::ferroui_controls::ContentControl::content_property(), rt::to_object(::std::string::String::from("Archive")));
+    // navigation.xaml(14,102) Icon
+    // navigation.xaml(14,102) SymbolIcon
+    let symbol_icon_2 = ::ferroui_controls::winui::SymbolIcon::new();
+    symbol_icon_2.begin_init();
+    navigation_view_item_1.set_value(::ferroui_controls::winui::NavigationViewItem::icon_property(), ::core::option::Option::Some(::core::clone::Clone::clone(&symbol_icon_2).upcast::<::ferroui_controls::IconElement>()));
+    // navigation.xaml(14,102) Symbol
+    symbol_icon_2.set_value(::ferroui_controls::winui::SymbolIcon::symbol_property(), ::ferroui_controls::winui::Symbol::Save);
+    rt::invoked(symbol_icon_2.try_end_init(), 14, 102)?;
+    rt::invoked(navigation_view_item_1.try_end_init(), 14, 10)?;
+    rt::invoked(navigation_view_item_0.try_end_init(), 9, 6)?;
+    // navigation.xaml(17,6) MenuItems
+    let menu_items_collection_2 = navigation_view_0.get_direct_value(::ferroui_controls::winui::NavigationView::menu_items_property());
+    // navigation.xaml(17,6) NavigationViewItemHeader
+    let navigation_view_item_header_0 = ::ferroui_controls::winui::NavigationViewItemHeader::new();
+    navigation_view_item_header_0.begin_init();
+    ::ferroui_controls::ItemCollection::__markup_Add_0(&menu_items_collection_2, rt::to_object(::core::clone::Clone::clone(&navigation_view_item_header_0)));
+    // navigation.xaml(17,36) Content
+    navigation_view_item_header_0.set_value(::ferroui_controls::ContentControl::content_property(), rt::to_object(::std::string::String::from("Other")));
+    rt::invoked(navigation_view_item_header_0.try_end_init(), 17, 6)?;
+    // navigation.xaml(18,6) MenuItems
+    let menu_items_collection_3 = navigation_view_0.get_direct_value(::ferroui_controls::winui::NavigationView::menu_items_property());
+    // navigation.xaml(18,6) NavigationViewItemSeparator
+    let navigation_view_item_separator_0 = ::ferroui_controls::winui::NavigationViewItemSeparator::new();
+    navigation_view_item_separator_0.begin_init();
+    ::ferroui_controls::ItemCollection::__markup_Add_0(&menu_items_collection_3, rt::to_object(::core::clone::Clone::clone(&navigation_view_item_separator_0)));
+    rt::invoked(navigation_view_item_separator_0.try_end_init(), 18, 6)?;
+    // navigation.xaml(21,6) FooterMenuItems
+    let footer_menu_items_collection_0 = navigation_view_0.get_direct_value(::ferroui_controls::winui::NavigationView::footer_menu_items_property());
+    // navigation.xaml(21,6) NavigationViewItem
+    let navigation_view_item_2 = ::ferroui_controls::winui::NavigationViewItem::new();
+    navigation_view_item_2.begin_init();
+    ::ferroui_controls::ItemCollection::__markup_Add_0(&footer_menu_items_collection_0, rt::to_object(::core::clone::Clone::clone(&navigation_view_item_2)));
+    // navigation.xaml(21,30) Name
+    navigation_view_item_2.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("Help")));
+    rt::register_name(name_scope.as_ref(), "Help", ::core::clone::Clone::clone(&navigation_view_item_2).upcast::<::ferroui_base::FerroObject>(), 21, 30)?;
+    // navigation.xaml(21,44) Content
+    navigation_view_item_2.set_value(::ferroui_controls::ContentControl::content_property(), rt::to_object(::std::string::String::from("Help")));
+    // navigation.xaml(21,6) SelectsOnInvoked
+    navigation_view_item_2.set_value(::ferroui_controls::winui::NavigationViewItem::selects_on_invoked_property(), ::core::clone::Clone::clone(&false));
+    // navigation.xaml(21,117) Icon
+    // navigation.xaml(21,117) SymbolIcon
+    let symbol_icon_3 = ::ferroui_controls::winui::SymbolIcon::new();
+    symbol_icon_3.begin_init();
+    navigation_view_item_2.set_value(::ferroui_controls::winui::NavigationViewItem::icon_property(), ::core::option::Option::Some(::core::clone::Clone::clone(&symbol_icon_3).upcast::<::ferroui_controls::IconElement>()));
+    // navigation.xaml(21,117) Symbol
+    symbol_icon_3.set_value(::ferroui_controls::winui::SymbolIcon::symbol_property(), ::ferroui_controls::winui::Symbol::Help);
+    rt::invoked(symbol_icon_3.try_end_init(), 21, 117)?;
+    rt::invoked(navigation_view_item_2.try_end_init(), 21, 6)?;
+    // navigation.xaml(23,4) Content
+    // navigation.xaml(23,4) Frame
+    let frame_0 = ::ferroui_controls::winui::Frame::new();
+    frame_0.begin_init();
+    navigation_view_0.set_value(::ferroui_controls::ContentControl::content_property(), rt::to_object(::core::clone::Clone::clone(&frame_0)));
+    // navigation.xaml(23,15) Name
+    frame_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("ContentFrame")));
+    rt::register_name(name_scope.as_ref(), "ContentFrame", ::core::clone::Clone::clone(&frame_0).upcast::<::ferroui_base::FerroObject>(), 23, 15)?;
+    rt::invoked(frame_0.try_end_init(), 23, 4)?;
+    rt::invoked(navigation_view_0.try_end_init(), 1, 2)?;
+    rt::complete_root_name_scope(::core::option::Option::Some(&navigation_view_0), name_scope.as_ref(), 1, 2)?;
+    ::core::result::Result::Ok(navigation_view_0)
+}
+
+fn build_navigation_xaml_untyped(
+    service_provider: ::core::option::Option<::std::rc::Rc<dyn ::ferroui_base::metadata::IServiceProvider>>,
+) -> ::core::result::Result<::ferroui_base::BoxedValue, ::ferroui_markup_xaml::XamlLoadException> {
+    let root = build_navigation_xaml(service_provider)?;
+    ::core::result::Result::Ok(::std::rc::Rc::new(root) as ::ferroui_base::BoxedValue)
+}
+
 /// The build function of every eligible public document, by document name.
 pub const DOCUMENTS: &[(&str, BuildDocument)] = &[
     ("root.xaml", build_root_xaml_untyped as BuildDocument),
     ("template.xaml", build_template_xaml_untyped as BuildDocument),
+    ("navigation.xaml", build_navigation_xaml_untyped as BuildDocument),
 ];
 
 /// The loader of the compiled markup of the assembly: builds the document with the URI
