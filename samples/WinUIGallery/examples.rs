@@ -33,7 +33,8 @@ macro_rules! page {
 
 pub static ADAPTATIONS: &[PageAdaptation] = &[
     page!("CompactSizing", "The source standard/compact page navigation copies all four text/password values and the selected date. The existing native compact dictionary is scoped to each compact page; global theme density remains unchanged. Header and PasswordBox are explicit compositions/adaptations; full WinUI control contracts and input/visual acceptance remain pending."),
-    page!("InfoBadge", "The source severity styles, embedded button badge and dynamic NumberBox value use native InfoBadge and audited ControlThemes. The NavigationView composition remains pending. Exact upstream rendering and host accessibility acceptance remain pending."),
+    page!("InfoBadge", "All four source compositions use native InfoBadge: NavigationView item badges, severity styles, an embedded button badge and dynamic NumberBox values. Visibility and pane options retain the original handlers. Exact upstream rendering and host accessibility acceptance remain pending."),
+    page!("NavigationView", "All eight source compositions use opt-in native NavigationView, items, hierarchy, footer, settings and Frame navigation. Model templates and C# handlers are explicitly adapted to Rust. Top overflow, selectors, transition effects and platform visual/accessibility acceptance remain pending."),
     page!("ProgressRing", "Both source examples use the opt-in native ProgressRing, active state, background options and original NumberBox empty-value recovery. Native arc animation is an explicit adaptation; exact Lottie motion, custom animated sources and platform accessibility acceptance remain pending."),
     page!("RatingControl", "Both source examples use native RatingControl input, caption changes, clearing/read-only options and half-step placeholder binding. Programmatic updates retain the original caption; user ValueChanged selects Your rating. Exact source animation and host accessibility acceptance remain pending."),
     page!("InfoBar", "All three original compositions use the opt-in InfoBar with severity, short/long messages, optional button/hyperlink and visibility/closability options. x:Bind is explicitly adapted to ordinary TwoWay Binding; final layout, icons and live-region acceptance remain pending."),
@@ -114,6 +115,7 @@ pub fn create(sample: &PageAdaptation) -> Result<Ref<Control>, XamlLoadException
     crate::assets::register();
     let root = FerroRuntimeXamlLoader::parse_as::<Ref<Control>>(sample.xaml, None)?;
     crate::frame_sample::wire(&root)?;
+    crate::navigation_view_samples::wire(&root)?;
     crate::sizing_sample::wire(&root)?;
     crate::platform_samples::wire(&root);
     crate::input_samples::wire(&root);

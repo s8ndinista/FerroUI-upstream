@@ -1,5 +1,5 @@
-<!-- Ported from three original InfoBadge examples; see ../NOTICE.md.
-     The NavigationView composition is separately pending in port-status.json. -->
+<!-- Ported from all four original InfoBadge examples; see ../NOTICE.md.
+     The original NavigationView composition uses opt-in native controls. -->
 <StackPanel xmlns="https://github.com/ferroui"
             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
             xmlns:winui="using:FerroUI.Controls.WinUI" Spacing="24">
@@ -10,6 +10,32 @@
       </ResourceDictionary.MergedDictionaries>
     </ResourceDictionary>
   </StackPanel.Resources>
+  <TextBlock Text="InfoBadge embedded in a NavigationView" FontSize="18" />
+  <Grid ColumnDefinitions="*,180" ColumnSpacing="24">
+    <winui:NavigationView x:Name="nvSample1" Height="300" PaneDisplayMode="Left">
+      <winui:NavigationView.MenuItems>
+        <winui:NavigationViewItem Content="Home">
+          <winui:NavigationViewItem.Icon><winui:SymbolIcon Symbol="Home" /></winui:NavigationViewItem.Icon>
+        </winui:NavigationViewItem>
+        <winui:NavigationViewItem Content="Account">
+          <winui:NavigationViewItem.Icon><winui:SymbolIcon Symbol="Contact" /></winui:NavigationViewItem.Icon>
+        </winui:NavigationViewItem>
+        <winui:NavigationViewItem x:Name="InboxPage" Content="Inbox" AutomationProperties.Name="Inbox, 5 notifications">
+          <winui:NavigationViewItem.Icon><winui:SymbolIcon Symbol="Mail" /></winui:NavigationViewItem.Icon>
+          <winui:NavigationViewItem.InfoBadge><winui:InfoBadge x:Name="infoBadge1" Value="5" /></winui:NavigationViewItem.InfoBadge>
+        </winui:NavigationViewItem>
+      </winui:NavigationView.MenuItems>
+      <winui:Frame x:Name="contentFrame" />
+    </winui:NavigationView>
+    <StackPanel Grid.Column="1" Spacing="8">
+      <TextBlock Text="InfoBadge Opacity" />
+      <ToggleSwitch x:Name="ToggleInfoBadgeOpacity" IsChecked="True" AutomationProperties.Name="InfoBadge Opacity" />
+      <TextBlock Text="Display Mode" />
+      <ComboBox x:Name="NavigationViewDisplayMode" SelectedIndex="0" AutomationProperties.Name="Display Mode">
+        <x:String>LeftExpanded</x:String><x:String>LeftCompact</x:String><x:String>Top</x:String>
+      </ComboBox>
+    </StackPanel>
+  </Grid>
   <TextBlock Text="Different InfoBadge styles" FontSize="18" />
   <Grid ColumnDefinitions="*,220" ColumnSpacing="24">
     <StackPanel Orientation="Horizontal" Spacing="20" HorizontalAlignment="Center">

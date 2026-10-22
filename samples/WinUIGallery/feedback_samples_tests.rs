@@ -175,6 +175,55 @@ fn info_badge_page_preserves_source_integer_guard_for_dynamic_values() {
 }
 
 #[test]
+fn info_badge_navigation_composition_keeps_original_badge_and_opacity_handler() {
+    use ferroui_controls::winui::{NavigationView, NavigationViewItem};
+    let _application = start();
+    let root = page("InfoBadge");
+    let nav = root.get_control::<NavigationView>("nvSample1");
+    assert_eq!(nav.menu_items().count(), 3);
+    let inbox = root.get_control::<NavigationViewItem>("InboxPage");
+    let badge = root.get_control::<InfoBadge>("infoBadge1");
+    assert_eq!(inbox.info_badge(), Some(badge.clone()));
+    assert_eq!(badge.value(), 5);
+    assert_eq!(badge.opacity(), 1.0);
+    let toggle = root.get_control::<ToggleSwitch>("ToggleInfoBadgeOpacity");
+    toggle.set_is_checked(Some(false));
+    assert_eq!(badge.opacity(), 0.0);
+    assert_eq!(badge.value(), 5);
+    toggle.set_is_checked(Some(true));
+    assert_eq!(badge.opacity(), 1.0);
+}
+
+#[test]
+fn info_badge_navigation_modes_preserve_the_same_notification_and_selection() {
+    use ferroui_controls::winui::{Frame, NavigationView, NavigationViewPaneDisplayMode};
+    let _application = start();
+    let root = page("InfoBadge");
+    let nav = root.get_control::<NavigationView>("nvSample1");
+    let badge = root.get_control::<InfoBadge>("infoBadge1");
+    let inbox = nav.menu_items().get_at(2).unwrap();
+    nav.set_selected_item(Some(inbox.clone()));
+    let modes = root.get_control::<ComboBox>("NavigationViewDisplayMode");
+    for (index, expected, open) in [
+        (1, NavigationViewPaneDisplayMode::LeftCompact, false),
+        (2, NavigationViewPaneDisplayMode::Top, true),
+        (0, NavigationViewPaneDisplayMode::Left, true),
+    ] {
+        modes.set_selected_index(index);
+        assert_eq!(nav.pane_display_mode(), expected);
+        assert_eq!(nav.is_pane_open(), open);
+        assert!(std::rc::Rc::ptr_eq(&nav.selected_item().unwrap(), &inbox));
+        assert_eq!(root.get_control::<InfoBadge>("infoBadge1"), badge);
+        assert_eq!(badge.value(), 5);
+    }
+    // This source example has an empty Frame and no navigation handler.
+    assert!(root
+        .get_control::<Frame>("contentFrame")
+        .current_page()
+        .is_none());
+}
+
+#[test]
 fn feedback_pages_and_callbacks_release_their_native_controls() {
     let _application = start();
     for id in ["InfoBadge", "ProgressRing", "RatingControl"] {

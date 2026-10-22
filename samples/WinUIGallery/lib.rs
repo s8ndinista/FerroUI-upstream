@@ -19,6 +19,7 @@ mod frame_sample;
 pub mod gallery;
 mod input_samples;
 pub mod navigation;
+mod navigation_view_samples;
 mod platform_samples;
 mod sizing_sample;
 
@@ -36,3 +37,6 @@ mod tests;
 
 #[cfg(test)]
 mod feedback_samples_tests;
+
+#[cfg(test)]
+mod navigation_view_samples_tests;

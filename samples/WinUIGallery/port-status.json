@@ -1757,7 +1757,9 @@
         "samples/WinUIGallery/examples.rs",
         "samples/WinUIGallery/feedback_samples.rs",
         "samples/WinUIGallery/assets.rs",
-        "src/FerroUI.Themes.WinUI/Controls/WinUIInfoBadge.xaml"
+        "src/FerroUI.Themes.WinUI/Controls/WinUIInfoBadge.xaml",
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
       ],
       "tests": [
         {
@@ -1775,10 +1777,34 @@
         {
           "path": "samples/WinUIGallery/feedback_samples_tests.rs",
           "name": "feedback_pages_and_callbacks_release_their_native_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "info_badge_navigation_composition_keeps_original_badge_and_opacity_handler"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "info_badge_navigation_modes_preserve_the_same_notification_and_selection"
         }
       ],
-      "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial.",
+      "notes": "All four original examples have native compositions: NavigationViewItem.InfoBadge retains Home/Account/Inbox, count 5, automation name, opacity and pane-mode handlers; severity ControlThemes retain source keys; the Refresh-button composition retains its glyph; NumberBox changes retain the integer-conversion guard. ToggleSwitch and page-property bindings are explicit existing-control/Rust adaptations. Style-to-Theme migration is audited; exact visuals, installed fonts, general XAML behavior and OS accessibility acceptance remain partial.",
       "examples": [
+        {
+          "source": "WinUIGallery/Samples/InfoBadge/InfobadgeEmbeddedNavigationview.txt",
+          "source_sha256": "5021a95ede25b30952ea55143661f7a6fc5312e4e4f611457e0937d41c44916c",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "info_badge_navigation_composition_keeps_original_badge_and_opacity_handler"
+            },
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "info_badge_navigation_modes_preserve_the_same_notification_and_selection"
+            }
+          ],
+          "notes": "Original Home/Account/Inbox composition, Inbox notification count 5 and automation name, live NavigationViewItem.InfoBadge, opacity toggle and exact LeftExpanded/LeftCompact/Top mode/open-state handlers. ToggleSwitch.IsOn/Header and the page opacity property are explicit existing-control/Rust adaptations; the source Frame is empty and no navigation handler is invented. Exact visuals/font/host accessibility remain pending."
+        },
         {
           "source": "WinUIGallery/Samples/InfoBadge/DifferentInfobadgeStyles.txt",
           "source_sha256": "933f4cb788aa224b18c091d9b251e2de98d89f92b3e4296b3dd737f4e149fa98",
@@ -1793,7 +1819,7 @@
               "name": "info_badge_page_switches_actual_source_themes_and_keeps_original_icon"
             }
           ],
-          "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial."
+          "notes": "Original dot/value/icon severity controls retain source resource keys through audited native ControlThemes. Selector changes update actual badge themes and live content. Arbitrary WinUI Style/VisualStateManager, exact glyphs/resources/pixels and OS accessibility remain partial."
         },
         {
           "source": "WinUIGallery/Samples/InfoBadge/PlacingInfobadgeInsideAnother.txt",
@@ -1809,7 +1835,7 @@
               "name": "info_badge_page_switches_actual_source_themes_and_keeps_original_icon"
             }
           ],
-          "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial."
+          "notes": "Original Refresh-button composition retains its FontIcon source glyph and native InfoBadge child. Runtime tests verify the actual native icon and composition; installed fonts, precise resources/pixels and OS accessibility remain partial."
         },
         {
           "source": "WinUIGallery/Samples/InfoBadge/InfobadgeDynamicValue.txt",
@@ -1825,7 +1851,7 @@
               "name": "info_badge_page_preserves_source_integer_guard_for_dynamic_values"
             }
           ],
-          "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial."
+          "notes": "Original NumberBox handler preserves the source integer-conversion guard and updates the native InfoBadge value. Native input/layout is exercised; precise resources/pixels, localization and OS accessibility remain partial."
         }
       ]
     },
@@ -1869,6 +1895,172 @@
             }
           ],
           "notes": "The original standard/compact navigation uses distinct native Page types and Frame factories. All four text/password fields and nullable date values copy between forms. The existing native compact dictionary stays local to the compact page. PasswordBox and Header are explicit native TextBox/composition adaptations; Date maps to SelectedDate. Complete original control contracts and visual/input acceptance remain pending."
+        }
+      ]
+    },
+    "NavigationView": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/NavigationView.xaml",
+        "samples/WinUIGallery/navigation_view_samples.rs",
+        "samples/WinUIGallery/Pages/NavigationSample1.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample2.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample3.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample4.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample5.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample6.xaml",
+        "samples/WinUIGallery/Pages/NavigationSettings.xaml",
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_page_initializes_all_eight_source_compositions"
+        },
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_source_selection_loads_distinct_pages_and_settings"
+        },
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_top_and_tabs_preserve_actual_source_targets_and_history"
+        },
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_category_template_preserves_models_headers_and_separator"
+        },
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_footer_uses_the_same_selection_and_original_destinations"
+        },
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_hierarchy_navigates_children_and_keeps_action_parent_unselected"
+        },
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_api_options_update_native_state_and_header_bindings"
+        },
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_api_search_custom_content_and_footer_options_keep_source_behavior"
+        },
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_adaptive_example_changes_mode_at_its_native_threshold"
+        },
+        {
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+          "name": "navigation_view_page_releases_controls_frames_and_category_models"
+        }
+      ],
+      "notes": "All eight original compositions now use native NavigationView and the exact source menu data, Frame destinations and option handlers. Category template selection and adaptive triggers are explicitly implemented in Rust; missing general XAML semantics, exact resource/animation/overflow behavior and full platform/visual acceptance remain partial. Actual running source quirks are preserved and separately noted in example entries.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/NavigationView/NavigationviewDefaultPanedisplaymode.txt",
+          "source_sha256": "afcb36b20fbfb8d8688a30cda801d5d78046cf8823f35ea9699d3c5f7f634d78",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_page_initializes_all_eight_source_compositions"
+            },
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_source_selection_loads_distinct_pages_and_settings"
+            }
+          ],
+          "notes": "Original Auto pane, four exact labels/Symbol icons/tags, initial first selection, distinct native Frame/Page factories, source header updates and Settings navigation. Native visuals/input are exercised by focused tests; acrylic, exact resource templates, transitions and host accessibility remain partial."
+        },
+        {
+          "source": "WinUIGallery/Samples/NavigationView/NavigationviewPanedisplaymodeTop.txt",
+          "source_sha256": "c836d73dc3d0ca87c6b8666e91b6debdd34b34bb8dfd2336c54236fc4b6c83fd",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_top_and_tabs_preserve_actual_source_targets_and_history"
+            }
+          ],
+          "notes": "Original Top composition and selections, including fourth Menu Item4 targeting SamplePage3 exactly as the running source page. Header stays This is Header Text. Top overflow, exact resource templates, transition animations and host accessibility remain pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/NavigationView/NavigationviewSwitchesPaneOrientation.txt",
+          "source_sha256": "45eedf703117b32bc24cbc913cb89d58a8df32e22de3d5be1012e12dc4fa06a2",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_adaptive_example_changes_mode_at_its_native_threshold"
+            }
+          ],
+          "notes": "Original four items, initial selection and Frame handlers. Rust observes actual TopLevel.ClientSize width against CompactModeThresholdWidth; without a host it uses sample bounds. Native property/layout observation explicitly adapts the VisualStateManager/AdaptiveTrigger expression; layout changes do not navigate again. General XAML state triggers remain pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/NavigationView/NavigationViewTyingSelectionFocusTabs.txt",
+          "source_sha256": "683869339df5d617e074b21195c9338196f42f54ae6b640993ba63235da29ba0",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_top_and_tabs_preserve_actual_source_targets_and_history"
+            }
+          ],
+          "notes": "Original Top composition, SelectionFollowsFocus=Enabled and collapsed back button. The running source handler uses Frame.Navigate and records history; preserved here. Its exported instructional snippet instead shows NavigateToType/IsNavigationStackEnabled=false and lacks a usable event hookup; that discrepancy is explicit, and snippet behavior is not claimed. Transition effects and full keyboard/host acceptance remain pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/NavigationView/NavigationViewDataBinding.txt",
+          "source_sha256": "6af6e2d2144324722a1b1d92e0b1a4d35344887d96b545652f49cc05fa719624",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_category_template_preserves_models_headers_and_separator"
+            }
+          ],
+          "notes": "Observable native collection retains original Category 1/Home, Category 2/Keyboard, Separator, More categories header, Category 3/Library and Category 4/Mail with exact tooltips. MenuItemsSource and native FuncDataTemplate dispatch retain model identity and selected-item behavior; all categories navigate SamplePage1 as in source. Custom DataTemplateSelector plus category x:Bind expressions are explicit Rust adaptations, not complete XAML/template-selector parity."
+        },
+        {
+          "source": "WinUIGallery/Samples/NavigationView/NavigationviewFooterMenuItems.txt",
+          "source_sha256": "7b6224386279a85ce8a69fe6e02e68a38b54de899c35ec84cc58feb3c818a48e",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_footer_uses_the_same_selection_and_original_destinations"
+            }
+          ],
+          "notes": "Original Browse/Track an Order/Order History menu and Account/Your Cart/Help footer labels/icons/tags, shared selection and Frame destinations. Exact Left/Top checked handlers set pane openness. Top footer alignment/overflow, transition effects and visual/host acceptance remain partial."
+        },
+        {
+          "source": "WinUIGallery/Samples/NavigationView/HierarchicalNavigationview.txt",
+          "source_sha256": "c04ca9372e8009e73e77527a4698e112f5309960d1459b8467006d8082929cb8",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_hierarchy_navigates_children_and_keeps_action_parent_unselected"
+            }
+          ],
+          "notes": "Original Home/Account(Mail,Calendar)/Document options(Create new,Upload file) hierarchy, exact icons/tags/tooltips, selects-on-invoked suppression and distinct destination pages. Source Left/Top/LeftCompact handlers preserve pane openness. General nested popup interaction, transitions and host accessibility remain partial."
+        },
+        {
+          "source": "WinUIGallery/Samples/NavigationView/NavigationViewApiAction.txt",
+          "source_sha256": "4b529f1cb29c24e82e917a2e632b3879bb26d0e7c80a4081439dc11c22d1dce9",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_api_options_update_native_state_and_header_bindings"
+            },
+            {
+              "path": "samples/WinUIGallery/navigation_view_samples_tests.rs",
+              "name": "navigation_view_api_search_custom_content_and_footer_options_keep_source_behavior"
+            }
+          ],
+          "notes": "Original settings/back/header/search/custom-content/footer/focus/selection-suppression options and Header/PaneTitle two-way bindings. Search check creates a new Find AutoSuggestBox with source automation name; source includes no search-query or back-navigation handler, so none is invented. Pane mode changes rotate footer and preserve source openness. Original image/font/platform/visual acceptance remains partial."
         }
       ]
     }

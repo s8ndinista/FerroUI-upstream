@@ -5,15 +5,58 @@ use ferroui_base::controls::ResourceKey;
 use ferroui_base::media::{Brushes, IBrush, SolidColorBrush};
 use ferroui_base::styling::ControlTheme;
 use ferroui_base::{ObjectType, Ref};
-use ferroui_controls::primitives::SelectingItemsControl;
-use ferroui_controls::winui::{InfoBadge, NumberBox, ProgressRing, RatingControl};
-use ferroui_controls::{ComboBox, Control, TextBlock};
+use ferroui_controls::primitives::{SelectingItemsControl, ToggleButton};
+use ferroui_controls::winui::{
+    InfoBadge, NavigationView, NavigationViewPaneDisplayMode, NumberBox, ProgressRing,
+    RatingControl,
+};
+use ferroui_controls::{ComboBox, Control, TextBlock, ToggleSwitch};
 use std::rc::Rc;
 
 pub(crate) fn wire(root: &Ref<Control>) {
     wire_progress_rings(root);
     wire_ratings(root);
     wire_badges(root);
+    wire_navigation_badge(root);
+}
+
+fn wire_navigation_badge(root: &Ref<Control>) {
+    let Some(nav) = find::<NavigationView>(root, "nvSample1") else {
+        return;
+    };
+    let badge = root.get_control::<InfoBadge>("infoBadge1");
+    // In the source, IsOn=True raises Toggled while loading and changes the
+    // view model's initial zero opacity to one. Wiring follows native loading.
+    badge.set_opacity(1.0);
+    let toggle = root.get_control::<ToggleSwitch>("ToggleInfoBadgeOpacity");
+    let weak_badge = badge.downgrade();
+    toggle.property_changed(move |change| {
+        if change.property() != ToggleButton::is_checked_property().as_property() {
+            return;
+        }
+        if let Some(badge) = weak_badge.upgrade() {
+            badge.set_opacity(if badge.opacity() == 0.0 { 1.0 } else { 0.0 });
+        }
+    });
+    let modes = root.get_control::<ComboBox>("NavigationViewDisplayMode");
+    let weak_modes = modes.downgrade();
+    let weak_nav = nav.downgrade();
+    modes.property_changed(move |change| {
+        if change.property() != SelectingItemsControl::selected_index_property().as_property() {
+            return;
+        }
+        let (Some(modes), Some(nav)) = (weak_modes.upgrade(), weak_nav.upgrade()) else {
+            return;
+        };
+        let (mode, open) = match modes.selected_index() {
+            0 => (NavigationViewPaneDisplayMode::Left, true),
+            1 => (NavigationViewPaneDisplayMode::LeftCompact, false),
+            2 => (NavigationViewPaneDisplayMode::Top, true),
+            _ => return,
+        };
+        nav.set_pane_display_mode(mode);
+        nav.set_is_pane_open(open);
+    });
 }
 
 fn find<T: ObjectType>(root: &Ref<Control>, name: &str) -> Option<Ref<T>> {
