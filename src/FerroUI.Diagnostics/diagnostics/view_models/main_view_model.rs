@@ -148,6 +148,9 @@ pub struct MainViewModel {
     pointer_over_element: RefCell<Option<Ref<InputElement>>>,
     should_visualize_margin_padding: Cell<bool>,
     freeze_popups: Cell<bool>,
+    /// Addition of the port: whether the left pane of the pages (the tree, the routed events) is
+    /// shown.
+    is_tree_pane_open: Cell<bool>,
     pointer_over_element_name: RefCell<Option<String>>,
     pointer_over_root: RefCell<Option<Rc<dyn IInputRoot>>>,
     screenshot_handler: RefCell<Option<Rc<dyn IScreenshotHandler>>>,
@@ -215,6 +218,7 @@ impl MainViewModel {
             pointer_over_element: RefCell::new(None),
             should_visualize_margin_padding: Cell::new(true),
             freeze_popups: Cell::new(false),
+            is_tree_pane_open: Cell::new(true),
             pointer_over_element_name: RefCell::new(None),
             pointer_over_root: RefCell::new(None),
             screenshot_handler: RefCell::new(None),
@@ -338,6 +342,22 @@ impl MainViewModel {
 
     pub fn set_freeze_popups(&self, value: bool) {
         self.base.raise_and_set_if_changed_cell(&self.freeze_popups, value, "FreezePopups");
+    }
+
+    /// Addition of the port: whether the left pane of the pages (the tree of a tree page, the
+    /// routed events of the events page) is shown; the button at the left of the header of the
+    /// tools toggles it.
+    pub fn is_tree_pane_open(&self) -> bool {
+        self.is_tree_pane_open.get()
+    }
+
+    pub fn set_is_tree_pane_open(&self, value: bool) {
+        self.base.raise_and_set_if_changed_cell(&self.is_tree_pane_open, value, "IsTreePaneOpen");
+    }
+
+    /// Shows or hides the left pane of the pages.
+    pub fn toggle_tree_pane(&self) {
+        self.set_is_tree_pane_open(!self.is_tree_pane_open());
     }
 
     pub fn should_visualize_margin_padding(&self) -> bool {
@@ -784,6 +804,7 @@ ferro_markup_type!(class MainViewModel {
     base: ViewModelBase,
     properties: [
         FreezePopups: bool { get: MainViewModel::freeze_popups, set: MainViewModel::set_freeze_popups },
+        IsTreePaneOpen: bool { get: MainViewModel::is_tree_pane_open, set: MainViewModel::set_is_tree_pane_open },
         ShouldVisualizeMarginPadding: bool {
             get: MainViewModel::should_visualize_margin_padding,
             set: MainViewModel::set_should_visualize_margin_padding
@@ -818,6 +839,7 @@ ferro_markup_type!(class MainViewModel {
         fn ToggleLayoutTimeGraphOverlay() => MainViewModel::toggle_layout_time_graph_overlay,
         fn ToggleRenderTimeGraphOverlay() => MainViewModel::toggle_render_time_graph_overlay,
         fn ShowHotKeys() => MainViewModel::show_hot_keys,
+        fn ToggleTreePane() => MainViewModel::toggle_tree_pane,
         fn SelectControl(Ref<Control>) =>
             (|this: &Rc<MainViewModel>, control: Ref<Control>| this.select_control(&control)),
         fn EnableSnapshotStyles(bool) => MainViewModel::enable_snapshot_styles,

@@ -24,6 +24,32 @@
     <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
   </Style>
 
+  <!-- The header in the title bar, as high as the command bar in it (48) and as the title bar the
+       window asks for: room for the caption buttons of the system, at the left on macOS and at
+       the right on Windows, when the window extends into its decorations. -->
+  <Style Selector="Border.title-bar">
+    <Setter Property="Height" Value="48" />
+    <Setter Property="Padding" Value="8,0" />
+  </Style>
+  <Style Selector="Window.macos[IsExtendedIntoWindowDecorations=True] Border.title-bar">
+    <Setter Property="Padding" Value="78,0,8,0" />
+  </Style>
+  <Style Selector="Window.windows[IsExtendedIntoWindowDecorations=True] Border.title-bar">
+    <Setter Property="Padding" Value="8,0,140,0" />
+  </Style>
+  <Style Selector="Button.title-bar-button">
+    <Setter Property="Width" Value="36" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Button.title-bar-button PathIcon">
+    <Setter Property="Width" Value="16" />
+    <Setter Property="Height" Value="16" />
+  </Style>
+
   <!-- The status bar at the bottom of the window. -->
   <Style Selector="Border.status-bar">
     <Setter Property="Background" Value="{DynamicResource LayerFillColorDefaultBrush}" />

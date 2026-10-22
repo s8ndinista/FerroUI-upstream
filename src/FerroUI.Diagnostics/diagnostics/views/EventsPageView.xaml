@@ -3,6 +3,9 @@
              xmlns:vm="using:FerroUI.Diagnostics.ViewModels"
              xmlns:controls="using:FerroUI.Diagnostics.Controls"
              xmlns:models="using:FerroUI.Diagnostics.Models"
+             xmlns:local="using:FerroUI.Diagnostics.Views"
+             xmlns:vmm="using:FerroUI.Diagnostics.ViewModels"
+             xmlns:lb="using:FerroUI.Diagnostics.Behaviors"
              x:Class="FerroUI.Diagnostics.Views.EventsPageView"
              Margin="2"
              x:DataType="vm:EventsPageViewModel">
@@ -63,7 +66,12 @@
 
   <!-- Deviation (DEVIATIONS.md, Developer tools): the margins, dividers and headers of the
        design of the tools (DevToolsStyles.xaml). -->
-  <Grid ColumnDefinitions="1.1*,1,3*">
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="1.1*" lb:ColumnDefinition.IsVisible="{Binding $parent[local:MainView].((vmm:MainViewModel)DataContext).IsTreePaneOpen}" />
+      <ColumnDefinition Width="1" lb:ColumnDefinition.IsVisible="{Binding $parent[local:MainView].((vmm:MainViewModel)DataContext).IsTreePaneOpen}" />
+      <ColumnDefinition Width="3*" />
+    </Grid.ColumnDefinitions>
 
     <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto">
 

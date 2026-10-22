@@ -5,6 +5,8 @@
         xmlns:viewModels="using:FerroUI.Diagnostics.ViewModels"
         Title="FerroUI DevTools"
         Background="{DynamicResource ApplicationPageBackgroundThemeBrush}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="48"
         x:Class="FerroUI.Diagnostics.Views.MainWindow"
         x:DataType="viewModels:MainViewModel">
   <Window.DataTemplates>

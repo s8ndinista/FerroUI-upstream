@@ -55,6 +55,7 @@ One crate joins, `ferroui-diagnostics`. The additions since the preview are list
   - the property grid is the TreeDataGrid of the port, grouped and sortable, in place of upstream's DataGrid;
   - the window has the WinUI 3 theme in its compact density, in place of upstream's Simple theme, with compact rows; the logical and visual trees and the tree of the routed events are TreeDataGrids too, in place of tree views: their rows are virtualized, and selecting a node (Ctrl+Shift over a control, a link of an event chain) expands its ancestors and scrolls to its row even when it was not shown;
   - a combined tree, the first tab and the default view: the logical tree with the parts of the template of each element, greyed out;
+  - a header in the title bar with a button that collapses the tree pane and a command bar in place of the menus, and the pages in the tab view of WinUI 3;
   - one design for every view (`DevToolsStyles.xaml`): consistent spacing, section headers, thin dividers, a status bar, and a property grid whose editors share one compact form, with read-only values shown as text and brushes as outlined swatches;
   - `MainViewModel::register_page` adds pages of other crates to the tools;
   - the ControlCatalog attaches them in debug builds, and `FERROUI_SMOKE_DEVTOOLS=<directory>` runs them without a person and writes pictures of their window;
@@ -62,7 +63,8 @@ One crate joins, `ferroui-diagnostics`. The additions since the preview are list
 
 ### Changed
 
-- **WinUI 3 theme**: the controls whose WinUI style leaves the content alignments unset centre their content, as WinUI's defaults do (the placeholder of a combo box, the content of stretched buttons, the fields of the date and time pickers); a single-line text box centres its line, which with the fonts of macOS and Linux sat above the middle (`docs/porting/winui-theme/DEVIATIONS.md`, G-27 and G-28).
+- **WinUI 3 theme**: the controls whose WinUI style leaves the content alignments unset centre their content, as WinUI's defaults do (the placeholder of a combo box, the content of stretched buttons, the fields of the date and time pickers); a single-line text box centres its line, and a command bar button with its label on the right centres the icon and the label, which with the fonts of macOS and Linux sat above the middle (`docs/porting/winui-theme/DEVIATIONS.md`, G-27 to G-29).
+- **macOS**: a window that extends into a title bar taller than the system's (`ExtendClientAreaTitleBarHeightHint`) centres the close, minimise and zoom buttons in it vertically.
 - **`#[component(rerender)]` memoizes by default** a component whose parameters are `PartialEq + Clone`; `#[component(rerender, always)]` runs it with its parent every time, and `memo` makes comparable parameters required.
 - **Markup compiler**: a setter of a style class in a style (`<Setter Property="Classes.name" .../>`) compiles to Rust; it was refused (`FRN3000`).
 - **Markup**: `Binding` returns itself from `BindingBase::as_any`, as the other bindings do; `Window.Close()` can be called from markup.

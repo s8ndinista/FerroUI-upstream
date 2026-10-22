@@ -1,6 +1,9 @@
 <UserControl xmlns="https://github.com/ferroui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:FerroUI.Diagnostics.ViewModels"
+             xmlns:vmm="using:FerroUI.Diagnostics.ViewModels"
+             xmlns:local="using:FerroUI.Diagnostics.Views"
+             xmlns:lb="using:FerroUI.Diagnostics.Behaviors"
              x:Class="FerroUI.Diagnostics.Views.TreePageView"
              x:DataType="vm:TreePageViewModel">
   <!--
@@ -42,7 +45,14 @@
     </Style>
   </UserControl.Styles>
 
-  <Grid ColumnDefinitions="0.35*,1,0.65*">
+  <!-- Deviation (DEVIATIONS.md, Developer tools): the tree is a pane the header of the tools
+       collapses (IsTreePaneOpen of the main view model), an addition of the port. -->
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="0.35*" lb:ColumnDefinition.IsVisible="{Binding $parent[local:MainView].((vmm:MainViewModel)DataContext).IsTreePaneOpen}" />
+      <ColumnDefinition Width="1" lb:ColumnDefinition.IsVisible="{Binding $parent[local:MainView].((vmm:MainViewModel)DataContext).IsTreePaneOpen}" />
+      <ColumnDefinition Width="0.65*" />
+    </Grid.ColumnDefinitions>
     <TreeDataGrid Name="tree"
                   BorderThickness="0"
                   ShowColumnHeaders="False"

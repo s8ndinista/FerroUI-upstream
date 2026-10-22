@@ -25,97 +25,41 @@
     </Style>
   </UserControl.Styles>
   <Grid Name="rootGrid" RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
-    <Menu>
-      <MenuItem Header="_File">
-        <MenuItem Header="E_xit" Command="{Binding $parent[Window].Close}" />
-        <MenuItem Header="Screenshot" Command="{Binding Shot}" HotKey="F8">
-          <MenuItem.Icon>
-            <Image>
-              <DrawingImage>
-                <DrawingGroup>
-                  <GeometryDrawing Geometry="F1 M 13.4533,17.56C 13.4533,19.8827 15.344,21.772 17.6653,21.772L 17.6653,21.772C 19.988,21.772 21.8773,19.8827 21.8773,17.56L 21.8773,17.56C 21.8773,15.2373 19.988,13.348 17.6653,13.348L 17.6653,13.348C 15.344,13.348 13.4533,15.2373 13.4533,17.56 Z ">
-                    <GeometryDrawing.Brush>
-                      <RadialGradientBrush Center="0.245696,0.288009" GradientOrigin="0.245696,0.288009" RadiusX="50%" RadiusY="50%">
-                        <RadialGradientBrush.GradientStops>
-                          <GradientStop Color="#FF878A8C" Offset="0" />
-                          <GradientStop Color="#FF544A4C" Offset="0.991379" />
-                        </RadialGradientBrush.GradientStops>
-                      </RadialGradientBrush>
-                    </GeometryDrawing.Brush>
-                  </GeometryDrawing>
-                  <GeometryDrawing Geometry="F1 M 13.332,6.22803L 10.2227,9.72668L 8.49866,9.72668L 8.49866,7.56136L 5.33333,7.56136L 5.33333,9.72668L 3.33333,9.72668L 3.33333,24.3947L 13.1213,24.3947C 14.424,25.264 15.9853,25.772 17.6653,25.772L 17.6653,25.772C 19.344,25.772 20.9067,25.264 22.2094,24.3947L 28.6667,24.3947L 28.6667,9.72668L 24.944,9.72668L 21.8333,6.22803M 12.12,17.56C 12.12,14.5013 14.608,12.0147 17.6653,12.0147L 17.6653,12.0147C 20.7227,12.0147 23.2107,14.5013 23.2107,17.56L 23.2107,17.56C 23.2107,20.6174 20.7227,23.104 17.6653,23.104L 17.6653,23.104C 14.608,23.104 12.12,20.6174 12.12,17.56 Z ">
-                    <GeometryDrawing.Brush>
-                      <RadialGradientBrush Center="0.196943,0.216757" GradientOrigin="0.196943,0.216757" RadiusX="50%" RadiusY="50%">
-                        <RadialGradientBrush.GradientStops>
-                          <GradientStop Color="#FF87898C" Offset="0" />
-                          <GradientStop Color="#FF544A4C" Offset="1" />
-                        </RadialGradientBrush.GradientStops>
-                      </RadialGradientBrush>
-                    </GeometryDrawing.Brush>
-                  </GeometryDrawing>
-                </DrawingGroup>
-              </DrawingImage>
-            </Image>
-          </MenuItem.Icon>
-        </MenuItem>
-      </MenuItem>
-      <MenuItem Header="_View">
-        <MenuItem Header="Control _Details">
-          <MenuItem Header="Show Implemented Interfaces" Command="{Binding ToggleShowImplementedInterfaces}">
-            <MenuItem.Icon>
-              <CheckBox BorderThickness="0"
-                        IsChecked="{Binding ShowImplementedInterfaces}"
-                        IsEnabled="False" />
-            </MenuItem.Icon>
-          </MenuItem>
-          <MenuItem Header="Split Property Type" Command="{Binding ToggleShowDetailsPropertyType}">
-            <MenuItem.Icon>
-              <CheckBox BorderThickness="0"
-                        IsChecked="{Binding ShowDetailsPropertyType}"
-                        IsEnabled="False"/>
-            </MenuItem.Icon>
-          </MenuItem>
-        </MenuItem>
-        <MenuItem Header="_HotKeys" Command="{Binding ShowHotKeys}" />
-      </MenuItem>
-      <MenuItem Header="_Overlays">
-        <MenuItem Header="Margin/padding" Command="{Binding ToggleVisualizeMarginPadding}">
-          <MenuItem.Icon>
-            <CheckBox BorderThickness="0"
-                      IsChecked="{Binding ShouldVisualizeMarginPadding}"
-                      IsEnabled="False" />
-          </MenuItem.Icon>
-        </MenuItem>
-        <MenuItem Header="Dirty rects" Command="{Binding ToggleDirtyRectsOverlay}">
-          <MenuItem.Icon>
-            <CheckBox BorderThickness="0"
-                      IsChecked="{Binding ShowDirtyRectsOverlay}"
-                      IsEnabled="False" />
-          </MenuItem.Icon>
-        </MenuItem>
-        <MenuItem Header="FPS" Command="{Binding ToggleFpsOverlay}">
-          <MenuItem.Icon>
-            <CheckBox BorderThickness="0"
-                      IsChecked="{Binding ShowFpsOverlay}"
-                      IsEnabled="False" />
-          </MenuItem.Icon>
-        </MenuItem>
-        <MenuItem Header="Layout time graph" Command="{Binding ToggleLayoutTimeGraphOverlay}">
-          <MenuItem.Icon>
-            <CheckBox BorderThickness="0"
-                      IsChecked="{Binding ShowLayoutTimeGraphOverlay}"
-                      IsEnabled="False" />
-          </MenuItem.Icon>
-        </MenuItem>
-        <MenuItem Header="Render time graph" Command="{Binding ToggleRenderTimeGraphOverlay}">
-          <MenuItem.Icon>
-            <CheckBox BorderThickness="0"
-                      IsChecked="{Binding ShowRenderTimeGraphOverlay}"
-                      IsEnabled="False" />
-          </MenuItem.Icon>
-        </MenuItem>
-        <MenuItem Header="Focus Highlighter" Grid.IsSharedSizeScope="True">
-          <MenuItem.Items>
+    <!-- Deviation (DEVIATIONS.md, Developer tools): a header in the title bar of the window (its
+         client area extends into the decorations, MainWindow.xaml) in place of upstream's menu
+         bar: the button of the left pane, the title, and a command bar with the commands of the
+         menus (the ones used most as buttons, the others in its overflow). -->
+    <Border Grid.Row="0" Classes="title-bar">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+        <Button Grid.Column="0" Classes="title-bar-button"
+                Theme="{StaticResource SubtleButtonStyle}"
+                Command="{Binding ToggleTreePane}"
+                ToolTip.Tip="Show or hide the tree">
+          <PathIcon Data="M3,6H21V8H3V6M3,11H21V13H3V11M3,16H21V18H3V16Z" />
+        </Button>
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10" Margin="8,0,0,0" VerticalAlignment="Center"
+                    IsHitTestVisible="False">
+          <Border Width="20" Height="20" CornerRadius="5" Background="{DynamicResource AccentFillColorDefaultBrush}">
+            <TextBlock Text="&lt;/&gt;" FontSize="10" FontWeight="Bold" HorizontalAlignment="Center" VerticalAlignment="Center"
+                       Foreground="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+          </Border>
+          <TextBlock Classes="section-header" Text="DevTools" />
+        </StackPanel>
+        <CommandBar Grid.Column="3" DefaultLabelPosition="Right" VerticalAlignment="Center" Background="Transparent">
+          <CommandBar.PrimaryCommands>
+            <CommandBarButton Label="Screenshot" Command="{Binding Shot}" ToolTip.Tip="Screenshot of the selected control (F8)">
+              <CommandBarButton.Icon><PathIcon Data="M4,7H7.5L9.5,5H14.5L16.5,7H20A1,1 0 0,1 21,8V18A1,1 0 0,1 20,19H4A1,1 0 0,1 3,18V8A1,1 0 0,1 4,7M12,9.5A3.5,3.5 0 1,0 12,16.5A3.5,3.5 0 1,0 12,9.5M12,11A2,2 0 1,1 12,15A2,2 0 1,1 12,11Z" /></CommandBarButton.Icon>
+            </CommandBarButton>
+            <CommandBarToggleButton Label="Freeze popups" IsChecked="{Binding FreezePopups}" ToolTip.Tip="Keep popups open (Ctrl+Alt+F)">
+              <CommandBarToggleButton.Icon><PathIcon Data="M7,5H10V19H7V5M14,5H17V19H14V5Z" /></CommandBarToggleButton.Icon>
+            </CommandBarToggleButton>
+            <CommandBarToggleButton Label="Margins" IsChecked="{Binding ShouldVisualizeMarginPadding}" ToolTip.Tip="Show the margin and padding of the selected control">
+              <CommandBarToggleButton.Icon><PathIcon Data="M3,3H21V21H3V3M5,5V19H19V5H5M8,8H16V16H8V8Z" /></CommandBarToggleButton.Icon>
+            </CommandBarToggleButton>
+            <CommandBarButton Label="Focus highlight" ToolTip.Tip="The brush that highlights the focused control">
+              <CommandBarButton.Icon><PathIcon Data="M12,2A10,10 0 1,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 1,0 20,12A8,8 0 0,0 12,4M12,7A5,5 0 1,1 7,12A5,5 0 0,1 12,7M12,9A3,3 0 1,0 15,12A3,3 0 0,0 12,9Z" /></CommandBarButton.Icon>
+              <CommandBarButton.Flyout>
+                <MenuFlyout Placement="BottomEdgeAlignedRight">
             <!-- None -->
             <MenuItem Command="{Binding SelectFocusHighlighter}"
                       CommandParameter="{x:Null}">
@@ -251,10 +195,25 @@
                 </Border>
               </MenuItem.Icon>
             </MenuItem>
-          </MenuItem.Items>
-        </MenuItem>
-      </MenuItem>
-    </Menu>
+          </MenuFlyout>
+              </CommandBarButton.Flyout>
+            </CommandBarButton>
+          </CommandBar.PrimaryCommands>
+          <CommandBar.SecondaryCommands>
+            <CommandBarToggleButton Label="Dirty rects" IsChecked="{Binding ShowDirtyRectsOverlay}" />
+            <CommandBarToggleButton Label="FPS" IsChecked="{Binding ShowFpsOverlay}" />
+            <CommandBarToggleButton Label="Layout time graph" IsChecked="{Binding ShowLayoutTimeGraphOverlay}" />
+            <CommandBarToggleButton Label="Render time graph" IsChecked="{Binding ShowRenderTimeGraphOverlay}" />
+            <CommandBarSeparator />
+            <CommandBarToggleButton Label="Show implemented interfaces" Command="{Binding ToggleShowImplementedInterfaces}" IsChecked="{Binding ShowImplementedInterfaces, Mode=OneWay}" />
+            <CommandBarToggleButton Label="Split property type" Command="{Binding ToggleShowDetailsPropertyType}" IsChecked="{Binding ShowDetailsPropertyType, Mode=OneWay}" />
+            <CommandBarSeparator />
+            <CommandBarButton Label="Hot keys" Command="{Binding ShowHotKeys}" />
+            <CommandBarButton Label="Close" Command="{Binding $parent[Window].Close}" />
+          </CommandBar.SecondaryCommands>
+        </CommandBar>
+      </Grid>
+    </Border>
     
 
     <!-- Upstream has a banner here (Grid.Row="1") that advertises its commercial developer tools;
@@ -262,21 +221,20 @@
 
 
     <!-- The tabs of the extension pages are added after these by the code of the view.
-         Deviation (DEVIATIONS.md, Developer tools): an addition of the port. -->
-    <TabStrip Name="tabStrip" Grid.Row="2" Margin="8,0" SelectedIndex="{Binding SelectedTab, Mode=TwoWay}">
+         Deviation (DEVIATIONS.md, Developer tools): an addition of the port.
+         Deviation (DEVIATIONS.md, Developer tools): a tab control, which the WinUI 3 theme shows as
+         a TabView, in place of upstream's tab strip over a content control. Every tab shows the
+         content of the view model (Content), which follows the selected tab (SelectedTab). -->
+    <TabControl Name="tabControl" Grid.Row="2" Grid.RowSpan="2"
+                SelectedIndex="{Binding SelectedTab, Mode=TwoWay}">
       <!-- Deviation (DEVIATIONS.md, Developer tools): the combined tree, an addition of the port,
            is the first tab and the default one. -->
-      <TabStripItem Content="Combined Tree" />
-      <TabStripItem Content="Logical Tree" />
-      <TabStripItem Content="Visual Tree" />
-      <TabStripItem Content="Events" />
-      <TabStripItem Content="HotKeys" IsVisible="False" />
-    </TabStrip>
-
-    <ContentControl Grid.Row="3"
-                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-                    BorderThickness="0,1,0,0"
-                    Content="{Binding Content}" />
+      <TabItem Header="Combined Tree" Content="{Binding Content}" />
+      <TabItem Header="Logical Tree" Content="{Binding Content}" />
+      <TabItem Header="Visual Tree" Content="{Binding Content}" />
+      <TabItem Header="Events" Content="{Binding Content}" />
+      <TabItem Header="HotKeys" Content="{Binding Content}" IsVisible="False" />
+    </TabControl>
 
     <GridSplitter Name="consoleSplitter" Grid.Row="4" Height="1"
                   Background="{DynamicResource CardStrokeColorDefaultBrush}"
