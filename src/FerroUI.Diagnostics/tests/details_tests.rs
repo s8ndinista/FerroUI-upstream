@@ -21,6 +21,9 @@ use std::collections::HashSet;
 use std::rc::{Rc, Weak};
 
 fn scope() -> UnitTestDispatcherScope {
+    // The names the tools give properties and types read the markup metadata of the process: it is
+    // registered before the test, not part way through it by a test of another thread.
+    crate::register_types();
     Dispatcher::unit_test_scope()
 }
 
