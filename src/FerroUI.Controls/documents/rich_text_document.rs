@@ -1231,33 +1231,42 @@ impl ContentPool {
             }
             _ => {}
         }
-        // Semantic containers carry constructor formatting, even when their
-        // snapshot leaves the corresponding property unspecified. Clearing a
-        // constructor's current value would let the parent's inherited value
-        // hide the container's type default after it joins the logical tree.
-        let mut format = snapshot.format.clone();
+        // Restore assigned properties exactly, then reinstate unspecified
+        // semantic defaults at their constructor's current-value priority.
+        // Materializing them as local values would change the next snapshot
+        // and prevent a subsequent application style from overriding them.
+        let format = &snapshot.format;
+        format.replace_on(&inline);
         match &snapshot.kind {
             InlineSnapshotKind::Bold(_) if format.font_weight.is_none() => {
-                format.font_weight = Some(ferroui_base::media::FontWeight::Bold);
+                inline.set_current_value(
+                    TextElement::font_weight_property(),
+                    ferroui_base::media::FontWeight::Bold,
+                );
             }
             InlineSnapshotKind::Italic(_) if format.font_style.is_none() => {
-                format.font_style = Some(ferroui_base::media::FontStyle::Italic);
+                inline.set_current_value(
+                    TextElement::font_style_property(),
+                    ferroui_base::media::FontStyle::Italic,
+                );
             }
             InlineSnapshotKind::Underline(_) if format.text_decorations.is_none() => {
-                format.text_decorations =
-                    Some(Some(ferroui_base::media::TextDecorations::underline()));
+                inline.set_current_value(
+                    Inline::text_decorations_property(),
+                    Some(ferroui_base::media::TextDecorations::underline()),
+                );
             }
             InlineSnapshotKind::Hyperlink {
                 underline_style, ..
             } if format.text_decorations.is_none() => {
-                format.text_decorations = Some(
+                inline.set_current_value(
+                    Inline::text_decorations_property(),
                     (*underline_style != super::UnderlineStyle::None)
                         .then(ferroui_base::media::TextDecorations::underline),
                 );
             }
             _ => {}
         }
-        format.replace_on(&inline);
         if let Some(children) = snapshot.children() {
             if let Some(span) = inline.cast::<Span>() {
                 for child in children {

@@ -81,9 +81,9 @@ ferroui_base::ferro_impl_classes!(Hyperlink: StyledElementImpl, TextElementImpl,
 impl FerroObjectImpl for Hyperlink {
     fn constructed(this: &Self) {
         Self::parent_constructed(this);
-        // As with Underline, this intrinsic format must survive inherited
-        // parent values and already be present when edit history captures it.
-        // A current value still allows application styles and local overrides.
+        // As with Underline, the intrinsic format overrides inherited parent
+        // values without becoming a local assignment in document snapshots.
+        // Application styles and local values can still override it.
         this.set_current_value(
             Inline::text_decorations_property(),
             Some(ferroui_base::media::TextDecorations::underline()),

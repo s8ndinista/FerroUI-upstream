@@ -149,11 +149,8 @@ fn hyperlink_default_formatting_and_explicit_overrides_round_trip() {
     let assigned = CharacterFormat::from_element(&link);
     assert_eq!(
         assigned,
-        CharacterFormat {
-            text_decorations: Some(Some(TextDecorations::underline())),
-            ..Default::default()
-        },
-        "a live hyperlink has the same intrinsic format as a restored hyperlink"
+        CharacterFormat::default(),
+        "the intrinsic current value must not become a local assignment"
     );
     let effective = document.character_format_at(0).unwrap();
     let decorations = effective.text_decorations.unwrap().unwrap();
@@ -192,7 +189,153 @@ fn hyperlink_default_formatting_and_explicit_overrides_round_trip() {
     assert_eq!(document.snapshot(), before);
     assert!(link.text_decorations().is_none());
     link.set_underline_style(UnderlineStyle::Single);
-    assert_eq!(CharacterFormat::from_element(&link), assigned);
+    assert_eq!(
+        CharacterFormat::from_element(&link),
+        CharacterFormat {
+            text_decorations: Some(Some(TextDecorations::underline())),
+            ..Default::default()
+        },
+        "changing UnderlineStyle explicitly updates the assigned decorations"
+    );
+    let before = document.snapshot();
+    document.restore(&before).unwrap();
+    assert_eq!(document.snapshot(), before);
+}
+
+#[test]
+fn semantic_current_defaults_preserve_assignments_and_style_precedence_after_restore() {
+    use ferroui_base::data::BindingPriority;
+    use ferroui_base::media::{TextDecorationLocation, TextDecorations};
+
+    let _scope = test_scope();
+    let document = RichTextDocument::new();
+    let paragraph = Paragraph::new();
+    paragraph.set_font_weight(FontWeight::Normal);
+    paragraph.set_font_style(FontStyle::Normal);
+    paragraph.set_value(Inline::text_decorations_property(), None);
+    let bold = Bold::new();
+    let italic = Italic::new();
+    let underline = Underline::new();
+    let link = Hyperlink::with_text("hh", Some("https://example.test"));
+    bold.add_child_text("bb");
+    italic.add_child_text("ii");
+    underline.add_child_text("uu");
+    paragraph.inlines().add(bold.clone());
+    paragraph.inlines().add(italic.clone());
+    paragraph.inlines().add(underline.clone());
+    paragraph.inlines().add(link.clone());
+    document.blocks().add(paragraph);
+
+    let before = document.snapshot();
+    for inline in &before.paragraphs[0].inlines {
+        assert_eq!(inline.format, CharacterFormat::default());
+    }
+    document.restore(&before).unwrap();
+    assert_eq!(
+        document.snapshot(),
+        before,
+        "reused semantic elements retain assigned state"
+    );
+    let fresh = RichTextDocument::new();
+    fresh.restore(&before).unwrap();
+    assert_eq!(
+        fresh.snapshot(),
+        before,
+        "new semantic elements retain assigned state"
+    );
+    for model in [&document, &fresh] {
+        assert_eq!(
+            model.character_format_at(1).unwrap().font_weight,
+            Some(FontWeight::Bold)
+        );
+        assert_eq!(
+            model.character_format_at(3).unwrap().font_style,
+            Some(FontStyle::Italic)
+        );
+        for offset in [5, 7] {
+            let decorations = model
+                .character_format_at(offset)
+                .unwrap()
+                .text_decorations
+                .unwrap()
+                .unwrap();
+            assert_eq!(decorations.len(), 1);
+            assert_eq!(
+                decorations.get(0).location(),
+                TextDecorationLocation::Underline
+            );
+        }
+    }
+
+    // A restore must not promote constructor defaults above application styles.
+    bold.set_value_with_priority(
+        TextElement::font_weight_property(),
+        FontWeight::Light,
+        BindingPriority::Style,
+    );
+    italic.set_value_with_priority(
+        TextElement::font_style_property(),
+        FontStyle::Oblique,
+        BindingPriority::Style,
+    );
+    underline.set_value_with_priority(
+        Inline::text_decorations_property(),
+        None,
+        BindingPriority::Style,
+    );
+    link.set_value_with_priority(
+        Inline::text_decorations_property(),
+        Some(TextDecorations::overline()),
+        BindingPriority::Style,
+    );
+    assert_eq!(
+        document.character_format_at(1).unwrap().font_weight,
+        Some(FontWeight::Light)
+    );
+    assert_eq!(
+        document.character_format_at(3).unwrap().font_style,
+        Some(FontStyle::Oblique)
+    );
+    assert!(matches!(
+        document.character_format_at(5).unwrap().text_decorations,
+        Some(None)
+    ));
+    let decorations = document
+        .character_format_at(7)
+        .unwrap()
+        .text_decorations
+        .unwrap()
+        .unwrap();
+    assert_eq!(
+        decorations.get(0).location(),
+        TextDecorationLocation::Overline
+    );
+
+    // Explicit values remain exact and take precedence over those styles.
+    bold.set_font_weight(FontWeight::Normal);
+    italic.set_font_style(FontStyle::Normal);
+    underline.set_text_decorations(None);
+    link.set_text_decorations(None);
+    let explicit = document.snapshot();
+    document.restore(&explicit).unwrap();
+    assert_eq!(document.snapshot(), explicit);
+    assert_eq!(
+        document.character_format_at(1).unwrap().font_weight,
+        Some(FontWeight::Normal)
+    );
+    assert_eq!(
+        document.character_format_at(3).unwrap().font_style,
+        Some(FontStyle::Normal)
+    );
+    for offset in [5, 7] {
+        assert!(matches!(
+            document
+                .character_format_at(offset)
+                .unwrap()
+                .text_decorations,
+            Some(None)
+        ));
+    }
 }
 
 #[test]

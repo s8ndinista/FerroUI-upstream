@@ -106,10 +106,12 @@ fn rich_text_case_preserves_nested_links_soft_breaks_paragraph_formats_and_contr
     };
     let model = RichTextDocument::new();
     model.restore(&fragment).unwrap();
-    // Restoring semantic containers supplies their intrinsic formatting. Use
-    // the actual pre-edit model as the preservation baseline, while explicitly
-    // checking that it contains the expected hyperlink and italic defaults.
+    // Semantic defaults are effective presentation, not local assignments.
+    // Restore must preserve the exact fragment while resolving underline and
+    // italic through the live element tree.
     let before = model.snapshot();
+    assert_eq!(before, fragment);
+    let effective = model.character_format_at(1).unwrap();
     let link = &before.paragraphs[0].inlines[0];
     assert!(matches!(
         &link.kind,
@@ -124,8 +126,7 @@ fn rich_text_case_preserves_nested_links_soft_breaks_paragraph_formats_and_contr
             ..
         } if uri == "https://example.test/keep" && target == "target"
     ));
-    assert!(link
-        .format
+    assert!(effective
         .text_decorations
         .as_ref()
         .and_then(Option::as_ref)
@@ -136,7 +137,8 @@ fn rich_text_case_preserves_nested_links_soft_breaks_paragraph_formats_and_contr
             .any(|decoration| decoration.location() == TextDecorationLocation::Underline)));
     let italic = &link.children().unwrap()[0];
     assert!(matches!(italic.kind, InlineSnapshotKind::Italic(_)));
-    assert_eq!(italic.format.font_style, Some(FontStyle::Italic));
+    assert_eq!(italic.format.font_style, None);
+    assert_eq!(effective.font_style, Some(FontStyle::Italic));
     let document = RichEditTextDocument::new(model);
     document
         .document_range()
@@ -160,6 +162,17 @@ fn rich_text_case_preserves_nested_links_soft_breaks_paragraph_formats_and_contr
     expected.paragraphs[0].inlines[3].kind = InlineSnapshotKind::Run("Z".to_owned());
     expected.paragraphs[1].inlines[0].kind = InlineSnapshotKind::Run("É".to_owned());
     assert_eq!(after, expected);
+    let effective = document.document().character_format_at(1).unwrap();
+    assert_eq!(effective.font_style, Some(FontStyle::Italic));
+    assert!(effective
+        .text_decorations
+        .as_ref()
+        .and_then(Option::as_ref)
+        .is_some_and(|decorations| decorations
+            .list()
+            .snapshot()
+            .iter()
+            .any(|decoration| decoration.location() == TextDecorationLocation::Underline)));
     assert!(matches!(
         first.inlines[1].kind,
         InlineSnapshotKind::LineBreak
