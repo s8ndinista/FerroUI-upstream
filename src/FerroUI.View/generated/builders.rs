@@ -9052,6 +9052,221 @@ pub trait AttachedProps: ElementBuilder {
         self.prop(<ferroui_controls::TrayIcon>::icons_property(), value)
     }
 
+    /// Sets the attached [`Typography::annotation_alternates_property`](ferroui_controls::documents::Typography::annotation_alternates_property).
+    fn typography_annotation_alternates<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::annotation_alternates_property(), value)
+    }
+
+    /// Sets the attached [`Typography::east_asian_expert_forms_property`](ferroui_controls::documents::Typography::east_asian_expert_forms_property).
+    fn typography_east_asian_expert_forms<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::east_asian_expert_forms_property(), value)
+    }
+
+    /// Sets the attached [`Typography::east_asian_language_property`](ferroui_controls::documents::Typography::east_asian_language_property).
+    fn typography_east_asian_language<M>(self, value: impl IntoProp<ferroui_base::media::FontEastAsianLanguage, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::east_asian_language_property(), value)
+    }
+
+    /// Sets the attached [`Typography::east_asian_widths_property`](ferroui_controls::documents::Typography::east_asian_widths_property).
+    fn typography_east_asian_widths<M>(self, value: impl IntoProp<ferroui_base::media::FontEastAsianWidths, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::east_asian_widths_property(), value)
+    }
+
+    /// Sets the attached [`Typography::standard_ligatures_property`](ferroui_controls::documents::Typography::standard_ligatures_property).
+    fn typography_standard_ligatures<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::standard_ligatures_property(), value)
+    }
+
+    /// Sets the attached [`Typography::contextual_ligatures_property`](ferroui_controls::documents::Typography::contextual_ligatures_property).
+    fn typography_contextual_ligatures<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::contextual_ligatures_property(), value)
+    }
+
+    /// Sets the attached [`Typography::discretionary_ligatures_property`](ferroui_controls::documents::Typography::discretionary_ligatures_property).
+    fn typography_discretionary_ligatures<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::discretionary_ligatures_property(), value)
+    }
+
+    /// Sets the attached [`Typography::historical_ligatures_property`](ferroui_controls::documents::Typography::historical_ligatures_property).
+    fn typography_historical_ligatures<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::historical_ligatures_property(), value)
+    }
+
+    /// Sets the attached [`Typography::standard_swashes_property`](ferroui_controls::documents::Typography::standard_swashes_property).
+    fn typography_standard_swashes<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::standard_swashes_property(), value)
+    }
+
+    /// Sets the attached [`Typography::contextual_swashes_property`](ferroui_controls::documents::Typography::contextual_swashes_property).
+    fn typography_contextual_swashes<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::contextual_swashes_property(), value)
+    }
+
+    /// Sets the attached [`Typography::contextual_alternates_property`](ferroui_controls::documents::Typography::contextual_alternates_property).
+    fn typography_contextual_alternates<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::contextual_alternates_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_alternates_property`](ferroui_controls::documents::Typography::stylistic_alternates_property).
+    fn typography_stylistic_alternates<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_alternates_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set1_property`](ferroui_controls::documents::Typography::stylistic_set1_property).
+    fn typography_stylistic_set1<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set1_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set2_property`](ferroui_controls::documents::Typography::stylistic_set2_property).
+    fn typography_stylistic_set2<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set2_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set3_property`](ferroui_controls::documents::Typography::stylistic_set3_property).
+    fn typography_stylistic_set3<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set3_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set4_property`](ferroui_controls::documents::Typography::stylistic_set4_property).
+    fn typography_stylistic_set4<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set4_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set5_property`](ferroui_controls::documents::Typography::stylistic_set5_property).
+    fn typography_stylistic_set5<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set5_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set6_property`](ferroui_controls::documents::Typography::stylistic_set6_property).
+    fn typography_stylistic_set6<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set6_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set7_property`](ferroui_controls::documents::Typography::stylistic_set7_property).
+    fn typography_stylistic_set7<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set7_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set8_property`](ferroui_controls::documents::Typography::stylistic_set8_property).
+    fn typography_stylistic_set8<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set8_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set9_property`](ferroui_controls::documents::Typography::stylistic_set9_property).
+    fn typography_stylistic_set9<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set9_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set10_property`](ferroui_controls::documents::Typography::stylistic_set10_property).
+    fn typography_stylistic_set10<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set10_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set11_property`](ferroui_controls::documents::Typography::stylistic_set11_property).
+    fn typography_stylistic_set11<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set11_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set12_property`](ferroui_controls::documents::Typography::stylistic_set12_property).
+    fn typography_stylistic_set12<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set12_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set13_property`](ferroui_controls::documents::Typography::stylistic_set13_property).
+    fn typography_stylistic_set13<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set13_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set14_property`](ferroui_controls::documents::Typography::stylistic_set14_property).
+    fn typography_stylistic_set14<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set14_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set15_property`](ferroui_controls::documents::Typography::stylistic_set15_property).
+    fn typography_stylistic_set15<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set15_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set16_property`](ferroui_controls::documents::Typography::stylistic_set16_property).
+    fn typography_stylistic_set16<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set16_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set17_property`](ferroui_controls::documents::Typography::stylistic_set17_property).
+    fn typography_stylistic_set17<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set17_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set18_property`](ferroui_controls::documents::Typography::stylistic_set18_property).
+    fn typography_stylistic_set18<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set18_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set19_property`](ferroui_controls::documents::Typography::stylistic_set19_property).
+    fn typography_stylistic_set19<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set19_property(), value)
+    }
+
+    /// Sets the attached [`Typography::stylistic_set20_property`](ferroui_controls::documents::Typography::stylistic_set20_property).
+    fn typography_stylistic_set20<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::stylistic_set20_property(), value)
+    }
+
+    /// Sets the attached [`Typography::capitals_property`](ferroui_controls::documents::Typography::capitals_property).
+    fn typography_capitals<M>(self, value: impl IntoProp<ferroui_base::media::FontCapitals, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::capitals_property(), value)
+    }
+
+    /// Sets the attached [`Typography::capital_spacing_property`](ferroui_controls::documents::Typography::capital_spacing_property).
+    fn typography_capital_spacing<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::capital_spacing_property(), value)
+    }
+
+    /// Sets the attached [`Typography::kerning_property`](ferroui_controls::documents::Typography::kerning_property).
+    fn typography_kerning<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::kerning_property(), value)
+    }
+
+    /// Sets the attached [`Typography::case_sensitive_forms_property`](ferroui_controls::documents::Typography::case_sensitive_forms_property).
+    fn typography_case_sensitive_forms<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::case_sensitive_forms_property(), value)
+    }
+
+    /// Sets the attached [`Typography::historical_forms_property`](ferroui_controls::documents::Typography::historical_forms_property).
+    fn typography_historical_forms<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::historical_forms_property(), value)
+    }
+
+    /// Sets the attached [`Typography::fraction_property`](ferroui_controls::documents::Typography::fraction_property).
+    fn typography_fraction<M>(self, value: impl IntoProp<ferroui_base::media::FontFraction, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::fraction_property(), value)
+    }
+
+    /// Sets the attached [`Typography::numeral_style_property`](ferroui_controls::documents::Typography::numeral_style_property).
+    fn typography_numeral_style<M>(self, value: impl IntoProp<ferroui_base::media::FontNumeralStyle, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::numeral_style_property(), value)
+    }
+
+    /// Sets the attached [`Typography::numeral_alignment_property`](ferroui_controls::documents::Typography::numeral_alignment_property).
+    fn typography_numeral_alignment<M>(self, value: impl IntoProp<ferroui_base::media::FontNumeralAlignment, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::numeral_alignment_property(), value)
+    }
+
+    /// Sets the attached [`Typography::slashed_zero_property`](ferroui_controls::documents::Typography::slashed_zero_property).
+    fn typography_slashed_zero<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::slashed_zero_property(), value)
+    }
+
+    /// Sets the attached [`Typography::mathematical_greek_property`](ferroui_controls::documents::Typography::mathematical_greek_property).
+    fn typography_mathematical_greek<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::mathematical_greek_property(), value)
+    }
+
+    /// Sets the attached [`Typography::variants_property`](ferroui_controls::documents::Typography::variants_property).
+    fn typography_variants<M>(self, value: impl IntoProp<ferroui_base::media::FontVariants, M>) -> Self {
+        self.prop(<ferroui_controls::documents::Typography>::variants_property(), value)
+    }
+
     /// Sets the attached [`Visual::flow_direction_property`](ferroui_base::Visual::flow_direction_property).
     fn visual_flow_direction<M>(self, value: impl IntoProp<ferroui_base::media::FlowDirection, M>) -> Self {
         self.prop(<ferroui_base::Visual>::flow_direction_property(), value)

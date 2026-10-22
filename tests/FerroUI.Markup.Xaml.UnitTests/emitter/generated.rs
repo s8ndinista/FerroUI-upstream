@@ -5765,6 +5765,228 @@ fn build_rich_text_document_xaml_untyped(
     ::core::result::Result::Ok(::std::rc::Rc::new(root) as ::ferroui_base::BoxedValue)
 }
 
+/// The base URI and the XML namespaces of `rich_typography.xaml`.
+static BUILD_RICH_TYPOGRAPHY_XAML_DOCUMENT: rt::DocumentInfo = rt::DocumentInfo { base_uri: ::core::option::Option::Some("ferres://FerroUI.Markup.Xaml.UnitTests/Emitter/rich_typography.xaml"), namespaces: XML_NAMESPACES_0 };
+
+/// Generated from `rich_typography.xaml`.
+pub fn build_rich_typography_xaml(
+    service_provider: ::core::option::Option<::std::rc::Rc<dyn ::ferroui_base::metadata::IServiceProvider>>,
+) -> ::core::result::Result<::ferroui_base::Ref<::ferroui_controls::UserControl>, ::ferroui_markup_xaml::XamlLoadException> {
+    // rich_typography.xaml(1,2) UserControl
+    let user_control_0 = ::ferroui_controls::UserControl::new();
+    let context = rt::populate_context(service_provider, &BUILD_RICH_TYPOGRAPHY_XAML_DOCUMENT, rt::to_value(user_control_0.clone()));
+    let name_scope = context.name_scope_field();
+    user_control_0.begin_init();
+    // rich_typography.xaml(4,6) Styles
+    let styles_collection_0 = ::ferroui_base::StyledElement::__markup_get_Styles(user_control_0.upcast_ref::<::ferroui_base::StyledElement>());
+    // rich_typography.xaml(4,6) Style
+    let style_0 = ::ferroui_base::styling::Style::new();
+    // rich_typography.xaml(4,6) Selector
+    let selector_0 = ::ferroui_base::styling::Selectors::of_type_info(::core::option::Option::None, <::ferroui_controls::TextBlock as ::ferroui_base::StaticType>::TYPE);
+    let selector_1 = ::ferroui_base::styling::Selectors::class(::core::option::Option::Some(selector_0), "typography");
+    ::ferroui_base::styling::Style::__markup_set_Selector(&style_0, ::core::option::Option::Some(selector_1.clone()));
+    // rich_typography.xaml(5,8) Content
+    rt::add_setter(style_0.upcast_ref::<::ferroui_base::styling::StyleBase>(), rt::property(::ferroui_controls::documents::Typography::kerning_property()), rt::to_object(::core::clone::Clone::clone(&false)));
+    // rich_typography.xaml(6,8) Content
+    rt::add_setter(style_0.upcast_ref::<::ferroui_base::styling::StyleBase>(), rt::property(::ferroui_controls::documents::Typography::capitals_property()), rt::to_object(::ferroui_base::media::FontCapitals::SmallCaps));
+    rt::invoked(::ferroui_base::styling::Styles::__markup_Add_0(&styles_collection_0, rt::cast(style_0.clone(), 4, 6)?), 4, 6)?;
+    // rich_typography.xaml(9,4) Content
+    // rich_typography.xaml(9,4) StackPanel
+    let stack_panel_0 = ::ferroui_controls::StackPanel::new();
+    stack_panel_0.begin_init();
+    user_control_0.set_value(::ferroui_controls::ContentControl::content_property(), rt::to_object(::core::clone::Clone::clone(&stack_panel_0)));
+    // rich_typography.xaml(10,6) Children
+    let children_collection_0 = ::ferroui_controls::Panel::__markup_get_Children(stack_panel_0.upcast_ref::<::ferroui_controls::Panel>());
+    // rich_typography.xaml(10,6) RichTextBlock
+    let rich_text_block_0 = ::ferroui_controls::RichTextBlock::new();
+    rich_text_block_0.begin_init();
+    ::ferroui_controls::Controls::__markup_Add_0(&children_collection_0, ::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_controls::Control>());
+    // rich_typography.xaml(10,20) Name
+    rich_text_block_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("fullTypography")));
+    rt::register_name(name_scope.as_ref(), "fullTypography", ::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), 10, 20)?;
+    // rich_typography.xaml(10,6) AnnotationAlternates
+    ::ferroui_controls::documents::Typography::__markup_SetAnnotationAlternates_1(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), 1_i32);
+    // rich_typography.xaml(10,6) EastAsianExpertForms
+    ::ferroui_controls::documents::Typography::__markup_SetEastAsianExpertForms_3(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) EastAsianLanguage
+    ::ferroui_controls::documents::Typography::__markup_SetEastAsianLanguage_5(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::ferroui_base::media::FontEastAsianLanguage::Jis90);
+    // rich_typography.xaml(10,6) EastAsianWidths
+    ::ferroui_controls::documents::Typography::__markup_SetEastAsianWidths_7(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::ferroui_base::media::FontEastAsianWidths::Half);
+    // rich_typography.xaml(10,6) StandardLigatures
+    ::ferroui_controls::documents::Typography::__markup_SetStandardLigatures_9(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&false));
+    // rich_typography.xaml(10,6) ContextualLigatures
+    ::ferroui_controls::documents::Typography::__markup_SetContextualLigatures_11(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&false));
+    // rich_typography.xaml(10,6) DiscretionaryLigatures
+    ::ferroui_controls::documents::Typography::__markup_SetDiscretionaryLigatures_13(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) HistoricalLigatures
+    ::ferroui_controls::documents::Typography::__markup_SetHistoricalLigatures_15(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StandardSwashes
+    ::ferroui_controls::documents::Typography::__markup_SetStandardSwashes_17(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), 2_i32);
+    // rich_typography.xaml(10,6) ContextualSwashes
+    ::ferroui_controls::documents::Typography::__markup_SetContextualSwashes_19(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), 3_i32);
+    // rich_typography.xaml(10,6) ContextualAlternates
+    ::ferroui_controls::documents::Typography::__markup_SetContextualAlternates_21(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&false));
+    // rich_typography.xaml(10,6) StylisticAlternates
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticAlternates_23(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), 4_i32);
+    // rich_typography.xaml(10,6) StylisticSet1
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet1_25(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet2
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet2_27(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet3
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet3_29(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet4
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet4_31(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet5
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet5_33(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet6
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet6_35(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet7
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet7_37(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet8
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet8_39(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet9
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet9_41(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet10
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet10_43(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet11
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet11_45(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet12
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet12_47(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet13
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet13_49(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet14
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet14_51(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet15
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet15_53(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet16
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet16_55(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet17
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet17_57(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet18
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet18_59(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet19
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet19_61(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) StylisticSet20
+    ::ferroui_controls::documents::Typography::__markup_SetStylisticSet20_63(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) Capitals
+    ::ferroui_controls::documents::Typography::__markup_SetCapitals_65(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::ferroui_base::media::FontCapitals::AllSmallCaps);
+    // rich_typography.xaml(10,6) CapitalSpacing
+    ::ferroui_controls::documents::Typography::__markup_SetCapitalSpacing_67(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) Kerning
+    ::ferroui_controls::documents::Typography::__markup_SetKerning_69(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&false));
+    // rich_typography.xaml(10,6) CaseSensitiveForms
+    ::ferroui_controls::documents::Typography::__markup_SetCaseSensitiveForms_71(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) HistoricalForms
+    ::ferroui_controls::documents::Typography::__markup_SetHistoricalForms_73(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) Fraction
+    ::ferroui_controls::documents::Typography::__markup_SetFraction_75(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::ferroui_base::media::FontFraction::Slashed);
+    // rich_typography.xaml(10,6) NumeralStyle
+    ::ferroui_controls::documents::Typography::__markup_SetNumeralStyle_77(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::ferroui_base::media::FontNumeralStyle::OldStyle);
+    // rich_typography.xaml(10,6) NumeralAlignment
+    ::ferroui_controls::documents::Typography::__markup_SetNumeralAlignment_79(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::ferroui_base::media::FontNumeralAlignment::Tabular);
+    // rich_typography.xaml(10,6) SlashedZero
+    ::ferroui_controls::documents::Typography::__markup_SetSlashedZero_81(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) MathematicalGreek
+    ::ferroui_controls::documents::Typography::__markup_SetMathematicalGreek_83(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(10,6) Variants
+    ::ferroui_controls::documents::Typography::__markup_SetVariants_85(::core::clone::Clone::clone(&rich_text_block_0).upcast::<::ferroui_base::FerroObject>(), ::ferroui_base::media::FontVariants::Superscript);
+    // rich_typography.xaml(54,8) Blocks
+    let blocks_collection_0 = ::ferroui_controls::RichTextBlock::__markup_get_Blocks(&rich_text_block_0);
+    // rich_typography.xaml(54,8) Paragraph
+    let paragraph_0 = ::ferroui_controls::documents::Paragraph::new();
+    paragraph_0.begin_init();
+    // rich_typography.xaml(54,19) Inlines
+    let inlines_collection_0 = ::ferroui_controls::documents::Paragraph::__markup_get_Inlines(&paragraph_0);
+    // rich_typography.xaml(54,19) Run
+    let run_0 = ::ferroui_controls::documents::Run::new();
+    run_0.begin_init();
+    // rich_typography.xaml(54,23) Text
+    run_0.set_value(::ferroui_controls::documents::Run::text_property(), ::core::option::Option::Some(::std::string::String::from("Inherited")));
+    rt::invoked(run_0.try_end_init(), 54, 19)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(&inlines_collection_0, ::core::clone::Clone::clone(&run_0).upcast::<::ferroui_controls::documents::Inline>());
+    // rich_typography.xaml(54,43) Inlines
+    let inlines_collection_1 = ::ferroui_controls::documents::Paragraph::__markup_get_Inlines(&paragraph_0);
+    // rich_typography.xaml(54,43) Span
+    let span_0 = ::ferroui_controls::documents::Span::new();
+    span_0.begin_init();
+    // rich_typography.xaml(54,43) Capitals
+    ::ferroui_controls::documents::Typography::__markup_SetCapitals_65(::core::clone::Clone::clone(&span_0).upcast::<::ferroui_base::FerroObject>(), ::ferroui_base::media::FontCapitals::Normal);
+    // rich_typography.xaml(54,43) StandardSwashes
+    ::ferroui_controls::documents::Typography::__markup_SetStandardSwashes_17(::core::clone::Clone::clone(&span_0).upcast::<::ferroui_base::FerroObject>(), 0_i32);
+    // rich_typography.xaml(54,109) Inlines
+    let inlines_collection_2 = span_0.get_value(::ferroui_controls::documents::Span::inlines_property());
+    // rich_typography.xaml(54,109) Run
+    let run_1 = ::ferroui_controls::documents::Run::new();
+    run_1.begin_init();
+    // rich_typography.xaml(54,109) Kerning
+    ::ferroui_controls::documents::Typography::__markup_SetKerning_69(::core::clone::Clone::clone(&run_1).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(54,139) Text
+    run_1.set_value(::ferroui_controls::documents::Run::text_property(), ::core::option::Option::Some(::std::string::String::from("Reset")));
+    rt::invoked(run_1.try_end_init(), 54, 109)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(rt::instance(&inlines_collection_2, "FerroUI.Controls.Documents.InlineCollection.Add", 54, 109)?, ::core::clone::Clone::clone(&run_1).upcast::<::ferroui_controls::documents::Inline>());
+    rt::invoked(span_0.try_end_init(), 54, 43)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(&inlines_collection_1, ::core::clone::Clone::clone(&span_0).upcast::<::ferroui_controls::documents::Inline>());
+    rt::invoked(paragraph_0.try_end_init(), 54, 8)?;
+    ::ferroui_controls::documents::BlockCollection::__markup_Add_0(&blocks_collection_0, ::core::clone::Clone::clone(&paragraph_0).upcast::<::ferroui_controls::documents::Block>());
+    rt::invoked(rich_text_block_0.try_end_init(), 10, 6)?;
+    // rich_typography.xaml(56,6) Children
+    let children_collection_1 = ::ferroui_controls::Panel::__markup_get_Children(stack_panel_0.upcast_ref::<::ferroui_controls::Panel>());
+    // rich_typography.xaml(56,6) TextBlock
+    let text_block_0 = ::ferroui_controls::TextBlock::new();
+    text_block_0.begin_init();
+    ::ferroui_controls::Controls::__markup_Add_0(&children_collection_1, ::core::clone::Clone::clone(&text_block_0).upcast::<::ferroui_controls::Control>());
+    // rich_typography.xaml(56,16) Name
+    text_block_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("styledTypography")));
+    rt::register_name(name_scope.as_ref(), "styledTypography", ::core::clone::Clone::clone(&text_block_0).upcast::<::ferroui_base::FerroObject>(), 56, 16)?;
+    // rich_typography.xaml(56,6) Classes
+    let classes_collection_0 = ::ferroui_base::StyledElement::__markup_get_Classes(text_block_0.upcast_ref::<::ferroui_base::StyledElement>());
+    ::ferroui_base::controls::Classes::__markup_Add_0(&classes_collection_0, ::std::string::String::from("typography"));
+    // rich_typography.xaml(56,61) Text
+    text_block_0.set_value(::ferroui_controls::TextBlock::text_property(), ::core::option::Option::Some(::std::string::String::from("AV")));
+    rt::invoked(text_block_0.try_end_init(), 56, 6)?;
+    // rich_typography.xaml(57,6) Children
+    let children_collection_2 = ::ferroui_controls::Panel::__markup_get_Children(stack_panel_0.upcast_ref::<::ferroui_controls::Panel>());
+    // rich_typography.xaml(57,6) RichEditBox
+    let rich_edit_box_0 = ::ferroui_controls::RichEditBox::new();
+    rich_edit_box_0.begin_init();
+    ::ferroui_controls::Controls::__markup_Add_0(&children_collection_2, ::core::clone::Clone::clone(&rich_edit_box_0).upcast::<::ferroui_controls::Control>());
+    // rich_typography.xaml(57,18) Name
+    rich_edit_box_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("editorTypography")));
+    rt::register_name(name_scope.as_ref(), "editorTypography", ::core::clone::Clone::clone(&rich_edit_box_0).upcast::<::ferroui_base::FerroObject>(), 57, 18)?;
+    // rich_typography.xaml(57,6) NumeralAlignment
+    ::ferroui_controls::documents::Typography::__markup_SetNumeralAlignment_79(::core::clone::Clone::clone(&rich_edit_box_0).upcast::<::ferroui_base::FerroObject>(), ::ferroui_base::media::FontNumeralAlignment::Tabular);
+    // rich_typography.xaml(58,8) Blocks
+    let blocks_collection_1 = ::ferroui_controls::RichEditBox::__markup_get_Blocks(&rich_edit_box_0);
+    // rich_typography.xaml(58,8) Paragraph
+    let paragraph_1 = ::ferroui_controls::documents::Paragraph::new();
+    paragraph_1.begin_init();
+    // rich_typography.xaml(58,19) Inlines
+    let inlines_collection_3 = ::ferroui_controls::documents::Paragraph::__markup_get_Inlines(&paragraph_1);
+    // rich_typography.xaml(58,19) Run
+    let run_2 = ::ferroui_controls::documents::Run::new();
+    run_2.begin_init();
+    // rich_typography.xaml(58,19) SlashedZero
+    ::ferroui_controls::documents::Typography::__markup_SetSlashedZero_81(::core::clone::Clone::clone(&run_2).upcast::<::ferroui_base::FerroObject>(), ::core::clone::Clone::clone(&true));
+    // rich_typography.xaml(58,53) Text
+    run_2.set_value(::ferroui_controls::documents::Run::text_property(), ::core::option::Option::Some(::std::string::String::from("0123")));
+    rt::invoked(run_2.try_end_init(), 58, 19)?;
+    ::ferroui_controls::documents::InlineCollection::__markup_Add_0(&inlines_collection_3, ::core::clone::Clone::clone(&run_2).upcast::<::ferroui_controls::documents::Inline>());
+    rt::invoked(paragraph_1.try_end_init(), 58, 8)?;
+    ::ferroui_controls::documents::BlockCollection::__markup_Add_0(&blocks_collection_1, ::core::clone::Clone::clone(&paragraph_1).upcast::<::ferroui_controls::documents::Block>());
+    rt::invoked(rich_edit_box_0.try_end_init(), 57, 6)?;
+    rt::invoked(stack_panel_0.try_end_init(), 9, 4)?;
+    rt::invoked(user_control_0.try_end_init(), 1, 2)?;
+    rt::complete_root_name_scope(::core::option::Option::Some(&user_control_0), name_scope.as_ref(), 1, 2)?;
+    ::core::result::Result::Ok(user_control_0)
+}
+
+fn build_rich_typography_xaml_untyped(
+    service_provider: ::core::option::Option<::std::rc::Rc<dyn ::ferroui_base::metadata::IServiceProvider>>,
+) -> ::core::result::Result<::ferroui_base::BoxedValue, ::ferroui_markup_xaml::XamlLoadException> {
+    let root = build_rich_typography_xaml(service_provider)?;
+    ::core::result::Result::Ok(::std::rc::Rc::new(root) as ::ferroui_base::BoxedValue)
+}
+
 /// The base URI and the XML namespaces of `rich_input_scope.xaml`.
 static BUILD_RICH_INPUT_SCOPE_XAML_DOCUMENT: rt::DocumentInfo = rt::DocumentInfo { base_uri: ::core::option::Option::Some("ferres://FerroUI.Markup.Xaml.UnitTests/Emitter/rich_input_scope.xaml"), namespaces: XML_NAMESPACES_0 };
 
@@ -5978,6 +6200,7 @@ pub const DOCUMENTS: &[(&str, BuildDocument)] = &[
     ("container_query.xaml", build_container_query_xaml_untyped as BuildDocument),
     ("static_resource_element.xaml", build_static_resource_element_xaml_untyped as BuildDocument),
     ("rich_text_document.xaml", build_rich_text_document_xaml_untyped as BuildDocument),
+    ("rich_typography.xaml", build_rich_typography_xaml_untyped as BuildDocument),
     ("rich_input_scope.xaml", build_rich_input_scope_xaml_untyped as BuildDocument),
 ];
 
