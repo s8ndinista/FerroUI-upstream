@@ -847,3 +847,31 @@ boundary edges**. The map records 36 complete API entries, 428 partial and
 794 pending entries; no runtime source file is marked complete. These numbers
 measure the mapped inventory, not a percentage of functional parity. The source
 integrity command and its actual result are recorded in `mapping.json`.
+
+## 2026-10-22 — Published checkpoint and native horizontal evidence
+
+Resumed PR #243 at `d148193deef581a1e99fc837c45c29ab9c6957c2`.
+The previous InputScope and extended-column implementation was not published;
+this continuation reconstructs it against the committed source and recorded
+native behavior.
+
+The [dedicated workflow](https://github.com/wieslawsoltes/FerroUI/actions/runs/39618880985)
+has now completed successfully. Linux passed 4,413 Base, 5,002 Controls, 308
+Win32 and 39 WinUI-host tests. Fluent passed 210 with two ignored, Simple 213
+with three ignored, WinUI theme 296 with two ignored, and XAML 611 with 17
+ignored plus one ignored doctest. All five reference generators and the exact
+checked-in reference comparison passed. Windows passed 49 WinUI tests, two
+exact HSTRING tests, three native probes and 561 rich Controls tests.
+
+`native-msftedit-navigation-horizontal.json` preserves all observations from
+the Windows job, including 220 fresh-control horizontal commands. Its commit,
+probe blob, workflow/job URLs, OS and DLL version remain attached to the data.
+The 282 vertical, 60 Home/End and 60 repeated Home/End rows equal the previous
+records exactly. These are system MSFTEDIT observations, not a claim of
+conformance with the externally supplied WinUI editing engine.
+
+The broader workflow had one failing catalog assertion on macOS: the expected
+page total still included only the TreeDataGrid addition, omitting this branch's
+Rich Text page. The corrected assertion includes both additions and verifies
+that Rich Text is available in the Text section. Runtime verification of this
+correction and all new implementation follows in subsequent checkpoints.
