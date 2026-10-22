@@ -1179,7 +1179,9 @@ impl PropertiesView {
             header("Value"),
             ResourceKey::from(PROPERTY_VALUE_CELL_TEMPLATE),
             None,
-            Some(GridLength::new(100.0, GridUnitType::Pixel)),
+            // Deviation (DEVIATIONS.md, Developer tools): 200 px, wide enough for the editors of the
+            // compact form (upstream: 100).
+            Some(GridLength::new(200.0, GridUnitType::Pixel)),
             Some(Rc::new(value_options)),
         ) as ColumnRef<PropertiesViewItem>);
 

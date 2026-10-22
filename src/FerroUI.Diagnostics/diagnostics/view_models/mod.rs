@@ -22,6 +22,8 @@ mod fired_event;
 pub use fired_event::*;
 mod hot_key_page_view_model;
 pub use hot_key_page_view_model::*;
+mod combined_tree_node;
+pub use combined_tree_node::*;
 mod logical_tree_node;
 pub use logical_tree_node::*;
 mod main_view_model;

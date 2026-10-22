@@ -6,7 +6,7 @@
 //! TreeDataGrid where upstream has a tree view).
 
 use crate::diagnostics::view_models::{
-    FilterViewModel, LogicalTreeNode, ReactiveExtensions, TreeNodeCollection, TreeNodeKind,
+    CombinedTreeNode, FilterViewModel, LogicalTreeNode, ReactiveExtensions, TreeNodeCollection, TreeNodeKind,
     TreePageViewModel, VisualTreeNode,
 };
 use crate::diagnostics::views::TreePageView;
@@ -478,4 +478,82 @@ fn the_nodes_of_a_tree_page_are_disposed_with_it() {
     text.classes().add("other");
 
     assert_eq!(node.classes(), "(title)");
+}
+
+/// A button with a template made in code (a border around a content presenter) and a text block
+/// as its content.
+fn templated_button() -> (Ref<Button>, Ref<TextBlock>) {
+    use ferroui_base::data::TemplateBinding;
+    use ferroui_controls::presenters::ContentPresenter;
+    use ferroui_controls::templates::FuncControlTemplate;
+    use ferroui_controls::ContentControl;
+
+    let button = Button::new();
+    button.set_template(Some(FuncControlTemplate::new(|_, _scope| {
+        let border = Border::new();
+        border.set_name(Some("PART_Border".to_string()));
+        let presenter = ContentPresenter::new();
+        presenter.set_name(Some("PART_ContentPresenter".to_string()));
+        let content = ContentControl::content_property().as_property();
+        presenter.bind_binding(content, &TemplateBinding::new(content));
+        border.set_child(Some(presenter.upcast::<Control>()));
+        border.upcast()
+    })));
+    let text = TextBlock::new();
+    text.set_text(Some("content"));
+    button.set_content(Some(Control::boxed(text.clone())));
+    button.apply_template();
+    if let Some(presenter) = button.get_visual_descendants().find_map(|v| v.cast::<ferroui_controls::presenters::ContentPresenter>()) {
+        presenter.update_child();
+    }
+    (button, text)
+}
+
+// Deviation (DEVIATIONS.md, Developer tools): the combined tree, an addition of the port.
+#[test]
+fn the_combined_tree_shows_the_parts_of_a_template_greyed_out_before_the_logical_children() {
+    let _scope = scope();
+    let panel = StackPanel::new();
+    let (button, text) = templated_button();
+    panel.children().add(button.clone());
+
+    let root = CombinedTreeNode::new_logical(object(&panel), None);
+    assert_eq!(root.kind(), TreeNodeKind::Combined { visual_only: false });
+    assert!(!root.is_visual_only());
+    // The children of the panel are logical: no part of a template.
+    assert_eq!(types(&root.children()), vec!["Button"]);
+
+    let button_node = root.children().to_vec()[0].clone();
+    let children = button_node.children().to_vec();
+    // The root of the template, greyed out, then the content: a logical child of the button.
+    assert_eq!(children.iter().map(|node| (node.type_(), node.is_visual_only())).collect::<Vec<_>>(),
+        vec![("Border".to_string(), true), ("TextBlock".to_string(), false)]);
+    assert!(children[1].visual().ptr_eq(&text));
+    assert!(children[0].is_in_template());
+
+    // Below the part: the presenter, greyed out; the content it shows is not repeated there.
+    let presenter = children[0].children().to_vec();
+    assert_eq!(presenter.iter().map(|node| (node.type_(), node.is_visual_only())).collect::<Vec<_>>(),
+        vec![("ContentPresenter".to_string(), true)]);
+    assert!(presenter[0].children().to_vec().is_empty());
+
+    assert!(CombinedTreeNode::is_logical_child(&text.clone().upcast()));
+    root.dispose();
+}
+
+#[test]
+fn the_combined_tree_follows_a_new_logical_child_and_keeps_the_other_nodes() {
+    let _scope = scope();
+    let (panel, border, _button) = panel();
+    let root = CombinedTreeNode::new_logical(object(&panel), None);
+    let before = root.children().to_vec();
+    assert_eq!(types(&root.children()), vec!["Border", "Button"]);
+
+    let added = TextBlock::new();
+    panel.children().add(added.clone());
+
+    let after = root.children().to_vec();
+    assert_eq!(types(&root.children()), vec!["Border", "Button", "TextBlock"]);
+    assert!(Rc::ptr_eq(&before[0], &after[0]) && after[0].visual().ptr_eq(&border));
+    root.dispose();
 }

@@ -98,8 +98,9 @@
             </Grid>
         </Viewbox>
 
-        <StackPanel Orientation="Vertical" Grid.Column="0" Grid.Row="1" Spacing="4"
-                    Margin="4" HorizontalAlignment="Stretch">
+        <!-- Deviation (DEVIATIONS.md, Developer tools): the margins of the panes of the tools. -->
+        <StackPanel Orientation="Vertical" Grid.Column="0" Grid.Row="1" Spacing="6"
+                    Margin="12,4,12,12" HorizontalAlignment="Stretch">
 
             <StackPanel.Resources>
                 <converters:EnumToCheckedConverter x:Key="AlignmentConverter" />

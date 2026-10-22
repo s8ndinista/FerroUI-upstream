@@ -1130,7 +1130,7 @@ fn accessibility_tree_run(path: PathBuf) {
 
 /// `FERROUI_SMOKE_DEVTOOLS=<directory>` (debug builds): F12 goes to the input manager as the
 /// platform passes a key (a raw key down and up on the main window), which opens DevTools; the run
-/// then selects a text block in the logical tree, records the click of a button of the catalog on
+/// then selects a text block in the combined tree and in the logical tree, records the click of a button of the catalog on
 /// the events page, goes from there to the button in the visual tree, shows the hot keys, and
 /// writes the frame of the DevTools window (and nothing else) an interval after each step, once it
 /// is laid out. The main window is closed at the end.
@@ -1209,9 +1209,19 @@ fn dev_tools_run(directory: PathBuf) {
             }
             println!("DevTools: F12 pressed; open: {}", dev_tools().is_some());
         }),
+        // The combined tree, the first tab: the text block of the home page selected, so that its
+        // ancestors are expanded with the parts of their templates.
+        Box::new(|| {
+            if let Some((_, view_model)) = dev_tools() {
+                let text_block = view_model.logical_tree().nodes().snapshot().iter().find_map(|node| first_text_block(node));
+                if let Some(text_block) = text_block {
+                    view_model.combined_tree().select_control(&text_block.upcast());
+                }
+            }
+        }),
         {
             let save = save.clone();
-            Box::new(move || save("01-logical-tree"))
+            Box::new(move || save("01-combined-tree"))
         },
         Box::new(|| {
             // A text block of the home page: the button above is part of a template, which the
@@ -1235,7 +1245,7 @@ fn dev_tools_run(directory: PathBuf) {
         },
         Box::new(|| {
             if let (Some((_, view_model)), Some(button)) = (dev_tools(), button_of_catalog()) {
-                view_model.set_selected_tab(2);
+                view_model.set_selected_tab(MainViewModel::EVENTS_TAB);
                 button.raise_event(&RoutedEventArgs::with_event(Button::click_event()));
                 let events = view_model.events();
                 println!("DevTools: {} event(s) recorded", events.recorded_events().count());
@@ -1261,7 +1271,7 @@ fn dev_tools_run(directory: PathBuf) {
         },
         Box::new(|| {
             if let Some((_, view_model)) = dev_tools() {
-                view_model.set_selected_tab(3);
+                view_model.set_selected_tab(MainViewModel::HOT_KEYS_TAB);
             }
         }),
         {

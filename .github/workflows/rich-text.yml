@@ -81,6 +81,7 @@ jobs:
         run: >-
           git diff --exit-code --
           src/FerroUI.Themes.WinUI/compiled_xaml.rs
+          src/FerroUI.Themes.WinUI/compiled_xaml/
           src/FerroUI.Themes.WinUI/compiled_xaml.xamlmeta
           src/FerroUI.Themes.Fluent/compiled_xaml.rs
           src/FerroUI.Themes.Fluent/compiled_xaml.xamlmeta
@@ -97,6 +98,7 @@ jobs:
           retention-days: 7
           path: |
             src/FerroUI.Themes.WinUI/compiled_xaml.rs
+            src/FerroUI.Themes.WinUI/compiled_xaml/
             src/FerroUI.Themes.WinUI/compiled_xaml.xamlmeta
             src/FerroUI.Themes.Fluent/compiled_xaml.rs
             src/FerroUI.Themes.Fluent/compiled_xaml.xamlmeta

@@ -3,6 +3,9 @@
              xmlns:vm="using:FerroUI.Diagnostics.ViewModels"
              xmlns:controls="using:FerroUI.Diagnostics.Controls"
              xmlns:models="using:FerroUI.Diagnostics.Models"
+             xmlns:local="using:FerroUI.Diagnostics.Views"
+             xmlns:vmm="using:FerroUI.Diagnostics.ViewModels"
+             xmlns:lb="using:FerroUI.Diagnostics.Behaviors"
              x:Class="FerroUI.Diagnostics.Views.EventsPageView"
              Margin="2"
              x:DataType="vm:EventsPageViewModel">
@@ -61,11 +64,18 @@
     </Style>
   </UserControl.Styles>
 
-  <Grid ColumnDefinitions="1.1*,4,3*">
+  <!-- Deviation (DEVIATIONS.md, Developer tools): the margins, dividers and headers of the
+       design of the tools (DevToolsStyles.xaml). -->
+  <Grid>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="1.1*" lb:ColumnDefinition.IsVisible="{Binding $parent[local:MainView].((vmm:MainViewModel)DataContext).IsTreePaneOpen}" />
+      <ColumnDefinition Width="1" lb:ColumnDefinition.IsVisible="{Binding $parent[local:MainView].((vmm:MainViewModel)DataContext).IsTreePaneOpen}" />
+      <ColumnDefinition Width="3*" />
+    </Grid.ColumnDefinitions>
 
     <Grid Grid.Column="0" RowDefinitions="Auto,*,Auto">
 
-      <controls:FilterTextBox Grid.Row="0" Margin="0,0,0,2"
+      <controls:FilterTextBox Grid.Row="0" Margin="12,10,12,8"
                               DataContext="{Binding EventsFilter}"
                               Text="{Binding FilterString}"
                               PlaceholderText="Filter events"
@@ -87,16 +97,16 @@
                     CanUserSortColumns="False"
                     Source="{Binding NodesSource}" />
 
-      <StackPanel Grid.Row="2" Margin="0,2" Orientation="Horizontal" Spacing="2">
+      <StackPanel Grid.Row="2" Margin="12,8" Orientation="Horizontal" Spacing="8">
         <Button Content="Disable all" Command="{Binding DisableAll}" />
         <Button Content="Enable default" Command="{Binding EnableDefault}" />
       </StackPanel>
 
     </Grid>
 
-    <GridSplitter Width="4" Grid.Column="1" />
+    <GridSplitter Classes="divider vertical" Grid.Column="1" />
 
-    <Grid RowDefinitions="*,4,2*,Auto" Grid.Column="2">
+    <Grid RowDefinitions="*,1,2*,Auto" Grid.Column="2">
 
       <ListBox Name="EventsList" ItemsSource="{Binding RecordedEvents}"
                SelectedItem="{Binding SelectedEvent, Mode=TwoWay}">
@@ -135,10 +145,10 @@
         </ListBox.ItemTemplate>
       </ListBox>
 
-      <GridSplitter Height="4" Grid.Row="1" />
+      <GridSplitter Classes="divider horizontal" Grid.Row="1" />
 
       <DockPanel Grid.Row="2" LastChildFill="True">
-        <TextBlock DockPanel.Dock="Top" FontSize="16" Text="Event chain:" />
+        <TextBlock DockPanel.Dock="Top" Classes="section-header" Margin="12,10,12,6" Text="Event chain" />
 
         <ListBox ItemsSource="{Binding SelectedEvent.EventChain}">
           <ListBox.Styles>
@@ -170,7 +180,7 @@
 
       </DockPanel>
 
-      <StackPanel Orientation="Horizontal" Grid.Row="3" Spacing="2" Margin="2">
+      <StackPanel Orientation="Horizontal" Grid.Row="3" Spacing="8" Margin="12,8">
         <Button Content="Clear" Command="{Binding Clear}" />
       </StackPanel>
 
