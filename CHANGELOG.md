@@ -60,6 +60,7 @@ One crate joins, `ferroui-diagnostics`. The additions since the preview are list
   - `MainViewModel::register_page` adds pages of other crates to the tools;
   - the ControlCatalog attaches them in debug builds, and `FERROUI_SMOKE_DEVTOOLS=<directory>` runs them without a person and writes pictures of their window;
   - the facade has them as the feature `diagnostics`.
+- **Text**: `TextBlock.TextLineBounds` (`Full`, `TrimToCapHeight`, `TrimToBaseline`, `Tight`), after WinUI's: the box of each line can be trimmed to the cap height of its font and to its baseline, so that centred text is centred by its capitals whatever the font; `FontMetrics::cap_height` reads the cap height of a font. The WinUI 3 theme bounds the labels of command bar buttons beside their icons that way.
 
 ### Changed
 

@@ -11,14 +11,14 @@ use ferroui_base::media::text_formatting::{
 };
 use ferroui_base::media::{
     DrawingContext, FlowDirection, FontFamily, FontFeatureCollection, FontStretch, FontStyle, FontWeight, IBrush, TextAlignment,
-    TextDecorationCollection, TextTrimming, TextWrapping, Typeface,
+    TextDecorationCollection, TextLineBounds, TextTrimming, TextWrapping, Typeface,
 };
 use ferroui_base::reactive::IDisposable;
 use ferroui_base::utilities::{ReadOnlyMemory, ValueSpan};
 use ferroui_base::{
-    ferro_class, ferro_property, instantiate, AttachedProperty, DirectProperty, FerroObjectImpl, FerroObjectImplExt,
+    ferro_class, ferro_property, instantiate, AttachedProperty, DirectProperty, FerroObject, FerroObjectImpl, FerroObjectImplExt,
     FerroProperty, FerroPropertyChangedEventArgs, Point, Rect, Ref, Size, StyledElementImpl, StyledProperty,
-    StyledPropertyOptions, Thickness, Visual, VisualImpl, VisualImplExt, VisualTreeAttachmentEventArgs, WeakRef,
+    StyledPropertyMetadata, StyledPropertyOptions, Thickness, Visual, VisualImpl, VisualImplExt, VisualTreeAttachmentEventArgs, WeakRef,
 };
 use std::cell::{Cell, OnceCell, RefCell};
 use std::rc::Rc;
@@ -96,6 +96,10 @@ ferroui_base::ferro_overrides! { impl FerroObjectImpl for TextBlock {
             // Properties that do not affect shaping: preserve the run cache.
             "TextWrapping" | "TextTrimming" | "TextAlignment" | "Padding" | "LineHeight" | "LineSpacing"
             | "MaxLines" => {
+                this.invalidate_text_layout_keep_cache();
+            }
+            "TextLineBounds" => {
+                this.coerce_value(Visual::clip_to_bounds_property().as_property());
                 this.invalidate_text_layout_keep_cache();
             }
             // A FerroUI addition: where the text goes in the height layout rounding adds. It
@@ -312,6 +316,7 @@ impl TextBlockImpl for TextBlock {
             this.letter_spacing(),
         );
         paragraph_properties.set_line_spacing(this.line_spacing());
+        paragraph_properties.set_text_line_bounds(this.text_line_bounds());
 
         let text_source: Rc<dyn ITextSource> = if this.has_complex_content() {
             this.ensure_text_runs();
@@ -423,6 +428,19 @@ ferroui_base::ferro_properties! { impl TextBlock {
             FerroProperty::register_attached_with::<TextBlock, Control, _>(
                 "BaselineOffset",
                 StyledPropertyOptions::new(0.0).inherits(true),
+            )
+        }
+    );
+
+    ferro_property!(
+        /// Defines the `TextLineBounds` attached property: how the box of each line is bounded
+        /// above and below (a FerroUI addition after WinUI's `TextBlock.TextLineBounds`,
+        /// DEVIATIONS.md, Text block). Inherited, as the other attached text properties, so that
+        /// a content presenter sets it for the text of its content.
+        pub fn text_line_bounds_property() -> AttachedProperty<TextLineBounds> {
+            FerroProperty::register_attached_with::<TextBlock, Control, _>(
+                "TextLineBounds",
+                StyledPropertyOptions::new(TextLineBounds::Full).inherits(true),
             )
         }
     );
@@ -542,7 +560,14 @@ ferroui_base::ferro_properties! { impl TextBlock {
 
 impl TextBlock {
     fn static_constructor() {
-        Visual::clip_to_bounds_property().override_default_value::<TextBlock>(true);
+        // A FerroUI addition (DEVIATIONS.md, Text block): a text block clips to its bounds, as
+        // the reference's, unless its lines are trimmed (`TextLineBounds`), whose ink is outside
+        // their boxes by design and which WinUI draws whole.
+        Visual::clip_to_bounds_property().override_metadata::<TextBlock>(
+            StyledPropertyMetadata::new(Some(true)).with_coerce(|object: &FerroObject, clip: bool| {
+                clip && object.get_value(Self::text_line_bounds_property()) == TextLineBounds::Full
+            }),
+        );
 
         Visual::affects_render::<TextBlock>(&[
             Self::background_property().as_property(),
@@ -837,6 +862,27 @@ impl TextBlock {
     /// Writes the attached `BaselineOffset` property to the given control.
     pub fn set_baseline_offset_on(control: &Control, value: f64) {
         control.set_value(Self::baseline_offset_property(), value)
+    }
+
+    /// How the box of each line is bounded: by the ascent and the descent of the font (the
+    /// default), or trimmed to the cap height above the baseline, to the baseline below it, or
+    /// both. A FerroUI addition after WinUI's `TextLineBounds`.
+    pub fn text_line_bounds(&self) -> TextLineBounds {
+        self.get_value(Self::text_line_bounds_property())
+    }
+
+    pub fn set_text_line_bounds(&self, value: TextLineBounds) {
+        self.set_value(Self::text_line_bounds_property(), value)
+    }
+
+    /// Reads the attached `TextLineBounds` property from the given control.
+    pub fn get_text_line_bounds(control: &Control) -> TextLineBounds {
+        control.get_value(Self::text_line_bounds_property())
+    }
+
+    /// Writes the attached `TextLineBounds` property to the given control.
+    pub fn set_text_line_bounds_on(control: &Control, value: TextLineBounds) {
+        control.set_value(Self::text_line_bounds_property(), value)
     }
 
     /// Where the text block puts the height layout rounding adds to it: below its text (the
