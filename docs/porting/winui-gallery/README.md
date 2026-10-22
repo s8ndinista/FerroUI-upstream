@@ -80,6 +80,41 @@ established.** The PR remains draft until the complete requirement map has execu
 and all strict acceptance gates pass. Subsequent commits update this record with measured
 counts, commands, exact results and limitations.
 
+### Main integration checkpoint at `7c679ceb`
+
+The tested merge is
+[`7c679ceb`](https://github.com/wieslawsoltes/FerroUI/commit/7c679ceb0a2e36c6259286ef47f4cc5d5b7abc70),
+which merges main parent `0ce4e90c20d89a03590ccdde555d5daa87e88ee6`.
+The separate [main-integration record](data/navigation-main-integration.json)
+records the merged source, commands, results and CI job status. The NavigationView
+and earlier integration records below retain their original revisions and counts;
+their passing results are not presented as reruns on this merged tree.
+
+The regenerated inventory reports **1,535 source member candidates**, **204 additive
+types** and **562 XAML member candidates**. These are source-comparison and mapping
+counts, not newly established behavioral parity.
+
+| Validation | Merged-checkpoint result | Boundary |
+| --- | --- | --- |
+| WinUI theme | **295 passed, 2 ignored**; the explicit reference regenerator also passed **1 test** | Local validation of the merged theme and complete compiler-reference comparisons. |
+| Focused integration rerun | **19 passed, 1 ignored**: Base 8, registration 1, enum-member lookup 1, Controls 5, public paths 3 and Skia 1 | All six commands completed with source equality checked before and after each command. The public-path regeneration task is explicitly ignored. |
+| Parity CI at `7c679ceb` | **All three jobs passed** | [Run 39824609248](https://github.com/wieslawsoltes/FerroUI/actions/runs/39824609248): pinned comparison, native/XAML/Gallery contracts and real rendering. Strict completeness remains a separate gate. |
+| General CI at `7c679ceb` | Source conventions failed | The subsequent comment-only correction passes all five convention steps locally. The original CI failure remains recorded; it is not relabeled as a pass. |
+
+The integration record keeps this validation separate from the earlier NavigationView
+native executions and the 151-image capture record. Their source hashes, manifests and
+historical acceptance boundaries remain unchanged.
+
+The downloaded CI rendering archive contains **151 opaque, nonblank 1280 × 900 PNGs**.
+Of these, **148 match the historical images exactly**, including all sixteen named
+NavigationView frames and both InfoBadge frames. The remaining differences are confined
+to the ProgressRing arc in each theme and the CommandBar's three right-side labels,
+which move down one pixel without clipping; every other CommandBar pixel is unchanged.
+The integration record preserves the archive, image and decoded-pixel hashes and the
+focused visual review. These checks do not establish upstream Windows pixel parity.
+
+### Earlier integration and NavigationView inventory
+
 The prior integration checkpoint is
 [`83623379`](https://github.com/wieslawsoltes/FerroUI/commit/83623379d8aeaa5a87d0417e7ce0823fc6fe9722),
 which merges main at `cfa62aeb` and uses workspace version **0.4.0**. The
@@ -100,7 +135,8 @@ original exported examples**. No complete page is claimed as ported or behaviora
 verified. The generated [report](data/REPORT.md) and [summary](data/summary.json) are the
 current ledger.
 
-Source comparison identifies **314 type candidates and 1,534 member candidates**.
+At the NavigationView checkpoint, source comparison identified **314 type candidates
+and 1,534 member candidates**.
 These are lexical declarations connected through explicit namespace/member maps;
 they do not establish signature, default, behavioral or WinMD ABI equivalence.
 
@@ -110,7 +146,7 @@ enum. Its 197 numeric values account for 197 of the verified members; the remain
 are narrowly tested icon members. These figures do not imply that 202 independently
 implemented control operations or any complete Gallery page have been verified.
 
-The current increment adds native `NavigationView`, its hierarchical item family,
+The NavigationView increment adds native `NavigationView`, its hierarchical item family,
 pane/selection/invocation events and two automation peers. The control uses the existing
 SplitView, property system, collections, layout, focus, popup and automation services.
 The Gallery now contains all eight original NavigationView compositions and the first

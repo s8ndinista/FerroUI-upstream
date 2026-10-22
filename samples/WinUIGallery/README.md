@@ -145,6 +145,19 @@ preview behavior and actual native event/property interactions. Tests that const
 controls do not claim an interactive desktop run, pixel equality, keyboard traversal,
 screen-reader interoperability or verification on every host.
 
+The **main integration checkpoint `7c679ceb`** incorporates main's TextLineBounds
+work at `0ce4e90c` and regenerates the complete combined WinUI theme reference.
+Local validation passed **295 WinUI theme tests** (two ignored), the explicit
+reference-regeneration test, and **19 focused tests** across Base, Controls, enum
+registration, generated public paths and Skia (one ignored regeneration task).
+The six focused commands checked source equality before and after execution.
+The current maps identify **1,535 member candidates** and **204 additive types**;
+these lexical counts do not promote a behavior or Gallery page to complete parity.
+The [main integration record](../../docs/porting/winui-gallery/data/navigation-main-integration.json)
+preserves the exact commands and separates this evidence from earlier native and
+rendering results. All three jobs in the [merged-source parity workflow](https://github.com/wieslawsoltes/FerroUI/actions/runs/39824609248)
+passed; CI observations remain bound to their stated commit and time.
+
 The **NavigationView checkpoint** publishes native contracts at `9ce7530c`, XAML
 migration at `fb2fee44`, Gallery compositions at `31eba1b6` and named-control captures
 at `8365ed0b`. Local Rust 1.99.0 validation passed **54 Gallery tests**, **182 native

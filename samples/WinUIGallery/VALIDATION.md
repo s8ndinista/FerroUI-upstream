@@ -10,7 +10,7 @@ The current [generated API summary](../../docs/porting/winui-gallery/data/summar
 records 1 verified type, 54 partial types, 202 verified members and 264 partial members.
 The complete `Symbol` enum contributes 197 of those verified members; these counts do
 not certify complete control, page, visual or platform parity.
-The source candidate map separately identifies 314 types and 1,534 members without
+The source candidate map separately identifies 314 types and 1,535 members without
 certifying their signatures, defaults, behavior or WinMD ABI compatibility.
 
 ## Reproducible source inputs
@@ -48,6 +48,79 @@ PNG files. The images total 525,150 bytes. They are registered under 110 paths:
 the original Windows metadata spells `CheckBox.png` and `AnnotatedScrollbar.png`
 differently from the tracked filenames `Checkbox.png` and `AnnotatedScrollBar.png`.
 Both spellings are explicit aliases; original filenames and image bytes are retained.
+
+## Main integration checkpoint: TextLineBounds
+
+Merge [`7c679ceb0a2e36c6259286ef47f4cc5d5b7abc70`](https://github.com/wieslawsoltes/FerroUI/commit/7c679ceb0a2e36c6259286ef47f4cc5d5b7abc70)
+incorporates main `0ce4e90c20d89a03590ccdde555d5daa87e88ee6` and the TextLineBounds
+changes from PR #294. The generated theme reference was regenerated from the merged
+sources; both compiler-output comparisons continue to compare all reference bytes.
+The existing `Full` text-line-bounds default remains in place. Only the source's
+right-side command-bar labels explicitly select `Tight`.
+
+The separate [main integration record](../../docs/porting/winui-gallery/data/navigation-main-integration.json)
+records source hashes, exact commands, environment, measured results and log hashes.
+The theme run used the prepared merge whose source blobs and reference match the
+published merge. The six focused commands ran after publication and checked source
+equality with `7c679ceb` before and after every command; the runner exited 0.
+
+| Validation | Actual result | Evidence scope |
+| --- | --- | --- |
+| Complete combined theme | **295 passed, 0 failed, 2 ignored** | Includes both full compiler-reference comparisons; the explicit regenerator also passed once. |
+| Base text-line bounds | **8 passed** | Text metrics, bounds modes and clipping defaults. |
+| Enum registration and lookup | **2 passed** | Two exact metadata tests, one execution each. |
+| TextBlock line bounds | **5 passed** | Native control property and layout propagation. |
+| Generated public Rust paths | **3 passed, 1 ignored** | Combined TextLineBounds and NavigationView declarations/accessors; the fixture-regeneration task remains explicitly ignored. |
+| Skia cap-height metrics | **1 passed** | The font's cap height agrees with its OS/2 table. |
+| Source gates | **44 scanner tests passed; normal gates passed** | Protected snapshots and API baseline remain unchanged. Strict completeness still returns expected exit 2. |
+
+The updated lexical inventory has **314 type candidates, 1,535 member candidates,
+562 XAML member candidates and 204 additive types**. Existing API preservation still
+accounts for **3,170 types, 28,435 declared member names and 458 registrations**.
+The additional TextBlock.TextLineBounds candidate is not promoted to verified
+WinUI behavior by a name match. The page state remains **72 partial and 54 pending**,
+with no complete page claimed.
+
+The [parity workflow at this merge](https://github.com/wieslawsoltes/FerroUI/actions/runs/39824609248)
+completed successfully: all three jobs passed, covering pinned comparisons, native
+control/XAML/Gallery contracts and real rendering. Its strict completeness gate
+is separate and remains unsatisfied. The integration record preserves timestamped
+CI observations, commands and available log provenance. The initial
+general CI run at this merge rejected an upstream-name reference in one source
+comment. Its subsequent terminology correction changes no executable statement;
+all five source-convention steps passed locally after the correction. The original
+failure and later checks remain separate evidence.
+
+The fresh parity CI used `rustc 1.99.1 (58cf8f9c3 2026-10-13)` on Linux x86_64.
+Its actual checkout, `2bd0915de2ada16ef5c2124afd18c694a6a901e5`, is the GitHub merge
+commit; fetching that commit and comparing Git tree IDs confirms that its complete
+tree equals the published `7c679ceb` tree. The CI log records **182 native-control,
+13 Base local-value, 13 binding-lifetime, 44 migration, 7 compiled/interpreted,
+3 deferred-resource, 295 WinUI-theme, 2 existing-theme fallback, 3 public-path and
+54 Gallery tests passed**. The compiled, theme and public-path suites respectively
+retain one, two and one explicit ignored tasks. Declarative API compilation also
+passed. These are actual new CI executions, separate from the earlier local runs.
+
+The [new CI rendering artifact](https://github.com/wieslawsoltes/FerroUI/actions/runs/39824609248/artifacts/12447045059)
+was downloaded and checked against its reported ZIP digest. All **151 PNGs** decode
+as opaque, nonblank 1280 × 900 images, with **150 distinct images** across the full
+set. Of the 151 outputs, **148 are byte-for-byte and decoded-pixel identical** to
+the earlier local capture manifest, including all sixteen named NavigationView
+frames and both InfoBadge frames. The complete comparisons and per-image hashes
+are preserved separately in the main integration record.
+
+The three changed frames were reviewed against their hash-verified historical
+images. In CommandBar, only the Add/Edit/Share labels move down one pixel: 442
+pixels differ, with no clipping and no change to icons, overflow or page layout.
+That result is consistent with the merged source's explicit `Tight` label bounds.
+The two ProgressRing differences are confined to the moving arc, consistent with
+capture at a different animation phase. These observations do not prove motion
+timing, interactive behavior, operating-system interoperability or Windows pixel
+parity. Host and toolchain provenance remain recorded separately for each run.
+
+The earlier NavigationView runtime records and 151-image capture manifest below
+are unchanged. No new local capture execution is claimed for this merge, and no
+historical test, binary or image is reassigned to the newer source revision.
 
 ## NavigationView checkpoint
 

@@ -407,7 +407,7 @@ impl Migration<'_, '_> {
     ) {
         // WinUI's icon shorthand creates a fresh SymbolIcon. Expand only these audited
         // opt-in members; adding a parser to the shared IconElement would also change
-        // existing Avalonia-style documents. Property elements work with both back ends.
+        // existing native-dialect documents. Property elements work with both back ends.
         if self.symbol_icon_attribute(node, namespace, owner, attribute_namespace, local, attribute, value) {
             return;
         }
