@@ -215,4 +215,42 @@ fn input_scope_metadata_converts_to_real_objects_and_checked_enum_values() {
         InputScopeName::TYPE.markup().unwrap().content_property,
         Some("NameValue")
     );
+
+    // Names exposes the same complete notifying-list metadata as the other
+    // framework collections, including checked Capacity rather than only Add.
+    let scope = InputScope::new();
+    let names = (InputScope::TYPE
+        .markup()
+        .unwrap()
+        .find_property("Names")
+        .unwrap()
+        .get
+        .unwrap())(&[into_markup_value(scope.clone())])
+    .unwrap();
+    let list = <crate::collections::FerroList<crate::Ref<InputScopeName>> as MarkupTyped>::MARKUP;
+    let capacity = list.find_property("Capacity").unwrap();
+    (capacity.set.unwrap())(&[names.clone(), into_markup_value(4i32)]).unwrap();
+    assert_eq!(
+        from_markup_value::<i32>(&(capacity.get.unwrap())(&[names.clone()]).unwrap()).unwrap(),
+        4
+    );
+    let name = InputScopeName::with_name_value(Scope::EmailSmtpAddress);
+    (list.find_methods("Add").next().unwrap().invoke)(&[
+        names.clone(),
+        into_markup_value(name.clone()),
+    ])
+    .unwrap();
+    assert_eq!(
+        from_markup_value::<i32>(
+            &(list.find_property("Count").unwrap().get.unwrap())(&[names.clone()]).unwrap()
+        )
+        .unwrap(),
+        1
+    );
+    assert_eq!(scope.names().get(0), name);
+    assert_eq!(&*scope.snapshot(), &[Scope::EmailSmtpAddress]);
+    for invalid in [-1, 0] {
+        assert!((capacity.set.unwrap())(&[names.clone(), into_markup_value(invalid)]).is_err());
+        assert_eq!(&*scope.snapshot(), &[Scope::EmailSmtpAddress]);
+    }
 }

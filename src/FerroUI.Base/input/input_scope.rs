@@ -216,12 +216,3 @@ impl IAddChild<Ref<InputScopeName>> for InputScopeAddChild {
         &*self.0 as *const InputScope as usize
     }
 }
-
-crate::ferro_markup_type!(class FerroList<Ref<InputScopeName>> as "FerroList`1" {
-    namespace: "FerroUI.Collections",
-    handles: [FerroList<Ref<InputScopeName>>, Option<FerroList<Ref<InputScopeName>>>],
-    generic: "FerroList`1" [Ref<InputScopeName>],
-    constructors: [() => FerroList::<Ref<InputScopeName>>::new],
-    properties: [Count: i32 { get: |list: &FerroList<Ref<InputScopeName>>| list.count() as i32 }],
-    methods: [fn Add(Ref<InputScopeName>) => |list: &FerroList<Ref<InputScopeName>>, item: Ref<InputScopeName>| list.add(item)],
-});
