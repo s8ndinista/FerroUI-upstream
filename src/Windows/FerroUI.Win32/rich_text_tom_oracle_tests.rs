@@ -1,7 +1,8 @@
 //! Characterization of the system MSFTEDIT engine, not WinUI's text engine.
 //!
 //! This probe prints native HomeKey/EndKey and directional movement destinations,
-//! active-end flags, selection types, HRESULTs and signed deltas. Its assertions validate setup and unambiguous
+//! active-end flags, selection types, links, range gravity, formatting affinity,
+//! HRESULTs and signed deltas. Its assertions validate setup and unambiguous
 //! invariants; the first-run destination/count observations are not Rust parity
 //! assertions. Keep the engine version with any fixture derived from its output.
 //!
@@ -21,6 +22,9 @@
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-gettype
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextrange2-geturl
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextrange2-seturl
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextrange2-getgravity
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextrange2-setgravity
+//! https://learn.microsoft.com/windows/windows-app-sdk/api/winrt/microsoft.ui.text.rangegravity
 //! https://learn.microsoft.com/windows/win32/controls/em-geteditstyle
 
 use crate::automation::marshalling::{free_bstr, string_to_bstr};
@@ -44,6 +48,8 @@ use windows_sys::Win32::UI::WindowsAndMessaging::{
 
 type TestResult<T = ()> = Result<T, String>;
 type Getter = unsafe extern "system" fn(*mut c_void, *mut i32) -> i32;
+type Setter = unsafe extern "system" fn(*mut c_void, i32) -> i32;
+type InterfaceGetter = unsafe extern "system" fn(*mut c_void, *mut *mut c_void) -> i32;
 type BoundaryMethod = unsafe extern "system" fn(*mut c_void, i32, i32, *mut i32) -> i32;
 type MoveMethod = unsafe extern "system" fn(*mut c_void, i32, i32, i32, *mut i32) -> i32;
 
@@ -75,14 +81,22 @@ struct TextSelectionVTable {
     _unknown: IUnknownVtbl,
     _dispatch: [*const c_void; 4],
     get_text: unsafe extern "system" fn(*mut c_void, *mut *mut u16) -> i32,
-    _set_text_through_set_formatted_text: [*const c_void; 6],
+    set_text: unsafe extern "system" fn(*mut c_void, *mut u16) -> i32,
+    _get_char_and_set_char: [*const c_void; 2],
+    get_duplicate: InterfaceGetter,
+    _get_and_set_formatted_text: [*const c_void; 2],
     get_start: Getter,
-    _set_start: *const c_void,
+    set_start: Setter,
     get_end: Getter,
-    _set_end: *const c_void,
-    _font_and_paragraph: [*const c_void; 4],
+    set_end: Setter,
+    get_font: InterfaceGetter,
+    _set_font: *const c_void,
+    get_para: InterfaceGetter,
+    _set_para: *const c_void,
     get_story_length: Getter,
-    _get_story_type_through_set_index: [*const c_void; 5],
+    _get_story_type: *const c_void,
+    collapse: Setter,
+    _expand_through_set_index: [*const c_void; 3],
     set_range: unsafe extern "system" fn(*mut c_void, i32, i32) -> i32,
     _in_range_through_get_embedded_object: [*const c_void; 29],
     get_flags: Getter,
@@ -102,9 +116,33 @@ struct TextSelectionVTable {
 #[repr(C)]
 struct TextRange2VTable {
     base: TextSelectionVTable,
-    _get_cch_through_get_table: [*const c_void; 16],
+    _get_cch_through_set_formatted_text2: [*const c_void; 9],
+    get_gravity: Getter,
+    set_gravity: Setter,
+    _get_para2_through_get_table: [*const c_void; 5],
     get_url: unsafe extern "system" fn(*mut c_void, *mut *mut u16) -> i32,
     set_url: unsafe extern "system" fn(*mut c_void, *mut u16) -> i32,
+}
+
+#[repr(C)]
+struct TextFontVTable {
+    _unknown: IUnknownVtbl,
+    _dispatch: [*const c_void; 4],
+    _get_duplicate_through_set_back_color: [*const c_void; 13],
+    get_bold: Getter,
+    set_bold: Setter,
+    _get_emboss_through_set_engrave: [*const c_void; 8],
+    get_italic: Getter,
+    set_italic: Setter,
+}
+
+#[repr(C)]
+struct TextParaVTable {
+    _unknown: IUnknownVtbl,
+    _dispatch: [*const c_void; 4],
+    _get_duplicate_through_set_style: [*const c_void; 7],
+    get_alignment: Getter,
+    set_alignment: Setter,
 }
 
 const _: () = {
@@ -112,9 +150,16 @@ const _: () = {
     assert!(offset_of!(TextDocumentVTable, get_selection) == 8 * slot);
     assert!(offset_of!(TextDocumentVTable, range) == 24 * slot);
     assert!(offset_of!(TextSelectionVTable, get_text) == 7 * slot);
+    assert!(offset_of!(TextSelectionVTable, set_text) == 8 * slot);
+    assert!(offset_of!(TextSelectionVTable, get_duplicate) == 11 * slot);
     assert!(offset_of!(TextSelectionVTable, get_start) == 14 * slot);
+    assert!(offset_of!(TextSelectionVTable, set_start) == 15 * slot);
     assert!(offset_of!(TextSelectionVTable, get_end) == 16 * slot);
+    assert!(offset_of!(TextSelectionVTable, set_end) == 17 * slot);
+    assert!(offset_of!(TextSelectionVTable, get_font) == 18 * slot);
+    assert!(offset_of!(TextSelectionVTable, get_para) == 20 * slot);
     assert!(offset_of!(TextSelectionVTable, get_story_length) == 22 * slot);
+    assert!(offset_of!(TextSelectionVTable, collapse) == 24 * slot);
     assert!(offset_of!(TextSelectionVTable, set_range) == 28 * slot);
     assert!(offset_of!(TextSelectionVTable, get_flags) == 58 * slot);
     assert!(offset_of!(TextSelectionVTable, set_flags) == 59 * slot);
@@ -127,8 +172,16 @@ const _: () = {
     assert!(offset_of!(TextSelectionVTable, end_key) == 66 * slot);
     assert!(offset_of!(TextSelectionVTable, type_text) == 67 * slot);
     assert!(size_of::<TextSelectionVTable>() == 68 * slot);
+    assert!(offset_of!(TextRange2VTable, get_gravity) == 77 * slot);
+    assert!(offset_of!(TextRange2VTable, set_gravity) == 78 * slot);
     assert!(offset_of!(TextRange2VTable, get_url) == 84 * slot);
     assert!(offset_of!(TextRange2VTable, set_url) == 85 * slot);
+    assert!(offset_of!(TextFontVTable, get_bold) == 20 * slot);
+    assert!(offset_of!(TextFontVTable, set_bold) == 21 * slot);
+    assert!(offset_of!(TextFontVTable, get_italic) == 30 * slot);
+    assert!(offset_of!(TextFontVTable, set_italic) == 31 * slot);
+    assert!(offset_of!(TextParaVTable, get_alignment) == 14 * slot);
+    assert!(offset_of!(TextParaVTable, set_alignment) == 15 * slot);
 };
 
 fn check_hresult(result: i32, operation: &str) -> TestResult {
@@ -416,6 +469,7 @@ impl Bstr {
     }
 }
 
+#[derive(Clone)]
 struct NativeRange2(ComPtr<IUnknown>);
 
 impl NativeRange2 {
@@ -1807,4 +1861,599 @@ fn rich_text_tom_oracle_system_msftedit_link_characterization() {
         .join()
         .expect("the native Link TOM probe thread panicked")
         .expect("the native Link TOM probe failed");
+}
+
+/// A failed getter retains its HRESULT and the initialized output sentinel.
+/// Mixed formatting and unsupported independent-range flags are observations.
+#[derive(Clone, Copy)]
+struct NativeNumber {
+    hresult: i32,
+    value: i32,
+}
+
+impl std::fmt::Debug for NativeNumber {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            formatter,
+            "NativeNumber {{ hresult: 0x{:08X}, value: {} }}",
+            self.hresult as u32, self.value
+        )
+    }
+}
+
+impl NativeRange2 {
+    fn raw_number(&self, getter: Getter) -> NativeNumber {
+        let mut value = i32::MIN;
+        // SAFETY: the caller supplies a verified LONG getter of this interface.
+        let hresult = unsafe { getter(self.0.as_ptr().cast(), &mut value) };
+        NativeNumber { hresult, value }
+    }
+
+    fn format_interface(
+        &self,
+        getter: InterfaceGetter,
+        name: &str,
+    ) -> TestResult<ComPtr<IUnknown>> {
+        let mut format = null_mut();
+        // SAFETY: GetFont/GetPara return an owned SDK interface reference.
+        check_hresult(unsafe { getter(self.0.as_ptr().cast(), &mut format) }, name)?;
+        // SAFETY: successful GetFont/GetPara transfers this owned reference.
+        unsafe { ComPtr::<IUnknown>::from_raw(format.cast()) }
+            .ok_or_else(|| format!("{name} returned null"))
+    }
+
+    fn font(&self) -> TestResult<ComPtr<IUnknown>> {
+        self.format_interface(self.table().base.get_font, "ITextRange2::GetFont")
+    }
+
+    fn paragraph(&self) -> TestResult<ComPtr<IUnknown>> {
+        self.format_interface(self.table().base.get_para, "ITextRange2::GetPara")
+    }
+
+    fn duplicate(&self) -> TestResult<(i32, Option<Self>)> {
+        let mut duplicate = null_mut();
+        // SAFETY: GetDuplicate is the SDK's owned ITextRange output at slot 11.
+        let result =
+            unsafe { (self.table().base.get_duplicate)(self.0.as_ptr().cast(), &mut duplicate) };
+        // SAFETY: a non-null output is an owned ITextRange reference.
+        let duplicate = unsafe { ComPtr::<IUnknown>::from_raw(duplicate.cast()) };
+        if result < 0 {
+            return Ok((result, None));
+        }
+        let duplicate = duplicate.ok_or("successful GetDuplicate returned null")?;
+        let mut range2 = null_mut();
+        // SAFETY: query the verified SDK IID before using its extended table.
+        check_hresult(
+            unsafe { duplicate.query_interface_raw(&IID_TEXT_RANGE2, &mut range2) } as i32,
+            "QueryInterface(ITextRange2 duplicate)",
+        )?;
+        // SAFETY: successful QueryInterface transfers an owned reference.
+        let duplicate = unsafe { ComPtr::<IUnknown>::from_raw(range2.cast()) }
+            .map(Self)
+            .ok_or("QueryInterface(ITextRange2 duplicate) returned null")?;
+        Ok((result, Some(duplicate)))
+    }
+
+    fn gravity_state(&self) -> TestResult<GravityRangeState> {
+        let range = self.state()?;
+        let gravity = self.raw_number(self.table().get_gravity);
+        let flags = self.raw_number(self.table().base.get_flags);
+        let font = self.font()?;
+        let paragraph = self.paragraph()?;
+        // SAFETY: the format getters returned the verified SDK interfaces.
+        let font_table = unsafe { &**font.as_ptr().cast::<*const TextFontVTable>() };
+        // SAFETY: GetPara returned an owned ITextPara with this verified prefix.
+        let paragraph_table = unsafe { &**paragraph.as_ptr().cast::<*const TextParaVTable>() };
+        let read = |object: &ComPtr<IUnknown>, getter: Getter| {
+            let mut value = i32::MIN;
+            // SAFETY: callers pair a typed SDK getter with its live interface.
+            let hresult = unsafe { getter(object.as_ptr().cast(), &mut value) };
+            NativeNumber { hresult, value }
+        };
+        let bold = read(&font, font_table.get_bold);
+        let italic = read(&font, font_table.get_italic);
+        let alignment = read(&paragraph, paragraph_table.get_alignment);
+        let text = self.text()?;
+        let text_utf16_length = text.encode_utf16().count();
+        assert_eq!(
+            self.state()?,
+            range,
+            "format observation must not move its range"
+        );
+        Ok(GravityRangeState {
+            range,
+            gravity,
+            flags,
+            bold,
+            italic,
+            alignment,
+            text,
+            text_utf16_length,
+        })
+    }
+}
+
+struct GravityRangeState {
+    range: RangeState,
+    gravity: NativeNumber,
+    flags: NativeNumber,
+    bold: NativeNumber,
+    italic: NativeNumber,
+    alignment: NativeNumber,
+    text: String,
+    text_utf16_length: usize,
+}
+
+impl std::fmt::Debug for GravityRangeState {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("GravityRangeState")
+            .field("range", &self.range)
+            .field("gravity", &self.gravity)
+            .field("flags", &self.flags)
+            .field("bold", &self.bold)
+            .field("italic", &self.italic)
+            .field("alignment", &self.alignment)
+            .field("text", &self.text)
+            .field("text_utf16_length", &self.text_utf16_length)
+            .finish()
+    }
+}
+
+struct GravitySnapshot {
+    primary: GravityRangeState,
+    duplicate: Option<GravityRangeState>,
+    story_text: String,
+    story_text_utf16_length: usize,
+    story_length: i32,
+    selection: SelectionState,
+}
+
+impl std::fmt::Debug for GravitySnapshot {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("GravitySnapshot")
+            .field("primary", &self.primary)
+            .field("duplicate", &self.duplicate)
+            .field("story_text", &self.story_text)
+            .field("story_text_utf16_length", &self.story_text_utf16_length)
+            .field("story_length", &self.story_length)
+            .field("selection", &self.selection)
+            .finish()
+    }
+}
+
+impl GravitySnapshot {
+    fn capture(
+        primary: &NativeRange2,
+        duplicate: Option<&NativeRange2>,
+        document: &NativeDocument,
+        selection: &NativeSelection,
+    ) -> TestResult<Self> {
+        let selected = selection.state()?;
+        let state = primary.gravity_state()?;
+        let duplicate = duplicate.map(NativeRange2::gravity_state).transpose()?;
+        let story_length =
+            primary.number(primary.table().base.get_story_length, "GetStoryLength")?;
+        let story_text = document.range(0, story_length)?.text()?;
+        let story_text_utf16_length = story_text.encode_utf16().count();
+        assert!(story_text_utf16_length <= story_length as usize);
+        assert_eq!(
+            selection.state()?,
+            selected,
+            "gravity observation retains selection"
+        );
+        Ok(Self {
+            primary: state,
+            duplicate,
+            story_text,
+            story_text_utf16_length,
+            story_length,
+            selection: selected,
+        })
+    }
+}
+
+#[derive(Clone, Copy)]
+enum GravityTarget {
+    Primary,
+    Duplicate,
+    External(i32, i32),
+}
+
+#[derive(Clone, Copy)]
+enum GravityOperation<'a> {
+    GetGravity,
+    SetGravity(i32),
+    SetRange(i32, i32),
+    SetStart(i32),
+    SetEnd(i32),
+    Collapse(i32),
+    Duplicate,
+    SetText(&'a str),
+    SetBold(i32),
+    SetItalic(i32),
+    SetAlignment(i32),
+}
+
+#[derive(Clone, Copy)]
+struct GravityAction<'a> {
+    target: GravityTarget,
+    operation: GravityOperation<'a>,
+}
+
+impl<'a> GravityAction<'a> {
+    fn primary(operation: GravityOperation<'a>) -> Self {
+        Self {
+            target: GravityTarget::Primary,
+            operation,
+        }
+    }
+
+    fn duplicate(operation: GravityOperation<'a>) -> Self {
+        Self {
+            target: GravityTarget::Duplicate,
+            operation,
+        }
+    }
+
+    fn external(start: i32, end: i32, operation: GravityOperation<'a>) -> Self {
+        Self {
+            target: GravityTarget::External(start, end),
+            operation,
+        }
+    }
+}
+
+fn observe_gravity_step(
+    name: &str,
+    step: usize,
+    role: &str,
+    action: GravityAction<'_>,
+    primary: &NativeRange2,
+    duplicate: &mut Option<NativeRange2>,
+    document: &NativeDocument,
+    selection: &NativeSelection,
+) -> TestResult<i32> {
+    use GravityOperation::*;
+    let (target, range) = match action.target {
+        GravityTarget::Primary => ("Primary", primary.clone()),
+        GravityTarget::Duplicate => (
+            "Duplicate",
+            duplicate
+                .as_ref()
+                .ok_or("duplicate command without a duplicate")?
+                .clone(),
+        ),
+        GravityTarget::External(start, end) => ("External", document.range(start, end)?),
+    };
+    let (method, mut argument1, mut argument2, value, text) = match action.operation {
+        GetGravity => ("GetGravity", 0, 0, 0, ""),
+        SetGravity(value) => ("SetGravity", 0, 0, value, ""),
+        SetRange(start, end) => ("SetRange", start, end, 0, ""),
+        SetStart(start) => ("SetStart", start, 0, 0, ""),
+        SetEnd(end) => ("SetEnd", 0, end, 0, ""),
+        Collapse(value) => ("Collapse", 0, 0, value, ""),
+        Duplicate => ("Duplicate", 0, 0, 0, ""),
+        SetText(text) => ("SetText", 0, 0, 0, text),
+        SetBold(value) => ("SetBold", 0, 0, value, ""),
+        SetItalic(value) => ("SetItalic", 0, 0, value, ""),
+        SetAlignment(value) => ("SetAlignment", 0, 0, value, ""),
+    };
+    if let GravityTarget::External(start, end) = action.target {
+        assert!(matches!(
+            action.operation,
+            SetText(_) | SetBold(_) | SetItalic(_) | SetAlignment(_)
+        ));
+        argument1 = start;
+        argument2 = end;
+    }
+    let before = GravitySnapshot::capture(primary, duplicate.as_ref(), document, selection)?;
+    let action_before = range.state()?;
+    let mut output = None;
+    let table = range.table();
+    let result = match action.operation {
+        GetGravity => {
+            let number = range.raw_number(table.get_gravity);
+            output = Some(number.value);
+            number.hresult
+        }
+        SetGravity(value) => {
+            // SAFETY: SDK SetGravity takes a signed LONG; invalid values are measured.
+            unsafe { (table.set_gravity)(range.0.as_ptr().cast(), value) }
+        }
+        SetRange(start, end) => {
+            // SAFETY: both signed LONG positions, including extreme values, are SDK inputs.
+            unsafe { (table.base.set_range)(range.0.as_ptr().cast(), start, end) }
+        }
+        SetStart(start) => {
+            // SAFETY: the verified SDK slot accepts one signed LONG position.
+            unsafe { (table.base.set_start)(range.0.as_ptr().cast(), start) }
+        }
+        SetEnd(end) => {
+            // SAFETY: the verified SDK slot accepts one signed LONG position.
+            unsafe { (table.base.set_end)(range.0.as_ptr().cast(), end) }
+        }
+        Collapse(value) => {
+            // SAFETY: the SDK takes tomTrue (-1) for start and tomFalse (0) for end.
+            unsafe { (table.base.collapse)(range.0.as_ptr().cast(), value) }
+        }
+        Duplicate => {
+            assert!(matches!(action.target, GravityTarget::Primary));
+            assert!(duplicate.is_none(), "one independent duplicate per fixture");
+            let (result, copy) = range.duplicate()?;
+            *duplicate = copy;
+            result
+        }
+        SetText(text) => {
+            let text = Bstr(string_to_bstr(text));
+            if text.0.is_null() {
+                return Err("SysAllocStringLen for gravity SetText failed".into());
+            }
+            // SAFETY: SetText borrows the allocated explicit-length BSTR synchronously.
+            unsafe { (table.base.set_text)(range.0.as_ptr().cast(), text.0) }
+        }
+        SetBold(value) | SetItalic(value) => {
+            let font = range.font()?;
+            // SAFETY: GetFont returned the SDK ITextFont interface.
+            let table = unsafe { &**font.as_ptr().cast::<*const TextFontVTable>() };
+            let setter = if matches!(action.operation, SetBold(_)) {
+                table.set_bold
+            } else {
+                table.set_italic
+            };
+            // SAFETY: the typed setter borrows its live ITextFont interface.
+            unsafe { setter(font.as_ptr().cast(), value) }
+        }
+        SetAlignment(value) => {
+            let paragraph = range.paragraph()?;
+            // SAFETY: GetPara returned the SDK ITextPara interface.
+            let table = unsafe { &**paragraph.as_ptr().cast::<*const TextParaVTable>() };
+            // SAFETY: the typed setter borrows its live ITextPara interface.
+            unsafe { (table.set_alignment)(paragraph.as_ptr().cast(), value) }
+        }
+    };
+    let action_after = range.state()?;
+    let after = GravitySnapshot::capture(primary, duplicate.as_ref(), document, selection)?;
+    let text_utf16_length = text.encode_utf16().count();
+    println!(
+        "SYSTEM_MSFTEDIT_GRAVITY fixture={name} step={step} role={role} target={target} operation={method} argument1={argument1} argument2={argument2} value={value} text={text:?} text_utf16_length={text_utf16_length} action_before={action_before:?} action_after={action_after:?} before={before:?} after={after:?} hresult=0x{:08X} output={output:?}",
+        result as u32,
+    );
+    Ok(result)
+}
+
+fn characterize_gravity_fixture(
+    name: &str,
+    text: &str,
+    setup: &[GravityAction<'_>],
+    initial: (i32, i32),
+    gravity: i32,
+    actions: &[GravityAction<'_>],
+) -> TestResult<usize> {
+    let window = HiddenRichEdit::new()?;
+    window.set_text(text)?;
+    let document = window.document()?;
+    let selection = document.selection()?;
+    let length = text.encode_utf16().count() as i32;
+    let primary = document.range(0, 0)?;
+    let story_length = primary.number(primary.table().base.get_story_length, "GetStoryLength")?;
+    assert_eq!(
+        document.range(0, length)?.text()?,
+        text,
+        "exact gravity fixture setup"
+    );
+    let commands = setup.len() + 2 + actions.len();
+    println!(
+        "SYSTEM_MSFTEDIT_GRAVITY_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length} window_ex_style=0 expected_commands={commands}"
+    );
+    let mut duplicate = None;
+    let prefix = [
+        GravityAction::primary(GravityOperation::SetRange(initial.0, initial.1)),
+        GravityAction::primary(GravityOperation::SetGravity(gravity)),
+    ];
+    for (step, action) in setup
+        .iter()
+        .chain(&prefix)
+        .chain(actions)
+        .copied()
+        .enumerate()
+    {
+        let role = if step < setup.len() {
+            "Setup"
+        } else {
+            "Target"
+        };
+        let result = observe_gravity_step(
+            name,
+            step,
+            role,
+            action,
+            &primary,
+            &mut duplicate,
+            &document,
+            &selection,
+        )?;
+        if role == "Setup" {
+            check_hresult(result, "gravity fixture format setup")?;
+        }
+    }
+    Ok(commands)
+}
+
+fn characterize_gravity() -> TestResult {
+    use GravityAction as A;
+    use GravityOperation::*;
+    let _apartment = OleApartment::new()?;
+    let library = SystemRichEditLibrary::load()?;
+    library.describe()?;
+    let mut commands = 0;
+    let mut fixtures = 0;
+    let mut observe =
+        |name: &str, text: &str, setup: &[A<'_>], initial, gravity, actions: &[A<'_>]| {
+            commands += characterize_gravity_fixture(name, text, setup, initial, gravity, actions)?;
+            fixtures += 1;
+            Ok::<_, String>(())
+        };
+    for gravity in 0..=4 {
+        for (name, text, split, position, paragraphs) in [
+            ("ascii_start", "abCD", 2, 0, false),
+            ("ascii_boundary", "abCD", 2, 2, false),
+            ("ascii_end", "abCD", 2, 4, false),
+            ("unicode_boundary", "a😀e\u{301}Z", 3, 3, false),
+            ("unicode_combining_inside", "a😀e\u{301}Z", 3, 4, false),
+            ("paragraph_before_mark", "ab\rcd", 3, 2, true),
+            ("paragraph_after_mark", "ab\rcd", 3, 3, true),
+            ("space_boundary", "ab CD", 3, 3, false),
+            ("empty", "", 0, 0, false),
+        ] {
+            let length = text.encode_utf16().count() as i32;
+            let mut setup = vec![
+                A::external(0, length, SetBold(0)),
+                A::external(0, length, SetItalic(0)),
+                A::external(0, length, SetAlignment(0)),
+            ];
+            if length > 0 {
+                setup.push(A::external(0, split, SetBold(-1)));
+                setup.push(A::external(split, length, SetItalic(-1)));
+            }
+            if paragraphs {
+                setup.push(A::external(split, length, SetAlignment(2)));
+            }
+            observe(
+                &format!("gravity_{gravity}_affinity_{name}"),
+                text,
+                &setup,
+                (position, position),
+                gravity,
+                &[
+                    A::primary(GetGravity),
+                    A::primary(SetText("X")),
+                    A::primary(GetGravity),
+                ],
+            )?;
+        }
+        // Fresh controls distinguish insertion at each boundary from edits
+        // earlier/later in the story. Native duplicates are tracked in parallel.
+        for (direction, initial) in [("forward", (1, 4)), ("reverse", (4, 1)), ("caret", (2, 2))] {
+            for position in [0, 1, 2, 4, 6] {
+                observe(
+                    &format!("gravity_{gravity}_insert_{direction}_{position}"),
+                    "abcdef",
+                    &[],
+                    initial,
+                    gravity,
+                    &[
+                        A::primary(Duplicate),
+                        A::external(position, position, SetText("X")),
+                        A::primary(GetGravity),
+                        A::duplicate(GetGravity),
+                    ],
+                )?;
+            }
+        }
+        for (direction, initial) in [("forward", (1, 4)), ("reverse", (4, 1))] {
+            for (name, start, end, text) in [
+                ("left_overlap", 0, 2, "X"),
+                ("inside", 2, 3, "😀"),
+                ("right_delete", 3, 6, ""),
+                ("whole", 0, 6, "Z"),
+            ] {
+                observe(
+                    &format!("gravity_{gravity}_replace_{direction}_{name}"),
+                    "abcdef",
+                    &[],
+                    initial,
+                    gravity,
+                    &[
+                        A::primary(Duplicate),
+                        A::external(start, end, SetText(text)),
+                        A::primary(GetGravity),
+                        A::duplicate(GetGravity),
+                    ],
+                )?;
+            }
+            observe(
+                &format!("gravity_{gravity}_retention_{direction}"),
+                "abcdef",
+                &[],
+                initial,
+                gravity,
+                &[
+                    A::primary(GetGravity),
+                    A::primary(Duplicate),
+                    A::duplicate(SetGravity((gravity + 1) % 5)),
+                    A::primary(SetRange(initial.0, initial.1)),
+                    A::primary(SetRange(2, 5)),
+                    A::primary(SetRange(5, 2)),
+                    A::primary(SetStart(6)),
+                    A::primary(SetEnd(0)),
+                    A::primary(SetRange(1, 4)),
+                    A::primary(Collapse(-1)),
+                    A::primary(Collapse(-1)),
+                    A::primary(SetRange(4, 1)),
+                    A::primary(Collapse(0)),
+                    A::primary(SetRange(2, 2)),
+                    A::primary(SetText("Q")),
+                    A::duplicate(GetGravity),
+                    A::primary(GetGravity),
+                ],
+            )?;
+        }
+        observe(
+            &format!("gravity_{gravity}_extreme_endpoints"),
+            "abcdef",
+            &[],
+            (1, 4),
+            gravity,
+            &[
+                A::primary(SetStart(i32::MIN)),
+                A::primary(SetEnd(i32::MAX)),
+                A::primary(SetRange(i32::MAX, i32::MIN)),
+                A::primary(Collapse(-1)),
+                A::primary(SetRange(-5, 2)),
+                A::primary(SetRange(2, -5)),
+                A::primary(SetStart(i32::MAX)),
+                A::primary(SetEnd(i32::MIN)),
+                A::primary(GetGravity),
+            ],
+        )?;
+    }
+    for value in [i32::MIN, -9_999_999, -2, -1, 5, 6, 32, i32::MAX] {
+        for (direction, initial) in [("caret", (2, 2)), ("forward", (1, 4)), ("reverse", (4, 1))] {
+            observe(
+                &format!("gravity_invalid_{value}_{direction}"),
+                "abcdef",
+                &[],
+                initial,
+                2,
+                &[
+                    A::primary(SetGravity(value)),
+                    A::primary(GetGravity),
+                    A::primary(Duplicate),
+                    A::duplicate(GetGravity),
+                    A::primary(SetRange(2, 2)),
+                    A::primary(GetGravity),
+                ],
+            )?;
+        }
+    }
+    assert_eq!(
+        (commands, fixtures),
+        (1577, 199),
+        "keep the gravity matrix complete"
+    );
+    println!("SYSTEM_MSFTEDIT_GRAVITY_PROBE_COMPLETE commands={commands} fixtures={fixtures}");
+    Ok(())
+}
+
+#[test]
+fn rich_text_tom_oracle_system_msftedit_gravity_characterization() {
+    std::thread::Builder::new()
+        .name("system-msftedit-gravity".into())
+        .spawn(characterize_gravity)
+        .expect("start the native gravity TOM probe thread")
+        .join()
+        .expect("the native gravity TOM probe thread panicked")
+        .expect("the native gravity TOM probe failed");
 }

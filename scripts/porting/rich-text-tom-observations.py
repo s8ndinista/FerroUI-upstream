@@ -22,9 +22,9 @@ ENGINE = re.compile(
     r"file_version=(\d+\.\d+\.\d+\.\d+)"
 )
 FIXTURE = re.compile(
-    r'(VERTICAL_|HORIZONTAL_|OPTIONS_|LINK_)?FIXTURE name=(\S+) text=("(?:\\.|[^"\\])*") '
+    r'(VERTICAL_|HORIZONTAL_|OPTIONS_|LINK_|GRAVITY_)?FIXTURE name=(\S+) text=("(?:\\.|[^"\\])*") '
     r"(?:supplied_)?utf16_length=(\d+) native_story_length=(\d+)"
-    r"(?: window_ex_style=(\d+))?"
+    r"(?: window_ex_style=(\d+))?(?: expected_commands=(\d+))?"
 )
 HOME_END = re.compile(
     r"HOME_END fixture=(\S+) supplied_utf16_length=(\d+) native_story_length=(\d+) "
@@ -84,6 +84,52 @@ LINK = re.compile(
     r"before=" + link_snapshot_pattern("before") + r" after=" + link_snapshot_pattern("after")
     + r" hresult=(?P<hresult>0x[0-9A-F]{8}) result_null=(?P<result_null>true|false) "
     rf"result=(?P<result>{DEBUG_STRING}) result_utf16_length=(?P<result_length>\d+)"
+)
+
+
+def native_number_pattern(prefix: str) -> str:
+    return (
+        rf"NativeNumber \{{ hresult: (?P<{prefix}_hresult>0x[0-9A-F]{{8}}), "
+        rf"value: (?P<{prefix}_value>-?\d+) \}}"
+    )
+
+
+def gravity_range_pattern(prefix: str) -> str:
+    result = (
+        rf"GravityRangeState \{{ range: RangeState \{{ start: (?P<{prefix}_start>-?\d+), "
+        rf"end: (?P<{prefix}_end>-?\d+) \}}, "
+    )
+    for name in ("gravity", "flags", "bold", "italic", "alignment"):
+        result += name + ": " + native_number_pattern(prefix + "_" + name) + ", "
+    return result + (
+        rf"text: (?P<{prefix}_text>{DEBUG_STRING}), "
+        rf"text_utf16_length: (?P<{prefix}_text_utf16_length>\d+) \}}"
+    )
+
+
+def gravity_snapshot_pattern(prefix: str) -> str:
+    return (
+        r"GravitySnapshot \{ primary: " + gravity_range_pattern(prefix + "_primary")
+        + rf", duplicate: (?:(?P<{prefix}_duplicate_none>None)|Some\("
+        + gravity_range_pattern(prefix + "_duplicate") + r"\)), "
+        + rf"story_text: (?P<{prefix}_story_text>{DEBUG_STRING}), "
+        rf"story_text_utf16_length: (?P<{prefix}_story_text_utf16_length>\d+), "
+        rf"story_length: (?P<{prefix}_story_length>\d+), "
+        rf"selection: SelectionState \{{ start: (?P<{prefix}_selection_start>-?\d+), "
+        rf"end: (?P<{prefix}_selection_end>-?\d+), flags: (?P<{prefix}_flags>\d+) \}} \}}"
+    )
+
+
+GRAVITY = re.compile(
+    r"GRAVITY fixture=(?P<fixture>\S+) step=(?P<step>\d+) role=(?P<role>Setup|Target) "
+    r"target=(?P<target>Primary|Duplicate|External) "
+    r"operation=(?P<operation>GetGravity|SetGravity|SetRange|SetStart|SetEnd|Collapse|Duplicate|SetText|SetBold|SetItalic|SetAlignment) "
+    r"argument1=(?P<argument1>-?\d+) argument2=(?P<argument2>-?\d+) value=(?P<value>-?\d+) "
+    rf"text=(?P<text>{DEBUG_STRING}) text_utf16_length=(?P<text_utf16_length>\d+) "
+    r"action_before=RangeState \{ start: (?P<action_before_start>-?\d+), end: (?P<action_before_end>-?\d+) \} "
+    r"action_after=RangeState \{ start: (?P<action_after_start>-?\d+), end: (?P<action_after_end>-?\d+) \} "
+    r"before=" + gravity_snapshot_pattern("before") + r" after=" + gravity_snapshot_pattern("after")
+    + r" hresult=(?P<hresult>0x[0-9A-F]{8}) output=(?:None|Some\((?P<output>-?\d+)\))"
 )
 
 
@@ -243,6 +289,128 @@ def validate_link_steps(fixture: dict, rows: list[dict]) -> None:
                 raise ValueError("Link readback must observe the same target range")
 
 
+def signed_long(value: str) -> int:
+    result = int(value)
+    if not -(2 ** 31) <= result < 2 ** 31:
+        raise ValueError("gravity value does not fit the native signed LONG ABI")
+    return result
+
+
+def gravity_range(values: dict[str, str], prefix: str, story_length: int) -> dict:
+    start, end = (signed_long(values[prefix + "_" + name]) for name in ("start", "end"))
+    if not 0 <= start <= end <= story_length:
+        raise ValueError("gravity range exceeds its exact native story")
+    result = {"range": {"start": start, "end": end}}
+    for name in ("gravity", "flags", "bold", "italic", "alignment"):
+        result[name] = {
+            "hresult": values[prefix + "_" + name + "_hresult"],
+            "value": signed_long(values[prefix + "_" + name + "_value"]),
+        }
+    text = rust_string(values[prefix + "_text"])
+    length = int(values[prefix + "_text_utf16_length"])
+    if len(text.encode("utf-16-le")) // 2 != length:
+        raise ValueError("gravity range text disagrees with its UTF-16 length")
+    return {**result, "text": text, "text_utf16_length": length}
+
+
+def gravity_snapshot(values: dict[str, str], prefix: str) -> dict:
+    story_length = signed_long(values[prefix + "_story_length"])
+    text = rust_string(values[prefix + "_story_text"])
+    length = int(values[prefix + "_story_text_utf16_length"])
+    if len(text.encode("utf-16-le")) // 2 != length or length > story_length:
+        raise ValueError("gravity story text disagrees with its UTF-16/native lengths")
+    selected = state(tuple(values[prefix + "_" + name] for name in ("selection_start", "selection_end", "flags")))
+    if selected["end"] > story_length or selected["flags"] >= 2 ** 31:
+        raise ValueError("gravity selection exceeds its native story or signed flags ABI")
+    return {
+        "primary": gravity_range(values, prefix + "_primary", story_length),
+        "duplicate": None if values[prefix + "_duplicate_none"] else gravity_range(values, prefix + "_duplicate", story_length),
+        "story_text": text,
+        "story_text_utf16_length": length,
+        "story_length": story_length,
+        "selection": selected,
+    }
+
+
+def gravity_command(match: re.Match) -> dict:
+    values = match.groupdict()
+    result = {name: values[name] for name in ("fixture", "role", "target", "operation", "hresult")}
+    result["step"] = int(values["step"])
+    for name in ("argument1", "argument2", "value"):
+        result[name] = signed_long(values[name])
+    result["text"] = rust_string(values["text"])
+    result["text_utf16_length"] = int(values["text_utf16_length"])
+    if len(result["text"].encode("utf-16-le")) // 2 != result["text_utf16_length"]:
+        raise ValueError("gravity command text disagrees with its UTF-16 length")
+    result["output"] = None if values["output"] is None else signed_long(values["output"])
+    for phase in ("before", "after"):
+        result[phase] = gravity_snapshot(values, phase)
+        action = {name: signed_long(values["action_" + phase + "_" + name]) for name in ("start", "end")}
+        if not 0 <= action["start"] <= action["end"] <= result[phase]["story_length"]:
+            raise ValueError("gravity action range exceeds its exact story")
+        result["action_" + phase] = action
+        if result["target"] != "External":
+            target = result[phase][result["target"].lower()]
+            if target is None or target["range"] != action:
+                raise ValueError("gravity action range disagrees with its tracked target")
+    operation, target = result["operation"], result["target"]
+    a, b, value = (result[name] for name in ("argument1", "argument2", "value"))
+    if (operation == "GetGravity") != (result["output"] is not None):
+        raise ValueError("only GetGravity has an integer output")
+    if operation != "SetText" and result["text"]:
+        raise ValueError("only gravity SetText has text input")
+    if target == "External":
+        if operation not in ("SetText", "SetBold", "SetItalic", "SetAlignment"):
+            raise ValueError("unexpected operation on an external gravity edit range")
+        if result["action_before"] != {"start": a, "end": b}:
+            raise ValueError("external gravity range disagrees with its exact creation arguments")
+    elif operation not in ("SetRange", "SetStart", "SetEnd") and (a or b):
+        raise ValueError("unexpected range arguments to gravity command")
+    elif (operation == "SetStart" and b) or (operation == "SetEnd" and a):
+        raise ValueError("unexpected second endpoint argument")
+    if operation not in ("SetGravity", "Collapse", "SetBold", "SetItalic", "SetAlignment") and value:
+        raise ValueError("unexpected integer value argument to gravity command")
+    if operation == "Collapse" and value not in (-1, 0):
+        raise ValueError("gravity probe Collapse requires tomTrue or tomFalse")
+    if operation in ("SetBold", "SetItalic", "SetAlignment"):
+        allowed = (-1, 0) if operation != "SetAlignment" else (0, 2)
+        if target != "External" or result["role"] != "Setup" or value not in allowed:
+            raise ValueError("gravity format commands must be declared external setup")
+    if result["role"] == "Setup":
+        if operation not in ("SetBold", "SetItalic", "SetAlignment") or int(result["hresult"], 16) >= 0x80000000:
+            raise ValueError("gravity fixture setup must successfully establish formatting")
+    if operation == "Duplicate":
+        if target != "Primary" or result["before"]["duplicate"] is not None:
+            raise ValueError("gravity duplicate must be created once from its primary")
+        success = int(result["hresult"], 16) < 0x80000000
+        if success != (result["after"]["duplicate"] is not None):
+            raise ValueError("gravity duplicate result disagrees with its HRESULT")
+    elif (result["before"]["duplicate"] is None) != (result["after"]["duplicate"] is None):
+        raise ValueError("gravity command unexpectedly creates or destroys its duplicate")
+    return result
+
+
+def validate_gravity_steps(fixture: dict, rows: list[dict]) -> None:
+    if len(rows) != fixture["expected_commands"] or [row["step"] for row in rows] != list(range(len(rows))):
+        raise ValueError("gravity steps do not match their declared consecutive command count")
+    targets = [index for index, row in enumerate(rows) if row["role"] == "Target"]
+    if len(targets) < 2 or targets != list(range(targets[0], len(rows))):
+        raise ValueError("gravity setup must precede the complete target sequence")
+    prefix = rows[targets[0]:targets[0] + 2]
+    if [(row["target"], row["operation"]) for row in prefix] != [("Primary", "SetRange"), ("Primary", "SetGravity")]:
+        raise ValueError("gravity target sequence must establish its directed range and gravity")
+    if rows[-1]["operation"] != "GetGravity":
+        raise ValueError("gravity fixture must finish with an explicit getter readback")
+    first = rows[0]["before"]
+    if first["primary"]["range"] != {"start": 0, "end": 0} or first["duplicate"] is not None:
+        raise ValueError("gravity fixture must begin with a fresh independent caret range")
+    if first["story_length"] != fixture["native_story_length"] or not first["story_text"].startswith(fixture["text"]):
+        raise ValueError("gravity initial story disagrees with its exact fixture")
+    for previous, current in zip(rows, rows[1:]):
+        if previous["after"] != current["before"]:
+            raise ValueError("gravity state changed between consecutive observed commands")
+
+
 def extract(log: str) -> dict:
     engine = None
     fixtures = []
@@ -251,6 +419,7 @@ def extract(log: str) -> dict:
     horizontal = []
     options = []
     link = []
+    gravity = []
     completed = {}
     for line_number, line in enumerate(log.splitlines(), 1):
         marker = line.find(PREFIX)
@@ -280,6 +449,7 @@ def extract(log: str) -> dict:
                     "HORIZONTAL_": "horizontal",
                     "OPTIONS_": "options",
                     "LINK_": "link",
+                    "GRAVITY_": "gravity",
                 }[match[1]],
                 "name": match[2],
                 "text": text,
@@ -288,14 +458,20 @@ def extract(log: str) -> dict:
             }
             if fixture["native_story_length"] < fixture["supplied_utf16_length"]:
                 raise ValueError("native story is shorter than its supplied text")
-            if fixture["family"] in ("horizontal", "options", "link"):
+            if fixture["family"] in ("horizontal", "options", "link", "gravity"):
                 if match[6] is None or int(match[6]) > 0xFFFFFFFF:
-                    raise ValueError("horizontal/options/Link fixture needs its native u32 window style")
+                    raise ValueError("horizontal/options/Link/gravity fixture needs its native u32 window style")
                 fixture["window_ex_style"] = int(match[6])
             elif match[6] is not None:
-                raise ValueError("unexpected window style outside horizontal/options/Link fixture")
-            if fixture["family"] == "link" and "link" in completed:
-                raise ValueError("Link fixture follows its completion marker")
+                raise ValueError("unexpected window style outside horizontal/options/Link/gravity fixture")
+            if fixture["family"] == "gravity":
+                if match[7] is None or int(match[7]) < 2:
+                    raise ValueError("gravity fixture needs its declared command count")
+                fixture["expected_commands"] = int(match[7])
+            elif match[7] is not None:
+                raise ValueError("unexpected per-fixture command count outside gravity")
+            if fixture["family"] in ("link", "gravity") and fixture["family"] in completed:
+                raise ValueError("Link/gravity fixture follows its completion marker")
             fixtures.append(fixture)
             continue
         match = HOME_END.fullmatch(row)
@@ -396,6 +572,14 @@ def extract(log: str) -> dict:
                 raise ValueError("Link command precedes its exact fixture")
             link.append(link_command(match))
             continue
+        match = GRAVITY.fullmatch(row)
+        if match:
+            if "gravity" in completed:
+                raise ValueError("gravity command follows its completion marker")
+            if not any(fixture["family"] == "gravity" and fixture["name"] == match["fixture"] for fixture in fixtures):
+                raise ValueError("gravity command precedes its exact fixture")
+            gravity.append(gravity_command(match))
+            continue
         match = re.fullmatch(r"PROBE_COMPLETE commands=(\d+) repeated_noops=(\d+)", row)
         if match:
             if "home_end" in completed:
@@ -426,6 +610,12 @@ def extract(log: str) -> dict:
                 raise ValueError("duplicate Link completion")
             completed["link"] = (int(match[1]), int(match[2]))
             continue
+        match = re.fullmatch(r"GRAVITY_PROBE_COMPLETE commands=(\d+) fixtures=(\d+)", row)
+        if match:
+            if "gravity" in completed:
+                raise ValueError("duplicate gravity completion")
+            completed["gravity"] = (int(match[1]), int(match[2]))
+            continue
         raise ValueError(f"unrecognized probe row on log line {line_number}: {row}")
 
     if engine is None or not completed:
@@ -447,6 +637,10 @@ def extract(log: str) -> dict:
         counts = (len(link), sum(fixture["family"] == "link" for fixture in fixtures))
         if counts != completed.get("link") or not link:
             raise ValueError("Link observations do not match the completion counts")
+    if gravity or "gravity" in completed:
+        counts = (len(gravity), sum(fixture["family"] == "gravity" for fixture in fixtures))
+        if counts != completed.get("gravity") or not gravity:
+            raise ValueError("gravity observations do not match the completion counts")
     by_fixture = {}
     for fixture in fixtures:
         identity = (fixture["family"], fixture["name"])
@@ -482,6 +676,15 @@ def extract(log: str) -> dict:
         link_rows.setdefault(identity, []).append(row)
     for identity, rows in link_rows.items():
         validate_link_steps(by_fixture[identity], rows)
+    gravity_rows = {}
+    for row in gravity:
+        identity = ("gravity", row["fixture"])
+        if identity not in by_fixture:
+            raise ValueError("gravity command has no exact text fixture")
+        used_fixtures.add(identity)
+        gravity_rows.setdefault(identity, []).append(row)
+    for identity, rows in gravity_rows.items():
+        validate_gravity_steps(by_fixture[identity], rows)
     if used_fixtures != by_fixture.keys():
         raise ValueError("declared fixture has no observed command")
     result = {
@@ -507,6 +710,10 @@ def extract(log: str) -> dict:
         result["link"] = link
         result["counts"]["link"] = len(link)
         result["counts"]["link_fixtures"] = len(link_rows)
+    if gravity:
+        result["gravity"] = gravity
+        result["counts"]["gravity"] = len(gravity)
+        result["counts"]["gravity_fixtures"] = len(gravity_rows)
     return result
 
 

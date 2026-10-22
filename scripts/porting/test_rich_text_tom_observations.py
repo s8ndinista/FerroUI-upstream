@@ -69,6 +69,42 @@ def link_row(row: dict) -> str:
     )
 
 
+def native_number_row(value: dict) -> str:
+    return 'NativeNumber { hresult: %s, value: %s }' % (value["hresult"], value["value"])
+
+
+def range_state_row(value: dict) -> str:
+    return 'RangeState { start: %s, end: %s }' % (value["start"], value["end"])
+
+
+def gravity_range_row(value: dict) -> str:
+    result = 'GravityRangeState { range: ' + range_state_row(value["range"]) + ', '
+    for name in ("gravity", "flags", "bold", "italic", "alignment"):
+        result += name + ': ' + native_number_row(value[name]) + ', '
+    return result + f'text: {debug_string(value["text"])}, text_utf16_length: {value["text_utf16_length"]} }}'
+
+
+def gravity_snapshot_row(value: dict) -> str:
+    duplicate = 'None' if value["duplicate"] is None else 'Some(' + gravity_range_row(value["duplicate"]) + ')'
+    return (
+        'GravitySnapshot { primary: ' + gravity_range_row(value["primary"]) + ', duplicate: ' + duplicate
+        + f', story_text: {debug_string(value["story_text"])}, story_text_utf16_length: {value["story_text_utf16_length"]}'
+        + f', story_length: {value["story_length"]}, selection: {native_state(value["selection"])} }}'
+    )
+
+
+def gravity_row(row: dict) -> str:
+    output = 'None' if row["output"] is None else 'Some(%s)' % row["output"]
+    return (
+        f'GRAVITY fixture={row["fixture"]} step={row["step"]} role={row["role"]} target={row["target"]} '
+        f'operation={row["operation"]} argument1={row["argument1"]} argument2={row["argument2"]} value={row["value"]} '
+        f'text={debug_string(row["text"])} text_utf16_length={row["text_utf16_length"]} '
+        f'action_before={range_state_row(row["action_before"])} action_after={range_state_row(row["action_after"])} '
+        f'before={gravity_snapshot_row(row["before"])} after={gravity_snapshot_row(row["after"])} '
+        f'hresult={row["hresult"]} output={output}'
+    )
+
+
 def record_log(record: dict) -> str:
     """Reconstitute the probe grammar from immutable previously captured rows."""
     engine = record["engine"]
@@ -82,6 +118,8 @@ def record_log(record: dict) -> str:
         )
         if "window_ex_style" in fixture:
             line += f' window_ex_style={fixture["window_ex_style"]}'
+        if "expected_commands" in fixture:
+            line += f' expected_commands={fixture["expected_commands"]}'
         lines.append(line)
     for family in ("home_end", "vertical", "horizontal"):
         for row in record.get(family, []):
@@ -113,7 +151,9 @@ def record_log(record: dict) -> str:
         lines.append(options_row(row))
     for row in record.get("link", []):
         lines.append(link_row(row))
-    for family in ("home_end", "vertical", "horizontal", "options", "link"):
+    for row in record.get("gravity", []):
+        lines.append(gravity_row(row))
+    for family in ("home_end", "vertical", "horizontal", "options", "link", "gravity"):
         count = record["counts"].get(family, 0)
         if not count:
             continue
@@ -121,6 +161,8 @@ def record_log(record: dict) -> str:
             lines.append(f'PROBE_COMPLETE commands={count} repeated_noops={record["counts"]["home_end_repeats"]}')
         elif family == "link":
             lines.append(f'LINK_PROBE_COMPLETE commands={count} fixtures={record["counts"]["link_fixtures"]}')
+        elif family == "gravity":
+            lines.append(f'GRAVITY_PROBE_COMPLETE commands={count} fixtures={record["counts"]["gravity_fixtures"]}')
         else:
             lines.append(f'{family.upper()}_PROBE_COMPLETE commands={count}')
     return "\n".join("SYSTEM_MSFTEDIT_" + line for line in lines)
@@ -178,6 +220,87 @@ def synthetic_link_record() -> dict:
         }],
         "home_end": [], "vertical": [], "link": [copy.deepcopy(row) for row in rows],
         "counts": {"home_end": 0, "home_end_repeats": 0, "vertical": 0, "link": 2, "link_fixtures": 1},
+    }
+
+
+def synthetic_gravity_record() -> dict:
+    """Invented parser states, explicitly not native gravity/format expectations."""
+    def number(value: int, hresult: str = "0x00000000") -> dict:
+        return {"hresult": hresult, "value": value}
+
+    def text_length(text: str) -> int:
+        return len(text.encode("utf-16-le")) // 2
+
+    def tracked(start: int, end: int, gravity: int, story: str) -> dict:
+        text = story.encode("utf-16-le")[2 * start:2 * end].decode("utf-16-le")
+        return {
+            "range": {"start": start, "end": end}, "gravity": number(gravity),
+            "flags": number(-(2 ** 31), "0x80004001"), "bold": number(0),
+            "italic": number(0), "alignment": number(0), "text": text,
+            "text_utf16_length": text_length(text),
+        }
+
+    current = {
+        "primary": tracked(0, 0, 0, "a😀b\r"), "duplicate": None,
+        "story_text": "a😀b\r", "story_text_utf16_length": 5, "story_length": 5,
+        "selection": {"start": 0, "end": 0, "flags": 17, "anchor": 0, "active": 0},
+    }
+    rows = []
+
+    def add(operation: str, after: dict, *, target: str = "Primary", a: int = 0, b: int = 0,
+            value: int = 0, text: str = "", role: str = "Target", hresult: str = "0x00000000",
+            output: int | None = None) -> None:
+        nonlocal current
+        action_before = {"start": a, "end": b} if target == "External" else current[target.lower()]["range"]
+        action_after = (
+            {"start": a, "end": a + text_length(text)} if operation == "SetText" else action_before
+        ) if target == "External" else after[target.lower()]["range"]
+        rows.append(copy.deepcopy({
+            "fixture": "example_gravity", "step": len(rows), "role": role, "target": target,
+            "operation": operation, "argument1": a, "argument2": b, "value": value,
+            "text": text, "text_utf16_length": text_length(text), "before": current,
+            "after": after, "action_before": action_before, "action_after": action_after,
+            "hresult": hresult, "output": output,
+        }))
+        current = copy.deepcopy(after)
+
+    after = copy.deepcopy(current)
+    after["primary"]["bold"] = number(-1)
+    add("SetBold", after, target="External", a=0, b=1, value=-1, role="Setup")
+    after = copy.deepcopy(current)
+    after["primary"] = tracked(1, 3, 0, current["story_text"])
+    after["primary"]["bold"] = number(-9_999_999)
+    add("SetRange", after, a=3, b=1)
+    after = copy.deepcopy(current)
+    after["primary"]["gravity"] = number(4)
+    add("SetGravity", after, value=4)
+    after = copy.deepcopy(current)
+    after["duplicate"] = copy.deepcopy(after["primary"])
+    add("Duplicate", after)
+    after = copy.deepcopy(current)
+    after.update(story_text="aX😀b\r", story_text_utf16_length=6, story_length=6)
+    for name in ("primary", "duplicate"):
+        after[name] = tracked(1, 4, 4, after["story_text"])
+        after[name]["bold"] = number(-9_999_999)
+    add("SetText", after, target="External", a=1, b=1, text="X")
+    after = copy.deepcopy(current)
+    after["duplicate"]["gravity"] = number(2)
+    add("SetGravity", after, target="Duplicate", value=2)
+    after = copy.deepcopy(current)
+    after["primary"] = tracked(0, 0, 4, after["story_text"])
+    add("SetRange", after, a=0, b=0)
+    add("GetGravity", current, output=4)
+    add("SetGravity", current, value=-(2 ** 31), hresult="0x80070057")
+    add("Collapse", current, value=-1, hresult="0x00000001")
+    add("GetGravity", current, output=4)
+    return {
+        "engine": {"windows_version": [10, 0, 26100], "dll_path": "Msftedit.dll", "dll_file_version": "1.2.3.4"},
+        "fixtures": [{
+            "family": "gravity", "name": "example_gravity", "text": "a😀b", "supplied_utf16_length": 4,
+            "native_story_length": 5, "window_ex_style": 0, "expected_commands": len(rows),
+        }],
+        "home_end": [], "vertical": [], "gravity": rows,
+        "counts": {"home_end": 0, "home_end_repeats": 0, "vertical": 0, "gravity": len(rows), "gravity_fixtures": 1},
     }
 
 
@@ -352,6 +475,160 @@ class NativeObservationExtractionTests(unittest.TestCase):
         ):
             with self.assertRaises(ValueError):
                 PARSER.extract("\n".join(reordered))
+
+    def test_gravity_roundtrips_raw_getters_formats_direction_and_live_duplicates(self) -> None:
+        expected = synthetic_gravity_record()
+        actual = PARSER.extract(record_log(expected))
+        self.assertEqual(actual, expected)
+        rows = actual["gravity"]
+        self.assertEqual((rows[1]["argument1"], rows[1]["argument2"]), (3, 1))
+        self.assertEqual(rows[1]["after"]["primary"]["bold"]["value"], -9_999_999)
+        self.assertEqual(rows[1]["after"]["primary"]["flags"], {"hresult": "0x80004001", "value": -(2 ** 31)})
+        self.assertEqual(rows[4]["after"]["primary"]["text"], "X😀")
+        self.assertEqual(rows[5]["after"]["duplicate"]["gravity"]["value"], 2)
+        self.assertEqual(rows[5]["after"]["primary"]["gravity"]["value"], 4)
+        self.assertEqual(rows[8]["hresult"], "0x80070057")
+        self.assertEqual(rows[9]["hresult"], "0x00000001")
+
+    def test_gravity_keeps_extreme_invalid_inputs_and_failed_getter_outputs(self) -> None:
+        for value in (-(2 ** 31), -9_999_999, -1, 5, 2 ** 31 - 1):
+            record = synthetic_gravity_record()
+            record["gravity"][8]["value"] = value
+            record["gravity"][7]["hresult"] = "0x80004001"
+            record["gravity"][7]["output"] = -(2 ** 31)
+            with self.subTest(value=value):
+                self.assertEqual(PARSER.extract(record_log(record)), record)
+        record = synthetic_gravity_record()
+        record["gravity"][6]["argument1"] = 2 ** 31 - 1
+        record["gravity"][6]["argument2"] = -(2 ** 31)
+        self.assertEqual(PARSER.extract(record_log(record)), record)
+
+    def test_gravity_rejects_incomplete_duplicate_or_mismatched_completion(self) -> None:
+        record = synthetic_gravity_record()
+        log = record_log(record)
+        invalid = [
+            log.rsplit("\n", 1)[0],
+            log.replace("expected_commands=11", "expected_commands=10"),
+            log.replace("commands=11 fixtures=1", "commands=10 fixtures=1"),
+            log.replace("commands=11 fixtures=1", "commands=11 fixtures=2"),
+            log + "\nSYSTEM_MSFTEDIT_GRAVITY_PROBE_COMPLETE commands=11 fixtures=1",
+            log + "\nSYSTEM_MSFTEDIT_" + gravity_row(record["gravity"][-1]),
+            log.replace("step=9 role=Target", "step=10 role=Target"),
+        ]
+        for rows in (record["gravity"][:-1], record["gravity"] + [record["gravity"][-1]],
+                     [record["gravity"][1], record["gravity"][0], *record["gravity"][2:]]):
+            changed = copy.deepcopy(record)
+            changed["gravity"] = rows
+            changed["counts"]["gravity"] = len(rows)
+            changed["fixtures"][0]["expected_commands"] = len(rows)
+            invalid.append(record_log(changed))
+        for value in invalid:
+            with self.subTest(log=value[-90:]), self.assertRaises(ValueError):
+                PARSER.extract(value)
+
+    def test_gravity_rejects_unknown_or_late_fixture_declarations(self) -> None:
+        lines = record_log(synthetic_gravity_record()).splitlines()
+        invalid = (
+            [lines[0], lines[2], lines[1], *lines[3:]],
+            [*lines, lines[1].replace("name=example_gravity", "name=late")],
+            [lines[0], lines[1].replace(" expected_commands=11", ""), *lines[2:]],
+            [lines[0], lines[1].replace(" window_ex_style=0", ""), *lines[2:]],
+        )
+        for reordered in invalid:
+            with self.assertRaises(ValueError):
+                PARSER.extract("\n".join(reordered))
+        with self.assertRaises(ValueError):
+            PARSER.extract(SYNTHETIC_OPTIONS.replace("window_ex_style=0", "window_ex_style=0 expected_commands=1"))
+
+    def test_gravity_rejects_contradictory_ranges_utf16_and_native_widths(self) -> None:
+        baseline = synthetic_gravity_record()
+        for row_index, path, value in (
+            (1, ("argument1",), 2 ** 31),
+            (2, ("value",), -(2 ** 31) - 1),
+            (7, ("output",), 2 ** 31),
+            (0, ("before", "primary", "gravity", "value"), 2 ** 31),
+            (0, ("before", "primary", "range", "end"), 6),
+            (0, ("before", "primary", "text_utf16_length"), 1),
+            (0, ("before", "story_text_utf16_length"), 4),
+            (0, ("before", "story_length"), 4),
+            (0, ("before", "selection", "end"), 6),
+            (0, ("before", "selection", "flags"), 2 ** 31),
+            (4, ("text_utf16_length",), 2),
+            (4, ("action_before", "end"), 2),
+            (4, ("action_after", "end"), 7),
+            (5, ("action_before", "start"), 0),
+            (5, ("after", "duplicate", "range", "start"), 5),
+        ):
+            record = copy.deepcopy(baseline)
+            target = record["gravity"][row_index]
+            for name in path[:-1]:
+                target = target[name]
+            target[path[-1]] = value
+            with self.subTest(row=row_index, path=path), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+
+    def test_gravity_rejects_wrong_argument_shapes_and_unrecorded_outputs(self) -> None:
+        for row_index, key, value in (
+            (7, "output", None), (8, "output", 4), (8, "argument1", 1),
+            (8, "text", "X"), (6, "value", 1), (9, "value", 1),
+            (0, "target", "Primary"), (0, "role", "Target"), (0, "value", 2),
+            (0, "hresult", "0x80070057"), (7, "role", "Setup"),
+            (1, "operation", "GetUnknownGravity"),
+        ):
+            record = synthetic_gravity_record()
+            record["gravity"][row_index][key] = value
+            if key == "text":
+                record["gravity"][row_index]["text_utf16_length"] = len(value.encode("utf-16-le")) // 2
+            with self.subTest(row=row_index, key=key), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+
+    def test_gravity_rejects_inconsistent_duplicate_lifetimes_and_targets(self) -> None:
+        for row_index, phase, key, value in (
+            (3, "before", "duplicate", synthetic_gravity_record()["gravity"][3]["after"]["duplicate"]),
+            (3, "after", "duplicate", None),
+            (4, "after", "duplicate", None),
+            (5, "before", "duplicate", None),
+        ):
+            record = synthetic_gravity_record()
+            record["gravity"][row_index][phase][key] = value
+            with self.subTest(row=row_index, phase=phase), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+        record = synthetic_gravity_record()
+        record["gravity"][3]["hresult"] = "0x80004001"
+        with self.assertRaises(ValueError):
+            PARSER.extract(record_log(record))
+
+    def test_gravity_rejects_missing_initial_configuration_or_state_continuity(self) -> None:
+        for row_index, path, value in (
+            (1, ("operation",), "SetStart"),
+            (2, ("operation",), "Collapse"),
+            (4, ("before", "primary", "bold", "value"), -1),
+            (4, ("before", "story_text"), "x😀b\r"),
+            (4, ("before", "selection", "flags"), 16),
+        ):
+            record = synthetic_gravity_record()
+            target = record["gravity"][row_index]
+            for name in path[:-1]:
+                target = target[name]
+            target[path[-1]] = value
+            with self.subTest(row=row_index, path=path), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+        record = synthetic_gravity_record()
+        record["fixtures"][0]["text"] = "x😀b"
+        with self.assertRaises(ValueError):
+            PARSER.extract(record_log(record))
+
+    def test_gravity_and_link_families_coexist_without_changing_old_schema(self) -> None:
+        gravity = synthetic_gravity_record()
+        link = synthetic_link_record()
+        record = copy.deepcopy(gravity)
+        record["fixtures"].extend(link["fixtures"])
+        record["link"] = link["link"]
+        record["counts"].update(link=2, link_fixtures=1)
+        self.assertEqual(PARSER.extract(record_log(record)), record)
+        old = PARSER.extract(SYNTHETIC_OPTIONS)
+        self.assertNotIn("gravity", old)
+        self.assertNotIn("gravity", old["counts"])
 
 
 if __name__ == "__main__":
