@@ -117,7 +117,9 @@ pub fn register_types() {
     static ONCE: std::sync::Once = std::sync::Once::new();
     ONCE.call_once(|| {
         ferroui_markup_xaml::register_types();
-        ferroui_themes_simple::register_types();
+        // Deviation (DEVIATIONS.md, Developer tools): the WinUI 3 theme, which the window includes
+        // in place of the Simple theme of upstream.
+        ferroui_themes_winui::register_types();
         ferroui_controls_color_picker::register_types();
         ferroui_controls_treedatagrid::register_types();
         TypeInfo::register_namespaces(NAMESPACES);

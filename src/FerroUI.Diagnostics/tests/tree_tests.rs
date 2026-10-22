@@ -1,7 +1,9 @@
 //! Not from upstream: the upstream project has no tests. The nodes of the
 //! logical and visual trees and their children following the trees, the
 //! collection of the children, the filter view model, the observable of a
-//! property of a view model, and the selection of a control in a tree page.
+//! property of a view model, the selection of a control in a tree page, and
+//! the rows of the TreeDataGrid of a tree page (the port shows the nodes in a
+//! TreeDataGrid where upstream has a tree view).
 
 use crate::diagnostics::view_models::{
     FilterViewModel, LogicalTreeNode, ReactiveExtensions, TreeNodeCollection, TreeNodeKind,
@@ -14,6 +16,8 @@ use ferroui_base::reactive::ObservableExt;
 use ferroui_base::threading::{Dispatcher, UnitTestDispatcherScope};
 use ferroui_base::{FerroObject, Ref};
 use ferroui_controls::{Border, Button, Control, IItemsList, StackPanel, TextBlock};
+use ferroui_treedatagrid_core::models::IRows;
+use ferroui_treedatagrid_core::IndexPath;
 use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
 use std::rc::{Rc, Weak};
@@ -349,8 +353,86 @@ fn selecting_a_control_selects_its_node_and_expands_its_ancestors() {
 
     page.collapse_children();
     assert!(!node.is_expanded());
+
+    // The row of a node without children does not stay expanded (the TreeDataGrid of the page
+    // writes the state of the row back to the node), so the nodes with children are the ones
+    // expand_recursively leaves expanded.
+    page.set_selected_node(Some(border_node.clone()));
+    page.collapse_children();
+    assert!(!border_node.is_expanded());
     page.expand_recursively();
-    assert!(node.is_expanded());
+    assert!(border_node.is_expanded());
+}
+
+#[test]
+fn the_rows_of_a_tree_page_list_the_children_of_a_node_when_it_is_expanded() {
+    let _scope = scope();
+    let (page, _panel, border, text) = tree_page();
+    let root = page.nodes().get(0);
+    let rows = page.nodes_source().typed_rows();
+
+    // The row of the root only: the children of the root are not listed.
+    assert_eq!(1, IRows::count(&*rows));
+    assert!(!root.children().is_initialized());
+
+    // Expanding the root lists its children and makes their rows; the children of the border are
+    // not listed.
+    root.set_is_expanded(true);
+    assert_eq!(2, IRows::count(&*rows));
+    assert!(root.children().is_initialized());
+    let border_node = root.children().get(0);
+    assert!(border_node.visual().ptr_eq(&border));
+    assert!(!border_node.children().is_initialized());
+    assert!(Rc::ptr_eq(rows.to_vec_typed()[1].model(), &border_node));
+
+    // Expanding a row expands its node.
+    rows.to_vec_typed()[1].set_is_expanded(true);
+    assert!(border_node.is_expanded());
+    assert_eq!(3, IRows::count(&*rows));
+    assert!(rows.to_vec_typed()[2].model().visual().ptr_eq(&text));
+
+    // A child added to an expanded node gets a row.
+    border.set_child(Button::new());
+    assert_eq!(3, IRows::count(&*rows));
+    assert_eq!("Button", rows.to_vec_typed()[2].model().type_());
+
+    // Collapsing a node collapses its row.
+    root.set_is_expanded(false);
+    assert_eq!(1, IRows::count(&*rows));
+}
+
+#[test]
+fn selecting_a_control_selects_the_row_of_its_node_and_expands_the_rows_of_its_ancestors() {
+    let _scope = scope();
+    let (page, _panel, _border, text) = tree_page();
+    let source = page.nodes_source();
+    let rows = source.typed_rows();
+    assert_eq!(1, IRows::count(&*rows));
+    assert_eq!(-1, page.selected_row_index());
+
+    page.select_control(&text.clone().upcast());
+
+    // The rows of the root and of the border were made and expanded; the row of the text block is
+    // selected.
+    let node = page.selected_node().expect("a selected node");
+    assert_eq!(3, IRows::count(&*rows));
+    let selection = source.row_selection().expect("the selection of the rows");
+    assert!(selection.base().selected_item().is_some_and(|selected| Rc::ptr_eq(&selected, &node)));
+    assert!(page.index_path_of(&node) == Some(IndexPath::from_indexes(&[0, 0, 0])));
+    assert_eq!(2, page.selected_row_index());
+
+    // Selecting a row selects its node.
+    selection.base().set_selected_index(IndexPath::new(0));
+    assert!(page.selected_node().is_some_and(|selected| Rc::ptr_eq(&selected, &page.nodes().get(0))));
+    assert_eq!(0, page.selected_row_index());
+
+    // No selected node, no selected row.
+    page.set_selected_node(None);
+    assert!(selection.base().selected_item().is_none());
+
+    // A node that is not in the trees of the page has no row.
+    let other = LogicalTreeNode::new(object(&Border::new()), None);
+    assert!(page.index_path_of(&other).is_none());
 }
 
 #[test]

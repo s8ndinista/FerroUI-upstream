@@ -1143,7 +1143,9 @@ impl PropertiesView {
             header("Property"),
             ResourceKey::from(PROPERTY_NAME_CELL_TEMPLATE),
             None,
-            Some(GridLength::new(1.0, GridUnitType::Star)),
+            // Deviation (DEVIATIONS.md, Developer tools): as wide as the names, so that the
+            // columns of types after it do not take their room.
+            Some(GridLength::new(1.0, GridUnitType::Auto)),
             Some(Rc::new(name_options)),
         );
         let weak = self.weak_self.clone();

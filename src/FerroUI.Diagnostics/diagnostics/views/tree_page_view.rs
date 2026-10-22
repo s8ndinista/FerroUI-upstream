@@ -1,21 +1,28 @@
 //! Port of `Diagnostics/Views/TreePageView.xaml.cs`: the class of the
 //! document `TreePageView.xaml`.
+//!
+//! The tree of the document is a TreeDataGrid, where upstream has a tree view
+//! (docs/porting/DEVIATIONS.md, Developer tools).
 
 use crate::diagnostics::controls::ControlHighlightAdorner;
 use crate::diagnostics::view_models::{TreeNode, TreePageViewModel};
 use crate::diagnostics::DevToolsDataFormats;
-use ferroui_base::input::{DataTransfer, DataTransferItem, IAsyncDataTransfer, InputElementImpl, PointerEventArgs};
+use ferroui_base::data::model::INotifyPropertyChanged;
+use ferroui_base::input::{
+    DataTransfer, DataTransferItem, IAsyncDataTransfer, InputElementImpl, PointerEventArgs, TappedEventArgs,
+};
 use ferroui_base::interactivity::{IRoutedEventArgs, InteractiveImpl};
 use ferroui_base::layout::LayoutableImpl;
 use ferroui_base::metadata::from_markup_value;
 use ferroui_base::reactive::IDisposable;
-use ferroui_base::threading::Dispatcher;
+use ferroui_base::threading::{Dispatcher, DispatcherPriority};
 use ferroui_base::{
     ferro_class, ferro_class_info, ferro_impl_classes, instantiate, BoxedValue, FerroObjectImpl, FerroObjectImplExt,
     FerroPropertyChangedEventArgs, Ref, StyledElement, StyledElementImpl, Visual, VisualImpl,
 };
-use ferroui_controls::primitives::TemplatedControlImpl;
-use ferroui_controls::{ContentControlImpl, ControlImpl, TopLevel, TreeView, TreeViewItem, UserControl};
+use ferroui_controls::primitives::{TemplatedControlImpl, ToggleButton};
+use ferroui_controls::{ContentControlImpl, Control, ControlImpl, TopLevel, UserControl};
+use ferroui_controls_treedatagrid::TreeDataGrid;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -25,10 +32,14 @@ use std::rc::Rc;
 #[repr(C)]
 pub struct TreePageView {
     base: UserControl,
-    hovered: RefCell<Option<Ref<TreeViewItem>>>,
-    tree: RefCell<Option<Ref<TreeView>>>,
+    // Deviation (DEVIATIONS.md, Developer tools): the node of the row under the pointer, where
+    // upstream keeps the item container of the tree view (the rows of the TreeDataGrid are
+    // recycled for other nodes as the grid scrolls).
+    hovered: RefCell<Option<Rc<TreeNode>>>,
+    tree: RefCell<Option<Ref<TreeDataGrid>>>,
     adorner: RefCell<Option<Rc<dyn IDisposable>>>,
     clipboard_copy_requested: RefCell<Option<Rc<dyn IDisposable>>>,
+    selected_node_changed: RefCell<Option<(Rc<TreePageViewModel>, u64)>>,
 }
 
 ferro_class!(TreePageView: UserControl);
@@ -58,6 +69,12 @@ ferro_class_info!(TreePageView {
                         this.remove_adorner(&sender, e)
                     }
                 },
+            fn ToggleExpanded(Option<BoxedValue>, Rc<dyn IRoutedEventArgs>) =>
+                |this: &Ref<TreePageView>, sender: Option<BoxedValue>, e: Rc<dyn IRoutedEventArgs>| {
+                    if let Some(e) = e.downcast_ref::<TappedEventArgs>() {
+                        this.toggle_expanded(&sender, e)
+                    }
+                },
         ],
     },
 });
@@ -80,6 +97,13 @@ impl FerroObjectImpl for TreePageView {
                 }
             }
 
+            // Deviation (DEVIATIONS.md, Developer tools): the handler of the changes of the
+            // selected node, which brings its row into view, is removed from the old view model.
+            let selected_node_changed = this.selected_node_changed.borrow_mut().take();
+            if let Some((old_view_model, token)) = selected_node_changed {
+                old_view_model.property_changed().remove(token);
+            }
+
             let new_view_model = from_markup_value::<Rc<TreePageViewModel>>(&change.get_new_value::<Option<BoxedValue>>());
             if let Some(new_view_model) = new_view_model {
                 let weak = this.to_ref().downgrade();
@@ -89,6 +113,26 @@ impl FerroObjectImpl for TreePageView {
                     }
                 });
                 *this.clipboard_copy_requested.borrow_mut() = Some(subscription);
+
+                // Deviation (DEVIATIONS.md, Developer tools): the row of a node the view model
+                // selects is brought into view (the source has selected it and expanded the rows
+                // of its ancestors), once the grid has its rows.
+                let weak = this.to_ref().downgrade();
+                let token = new_view_model.property_changed().add(Rc::new(move |property_name: &str| {
+                    if property_name != "SelectedNode" {
+                        return;
+                    }
+                    let weak = weak.clone();
+                    Dispatcher::ui_thread().post_local(
+                        move || {
+                            if let Some(this) = weak.upgrade() {
+                                this.bring_selected_row_into_view();
+                            }
+                        },
+                        DispatcherPriority::default(),
+                    );
+                }));
+                *this.selected_node_changed.borrow_mut() = Some((new_view_model, token));
             }
         }
     }
@@ -105,6 +149,7 @@ impl TreePageView {
             tree: RefCell::new(None),
             adorner: RefCell::new(None),
             clipboard_copy_requested: RefCell::new(None),
+            selected_node_changed: RefCell::new(None),
         }
     }
 
@@ -119,7 +164,7 @@ impl TreePageView {
         crate::register_types();
         let this = instantiate(Self::construct());
         Self::initialize_component(&this);
-        *this.tree.borrow_mut() = Some(this.get_control::<TreeView>("tree"));
+        *this.tree.borrow_mut() = Some(this.get_control::<TreeDataGrid>("tree"));
         this
     }
 
@@ -130,15 +175,31 @@ impl TreePageView {
         }
     }
 
+    /// The node of the row of the grid that is `control` or contains it.
+    ///
+    /// Deviation (DEVIATIONS.md, Developer tools): the nodes are the rows of a TreeDataGrid, not
+    /// the items of a tree view.
+    fn node_of(&self, control: &Control) -> Option<Rc<TreeNode>> {
+        let tree = self.tree.borrow().clone()?;
+        tree.try_get_row_model::<TreeNode>(control)
+    }
+
     /// `UpdateAdorner`: highlights the control of the node under the
     /// pointer.
     pub fn update_adorner(&self, _sender: &Option<BoxedValue>, e: &PointerEventArgs) {
-        let Some(source) = e.source().and_then(|source| source.cast::<StyledElement>()) else {
+        let Some(source) = e.source().and_then(|source| source.cast::<Control>()) else {
             return;
         };
 
-        let item = source.find_logical_ancestor_of_type::<TreeViewItem>(false);
-        if item == *self.hovered.borrow() {
+        // Deviation (DEVIATIONS.md, Developer tools): the node of the row of the TreeDataGrid under
+        // the pointer, where upstream finds the item container of the tree view (and its owner).
+        let node = self.node_of(&source);
+        let same = match (&node, &*self.hovered.borrow()) {
+            (Some(node), Some(hovered)) => Rc::ptr_eq(node, hovered),
+            (None, None) => true,
+            _ => false,
+        };
+        if same {
             return;
         }
 
@@ -147,19 +208,14 @@ impl TreePageView {
             adorner.dispose();
         }
 
-        // Deviation (DEVIATIONS.md, Developer tools): `TreeViewItem::tree_view_owner` is internal
-        // to the controls crate; the owner is found as it finds it, as the nearest logical ancestor
-        // that is a tree view.
-        let tree = self.tree.borrow().clone();
-        let tree_view_owner = item.as_ref().and_then(|item| item.find_logical_ancestor_of_type::<TreeView>(false));
-        let Some(item) = item.filter(|_| tree_view_owner == tree) else {
+        let Some(node) = node else {
             *self.hovered.borrow_mut() = None;
             return;
         };
 
-        *self.hovered.borrow_mut() = Some(item.clone());
+        *self.hovered.borrow_mut() = Some(node.clone());
 
-        let visual = from_markup_value::<Rc<TreeNode>>(&item.data_context()).and_then(|node| node.visual().cast::<Visual>());
+        let visual = node.visual().cast::<Visual>();
         let should_visualize_margin_padding = from_markup_value::<Rc<TreePageViewModel>>(&self.data_context())
             .and_then(|view_model| view_model.main_view())
             .map(|main_view| main_view.should_visualize_margin_padding());
@@ -176,6 +232,50 @@ impl TreePageView {
         let adorner = self.adorner.borrow_mut().take();
         if let Some(adorner) = adorner {
             adorner.dispose();
+        }
+        // Deviation (DEVIATIONS.md, Developer tools): the row the pointer enters next is
+        // highlighted again (upstream keeps the item container, whose highlight it has removed).
+        *self.hovered.borrow_mut() = None;
+    }
+
+    /// Double tapping a node expands or collapses it, as double tapping the header of an item of
+    /// a tree view does; the expander of the row toggles it by itself.
+    ///
+    /// Deviation (DEVIATIONS.md, Developer tools): the nodes are the rows of a TreeDataGrid, which
+    /// has no such gesture.
+    fn toggle_expanded(&self, _sender: &Option<BoxedValue>, e: &TappedEventArgs) {
+        if e.handled() {
+            return;
+        }
+        let Some(source) = e.source().and_then(|source| source.cast::<Control>()) else {
+            return;
+        };
+        if source.find_ancestor_of_type::<ToggleButton>(true).is_some() {
+            return;
+        }
+        if let Some(node) = self.node_of(&source) {
+            if node.children().count() > 0 {
+                node.set_is_expanded(!node.is_expanded());
+                e.set_handled(true);
+            }
+        }
+    }
+
+    /// Brings the row of the selected node into view.
+    ///
+    /// Deviation (DEVIATIONS.md, Developer tools): the row of a node may not exist until the view
+    /// model selects it; upstream's tree view selects the item of a node only when it is shown.
+    fn bring_selected_row_into_view(&self) {
+        let Some(view_model) = from_markup_value::<Rc<TreePageViewModel>>(&self.data_context()) else {
+            return;
+        };
+        let row_index = view_model.selected_row_index();
+        if row_index < 0 {
+            return;
+        }
+        let tree = self.tree.borrow().clone();
+        if let Some(rows_presenter) = tree.and_then(|tree| tree.rows_presenter()) {
+            rows_presenter.bring_into_view(row_index, None);
         }
     }
 

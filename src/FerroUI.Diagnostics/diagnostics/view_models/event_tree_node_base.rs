@@ -2,9 +2,9 @@
 
 use super::{EventOwnerTreeNode, EventTreeNode, ViewModelBase};
 use ferroui_base::collections::FerroList;
-use ferroui_base::data::model::{Event, INotifyPropertyChanged};
+use ferroui_base::data::model::{Event, INotifyPropertyChanged, ModelTypes};
 use ferroui_base::ferro_markup_type;
-use std::cell::{Cell, RefCell};
+use std::cell::{Cell, OnceCell, RefCell};
 use std::rc::{Rc, Weak};
 
 /// What the deriving class of a node adds to it: the owner of a group of
@@ -14,8 +14,8 @@ use std::rc::{Rc, Weak};
 /// Upstream the node is an abstract class with these two deriving classes,
 /// whose `IsEnabled` overrides the virtual property of the base. In the port
 /// a node is one shared type, [`EventTreeNodeBase`], that carries the part of
-/// its deriving class: the tree view of the events page holds one item type
-/// (its item template is typed with the base class), and the type tests of
+/// its deriving class: the tree of the events page holds one model type
+/// (its cell template is typed with the base class), and the type tests of
 /// the original (`node is EventTreeNode eventNode`) are the hooks
 /// [`EventTreeNodeBase::as_event_tree_node`] and
 /// [`EventTreeNodeBase::as_event_owner_tree_node`].
@@ -40,6 +40,9 @@ pub struct EventTreeNodeBase {
     parent: Option<Weak<EventTreeNodeBase>>,
     text: String,
     children: RefCell<Option<FerroList<Rc<EventTreeNodeBase>>>>,
+    // Deviation (DEVIATIONS.md, Developer tools): the children the TreeDataGrid of the events
+    // page shows (the visible ones, in their order), made the first time they are asked for.
+    visible_children: OnceCell<Rc<FerroList<Rc<EventTreeNodeBase>>>>,
     kind: EventTreeNodeKind,
 }
 
@@ -75,6 +78,7 @@ impl EventTreeNodeBase {
             parent: parent.map(Rc::downgrade),
             text,
             children: RefCell::new(None),
+            visible_children: OnceCell::new(),
             kind: kind(this),
         });
         this.set_is_visible(true);
@@ -110,6 +114,37 @@ impl EventTreeNodeBase {
     /// The child nodes; `None` for a node without children.
     pub fn children(&self) -> Option<FerroList<Rc<EventTreeNodeBase>>> {
         self.children.borrow().clone()
+    }
+
+    /// The visible children, in their order: the child rows of the node in the TreeDataGrid of the
+    /// events page, which follow the filter of the page (`sync_visible_nodes`); `None` for a node
+    /// without children. The same list every time, so that the rows of the children are kept
+    /// while the node notifies other changes.
+    ///
+    /// Deviation (DEVIATIONS.md, Developer tools): upstream's tree view hides the items of the
+    /// nodes that are not visible; the rows of a TreeDataGrid are the nodes of its source.
+    pub fn visible_children(&self) -> Option<Rc<FerroList<Rc<EventTreeNodeBase>>>> {
+        let children = self.children()?;
+        let visible = self.visible_children.get_or_init(|| {
+            Rc::new(FerroList::from_items(children.to_vec().into_iter().filter(|child| child.is_visible())))
+        });
+        Some(visible.clone())
+    }
+
+    /// Updates the visible children (once they were asked for) after a change of the visibility
+    /// of the children.
+    pub(crate) fn update_visible_children(&self) {
+        if let (Some(children), Some(visible)) = (self.children(), self.visible_children.get()) {
+            sync_visible_nodes(&children.to_vec(), visible);
+        }
+    }
+
+    /// States what the TreeDataGrid of the events page observes of the nodes: their property
+    /// change notifications (the expansion of a node). Once per thread.
+    pub(crate) fn register_model() {
+        if !ModelTypes::is_registered(std::any::TypeId::of::<EventTreeNodeBase>()) {
+            ModelTypes::register::<EventTreeNodeBase>(|builder| builder.notify_property_changed());
+        }
     }
 
     /// The protected setter of `Children`.
@@ -190,7 +225,28 @@ impl EventTreeNodeBase {
     }
 }
 
-// The list of the child nodes, which the tree view of the events page shows.
+/// Makes `visible` the nodes of `all` that are visible, in the order of `all`: inserts the nodes
+/// that became visible and removes the ones that were hidden, so that the rows of the others are
+/// kept. `visible` holds nodes of `all` only, in their order.
+///
+/// Deviation (DEVIATIONS.md, Developer tools): the rows of the TreeDataGrid of the events page.
+pub(crate) fn sync_visible_nodes(all: &[Rc<EventTreeNodeBase>], visible: &FerroList<Rc<EventTreeNodeBase>>) {
+    let mut index = 0;
+    for node in all {
+        let shown = index < visible.count() && Rc::ptr_eq(&visible.get(index), node);
+        if node.is_visible() {
+            if !shown {
+                visible.insert(index, node.clone());
+            }
+            index += 1;
+        } else if shown {
+            visible.remove_at(index);
+        }
+    }
+}
+
+// The list of the child nodes (the items of a tree view upstream; the TreeDataGrid of the events
+// page shows the visible children, `visible_children`).
 ferroui_controls::ferro_markup_list!(pub EventTreeNodeList: Rc<EventTreeNodeBase>);
 
 ferro_markup_type!(class EventTreeNodeBase {

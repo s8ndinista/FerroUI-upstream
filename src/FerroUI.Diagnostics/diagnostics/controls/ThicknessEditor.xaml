@@ -25,7 +25,13 @@
                         BorderThickness="{TemplateBinding BorderThickness}">
                         <Grid RowDefinitions="Auto,*,Auto" ColumnDefinitions="Auto,*,Auto">
                             <Grid.Styles>
+                                <!-- Deviation (DEVIATIONS.md, Developer tools): MinWidth, MinHeight
+                                     and Padding: the boxes of the sides, without the minimum size
+                                     and the padding of a WinUI 3 text box. -->
                                 <Style Selector="TextBox.thickness-edit">
+                                    <Setter Property="MinWidth" Value="0" />
+                                    <Setter Property="MinHeight" Value="0" />
+                                    <Setter Property="Padding" Value="2,0" />
                                     <Setter Property="Background" Value="Transparent" />
                                     <Setter Property="BorderThickness" Value="0" />
                                     <Setter Property="Margin" Value="2" />

@@ -2,7 +2,7 @@
 
 use super::{TreeNodeCollection, ViewModelBase};
 use ferroui_base::collections::NotifyCollectionChangedEventArgs;
-use ferroui_base::data::model::{Event, INotifyPropertyChanged};
+use ferroui_base::data::model::{Event, INotifyPropertyChanged, ModelTypes};
 use ferroui_base::media::FontWeight;
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::{ferro_markup_type, FerroObject, Ref, StyledElement};
@@ -191,6 +191,17 @@ impl TreeNode {
         matches!(self.kind, TreeNodeKind::Visual { is_in_template: true })
     }
 
+    /// States what the TreeDataGrid of a tree page observes of the nodes: their property change
+    /// notifications (the expansion of a node, its classes). Once per thread.
+    ///
+    /// Deviation (DEVIATIONS.md, Developer tools): the tree pages show the nodes in a TreeDataGrid,
+    /// not in a tree view.
+    pub(crate) fn register_model() {
+        if !ModelTypes::is_registered(std::any::TypeId::of::<TreeNode>()) {
+            ModelTypes::register::<TreeNode>(|builder| builder.notify_property_changed());
+        }
+    }
+
     /// `Dispose()`: ends the subscription to the classes and disposes the
     /// children.
     pub fn dispose(&self) {
@@ -214,6 +225,10 @@ ferro_markup_type!(class TreeNode {
         IsExpanded: bool { get: TreeNode::is_expanded, set: TreeNode::set_is_expanded },
         Parent: Option<Rc<TreeNode>> { get: TreeNode::parent },
         Type: String { get: TreeNode::type_ },
+        // Deviation (DEVIATIONS.md, Developer tools): not a member of the base class upstream (it
+        // is `VisualTreeNode.IsInTemplate`); the cells of the tree pages show the nodes of
+        // template parts in their own style.
+        IsInTemplate: bool { get: TreeNode::is_in_template },
     ],
     notify_property_changed: TreeNode,
 });

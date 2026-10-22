@@ -5,14 +5,18 @@
              xmlns:convertes="using:FerroUI.Diagnostics.Converters"
              x:Class="FerroUI.Diagnostics.Views.MainView"
              x:DataType="viewModels:MainViewModel">
+  <!-- Deviation (DEVIATIONS.md, Developer tools): the brushes of the WinUI 3 theme in place of the
+       ones of the Simple theme: AccentFillColorDefaultBrush for HighlightBrush,
+       ControlStrongStrokeColorDefaultBrush for ThemeBorderHighBrush and CardStrokeColorDefaultBrush
+       for ThemeControlMidBrush. -->
   <UserControl.Resources>
     <x:Double x:Key="SampleSize">16</x:Double>
     <convertes:BrushSelectorConveter x:Key="bsc"
-               Brush="{DynamicResource HighlightBrush}"/>
+               Brush="{DynamicResource AccentFillColorDefaultBrush}"/>
   </UserControl.Resources>
   <UserControl.Styles>
     <Style Selector="Border.Sample">
-      <Setter Property="BorderBrush" Value="{DynamicResource ThemeBorderHighBrush}"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource ControlStrongStrokeColorDefaultBrush}"/>
       <Setter Property="BorderThickness" Value="1"/>
       <Setter Property="Grid.Column" Value="1"/>
       <Setter Property="Width" Value="{StaticResource SampleSize}"/>
@@ -130,7 +134,7 @@
                 <Border CornerRadius="8"
                         Width="16"
                         Height="16"
-                        BorderBrush="{DynamicResource ThemeBorderHighBrush}"
+                        BorderBrush="{DynamicResource ControlStrongStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         >
                   <Border Background="{Binding FocusHighlighter,Converter={StaticResource bsc},ConverterParameter={x:Null}}"
@@ -157,7 +161,7 @@
                 <Border CornerRadius="8"
                         Width="16"
                         Height="16"
-                        BorderBrush="{DynamicResource ThemeBorderHighBrush}"
+                        BorderBrush="{DynamicResource ControlStrongStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         >
                   <Border Background="{Binding FocusHighlighter,Converter={StaticResource bsc},ConverterParameter={x:Static Brushes.Red}}"
@@ -184,7 +188,7 @@
                 <Border CornerRadius="8"
                         Width="16"
                         Height="16"
-                        BorderBrush="{DynamicResource ThemeBorderHighBrush}"
+                        BorderBrush="{DynamicResource ControlStrongStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         >
                   <Border Background="{Binding FocusHighlighter,Converter={StaticResource bsc},ConverterParameter={x:Static Brushes.Blue}}"
@@ -211,7 +215,7 @@
                 <Border CornerRadius="8"
                         Width="16"
                         Height="16"
-                        BorderBrush="{DynamicResource ThemeBorderHighBrush}"
+                        BorderBrush="{DynamicResource ControlStrongStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         >
                   <Border Background="{Binding FocusHighlighter,Converter={StaticResource bsc},ConverterParameter={x:Static Brushes.Black}}"
@@ -238,7 +242,7 @@
                 <Border CornerRadius="8"
                         Width="16"
                         Height="16"
-                        BorderBrush="{DynamicResource ThemeBorderHighBrush}"
+                        BorderBrush="{DynamicResource ControlStrongStrokeColorDefaultBrush}"
                         BorderThickness="1"
                         >
                   <Border Background="{Binding FocusHighlighter,Converter={StaticResource bsc},ConverterParameter={x:Static Brushes.White}}"
@@ -267,16 +271,16 @@
     </TabStrip>
 
     <ContentControl Grid.Row="3"
-                    BorderBrush="{DynamicResource ThemeControlMidBrush}"
+                    BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
                     BorderThickness="0,1,0,0"
                     Content="{Binding Content}" />
 
     <GridSplitter Name="consoleSplitter" Grid.Row="4" Height="1"
-                  Background="{DynamicResource ThemeControlMidBrush}"
+                  Background="{DynamicResource CardStrokeColorDefaultBrush}"
                   IsVisible="False" />
 
     <Border Grid.Row="5"
-            BorderBrush="{DynamicResource ThemeControlMidBrush}"
+            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
             BorderThickness="0,1,0,0">
       <Grid ColumnDefinitions="*, Auto">
         <StackPanel Grid.Column="0" Spacing="4" Orientation="Horizontal">

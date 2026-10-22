@@ -6,26 +6,53 @@
              x:Class="FerroUI.Diagnostics.Views.EventsPageView"
              Margin="2"
              x:DataType="vm:EventsPageViewModel">
+  <UserControl.Resources>
+    <!-- Deviation (DEVIATIONS.md, Developer tools): the cells of the nodes of the TreeDataGrid of
+         the routed events (EventsPageViewModel.cs), what the item template of upstream's tree view
+         shows. -->
+    <DataTemplate x:Key="EventTreeNodeCell" x:DataType="vm:EventTreeNodeBase">
+      <CheckBox Classes="event-node" Content="{Binding Text}" IsChecked="{Binding IsEnabled, Mode=TwoWay}" />
+    </DataTemplate>
+  </UserControl.Resources>
+
   <UserControl.Styles>
+    <!-- Deviation (DEVIATIONS.md, Developer tools): the underline has no stroke of its own, so that
+         it has the colour of the text in the light and the dark variants (upstream: Black). -->
     <Style Selector="TextBlock.nav" >
       <Setter Property="TextDecorations">
         <TextDecorationCollection>
-          <TextDecoration Location="Underline" Stroke="Black" StrokeThickness="1" StrokeDashArray="2,2"/>
+          <TextDecoration Location="Underline" StrokeThickness="1" StrokeDashArray="2,2"/>
         </TextDecorationCollection>
       </Setter>
     </Style>
 
+    <!-- Deviation (DEVIATIONS.md, Developer tools): the brushes of the WinUI 3 theme in place of
+         the ones of the Simple theme (ThemeAccentBrush) and of Black. -->
     <Style Selector="TextBlock.nav:pointerover" >
-      <Setter Property="Foreground" Value="{DynamicResource ThemeAccentBrush}" />
+      <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
       <Setter Property="Cursor" Value="Help" />
     </Style>
 
     <Style Selector="ListBoxItem" >
       <Setter Property="BorderThickness" Value="1" />
+      <!-- Deviation (DEVIATIONS.md, Developer tools): the items of WinUI 3 align their content
+           left and are at least 40 high; the rows of the tools are stretched and compact. -->
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Padding" Value="8,2" />
     </Style>
 
     <Style Selector="ListBoxItem:selected /template/ ContentPresenter" >
-      <Setter Property="BorderBrush" Value="Black" />
+      <Setter Property="BorderBrush" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+    </Style>
+
+    <!-- Deviation (DEVIATIONS.md, Developer tools): the check boxes of the compact rows of the
+         TreeDataGrid, without the minimum size of a WinUI 3 check box. -->
+    <Style Selector="CheckBox.event-node">
+      <Setter Property="MinWidth" Value="0" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Padding" Value="6,0,0,0" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
     </Style>
 
     <Style Selector="ListBoxItem.handled" >
@@ -46,20 +73,19 @@
                               UseWholeWordFilter="{Binding UseWholeWordFilter}"
                               UseRegexFilter="{Binding UseRegexFilter}" />
 
-      <TreeView Grid.Row="1" ItemsSource="{Binding Nodes}" SelectedItem="{Binding SelectedNode, Mode=TwoWay}" >
-        <TreeView.DataTemplates>
-          <TreeDataTemplate DataType="vm:EventTreeNodeBase"
-                            ItemsSource="{Binding Children}">
-            <CheckBox Content="{Binding Text}" IsChecked="{Binding IsEnabled, Mode=TwoWay}" />
-          </TreeDataTemplate>
-        </TreeView.DataTemplates>
-        <TreeView.Styles>
-          <Style Selector="TreeViewItem" x:DataType="vm:EventTreeNodeBase">
-            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-            <Setter Property="IsVisible" Value="{Binding IsVisible}" />
-          </Style>
-        </TreeView.Styles>
-      </TreeView>
+      <!--
+      Deviation (DEVIATIONS.md, Developer tools): the routed events are the rows of a TreeDataGrid,
+      not the items of a tree view. The source of the grid (the visible nodes: the filter hides a
+      node by removing its row), its expander column and the selection of its rows (SelectedNode)
+      are those of EventsPageViewModel; the cells are the template EventTreeNodeCell.
+      -->
+      <TreeDataGrid Grid.Row="1"
+                    Name="EventsTree"
+                    BorderThickness="0"
+                    ShowColumnHeaders="False"
+                    CanUserResizeColumns="False"
+                    CanUserSortColumns="False"
+                    Source="{Binding NodesSource}" />
 
       <StackPanel Grid.Row="2" Margin="0,2" Orientation="Horizontal" Spacing="2">
         <Button Content="Disable all" Command="{Binding DisableAll}" />

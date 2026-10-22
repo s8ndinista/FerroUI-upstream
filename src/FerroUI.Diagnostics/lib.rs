@@ -12,8 +12,12 @@
 //! window.attach_dev_tools();
 //! ```
 //!
-//! The property grid of the control details is built on the TreeDataGrid of
-//! the port, where upstream compiled a copy of DataGrid into its project.
+//! The window has the WinUI 3 theme of the port in its compact density
+//! (`ferroui-themes-winui`), where upstream has the Simple theme. The logical
+//! and visual trees, the tree of the routed events and the property grid of
+//! the control details are built on the TreeDataGrid of the port, where
+//! upstream has tree views and a copy of DataGrid compiled into its project
+//! (docs/porting/DEVIATIONS.md, Developer tools).
 
 // The compiled markup of a document names the types of this crate by the name of the crate.
 extern crate self as ferroui_diagnostics;
