@@ -1016,6 +1016,7 @@ pub(super) const TYPES: &[&MarkupType] = &[
     <FerroList<Ref<GradientStop>> as MarkupTyped>::MARKUP,
     <FerroList<Rc<dyn ITransition>> as MarkupTyped>::MARKUP,
     <FerroList<Ref<KeyFrame>> as MarkupTyped>::MARKUP,
+    <FerroList<Ref<InputScopeName>> as MarkupTyped>::MARKUP,
     <FerroList<Ref<PathFigure>> as MarkupTyped>::MARKUP,
     <FerroList<Ref<PathSegment>> as MarkupTyped>::MARKUP,
     <FerroList<Ref<Drawing>> as MarkupTyped>::MARKUP,
@@ -1061,6 +1062,7 @@ pub(super) fn register_value_types() {
     ValueTypes::register_nullable::<FerroList<Ref<GradientStop>>>();
     ValueTypes::register_nullable::<FerroList<Rc<dyn ITransition>>>();
     ValueTypes::register_nullable::<FerroList<Ref<KeyFrame>>>();
+    ValueTypes::register_nullable::<FerroList<Ref<InputScopeName>>>();
     ValueTypes::register_nullable::<FerroList<Ref<PathFigure>>>();
     ValueTypes::register_nullable::<FerroList<Ref<PathSegment>>>();
     ValueTypes::register_nullable::<FerroList<Ref<Drawing>>>();
