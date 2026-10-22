@@ -2457,3 +2457,656 @@ fn rich_text_tom_oracle_system_msftedit_gravity_characterization() {
         .expect("the native gravity TOM probe thread panicked")
         .expect("the native gravity TOM probe failed");
 }
+
+// Actual selection Gravity is a separate measurement from document.Range.
+// ITextSelection2 has the ITextRange2 vtable without additional methods:
+// https://learn.microsoft.com/windows/win32/api/tom/nn-tom-itextselection2
+// The SDK pin above defines IID c241f5e1-7206-11d8-a2c7-00a0d1d6c6b3.
+// Both extended interfaces must resolve to the GetSelection object's canonical
+// IUnknown before this fixture is permitted to call its Gravity slots.
+const IID_TEXT_SELECTION2: Guid = Guid::from_u128(0xc241f5e1_7206_11d8_a2c7_00a0d1d6c6b3);
+const IID_NATIVE_UNKNOWN: Guid = Guid::from_u128(0x00000000_0000_0000_c000_000000000046);
+
+struct NativeInterfaceObservation {
+    hresult: i32,
+    is_null: bool,
+    identity: Option<(i32, bool, bool)>,
+}
+
+impl std::fmt::Debug for NativeInterfaceObservation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "NativeInterface {{ hresult: 0x{:08X}, is_null: {}, identity: ",
+            self.hresult as u32, self.is_null
+        )?;
+        if let Some((hresult, is_null, same_identity)) = self.identity {
+            write!(f, "Some(NativeIdentity {{ hresult: 0x{:08X}, is_null: {is_null}, same_identity: {same_identity} }})", hresult as u32)?;
+        } else {
+            write!(f, "None")?;
+        }
+        write!(f, " }}")
+    }
+}
+
+fn native_query(object: &ComPtr<IUnknown>, iid: &Guid) -> (i32, Option<ComPtr<IUnknown>>) {
+    let mut result = null_mut();
+    // SAFETY: an exact SDK IID and an owned interface-pointer output. Retain the
+    // HRESULT and null distinction before inspecting or using the interface.
+    let hresult = unsafe { object.query_interface_raw(iid, &mut result) } as i32;
+    // SAFETY: any returned non-null interface is one owned COM reference.
+    (hresult, unsafe {
+        ComPtr::<IUnknown>::from_raw(result.cast())
+    })
+}
+
+fn observed_query(
+    object: &ComPtr<IUnknown>,
+    iid: &Guid,
+    source_identity: &ComPtr<IUnknown>,
+) -> (NativeInterfaceObservation, Option<ComPtr<IUnknown>>) {
+    let (hresult, result) = native_query(object, iid);
+    let identity = if hresult >= 0 {
+        result.as_ref().map(|result| {
+            let (hresult, identity) = native_query(result, &IID_NATIVE_UNKNOWN);
+            let same = identity
+                .as_ref()
+                .is_some_and(|identity| identity.as_ptr() == source_identity.as_ptr());
+            (hresult, identity.is_none(), same)
+        })
+    } else {
+        None
+    };
+    (
+        NativeInterfaceObservation {
+            hresult,
+            is_null: result.is_none(),
+            identity,
+        },
+        result,
+    )
+}
+
+struct NativeTextObservation {
+    hresult: i32,
+    is_null: bool,
+    text: String,
+    text_utf16_length: usize,
+}
+
+impl std::fmt::Debug for NativeTextObservation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "NativeText {{ hresult: 0x{:08X}, is_null: {}, text: {:?}, text_utf16_length: {} }}",
+            self.hresult as u32, self.is_null, self.text, self.text_utf16_length
+        )
+    }
+}
+
+impl NativeRange2 {
+    fn observed_text(&self) -> TestResult<NativeTextObservation> {
+        let mut text = Bstr(null_mut());
+        // SAFETY: the verified getter writes an owned, possibly-null BSTR.
+        let hresult = unsafe { (self.table().base.get_text)(self.0.as_ptr().cast(), &mut text.0) };
+        let is_null = text.0.is_null();
+        let text = text.text()?;
+        let text_utf16_length = text.encode_utf16().count();
+        Ok(NativeTextObservation {
+            hresult,
+            is_null,
+            text,
+            text_utf16_length,
+        })
+    }
+
+    fn selection_gravity_state(&self) -> TestResult<SelectionGravityRangeState> {
+        let range = self.state()?;
+        let font = self.font()?;
+        let paragraph = self.paragraph()?;
+        // SAFETY: the SDK format getters return owned ITextFont/ITextPara.
+        let font_table = unsafe { &**font.as_ptr().cast::<*const TextFontVTable>() };
+        // SAFETY: GetPara returned an owned ITextPara with this verified prefix.
+        let para_table = unsafe { &**paragraph.as_ptr().cast::<*const TextParaVTable>() };
+        let read = |object: &ComPtr<IUnknown>, getter: Getter| {
+            let mut value = i32::MIN;
+            // SAFETY: each caller supplies the getter for its live interface.
+            let hresult = unsafe { getter(object.as_ptr().cast(), &mut value) };
+            NativeNumber { hresult, value }
+        };
+        let result = SelectionGravityRangeState {
+            range,
+            gravity: self.raw_number(self.table().get_gravity),
+            flags: self.raw_number(self.table().base.get_flags),
+            selection_type: self.raw_number(self.table().base.get_type),
+            bold: read(&font, font_table.get_bold),
+            italic: read(&font, font_table.get_italic),
+            alignment: read(&paragraph, para_table.get_alignment),
+            text: self.observed_text()?,
+        };
+        assert_eq!(
+            self.state()?,
+            range,
+            "selection gravity observation retains endpoints"
+        );
+        Ok(result)
+    }
+}
+
+struct SelectionGravityRangeState {
+    range: RangeState,
+    gravity: NativeNumber,
+    flags: NativeNumber,
+    selection_type: NativeNumber,
+    bold: NativeNumber,
+    italic: NativeNumber,
+    alignment: NativeNumber,
+    text: NativeTextObservation,
+}
+
+impl std::fmt::Debug for SelectionGravityRangeState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SelectionGravityRangeState")
+            .field("range", &self.range)
+            .field("gravity", &self.gravity)
+            .field("flags", &self.flags)
+            .field("selection_type", &self.selection_type)
+            .field("bold", &self.bold)
+            .field("italic", &self.italic)
+            .field("alignment", &self.alignment)
+            .field("text", &self.text)
+            .finish()
+    }
+}
+
+struct SelectionGravitySnapshot {
+    primary: SelectionGravityRangeState,
+    duplicate: Option<SelectionGravityRangeState>,
+    story_text: NativeTextObservation,
+    story_length: NativeNumber,
+    selection: SelectionState,
+}
+
+impl std::fmt::Debug for SelectionGravitySnapshot {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SelectionGravitySnapshot")
+            .field("primary", &self.primary)
+            .field("duplicate", &self.duplicate)
+            .field("story_text", &self.story_text)
+            .field("story_length", &self.story_length)
+            .field("selection", &self.selection)
+            .finish()
+    }
+}
+
+impl SelectionGravitySnapshot {
+    fn capture(
+        primary: &NativeRange2,
+        duplicate: Option<&NativeRange2>,
+        document: &NativeDocument,
+        selection: &NativeSelection,
+    ) -> TestResult<Self> {
+        let selected = selection.state()?;
+        let primary = primary.selection_gravity_state()?;
+        assert_eq!(
+            primary.range,
+            RangeState {
+                start: selected.start,
+                end: selected.end
+            },
+            "extended interface is the actual selection"
+        );
+        check_hresult(primary.flags.hresult, "actual selection GetFlags")?;
+        assert_eq!(primary.flags.value, selected.flags);
+        let duplicate = duplicate
+            .map(NativeRange2::selection_gravity_state)
+            .transpose()?;
+        let caret = document.range(0, 0)?;
+        let story_length = caret.raw_number(caret.table().base.get_story_length);
+        check_hresult(story_length.hresult, "selection gravity story length")?;
+        assert!(story_length.value >= 0);
+        let story_text = document.range(0, story_length.value)?.observed_text()?;
+        assert_eq!(
+            selection.state()?,
+            selected,
+            "snapshot metadata must not move the selection"
+        );
+        Ok(Self {
+            primary,
+            duplicate,
+            story_text,
+            story_length,
+            selection: selected,
+        })
+    }
+}
+
+#[derive(Clone, Copy)]
+enum SelectionGravityOperation<'a> {
+    GetGravity,
+    SetGravity(i32),
+    SetRange(i32, i32),
+    Duplicate,
+    TypeText(Option<&'a str>),
+    MoveLeft(Unit, i32, bool),
+    MoveRight(Unit, i32, bool),
+    MoveUp(Unit, i32, bool),
+    MoveDown(Unit, i32, bool),
+    EndKey(Unit, bool),
+    SetBold(i32),
+    SetItalic(i32),
+    SetAlignment(i32),
+}
+
+#[derive(Clone, Copy)]
+struct SelectionGravityAction<'a> {
+    target: GravityTarget,
+    operation: SelectionGravityOperation<'a>,
+}
+
+impl<'a> SelectionGravityAction<'a> {
+    fn primary(operation: SelectionGravityOperation<'a>) -> Self {
+        Self {
+            target: GravityTarget::Primary,
+            operation,
+        }
+    }
+    fn duplicate(operation: SelectionGravityOperation<'a>) -> Self {
+        Self {
+            target: GravityTarget::Duplicate,
+            operation,
+        }
+    }
+    fn external(start: i32, end: i32, operation: SelectionGravityOperation<'a>) -> Self {
+        Self {
+            target: GravityTarget::External(start, end),
+            operation,
+        }
+    }
+}
+
+fn observe_selection_gravity_step(
+    name: &str,
+    step: usize,
+    role: &str,
+    action: SelectionGravityAction<'_>,
+    primary: &NativeRange2,
+    duplicate: &mut Option<NativeRange2>,
+    document: &NativeDocument,
+    selection: &NativeSelection,
+    source_identity: &ComPtr<IUnknown>,
+) -> TestResult<i32> {
+    use SelectionGravityOperation::*;
+    let (target, range) = match action.target {
+        GravityTarget::Primary => ("Primary", primary.clone()),
+        GravityTarget::Duplicate => (
+            "Duplicate",
+            duplicate
+                .as_ref()
+                .ok_or("selection gravity duplicate is unavailable")?
+                .clone(),
+        ),
+        GravityTarget::External(start, end) => ("External", document.range(start, end)?),
+    };
+    let (method, mut argument1, mut argument2, value, extend, text) = match action.operation {
+        GetGravity => ("GetGravity", 0, 0, 0, false, None),
+        SetGravity(value) => ("SetGravity", 0, 0, value, false, None),
+        SetRange(start, end) => ("SetRange", start, end, 0, false, None),
+        Duplicate => ("Duplicate", 0, 0, 0, false, None),
+        TypeText(text) => ("TypeText", 0, 0, 0, false, text),
+        MoveLeft(unit, count, extend) => ("MoveLeft", unit as i32, count, 0, extend, None),
+        MoveRight(unit, count, extend) => ("MoveRight", unit as i32, count, 0, extend, None),
+        MoveUp(unit, count, extend) => ("MoveUp", unit as i32, count, 0, extend, None),
+        MoveDown(unit, count, extend) => ("MoveDown", unit as i32, count, 0, extend, None),
+        EndKey(unit, extend) => ("EndKey", unit as i32, 0, 0, extend, None),
+        SetBold(value) => ("SetBold", 0, 0, value, false, None),
+        SetItalic(value) => ("SetItalic", 0, 0, value, false, None),
+        SetAlignment(value) => ("SetAlignment", 0, 0, value, false, None),
+    };
+    if let GravityTarget::External(start, end) = action.target {
+        assert!(matches!(
+            action.operation,
+            GetGravity | SetBold(_) | SetItalic(_) | SetAlignment(_)
+        ));
+        argument1 = start;
+        argument2 = end;
+    }
+    let before =
+        SelectionGravitySnapshot::capture(primary, duplicate.as_ref(), document, selection)?;
+    let action_before = range.selection_gravity_state()?;
+    let mut output = None;
+    let mut returned_null = None;
+    let mut duplicate_interface = None;
+    let table = range.table();
+    let hresult = match action.operation {
+        GetGravity => {
+            let number = range.raw_number(table.get_gravity);
+            output = Some(number.value);
+            number.hresult
+        }
+        SetGravity(value) => {
+            // SAFETY: exact signed LONG input; invalid values are observations.
+            unsafe { (table.set_gravity)(range.0.as_ptr().cast(), value) }
+        }
+        SetRange(start, end) => {
+            // SAFETY: verified ITextRange prefix and signed LONG positions.
+            unsafe { (table.base.set_range)(range.0.as_ptr().cast(), start, end) }
+        }
+        Duplicate => {
+            assert!(matches!(action.target, GravityTarget::Primary));
+            assert!(
+                duplicate.is_none(),
+                "one duplicate per fresh selection fixture"
+            );
+            let mut raw = null_mut();
+            // SAFETY: GetDuplicate returns an owned ITextRange reference.
+            let hresult = unsafe { (table.base.get_duplicate)(range.0.as_ptr().cast(), &mut raw) };
+            returned_null = Some(raw.is_null());
+            // SAFETY: any non-null output is one owned interface reference.
+            let raw = unsafe { ComPtr::<IUnknown>::from_raw(raw.cast()) };
+            if hresult >= 0 {
+                if let Some(raw) = raw {
+                    let (observation, extended) =
+                        observed_query(&raw, &IID_TEXT_RANGE2, source_identity);
+                    if observation.hresult >= 0 {
+                        *duplicate = extended.map(NativeRange2);
+                    }
+                    duplicate_interface = Some(observation);
+                }
+            }
+            hresult
+        }
+        TypeText(text) => {
+            assert!(matches!(action.target, GravityTarget::Primary));
+            let nonnull = text.is_some();
+            let text = Bstr(text.map_or(null_mut(), string_to_bstr));
+            if nonnull && text.0.is_null() {
+                return Err("SysAllocStringLen for selection gravity TypeText failed".into());
+            }
+            // SAFETY: call the original GetSelection interface, retaining its
+            // exact nullable BSTR and raw HRESULT rather than asserting success.
+            unsafe { (selection.table().type_text)(selection.0.as_ptr().cast(), text.0) }
+        }
+        MoveLeft(unit, count, extend)
+        | MoveRight(unit, count, extend)
+        | MoveUp(unit, count, extend)
+        | MoveDown(unit, count, extend) => {
+            assert!(matches!(action.target, GravityTarget::Primary));
+            let table = selection.table();
+            let method = match action.operation {
+                MoveLeft(..) => table.move_left,
+                MoveRight(..) => table.move_right,
+                MoveUp(..) => table.move_up,
+                MoveDown(..) => table.move_down,
+                _ => unreachable!(),
+            };
+            let mut delta = i32::MIN;
+            // SAFETY: exact SDK movement signature and initialized LONG output.
+            let hresult = unsafe {
+                method(
+                    selection.0.as_ptr().cast(),
+                    unit as i32,
+                    count,
+                    i32::from(extend),
+                    &mut delta,
+                )
+            };
+            output = Some(delta);
+            hresult
+        }
+        EndKey(unit, extend) => {
+            assert!(matches!(action.target, GravityTarget::Primary));
+            let mut delta = i32::MIN;
+            // SAFETY: exact SDK boundary signature and initialized LONG output.
+            let hresult = unsafe {
+                (selection.table().end_key)(
+                    selection.0.as_ptr().cast(),
+                    unit as i32,
+                    i32::from(extend),
+                    &mut delta,
+                )
+            };
+            output = Some(delta);
+            hresult
+        }
+        SetBold(value) | SetItalic(value) => {
+            let font = range.font()?;
+            // SAFETY: GetFont returns the verified SDK ITextFont prefix.
+            let table = unsafe { &**font.as_ptr().cast::<*const TextFontVTable>() };
+            let setter = if matches!(action.operation, SetBold(_)) {
+                table.set_bold
+            } else {
+                table.set_italic
+            };
+            // SAFETY: the typed setter is paired with its live SDK interface.
+            unsafe { setter(font.as_ptr().cast(), value) }
+        }
+        SetAlignment(value) => {
+            let paragraph = range.paragraph()?;
+            // SAFETY: GetPara returns the verified SDK ITextPara prefix.
+            let table = unsafe { &**paragraph.as_ptr().cast::<*const TextParaVTable>() };
+            // SAFETY: the typed setter is paired with its live SDK interface.
+            unsafe { (table.set_alignment)(paragraph.as_ptr().cast(), value) }
+        }
+    };
+    let action_after = range.selection_gravity_state()?;
+    let after =
+        SelectionGravitySnapshot::capture(primary, duplicate.as_ref(), document, selection)?;
+    let text_null = text.is_none();
+    let text = text.unwrap_or("");
+    let text_utf16_length = text.encode_utf16().count();
+    println!("SYSTEM_MSFTEDIT_SELECTION_GRAVITY fixture={name} step={step} role={role} target={target} operation={method} argument1={argument1} argument2={argument2} value={value} extend={extend} text_null={text_null} text={text:?} text_utf16_length={text_utf16_length} action_before={action_before:?} action_after={action_after:?} before={before:?} after={after:?} hresult=0x{:08X} output={output:?} returned_null={returned_null:?} duplicate_interface={duplicate_interface:?}", hresult as u32);
+    Ok(hresult)
+}
+
+fn characterize_selection_gravity_fixture(
+    name: &str,
+    text: &str,
+    setup: &[SelectionGravityAction<'_>],
+    initial: Option<((i32, i32), i32)>,
+    actions: &[SelectionGravityAction<'_>],
+) -> TestResult<usize> {
+    let window = HiddenRichEdit::new()?;
+    window.set_text(text)?;
+    let document = window.document()?;
+    let selection = document.selection()?;
+    let length = text.encode_utf16().count() as i32;
+    let story_length = selection.number(selection.table().get_story_length, "GetStoryLength")?;
+    assert_eq!(
+        document.range(0, length)?.text()?,
+        text,
+        "exact selection gravity fixture"
+    );
+    let mut prefix = Vec::new();
+    if let Some(((start, end), gravity)) = initial {
+        prefix.push(SelectionGravityAction::primary(
+            SelectionGravityOperation::SetRange(start, end),
+        ));
+        prefix.push(SelectionGravityAction::primary(
+            SelectionGravityOperation::SetGravity(gravity),
+        ));
+    }
+    let initialization = if initial.is_some() {
+        "Configured"
+    } else {
+        "Default"
+    };
+    let commands = setup.len() + prefix.len() + actions.len();
+    println!("SYSTEM_MSFTEDIT_SELECTION_GRAVITY_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length} window_ex_style=0 expected_commands={commands} initialization={initialization}");
+    let (source_hresult, source_identity) = native_query(&selection.0, &IID_NATIVE_UNKNOWN);
+    let source_null = source_identity.is_none();
+    check_hresult(source_hresult, "selection QueryInterface(IUnknown)")?;
+    let source_identity = source_identity.ok_or("selection identity is null")?;
+    let (range2, primary) = observed_query(&selection.0, &IID_TEXT_RANGE2, &source_identity);
+    let (selection2, selection2_object) =
+        observed_query(&selection.0, &IID_TEXT_SELECTION2, &source_identity);
+    println!("SYSTEM_MSFTEDIT_SELECTION_GRAVITY_INTERFACE fixture={name} source_hresult=0x{:08X} source_null={source_null} range2={range2:?} selection2={selection2:?}", source_hresult as u32);
+    for observation in [&range2, &selection2] {
+        check_hresult(observation.hresult, "actual selection extended interface")?;
+        let (hresult, is_null, same_identity) = observation
+            .identity
+            .ok_or("selection extension has no identity")?;
+        check_hresult(hresult, "selection extension QueryInterface(IUnknown)")?;
+        assert!(
+            !observation.is_null && !is_null && same_identity,
+            "extended interface must identify the original selection"
+        );
+    }
+    let primary = NativeRange2(primary.ok_or("selection ITextRange2 is null")?);
+    drop(selection2_object);
+    let mut duplicate = None;
+    for (step, action) in setup
+        .iter()
+        .chain(&prefix)
+        .chain(actions)
+        .copied()
+        .enumerate()
+    {
+        let role = if step < setup.len() {
+            "Setup"
+        } else {
+            "Target"
+        };
+        let hresult = observe_selection_gravity_step(
+            name,
+            step,
+            role,
+            action,
+            &primary,
+            &mut duplicate,
+            &document,
+            &selection,
+            &source_identity,
+        )?;
+        if role == "Setup" {
+            check_hresult(hresult, "selection gravity formatting setup")?;
+        }
+    }
+    Ok(commands)
+}
+
+fn characterize_selection_gravity() -> TestResult {
+    use SelectionGravityAction as A;
+    use SelectionGravityOperation::*;
+    let _apartment = OleApartment::new()?;
+    let library = SystemRichEditLibrary::load()?;
+    library.describe()?;
+    let mut commands = 0;
+    let mut fixtures = 0;
+    let mut observe = |name: &str, text: &str, setup: &[A<'_>], initial, actions: &[A<'_>]| {
+        commands += characterize_selection_gravity_fixture(name, text, setup, initial, actions)?;
+        fixtures += 1;
+        Ok::<_, String>(())
+    };
+    let ordinary = [
+        A::external(0, 4, SetBold(0)),
+        A::external(0, 4, SetItalic(0)),
+        A::external(0, 2, SetBold(-1)),
+        A::external(2, 4, SetItalic(-1)),
+    ];
+    let paragraphs = [
+        A::external(0, 5, SetBold(0)),
+        A::external(0, 5, SetItalic(0)),
+        A::external(0, 5, SetAlignment(0)),
+        A::external(0, 3, SetBold(-1)),
+        A::external(3, 5, SetItalic(-1)),
+        A::external(3, 5, SetAlignment(2)),
+    ];
+    for gravity in 0..=4 {
+        observe(
+            &format!("selection_gravity_{gravity}_ordinary"),
+            "abCD",
+            &ordinary,
+            Some(((2, 2), gravity)),
+            &[
+                A::primary(Duplicate),
+                A::duplicate(SetGravity((gravity + 1) % 5)),
+                A::primary(TypeText(Some("X"))),
+                A::external(2, 3, GetGravity),
+                A::primary(GetGravity),
+            ],
+        )?;
+        observe(
+            &format!("selection_gravity_{gravity}_paragraph"),
+            "ab\rcd",
+            &paragraphs,
+            Some(((2, 2), gravity)),
+            &[
+                A::primary(GetGravity),
+                A::primary(SetRange(3, 3)),
+                // Selection SetRange may itself change gravity; measure both
+                // its retention and the requested affinity at the new boundary.
+                A::primary(SetGravity(gravity)),
+                A::primary(TypeText(Some("X"))),
+                A::external(3, 4, GetGravity),
+                A::primary(GetGravity),
+            ],
+        )?;
+        observe(
+            &format!("selection_gravity_{gravity}_navigation"),
+            "ab\rcd",
+            &paragraphs,
+            Some(((4, 1), gravity)),
+            &[
+                A::primary(GetGravity),
+                A::primary(Duplicate),
+                A::primary(MoveRight(Unit::Character, 1, false)),
+                A::primary(MoveLeft(Unit::Character, 1, true)),
+                A::primary(SetRange(1, 1)),
+                A::primary(EndKey(Unit::Line, false)),
+                A::primary(MoveRight(Unit::Character, 1, false)),
+                A::primary(MoveUp(Unit::Line, 1, false)),
+                A::primary(MoveDown(Unit::Line, 1, true)),
+                A::primary(SetRange(4, 1)),
+                A::primary(TypeText(Some("😀"))),
+                A::external(1, 3, GetGravity),
+                A::primary(GetGravity),
+            ],
+        )?;
+    }
+    for (name, positions) in [("caret", (2, 2)), ("reverse", (4, 1))] {
+        observe(
+            &format!("selection_gravity_invalid_{name}"),
+            "abcdef",
+            &[],
+            Some((positions, 2)),
+            &[
+                A::primary(SetGravity(-1)),
+                A::primary(GetGravity),
+                A::primary(SetGravity(5)),
+                A::primary(GetGravity),
+                A::primary(TypeText(None)),
+                A::primary(TypeText(Some(""))),
+                A::primary(GetGravity),
+            ],
+        )?;
+    }
+    // No SetRange or SetGravity masks the fresh empty selection's defaults.
+    observe(
+        "selection_gravity_empty_default",
+        "",
+        &[],
+        None,
+        &[A::primary(TypeText(Some("X"))), A::primary(GetGravity)],
+    )?;
+    assert_eq!(
+        (commands, fixtures),
+        (250, 18),
+        "keep the actual selection matrix bounded and complete"
+    );
+    println!(
+        "SYSTEM_MSFTEDIT_SELECTION_GRAVITY_PROBE_COMPLETE commands={commands} fixtures={fixtures}"
+    );
+    Ok(())
+}
+
+#[test]
+fn rich_text_tom_oracle_system_msftedit_selection_gravity_characterization() {
+    std::thread::Builder::new()
+        .name("system-msftedit-selection-gravity-probe".into())
+        .spawn(characterize_selection_gravity)
+        .expect("start the actual selection Gravity probe thread")
+        .join()
+        .expect("the actual selection Gravity probe thread panicked")
+        .expect("the actual selection Gravity probe failed");
+}

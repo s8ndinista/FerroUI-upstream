@@ -105,6 +105,179 @@ def gravity_row(row: dict) -> str:
     )
 
 
+def native_interface_row(value: dict) -> str:
+    identity = value["identity"]
+    rendered = 'None' if identity is None else (
+        'Some(NativeIdentity { hresult: %s, is_null: %s, same_identity: %s })'
+        % (identity["hresult"], str(identity["is_null"]).lower(), str(identity["same_identity"]).lower())
+    )
+    return 'NativeInterface { hresult: %s, is_null: %s, identity: %s }' % (
+        value["hresult"], str(value["is_null"]).lower(), rendered,
+    )
+
+
+def native_text_row(value: dict) -> str:
+    return 'NativeText { hresult: %s, is_null: %s, text: %s, text_utf16_length: %s }' % (
+        value["hresult"], str(value["is_null"]).lower(), debug_string(value["text"]), value["text_utf16_length"],
+    )
+
+
+def selection_gravity_range_row(value: dict) -> str:
+    result = 'SelectionGravityRangeState { range: ' + range_state_row(value["range"]) + ', '
+    for name in ("gravity", "flags", "selection_type", "bold", "italic", "alignment"):
+        result += name + ': ' + native_number_row(value[name]) + ', '
+    return result + 'text: ' + native_text_row(value["text"]) + ' }'
+
+
+def selection_gravity_snapshot_row(value: dict) -> str:
+    duplicate = 'None' if value["duplicate"] is None else 'Some(' + selection_gravity_range_row(value["duplicate"]) + ')'
+    return (
+        'SelectionGravitySnapshot { primary: ' + selection_gravity_range_row(value["primary"])
+        + ', duplicate: ' + duplicate + ', story_text: ' + native_text_row(value["story_text"])
+        + ', story_length: ' + native_number_row(value["story_length"])
+        + ', selection: ' + native_state(value["selection"]) + ' }'
+    )
+
+
+def selection_gravity_interface_row(value: dict) -> str:
+    return (
+        f'SELECTION_GRAVITY_INTERFACE fixture={value["fixture"]} source_hresult={value["source_hresult"]} '
+        f'source_null={str(value["source_null"]).lower()} range2={native_interface_row(value["range2"])} '
+        f'selection2={native_interface_row(value["selection2"])}'
+    )
+
+
+def selection_gravity_row(row: dict) -> str:
+    output = 'None' if row["output"] is None else 'Some(%s)' % row["output"]
+    returned_null = 'None' if row["returned_null"] is None else 'Some(%s)' % str(row["returned_null"]).lower()
+    interface = 'None' if row["duplicate_interface"] is None else 'Some(' + native_interface_row(row["duplicate_interface"]) + ')'
+    return (
+        f'SELECTION_GRAVITY fixture={row["fixture"]} step={row["step"]} role={row["role"]} target={row["target"]} '
+        f'operation={row["operation"]} argument1={row["argument1"]} argument2={row["argument2"]} value={row["value"]} '
+        f'extend={str(row["extend"]).lower()} text_null={str(row["text_null"]).lower()} '
+        f'text={debug_string(row["text"])} text_utf16_length={row["text_utf16_length"]} '
+        f'action_before={selection_gravity_range_row(row["action_before"])} '
+        f'action_after={selection_gravity_range_row(row["action_after"])} '
+        f'before={selection_gravity_snapshot_row(row["before"])} '
+        f'after={selection_gravity_snapshot_row(row["after"])} '
+        f'hresult={row["hresult"]} output={output} returned_null={returned_null} duplicate_interface={interface}'
+    )
+
+
+def synthetic_selection_gravity_record(default: bool = False) -> dict:
+    """Invented parser inputs, not expected native selection behavior.
+
+    In particular, mode 4 deliberately reads back as 4, and the untouched
+    default deliberately reads back as 2. Extraction cannot assume the measured
+    independent-range results are the actual selection's behavior.
+    """
+    def number(value: int, hresult: str = "0x00000000") -> dict:
+        return {"hresult": hresult, "value": value}
+
+    def text_value(text: str, is_null: bool = False) -> dict:
+        return {"hresult": "0x00000000", "is_null": is_null, "text": text,
+                "text_utf16_length": len(text.encode("utf-16-le")) // 2}
+
+    def interface(same: bool = True) -> dict:
+        return {"hresult": "0x00000000", "is_null": False,
+                "identity": {"hresult": "0x00000000", "is_null": False, "same_identity": same}}
+
+    def tracked(story: str, start: int, end: int, gravity: int, actual: bool = True, null_text: bool = False) -> dict:
+        text = story.encode("utf-16-le")[2 * start:2 * end].decode("utf-16-le")
+        return {
+            "range": {"start": start, "end": end}, "gravity": number(gravity),
+            "flags": number(17 if actual else -(2 ** 31), "0x00000000" if actual else "0x80004001"),
+            "selection_type": number(1 if start == end else 2, "0x00000000" if actual else "0x80004001"),
+            "bold": number(0), "italic": number(0), "alignment": number(0),
+            "text": text_value(text, null_text),
+        }
+
+    story = "\r" if default else "a😀b\r"
+    current = {
+        "primary": tracked(story, 0, 0, 2 if default else 0, null_text=True), "duplicate": None,
+        "story_text": text_value(story), "story_length": number(len(story.encode("utf-16-le")) // 2),
+        "selection": {"start": 0, "end": 0, "flags": 17, "anchor": 0, "active": 0},
+    }
+    rows = []
+
+    def select(snapshot: dict, start: int, end: int, gravity: int) -> dict:
+        snapshot = copy.deepcopy(snapshot)
+        snapshot["primary"] = tracked(snapshot["story_text"]["text"], start, end, gravity)
+        snapshot["selection"] = {"start": start, "end": end, "flags": 17, "anchor": end, "active": start}
+        return snapshot
+
+    def add(operation: str, after: dict, *, target: str = "Primary", a: int = 0, b: int = 0,
+            value: int = 0, role: str = "Target", text: str | None = None, extend: bool = False,
+            output: int | None = None, hresult: str = "0x00000000") -> None:
+        nonlocal current
+        action_before = tracked(current["story_text"]["text"], a, b, 0, False) if target == "External" else current[target.lower()]
+        action_after = tracked(after["story_text"]["text"], a, b, 0, False) if target == "External" else after[target.lower()]
+        rows.append(copy.deepcopy({
+            "fixture": "selection_default" if default else "selection_configured", "step": len(rows),
+            "role": role, "target": target, "operation": operation, "argument1": a, "argument2": b,
+            "value": value, "extend": extend, "text_null": text is None, "text": text or "",
+            "text_utf16_length": len((text or "").encode("utf-16-le")) // 2,
+            "action_before": action_before, "action_after": action_after, "before": current, "after": after,
+            "hresult": hresult, "output": output,
+            "returned_null": False if operation == "Duplicate" else None,
+            "duplicate_interface": interface(False) if operation == "Duplicate" else None,
+        }))
+        current = copy.deepcopy(after)
+
+    if default:
+        after = copy.deepcopy(current)
+        after["story_text"] = text_value("X\r")
+        after["story_length"] = number(2)
+        after = select(after, 1, 1, 2)
+        add("TypeText", after, text="X")
+        add("GetGravity", current, output=2)
+    else:
+        after = copy.deepcopy(current)
+        after["primary"]["bold"] = number(-1)
+        add("SetBold", after, role="Setup", target="External", a=0, b=1, value=-1)
+        add("SetRange", select(current, 1, 3, 0), a=3, b=1)
+        after = copy.deepcopy(current)
+        after["primary"]["gravity"] = number(4)
+        add("SetGravity", after, value=4)
+        after = copy.deepcopy(current)
+        after["duplicate"] = tracked(story, 1, 3, 0, False)
+        add("Duplicate", after)
+        after = copy.deepcopy(current)
+        after["duplicate"]["gravity"] = number(2)
+        add("SetGravity", after, target="Duplicate", value=2)
+        add("MoveRight", select(current, 3, 3, 4), a=1, b=1, output=1)
+        add("SetGravity", current, value=-1, hresult="0x80070057")
+        add("TypeText", current, text=None, hresult="0x00000001")
+        add("TypeText", current, text="", hresult="0x00000001")
+        add("SetRange", select(current, 1, 1, 4), a=1, b=1)
+        after = copy.deepcopy(current)
+        after["story_text"] = text_value("aX😀b\r")
+        after["story_length"] = number(6)
+        after["duplicate"] = tracked("aX😀b\r", 1, 4, 2, False)
+        after = select(after, 2, 2, 4)
+        add("TypeText", after, text="X")
+        add("GetGravity", current, target="External", a=1, b=2, output=0)
+        add("EndKey", select(current, 5, 5, 2), a=5, output=1)
+        add("GetGravity", current, output=2)
+    name = rows[0]["fixture"]
+    supplied = "" if default else "a😀b"
+    return {
+        "engine": {"windows_version": [10, 0, 26100], "dll_path": "Msftedit.dll", "dll_file_version": "1.2.3.4"},
+        "fixtures": [{"family": "selection_gravity", "name": name, "text": supplied,
+                      "supplied_utf16_length": len(supplied.encode("utf-16-le")) // 2,
+                      "native_story_length": 1 if default else 5, "window_ex_style": 0,
+                      "expected_commands": len(rows), "initialization": "Default" if default else "Configured"}],
+        "home_end": [], "vertical": [],
+        "selection_gravity_interfaces": [{"fixture": name, "source_hresult": "0x00000000", "source_null": False,
+                                           "range2": interface(), "selection2": interface()}],
+        "selection_gravity": rows,
+        "counts": {"home_end": 0, "home_end_repeats": 0, "vertical": 0,
+                   "selection_gravity": len(rows), "selection_gravity_fixtures": 1},
+    }
+
+
+
+
 def record_log(record: dict) -> str:
     """Reconstitute the probe grammar from immutable previously captured rows."""
     engine = record["engine"]
@@ -120,7 +293,11 @@ def record_log(record: dict) -> str:
             line += f' window_ex_style={fixture["window_ex_style"]}'
         if "expected_commands" in fixture:
             line += f' expected_commands={fixture["expected_commands"]}'
+        if "initialization" in fixture:
+            line += f' initialization={fixture["initialization"]}'
         lines.append(line)
+    for interface in record.get("selection_gravity_interfaces", []):
+        lines.append(selection_gravity_interface_row(interface))
     for family in ("home_end", "vertical", "horizontal"):
         for row in record.get(family, []):
             identity = f'{family.upper()} fixture={row["fixture"]} '
@@ -153,7 +330,9 @@ def record_log(record: dict) -> str:
         lines.append(link_row(row))
     for row in record.get("gravity", []):
         lines.append(gravity_row(row))
-    for family in ("home_end", "vertical", "horizontal", "options", "link", "gravity"):
+    for row in record.get("selection_gravity", []):
+        lines.append(selection_gravity_row(row))
+    for family in ("home_end", "vertical", "horizontal", "options", "link", "gravity", "selection_gravity"):
         count = record["counts"].get(family, 0)
         if not count:
             continue
@@ -161,6 +340,8 @@ def record_log(record: dict) -> str:
             lines.append(f'PROBE_COMPLETE commands={count} repeated_noops={record["counts"]["home_end_repeats"]}')
         elif family == "link":
             lines.append(f'LINK_PROBE_COMPLETE commands={count} fixtures={record["counts"]["link_fixtures"]}')
+        elif family == "selection_gravity":
+            lines.append(f'SELECTION_GRAVITY_PROBE_COMPLETE commands={count} fixtures={record["counts"]["selection_gravity_fixtures"]}')
         elif family == "gravity":
             lines.append(f'GRAVITY_PROBE_COMPLETE commands={count} fixtures={record["counts"]["gravity_fixtures"]}')
         else:
@@ -629,6 +810,163 @@ class NativeObservationExtractionTests(unittest.TestCase):
         old = PARSER.extract(SYNTHETIC_OPTIONS)
         self.assertNotIn("gravity", old)
         self.assertNotIn("gravity", old["counts"])
+
+    def test_selection_gravity_roundtrips_actual_identity_affinity_and_duplicate_results(self) -> None:
+        record = synthetic_selection_gravity_record()
+        actual = PARSER.extract(record_log(record))
+        self.assertEqual(actual, record)
+        self.assertEqual(actual["selection_gravity"][2]["after"]["primary"]["gravity"]["value"], 4)
+        self.assertEqual(actual["selection_gravity"][4]["after"]["duplicate"]["gravity"]["value"], 2)
+        self.assertFalse(actual["selection_gravity"][3]["duplicate_interface"]["identity"]["same_identity"])
+        self.assertEqual(actual["selection_gravity"][11]["action_after"]["text"]["text"], "X")
+
+    def test_selection_gravity_preserves_null_empty_and_native_error_outputs(self) -> None:
+        record = synthetic_selection_gravity_record()
+        rows = record["selection_gravity"]
+        self.assertTrue(rows[7]["text_null"])
+        self.assertFalse(rows[8]["text_null"])
+        self.assertEqual(rows[7]["text"], rows[8]["text"])
+        rows[-1]["hresult"] = "0x80004001"
+        rows[-1]["output"] = -(2 ** 31)
+        rows[6]["value"] = 2 ** 31 - 1
+        self.assertEqual(PARSER.extract(record_log(record)), record)
+        self.assertTrue(record["selection_gravity"][0]["before"]["primary"]["text"]["is_null"])
+        self.assertFalse(record["selection_gravity"][5]["after"]["primary"]["text"]["is_null"])
+
+    def test_selection_gravity_default_fixture_has_no_synthesized_mode_or_range(self) -> None:
+        record = synthetic_selection_gravity_record(default=True)
+        self.assertEqual(PARSER.extract(record_log(record)), record)
+        self.assertEqual(record["selection_gravity"][0]["before"]["primary"]["gravity"]["value"], 2)
+        for field, value in (("initialization", "Configured"), ("text", "x")):
+            changed = copy.deepcopy(record)
+            changed["fixtures"][0][field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                PARSER.extract(record_log(changed))
+        record["selection_gravity"][0]["text"] = "Y"
+        with self.assertRaises(ValueError):
+            PARSER.extract(record_log(record))
+
+    def test_selection_gravity_rejects_unproven_interface_identity(self) -> None:
+        changes = (
+            (("source_null",), True), (("source_hresult",), "0x80004002"),
+            (("range2", "hresult"), "0x80004002"), (("range2", "is_null"), True),
+            (("range2", "identity"), None), (("range2", "identity", "same_identity"), False),
+            (("selection2", "identity", "hresult"), "0x80004002"),
+            (("selection2", "identity", "is_null"), True),
+        )
+        for path, value in changes:
+            record = synthetic_selection_gravity_record()
+            target = record["selection_gravity_interfaces"][0]
+            for key in path[:-1]:
+                target = target[key]
+            target[path[-1]] = value
+            with self.subTest(path=path), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+
+    def test_selection_gravity_rejects_missing_duplicate_late_and_reordered_interfaces(self) -> None:
+        lines = record_log(synthetic_selection_gravity_record()).splitlines()
+        interface = lines[2]
+        variants = (
+            [*lines[:2], *lines[3:]],
+            [*lines[:3], interface, *lines[3:]],
+            [lines[0], interface, lines[1], *lines[3:]],
+            [*lines[:2], lines[3], interface, *lines[4:]],
+            [*lines, interface],
+            [*lines[:2], interface.replace("fixture=selection_configured", "fixture=unknown"), *lines[3:]],
+        )
+        for variant in variants:
+            with self.subTest(prefix=variant[:3]), self.assertRaises(ValueError):
+                PARSER.extract("\n".join(variant))
+
+    def test_selection_gravity_rejects_incomplete_duplicate_and_unbounded_command_sets(self) -> None:
+        record = synthetic_selection_gravity_record()
+        log = record_log(record)
+        for changed in (
+            log.rsplit("\n", 1)[0], log + "\n" + log.splitlines()[-1],
+            log.replace("PROBE_COMPLETE commands=14", "PROBE_COMPLETE commands=13"),
+            log.replace("fixtures=1", "fixtures=2"), log + "\n" + log.splitlines()[-2],
+            log.replace("expected_commands=14", "expected_commands=251"),
+        ):
+            with self.subTest(tail=changed[-100:]), self.assertRaises(ValueError):
+                PARSER.extract(changed)
+        for rows in (record["selection_gravity"][:-1], [record["selection_gravity"][1], record["selection_gravity"][0], *record["selection_gravity"][2:]]):
+            changed = copy.deepcopy(record)
+            changed["selection_gravity"] = rows
+            changed["counts"]["selection_gravity"] = len(rows)
+            with self.assertRaises(ValueError):
+                PARSER.extract(record_log(changed))
+
+    def test_selection_gravity_rejects_alias_inconsistent_snapshots_and_hidden_state_changes(self) -> None:
+        for row, path, value in (
+            (5, ("before", "selection", "flags"), 16),
+            (5, ("action_after", "gravity", "value"), 1),
+            (4, ("before", "duplicate", "gravity", "value"), 2),
+            (5, ("before", "primary", "flags", "hresult"), "0x80004001"),
+            (2, ("before", "primary", "range", "end"), 2 ** 31),
+            (3, ("before", "story_length", "hresult"), "0x80004001"),
+        ):
+            record = synthetic_selection_gravity_record()
+            target = record["selection_gravity"][row]
+            for key in path[:-1]:
+                target = target[key]
+            target[path[-1]] = value
+            with self.subTest(row=row, path=path), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+
+    def test_selection_gravity_rejects_malformed_bstr_and_scalar_width_records(self) -> None:
+        for row, path, value in (
+            (10, ("text_null",), True), (10, ("text_utf16_length",), 2),
+            (10, ("after", "story_text", "text_utf16_length"), 5),
+            (1, ("after", "primary", "text", "is_null"), True),
+            (1, ("after", "primary", "gravity", "value"), -(2 ** 31) - 1),
+            (6, ("value",), 2 ** 31),
+            (13, ("output",), 2 ** 31),
+            (11, ("action_after", "text", "text"), "XX"),
+        ):
+            record = synthetic_selection_gravity_record()
+            target = record["selection_gravity"][row]
+            for key in path[:-1]:
+                target = target[key]
+            target[path[-1]] = value
+            with self.subTest(row=row, path=path), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+
+    def test_selection_gravity_rejects_wrong_operation_arguments_and_targets(self) -> None:
+        for row, field, value in (
+            (2, "text_null", False), (2, "extend", True), (2, "argument1", 1),
+            (5, "argument1", 5), (5, "output", None), (5, "value", 1),
+            (12, "argument2", 1), (1, "operation", "GetGravity"),
+            (0, "role", "Target"), (0, "value", 1), (11, "argument1", 0),
+            (6, "output", 0), (1, "target", "Duplicate"),
+        ):
+            record = synthetic_selection_gravity_record()
+            record["selection_gravity"][row][field] = value
+            with self.subTest(row=row, field=field), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+
+    def test_selection_gravity_rejects_duplicate_creation_without_interface_provenance(self) -> None:
+        for row, field, value in (
+            (3, "returned_null", True), (3, "returned_null", None),
+            (3, "duplicate_interface", None), (3, "hresult", "0x80004001"),
+            (4, "returned_null", False), (4, "duplicate_interface", {"hresult": "0x80004002", "is_null": True, "identity": None}),
+        ):
+            record = synthetic_selection_gravity_record()
+            record["selection_gravity"][row][field] = value
+            with self.subTest(row=row, field=field), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+
+    def test_selection_gravity_and_measured_range_gravity_keep_separate_families(self) -> None:
+        record = synthetic_gravity_record()
+        selection = synthetic_selection_gravity_record()
+        record["fixtures"].extend(selection["fixtures"])
+        for key in ("selection_gravity_interfaces", "selection_gravity"):
+            record[key] = selection[key]
+        record["counts"].update(selection_gravity=len(selection["selection_gravity"]), selection_gravity_fixtures=1)
+        self.assertEqual(PARSER.extract(record_log(record)), record)
+        old = PARSER.extract(record_log(synthetic_gravity_record()))
+        self.assertNotIn("selection_gravity", old)
+        self.assertNotIn("selection_gravity_interfaces", old)
+        self.assertNotIn("selection_gravity", old["counts"])
 
 
 if __name__ == "__main__":

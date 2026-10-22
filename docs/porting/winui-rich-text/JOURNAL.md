@@ -1022,3 +1022,28 @@ parts. Its regeneration test passed, followed by the full fresh theme suite:
 layout implementation will consume this shared API; it does not introduce a
 second enum or duplicate the formatter. Native requested-family metrics, line-gap
 policy and fallback behavior remain independently reviewed contracts.
+
+## 2026-10-22 — Characterize the actual selection's Gravity
+
+The independent-range observations do not establish the behavior of the live
+selection object. A separate system-MSFTEDIT probe now starts from
+`ITextDocument::GetSelection`, queries both extended interfaces, and checks their
+canonical IUnknown identity before using Gravity. Its matrix declares 250
+commands across 18 fresh controls: styled and paragraph boundaries, all five
+modes, duplicates, directed movement and replacement, invalid values, null/empty
+typing and the untouched empty control. Inserted spans are read independently
+so the resulting caret format cannot be mistaken for the inserted format.
+
+The strict parser retains raw HRESULTs, nullable counted strings, before/after
+states, direction, interface identity and command counts. All 34 extraction
+tests pass, including unchanged historical-record round trips. The new probe
+is selected by the existing Windows workflow; native execution and production
+selection Gravity remain pending until a new immutable observation is captured.
+
+The merged checkpoint `c1e1a0b4` has now completed its rich-text CI. The Windows
+job passed, as did Linux Base (4,433), Controls (5,073), Win32 (329), WinUI (42)
+and all three themes (Fluent 210, Simple 213, WinUI 301). XAML passed 616 tests
+and failed the generated Rust-path freshness check because its reference lacked
+Typography. The authoritative generator supplies that missing row; it is included
+with this checkpoint. These CI results precede the new layout, geometry,
+namescope and independent-range Gravity implementations.

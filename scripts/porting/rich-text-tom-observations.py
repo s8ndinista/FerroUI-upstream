@@ -411,6 +411,243 @@ def validate_gravity_steps(fixture: dict, rows: list[dict]) -> None:
             raise ValueError("gravity state changed between consecutive observed commands")
 
 
+def native_interface_pattern(prefix: str) -> str:
+    return (
+        rf"NativeInterface \{{ hresult: (?P<{prefix}_hresult>0x[0-9A-F]{{8}}), "
+        rf"is_null: (?P<{prefix}_is_null>true|false), identity: "
+        rf"(?:(?P<{prefix}_identity_none>None)|Some\(NativeIdentity \{{ "
+        rf"hresult: (?P<{prefix}_identity_hresult>0x[0-9A-F]{{8}}), "
+        rf"is_null: (?P<{prefix}_identity_is_null>true|false), "
+        rf"same_identity: (?P<{prefix}_same_identity>true|false) \}}\)) \}}"
+    )
+
+
+def native_text_pattern(prefix: str) -> str:
+    return (
+        rf"NativeText \{{ hresult: (?P<{prefix}_hresult>0x[0-9A-F]{{8}}), "
+        rf"is_null: (?P<{prefix}_is_null>true|false), text: (?P<{prefix}_text>{DEBUG_STRING}), "
+        rf"text_utf16_length: (?P<{prefix}_text_utf16_length>\d+) \}}"
+    )
+
+
+def selection_gravity_range_pattern(prefix: str) -> str:
+    result = (
+        rf"SelectionGravityRangeState \{{ range: RangeState \{{ start: (?P<{prefix}_start>-?\d+), "
+        rf"end: (?P<{prefix}_end>-?\d+) \}}, "
+    )
+    for name in ("gravity", "flags", "selection_type", "bold", "italic", "alignment"):
+        result += name + ": " + native_number_pattern(prefix + "_" + name) + ", "
+    return result + "text: " + native_text_pattern(prefix + "_text") + r" \}"
+
+
+def selection_gravity_snapshot_pattern(prefix: str) -> str:
+    return (
+        r"SelectionGravitySnapshot \{ primary: " + selection_gravity_range_pattern(prefix + "_primary")
+        + rf", duplicate: (?:(?P<{prefix}_duplicate_none>None)|Some\("
+        + selection_gravity_range_pattern(prefix + "_duplicate") + r"\)), story_text: "
+        + native_text_pattern(prefix + "_story_text") + ", story_length: "
+        + native_number_pattern(prefix + "_story_length")
+        + rf", selection: SelectionState \{{ start: (?P<{prefix}_selection_start>-?\d+), "
+        rf"end: (?P<{prefix}_selection_end>-?\d+), flags: (?P<{prefix}_selection_flags>\d+) \}} \}}"
+    )
+
+
+SELECTION_GRAVITY_FIXTURE = re.compile(
+    rf"SELECTION_GRAVITY_FIXTURE name=(\S+) text=({DEBUG_STRING}) supplied_utf16_length=(\d+) "
+    r"native_story_length=(\d+) window_ex_style=(\d+) expected_commands=(\d+) initialization=(Configured|Default)"
+)
+SELECTION_GRAVITY_INTERFACE = re.compile(
+    r"SELECTION_GRAVITY_INTERFACE fixture=(?P<fixture>\S+) source_hresult=(?P<source_hresult>0x[0-9A-F]{8}) "
+    r"source_null=(?P<source_null>true|false) range2=" + native_interface_pattern("range2")
+    + " selection2=" + native_interface_pattern("selection2")
+)
+SELECTION_GRAVITY = re.compile(
+    r"SELECTION_GRAVITY fixture=(?P<fixture>\S+) step=(?P<step>\d+) role=(?P<role>Setup|Target) "
+    r"target=(?P<target>Primary|Duplicate|External) "
+    r"operation=(?P<operation>GetGravity|SetGravity|SetRange|Duplicate|TypeText|MoveLeft|MoveRight|MoveUp|MoveDown|EndKey|SetBold|SetItalic|SetAlignment) "
+    r"argument1=(?P<argument1>-?\d+) argument2=(?P<argument2>-?\d+) value=(?P<value>-?\d+) "
+    r"extend=(?P<extend>true|false) text_null=(?P<text_null>true|false) "
+    rf"text=(?P<text>{DEBUG_STRING}) text_utf16_length=(?P<text_utf16_length>\d+) "
+    r"action_before=" + selection_gravity_range_pattern("action_before")
+    + r" action_after=" + selection_gravity_range_pattern("action_after")
+    + r" before=" + selection_gravity_snapshot_pattern("before")
+    + r" after=" + selection_gravity_snapshot_pattern("after")
+    + r" hresult=(?P<hresult>0x[0-9A-F]{8}) output=(?:None|Some\((?P<output>-?\d+)\)) "
+    r"returned_null=(?:None|Some\((?P<returned_null>true|false)\)) "
+    r"duplicate_interface=(?:(?P<duplicate_interface_none>None)|Some\("
+    + native_interface_pattern("duplicate_interface") + r"\))"
+)
+
+
+def hresult_succeeded(value: str) -> bool:
+    return int(value, 16) < 0x80000000
+
+
+def native_interface(values: dict[str, str], prefix: str) -> dict:
+    result = {"hresult": values[prefix + "_hresult"], "is_null": values[prefix + "_is_null"] == "true", "identity": None}
+    if not values[prefix + "_identity_none"]:
+        result["identity"] = {
+            "hresult": values[prefix + "_identity_hresult"],
+            "is_null": values[prefix + "_identity_is_null"] == "true",
+            "same_identity": values[prefix + "_same_identity"] == "true",
+        }
+    if (hresult_succeeded(result["hresult"]) and not result["is_null"]) != (result["identity"] is not None):
+        raise ValueError("selection interface identity query contradicts its HRESULT/null result")
+    identity = result["identity"]
+    if identity and identity["same_identity"] and (identity["is_null"] or not hresult_succeeded(identity["hresult"])):
+        raise ValueError("a failed/null canonical identity cannot prove selection identity")
+    return result
+
+
+def selection_gravity_interface(match: re.Match) -> dict:
+    values = match.groupdict()
+    result = {
+        "fixture": values["fixture"], "source_hresult": values["source_hresult"],
+        "source_null": values["source_null"] == "true",
+        "range2": native_interface(values, "range2"), "selection2": native_interface(values, "selection2"),
+    }
+    if result["source_null"] or not hresult_succeeded(result["source_hresult"]):
+        raise ValueError("selection probe has no source canonical IUnknown")
+    for name in ("range2", "selection2"):
+        interface = result[name]
+        if not hresult_succeeded(interface["hresult"]) or interface["is_null"] or not interface["identity"] or not interface["identity"]["same_identity"]:
+            raise ValueError("extended interface has not established the actual selection identity")
+    return result
+
+
+def native_text(values: dict[str, str], prefix: str) -> dict:
+    text = rust_string(values[prefix + "_text"])
+    length = int(values[prefix + "_text_utf16_length"])
+    is_null = values[prefix + "_is_null"] == "true"
+    if len(text.encode("utf-16-le")) // 2 != length or (is_null and text):
+        raise ValueError("selection gravity BSTR null/text/UTF-16 length disagree")
+    return {"hresult": values[prefix + "_hresult"], "is_null": is_null, "text": text, "text_utf16_length": length}
+
+
+def selection_gravity_range(values: dict[str, str], prefix: str, story_length: int) -> dict:
+    start, end = (signed_long(values[prefix + "_" + name]) for name in ("start", "end"))
+    if not 0 <= start <= end <= story_length:
+        raise ValueError("selection gravity range exceeds its native story")
+    result = {"range": {"start": start, "end": end}}
+    for name in ("gravity", "flags", "selection_type", "bold", "italic", "alignment"):
+        result[name] = {"hresult": values[prefix + "_" + name + "_hresult"], "value": signed_long(values[prefix + "_" + name + "_value"])}
+    result["text"] = native_text(values, prefix + "_text")
+    if hresult_succeeded(result["text"]["hresult"]) and result["text"]["text_utf16_length"] > end - start:
+        raise ValueError("selection gravity text exceeds its observed range extent")
+    return result
+
+
+def selection_gravity_snapshot(values: dict[str, str], prefix: str) -> dict:
+    story_length = {
+        "hresult": values[prefix + "_story_length_hresult"],
+        "value": signed_long(values[prefix + "_story_length_value"]),
+    }
+    if not hresult_succeeded(story_length["hresult"]) or story_length["value"] < 0:
+        raise ValueError("selection probe lacks a valid story length for snapshot capture")
+    length = story_length["value"]
+    story_text = native_text(values, prefix + "_story_text")
+    if hresult_succeeded(story_text["hresult"]) and story_text["text_utf16_length"] > length:
+        raise ValueError("selection gravity story text exceeds its native length")
+    selected = state(tuple(values[prefix + "_selection_" + name] for name in ("start", "end", "flags")))
+    primary = selection_gravity_range(values, prefix + "_primary", length)
+    if selected["end"] > length or selected["flags"] >= 2 ** 31:
+        raise ValueError("selection gravity actual selection exceeds native bounds")
+    if primary["range"] != {"start": selected["start"], "end": selected["end"]} or not hresult_succeeded(primary["flags"]["hresult"]) or primary["flags"]["value"] != selected["flags"]:
+        raise ValueError("extended selection snapshot disagrees with the actual selection")
+    return {
+        "primary": primary,
+        "duplicate": None if values[prefix + "_duplicate_none"] else selection_gravity_range(values, prefix + "_duplicate", length),
+        "story_text": story_text, "story_length": story_length, "selection": selected,
+    }
+
+
+def selection_gravity_command(match: re.Match) -> dict:
+    values = match.groupdict()
+    result = {name: values[name] for name in ("fixture", "role", "target", "operation", "hresult")}
+    result["step"] = int(values["step"])
+    for name in ("argument1", "argument2", "value"):
+        result[name] = signed_long(values[name])
+    for name in ("extend", "text_null"):
+        result[name] = values[name] == "true"
+    result["text"] = rust_string(values["text"])
+    result["text_utf16_length"] = int(values["text_utf16_length"])
+    if len(result["text"].encode("utf-16-le")) // 2 != result["text_utf16_length"] or (result["text_null"] and result["text"]):
+        raise ValueError("selection gravity input BSTR null/text/UTF-16 length disagree")
+    result["output"] = None if values["output"] is None else signed_long(values["output"])
+    result["returned_null"] = None if values["returned_null"] is None else values["returned_null"] == "true"
+    result["duplicate_interface"] = None if values["duplicate_interface_none"] else native_interface(values, "duplicate_interface")
+    for phase in ("before", "after"):
+        result[phase] = selection_gravity_snapshot(values, phase)
+        action = selection_gravity_range(values, "action_" + phase, result[phase]["story_length"]["value"])
+        result["action_" + phase] = action
+        if result["target"] != "External" and result[phase][result["target"].lower()] != action:
+            raise ValueError("selection gravity action state disagrees with its tracked target")
+    operation, target = result["operation"], result["target"]
+    a, b, value = (result[name] for name in ("argument1", "argument2", "value"))
+    movements = {"MoveLeft", "MoveRight", "MoveUp", "MoveDown", "EndKey"}
+    if (operation in movements | {"GetGravity"}) != (result["output"] is not None):
+        raise ValueError("selection gravity getter/movement output presence is incorrect")
+    if operation != "TypeText" and (not result["text_null"] or result["text"]):
+        raise ValueError("only selection TypeText has a BSTR argument")
+    if operation not in movements and result["extend"]:
+        raise ValueError("only selection movement has an extend argument")
+    if target == "External":
+        if operation not in ("GetGravity", "SetBold", "SetItalic", "SetAlignment") or result["action_before"]["range"] != {"start": a, "end": b}:
+            raise ValueError("selection gravity external inspection/setup arguments disagree")
+    elif operation not in movements | {"SetRange"} and (a or b):
+        raise ValueError("selection gravity command has unexpected endpoint arguments")
+    if operation in movements:
+        if target != "Primary" or value or a != (1 if operation in ("MoveLeft", "MoveRight") else 5) or (operation == "EndKey" and b):
+            raise ValueError("selection gravity movement signature/target disagrees with probe")
+    if operation == "TypeText" and target != "Primary":
+        raise ValueError("TypeText must act on the actual selection")
+    if operation not in ("SetGravity", "SetBold", "SetItalic", "SetAlignment") and value:
+        raise ValueError("selection gravity operation has an unexpected value argument")
+    formats = {"SetBold", "SetItalic", "SetAlignment"}
+    if operation in formats:
+        if target != "External" or result["role"] != "Setup" or value not in ((0, 2) if operation == "SetAlignment" else (-1, 0)):
+            raise ValueError("selection gravity formatting must be explicit external setup")
+    if result["role"] == "Setup" and (operation not in formats or not hresult_succeeded(result["hresult"])):
+        raise ValueError("selection gravity setup did not establish its declared formatting")
+    if operation == "Duplicate":
+        if target != "Primary" or result["before"]["duplicate"] is not None or result["returned_null"] is None:
+            raise ValueError("selection gravity duplicate must record one actual selection clone result")
+        queried = hresult_succeeded(result["hresult"]) and not result["returned_null"]
+        interface = result["duplicate_interface"]
+        if queried != (interface is not None):
+            raise ValueError("selection duplicate interface query disagrees with creation HRESULT/null")
+        available = queried and hresult_succeeded(interface["hresult"]) and not interface["is_null"]
+        if available != (result["after"]["duplicate"] is not None):
+            raise ValueError("selection duplicate lifetime disagrees with its interface result")
+    elif result["returned_null"] is not None or result["duplicate_interface"] is not None or ((result["before"]["duplicate"] is None) != (result["after"]["duplicate"] is None)):
+        raise ValueError("selection gravity command unexpectedly changes duplicate lifetime")
+    return result
+
+
+def validate_selection_gravity_steps(fixture: dict, rows: list[dict]) -> None:
+    if len(rows) != fixture["expected_commands"] or [row["step"] for row in rows] != list(range(len(rows))):
+        raise ValueError("selection gravity steps disagree with their consecutive command count")
+    targets = [index for index, row in enumerate(rows) if row["role"] == "Target"]
+    if not targets or targets != list(range(targets[0], len(rows))):
+        raise ValueError("selection gravity setup must precede its target sequence")
+    if fixture["initialization"] == "Configured":
+        prefix = rows[targets[0]:targets[0] + 2]
+        if [(row["target"], row["operation"]) for row in prefix] != [("Primary", "SetRange"), ("Primary", "SetGravity")]:
+            raise ValueError("configured selection gravity needs its exact range/mode prefix")
+        if prefix[1]["value"] not in range(5):
+            raise ValueError("configured selection gravity must start with a declared enum mode")
+    elif fixture["text"] or len(rows) != 2 or targets != [0, 1] or [(row["target"], row["operation"]) for row in rows] != [("Primary", "TypeText"), ("Primary", "GetGravity")] or rows[0]["text_null"] or rows[0]["text"] != "X":
+        raise ValueError("default selection gravity fixture must preserve untouched empty-story initialization")
+    if rows[-1]["operation"] != "GetGravity" or rows[-1]["target"] != "Primary":
+        raise ValueError("selection gravity fixture must finish by reading the actual selection gravity")
+    first = rows[0]["before"]
+    if first["duplicate"] is not None or first["story_length"]["value"] != fixture["native_story_length"] or not first["story_text"]["text"].startswith(fixture["text"]):
+        raise ValueError("selection gravity initial story or duplicate disagrees with its fresh fixture")
+    for previous, current in zip(rows, rows[1:]):
+        if previous["after"] != current["before"]:
+            raise ValueError("selection gravity state changed between consecutive commands")
+
+
 def extract(log: str) -> dict:
     engine = None
     fixtures = []
@@ -420,6 +657,8 @@ def extract(log: str) -> dict:
     options = []
     link = []
     gravity = []
+    selection_gravity = []
+    selection_gravity_interfaces = []
     completed = {}
     for line_number, line in enumerate(log.splitlines(), 1):
         marker = line.find(PREFIX)
@@ -436,6 +675,40 @@ def extract(log: str) -> dict:
             if engine is not None and engine != current:
                 raise ValueError("engine changed within one probe record")
             engine = current
+            continue
+        match = SELECTION_GRAVITY_FIXTURE.fullmatch(row)
+        if match:
+            if "selection_gravity" in completed:
+                raise ValueError("selection gravity fixture follows completion")
+            text = rust_string(match[2])
+            supplied, story, style, commands = map(int, match.group(3, 4, 5, 6))
+            if len(text.encode("utf-16-le")) // 2 != supplied or not supplied <= story < 2 ** 31 or style > 0xFFFFFFFF or not 2 <= commands <= 250:
+                raise ValueError("selection gravity fixture has inconsistent native lengths/style/count")
+            fixtures.append({"family": "selection_gravity", "name": match[1], "text": text,
+                             "supplied_utf16_length": supplied, "native_story_length": story,
+                             "window_ex_style": style, "expected_commands": commands, "initialization": match[7]})
+            continue
+        match = SELECTION_GRAVITY_INTERFACE.fullmatch(row)
+        if match:
+            if "selection_gravity" in completed or any(value["fixture"] == match["fixture"] for value in selection_gravity_interfaces):
+                raise ValueError("duplicate or late selection interface identity")
+            if not any(fixture["family"] == "selection_gravity" and fixture["name"] == match["fixture"] for fixture in fixtures):
+                raise ValueError("selection interface identity has no preceding fixture")
+            selection_gravity_interfaces.append(selection_gravity_interface(match))
+            continue
+        match = SELECTION_GRAVITY.fullmatch(row)
+        if match:
+            if "selection_gravity" in completed:
+                raise ValueError("selection gravity command follows completion")
+            if not any(value["fixture"] == match["fixture"] for value in selection_gravity_interfaces):
+                raise ValueError("selection gravity command precedes its actual-selection identity proof")
+            selection_gravity.append(selection_gravity_command(match))
+            continue
+        match = re.fullmatch(r"SELECTION_GRAVITY_PROBE_COMPLETE commands=(\d+) fixtures=(\d+)", row)
+        if match:
+            if "selection_gravity" in completed:
+                raise ValueError("duplicate selection gravity completion")
+            completed["selection_gravity"] = (int(match[1]), int(match[2]))
             continue
         match = FIXTURE.fullmatch(row)
         if match:
@@ -641,6 +914,10 @@ def extract(log: str) -> dict:
         counts = (len(gravity), sum(fixture["family"] == "gravity" for fixture in fixtures))
         if counts != completed.get("gravity") or not gravity:
             raise ValueError("gravity observations do not match the completion counts")
+    if selection_gravity or "selection_gravity" in completed:
+        counts = (len(selection_gravity), sum(fixture["family"] == "selection_gravity" for fixture in fixtures))
+        if counts != completed.get("selection_gravity") or not 0 < counts[0] <= 250 or len(selection_gravity_interfaces) != counts[1]:
+            raise ValueError("selection gravity observations/interfaces disagree with bounded completion counts")
     by_fixture = {}
     for fixture in fixtures:
         identity = (fixture["family"], fixture["name"])
@@ -685,6 +962,15 @@ def extract(log: str) -> dict:
         gravity_rows.setdefault(identity, []).append(row)
     for identity, rows in gravity_rows.items():
         validate_gravity_steps(by_fixture[identity], rows)
+    selection_gravity_rows = {}
+    for row in selection_gravity:
+        identity = ("selection_gravity", row["fixture"])
+        if identity not in by_fixture:
+            raise ValueError("selection gravity command has no exact fixture")
+        used_fixtures.add(identity)
+        selection_gravity_rows.setdefault(identity, []).append(row)
+    for identity, rows in selection_gravity_rows.items():
+        validate_selection_gravity_steps(by_fixture[identity], rows)
     if used_fixtures != by_fixture.keys():
         raise ValueError("declared fixture has no observed command")
     result = {
@@ -714,6 +1000,11 @@ def extract(log: str) -> dict:
         result["gravity"] = gravity
         result["counts"]["gravity"] = len(gravity)
         result["counts"]["gravity_fixtures"] = len(gravity_rows)
+    if selection_gravity:
+        result["selection_gravity_interfaces"] = selection_gravity_interfaces
+        result["selection_gravity"] = selection_gravity
+        result["counts"]["selection_gravity"] = len(selection_gravity)
+        result["counts"]["selection_gravity_fixtures"] = len(selection_gravity_rows)
     return result
 
 

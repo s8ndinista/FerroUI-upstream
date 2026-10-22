@@ -865,6 +865,7 @@ pub fn markup_types() -> Vec<(&'static ::ferroui_base::metadata::MarkupType, &'s
         (<::ferroui_controls::documents::TextHighlightRange as ::ferroui_base::metadata::MarkupTyped>::MARKUP, "ferroui_controls::documents::TextHighlightRange", false),
         (<::ferroui_controls::documents::TextHighlighterCollection as ::ferroui_base::metadata::MarkupTyped>::MARKUP, "ferroui_controls::documents::TextHighlighterCollection", false),
         (<::ferroui_controls::documents::TextRangeCollection as ::ferroui_base::metadata::MarkupTyped>::MARKUP, "ferroui_controls::documents::TextRangeCollection", false),
+        (<::ferroui_controls::documents::Typography as ::ferroui_base::metadata::MarkupTyped>::MARKUP, "ferroui_controls::documents::Typography", false),
         (<::ferroui_controls::documents::UnderlineStyle as ::ferroui_base::metadata::MarkupTyped>::MARKUP, "ferroui_controls::documents::UnderlineStyle", false),
         (<::ferroui_controls::platform::Win32HitTestValue as ::ferroui_base::metadata::MarkupTyped>::MARKUP, "ferroui_controls::platform::Win32HitTestValue", false),
         (<::ferroui_controls::platform::WindowCornerPreference as ::ferroui_base::metadata::MarkupTyped>::MARKUP, "ferroui_controls::platform::WindowCornerPreference", false),
