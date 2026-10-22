@@ -138,7 +138,7 @@ fn planarize_nearby_distinct_crossings_cannot_collapse_a_face_into_one_junction(
     assert_eq!(exact.vertices.len(), 7);
     assert_eq!(exact.edges.len(), 6);
     assert!(exact.detect_faces().unwrap().is_empty(), "An exact common junction has no bounded face");
-    for offset in [-1e-14, 1e-14] {
+    for offset in [-1e-14_f64, 1e-14_f64] {
         // These three transverse roots are distinct representable values,
         // separated by less than the old parameter/position weld tolerances.
         // They enclose a triangle. If its subdivision cannot be certified,
