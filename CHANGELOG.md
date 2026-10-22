@@ -4,6 +4,15 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-22
+
+The fourth release. It completes the declarative Rust API of `0.4.0-preview.1` and adds the developer tools:
+- the declarative API in all its phases ([docs/declarative-ui.md](docs/declarative-ui.md)): element builders and `rsx!`, signals, components that run again with hooks and a reconciler, interoperation with XAML and data templates, styles, resources, transitions and popups as elements, hot reload of the literals of `rsx!`, diagnostics and an inspector, the fewest moves of keyed children, asynchronous data, error boundaries and a router;
+- the samples: the 7GUIs in three versions, a gallery, TodoMVC and ReactiveDemo as components;
+- the developer tools, `ferroui-diagnostics`, a port of upstream's last open-source version on the WinUI 3 theme, with the TreeDataGrid for the trees and the property grid.
+
+One crate joins, `ferroui-diagnostics`. The additions since the preview are listed below; the known limitations are those of `0.4.0-preview.1`. Within 0.4 the public API is kept; 0.5.0 may change it.
+
 ### Added
 
 - **Components that run again** in `ferroui-view` (phase 1 of the declarative API, `docs/declarative-ui.md`, sections 7 and 8):
@@ -326,7 +335,8 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.4.0-preview.1...main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.4.0...main
+[0.4.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.4.0
 [0.4.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.4.0-preview.1
 [0.3.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0
 [0.3.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0-preview.1

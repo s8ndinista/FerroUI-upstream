@@ -6,7 +6,7 @@
 
 FerroUI is a cross-platform UI framework for Rust: a retained-mode control library with a styled property system, data binding, XAML markup, control themes and a composition-based renderer. It is a port of the Avalonia UI framework to Rust that keeps the original architecture, contracts and behaviour, so that applications, themes and markup written against that model carry over with their structure intact.
 
-> **Status: 0.3.0, with the preview 0.4.0-preview.1.** `0.3.0`, which adds ports of Rx, DynamicData and ReactiveUI for MVVM applications ([docs/mvvm.md](docs/mvvm.md)), is the current release on crates.io. `0.4.0-preview.1` previews the next one: it adds a declarative Rust API for user interfaces without XAML, with builders, the `rsx!` macro and signals ([docs/declarative-ui.md](docs/declarative-ui.md)), and makes the Vello backend faster ([CHANGELOG.md](CHANGELOG.md)). Every upstream file and member in scope is ported or waived with a recorded reason. The framework runs on macOS, Windows, Linux (X11, Wayland and the framebuffer), iOS, Android and in the browser. It was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator, not on a range of real devices. Within 0.3 the public API is kept; 0.4.0 may change it. See [Project status](#project-status).
+> **Status: 0.4.0.** `0.4.0` is the current release on crates.io. It adds a declarative Rust API for user interfaces without XAML: builders, the `rsx!` macro, signals, components with hooks and a reconciler, asynchronous data, error boundaries and a router ([docs/declarative-ui.md](docs/declarative-ui.md)). It also adds the [developer tools](#developer-tools) and makes the Vello backend faster ([CHANGELOG.md](CHANGELOG.md)). Every upstream file and member in scope is ported or waived with a recorded reason. The framework runs on macOS, Windows, Linux (X11, Wayland and the framebuffer), iOS, Android and in the browser. It was verified in continuous integration, in virtual machines, in the iOS simulator and on the Android emulator, not on a range of real devices. Within 0.4 the public API is kept; 0.5.0 may change it. See [Project status](#project-status).
 
 ![The ControlCatalog with the WinUI 3 theme on Windows 11, in a window with the Mica backdrop](docs/porting/images/control_catalog_winui_windows.png)
 
@@ -25,6 +25,7 @@ The ControlCatalog sample with the WinUI 3 theme (`ferroui-themes-winui`), its d
 - **Composition renderer.** A compositor with a render loop on its own thread, dirty-region tracking, server-side visuals and composition animations, drawing through a backend-neutral drawing context.
 - **Swappable backends.** Rendering and windowing sit behind contracts. Skia renders through Graphite on Metal, Ganesh on OpenGL, ANGLE, WebGL and Vulkan, or in software; an experimental Vello backend sits behind the same contracts; HarfBuzz shapes text.
 - **Declarative Rust UI.** `ferroui-view` writes user interfaces in Rust without XAML: builders generated for every control, an `rsx!` macro, fine-grained signals, and React-style components with hooks and a reconciler, with hot reload, an inspector and interoperation with XAML ([below](#declarative-rust-ui)).
+- **Developer tools.** F12 opens the [developer tools](#developer-tools) on a running application: its trees, the properties of a control and where their values come from, its layout and styles, and the routed events.
 - **Safe Rust.** The controls, markup, XAML and theme crates contain no `unsafe` code. It is confined to a small part of the object model core and to the rendering, text shaping, platform and interop backends.
 
 ## Project status
@@ -84,21 +85,21 @@ FerroUI is a set of crates that are released together at one version. A desktop 
 
 ```toml
 [dependencies]
-ferroui-base = "=0.3.0"
-ferroui-controls = "=0.3.0"
-ferroui-desktop = "=0.3.0"
-ferroui-themes-fluent = "=0.3.0"
+ferroui-base = "=0.4.0"
+ferroui-controls = "=0.4.0"
+ferroui-desktop = "=0.4.0"
+ferroui-themes-fluent = "=0.4.0"
 ```
 
 The WinUI 3 theme is the crate `ferroui-themes-winui` (`WinUITheme`), used in place of `ferroui-themes-fluent` or beside it; the facade crate has it as the feature `winui-theme`.
 
 An application can also name one dependency instead: the facade crate `ferroui`. It re-exports the common crates under short names (`ferroui::base`, `ferroui::controls`, ...) with a prelude of the types of a minimal application; its default features are the desktop platforms and the Fluent theme, and further features add the Simple theme, XAML loading at run time, the colour picker, the TreeDataGrid, the dialogs, the browser platform, the WinUI 3 theme, the Vello backend, the headless platform and the graphics contracts ([docs/release.md](docs/release.md), section 2.1). In the repository it is used already: `cargo run -p ferroui --example hello`.
 
-The libraries for MVVM applications (Rx, DynamicData, ReactiveUI and their integration with the controls) are crates of the release as well: `ferroui-reactiveui-controls = "=0.3.0"` beside the crates above, or the facade crate with its feature `reactiveui` ([docs/mvvm.md](docs/mvvm.md)).
+The libraries for MVVM applications (Rx, DynamicData, ReactiveUI and their integration with the controls) are crates of the release as well: `ferroui-reactiveui-controls = "=0.4.0"` beside the crates above, or the facade crate with its feature `reactiveui` ([docs/mvvm.md](docs/mvvm.md)).
 
-The declarative API (`ferroui-view` with `ferroui-view-macros`) is first published in the preview `0.4.0-preview.1`. An application that uses it names that version for every FerroUI crate, for example `ferroui-view = "=0.4.0-preview.1"` beside `ferroui-controls = "=0.4.0-preview.1"` ([docs/declarative-ui.md](docs/declarative-ui.md)).
+The declarative API (`ferroui-view` with `ferroui-view-macros`, [docs/declarative-ui.md](docs/declarative-ui.md)) and the developer tools (`ferroui-diagnostics`) are crates of the release too: `ferroui-view = "=0.4.0"` and `ferroui-diagnostics = "=0.4.0"` beside the crates above (the facade has the developer tools as its feature `diagnostics`).
 
-The crates of a release depend on one another at exactly its version, so name the same version for every FerroUI crate, as above. `0.1.0` followed four previews (`0.1.0-preview.1` to `0.1.0-preview.4`), pre-releases in the sense of semantic versioning, which Cargo selects only when they are named, `0.2.0` and `0.3.0` are the next minor versions, and `0.3.0` followed one preview (`0.3.0-preview.1`). The work towards the next one is published as previews of it (`0.4.0-preview.1` is the first), which may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
+The crates of a release depend on one another at exactly its version, so name the same version for every FerroUI crate, as above. `0.1.0` followed four previews (`0.1.0-preview.1` to `0.1.0-preview.4`), pre-releases in the sense of semantic versioning, which Cargo selects only when they are named, `0.2.0`, `0.3.0` and `0.4.0` are the next minor versions, and `0.3.0` and `0.4.0` each followed one preview (`0.3.0-preview.1`, `0.4.0-preview.1`). The work towards the next one is published as previews of it (`0.5.0-preview.1` will be the first), which may change any part of the public API. The release process is described in [docs/release.md](docs/release.md) and the changes of each release in [CHANGELOG.md](CHANGELOG.md).
 
 The platforms that are not part of platform detection are named by their own crates beside the others: `ferroui-wayland`, `ferroui-linuxframebuffer`, `ferroui-ios`, `ferroui-android`, `ferroui-browser`, `ferroui-winui` and `ferroui-headless-vnc`.
 
@@ -401,7 +402,11 @@ FerroUI has ports of System.Reactive, DynamicData, Splat and ReactiveUI, one cra
 
 ### Developer tools
 
-`ferroui-diagnostics` is the port of upstream's developer tools at their last open-source version: the logical and visual trees, the properties of the selected control with their value sources and an editor for each, the layout explorer, the routed events with their routes, and screenshots of a control. The trees, the routed events and the property grid are TreeDataGrids of the port, in the WinUI 3 theme in its compact density. Attach the tools after the application is set up, usually in debug builds, and press F12 in a window to open them (the ControlCatalog does this in `samples/ControlCatalog.Desktop/program.rs`):
+Press F12 in a window of a debug build to inspect the running application: its logical and visual trees, the properties of the selected control with where each value comes from and an editor for it, the styles and setters that apply, its layout, and the routed events as they travel. The tools are `ferroui-diagnostics`, a port of upstream's last open-source developer tools, in the WinUI 3 theme with TreeDataGrids for the trees and the property grid.
+
+![The developer tools on the ControlCatalog: the visual tree, the properties of a button with their priorities, its layout and the setters of its theme](docs/images/diagnostics/devtools.png)
+
+Attach them once the application is set up (the ControlCatalog does it in `samples/ControlCatalog.Desktop/program.rs`), or use the feature `diagnostics` of the facade:
 
 ```rust
 use ferroui_diagnostics::DevToolsExtensions;
@@ -413,14 +418,6 @@ let builder = builder.after_setup(|builder| {
     }
 });
 ```
-
-The facade has them as the feature `diagnostics` (`ferroui::diagnostics`). Where the port differs from upstream is in [DEVIATIONS.md](docs/porting/DEVIATIONS.md), section "Developer tools", and its state per upstream member in [the tracking of the developer tools](docs/porting/tracking/diagnostics/TRACKING.md).
-
-![The developer tools on the ControlCatalog: the visual tree, the property grid of a button and its value frames](docs/images/diagnostics/visual-tree.png)
-
-| The logical tree | The events page |
-|---|---|
-| ![The logical tree with the details of a text block](docs/images/diagnostics/logical-tree.png) | ![The events page: the routed events by owner, a recorded click and its route](docs/images/diagnostics/events.png) |
 
 ## Repository layout
 

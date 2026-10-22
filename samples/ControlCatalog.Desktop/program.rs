@@ -177,7 +177,13 @@ fn attach_dev_tools(builder: &AppBuilder) {
             return;
         }
         if let Some(application) = builder.instance() {
-            application.attach_dev_tools_with_options(DevToolsOptions::new().with_startup_screen_index(Some(1)));
+            let options = DevToolsOptions::new().with_startup_screen_index(Some(1));
+            // The pictures of a smoke run: a window large enough for every column of the grid.
+            let options = match std::env::var_os("FERROUI_SMOKE_DEVTOOLS") {
+                Some(_) => options.with_startup_screen_index(None).with_size(ferroui_base::Size::new(1600.0, 900.0)),
+                None => options,
+            };
+            application.attach_dev_tools_with_options(options);
         }
     }
     let _ = builder;
