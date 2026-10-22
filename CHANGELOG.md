@@ -30,6 +30,16 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
   - hot reload of the literals of `rsx!` (feature `hot-reload`): `hot::lit`, `hot::watch`, `hot::poll`, `hot::apply_source`; `launch` watches the sources;
   - diagnostics in debug builds: `Diagnostic` (`MissingKeys`, `DuplicateKey`, `RunawayComponent`, `NeedsRebuild`, `HotReloaded`), `set_diagnostics_handler`; `Element::List` for iterations;
   - the inspector: `mounted_trees()`, `inspector()`, `open_inspector()`, `attach_inspector()` (Shift+F12 in debug builds).
+- **Performance** of `ferroui-view` (phase 5, `docs/declarative-ui.md`, section 12):
+  - keyed children of panels and items controls reordered with the fewest moves (the longest increasing subsequence), a panel moving controls without taking them out of the visual tree;
+  - handlers kept attached with their closures swapped on each run (`Handler`), and values that follow the same signal or memo kept (`PropValue::Follows`);
+  - `view_stats()`, the counts of the mounting and the reconciler;
+  - benchmarks of the declarative API in `ferroui-benchmarks` (`declarative`);
+  - the README gains a section on the declarative API with its features and a comparison with React, and `examples/counter.rs` keeps its example building.
+
+### Changed
+
+- **`#[component(rerender)]` memoizes by default** a component whose parameters are `PartialEq + Clone`; `#[component(rerender, always)]` runs it with its parent every time, and `memo` makes comparable parameters required.
 
 ### Changed
 

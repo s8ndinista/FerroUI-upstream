@@ -22,6 +22,12 @@ autotests = false
 [lib]
 path = "lib.rs"
 
+# The counter of the README.
+[[example]]
+name = "counter"
+path = "examples/counter.rs"
+required-features = ["desktop"]
+
 [features]
 default = []
 # `launch`, `open_window`: an application on the platform of the operating system with the Fluent theme.

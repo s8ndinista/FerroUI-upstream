@@ -14,8 +14,9 @@ This document is the design of the crates and the plan of the work (issue #237).
   - transitions and animations;
   - popups and context menus as elements.
 - **Phase 4**: tools (section 11): hot reload of the literals of `rsx!`, diagnostics, and an inspector of the mounted trees.
+- **Phase 5**: performance and scale (section 12): the fewest moves of keyed children, handlers swapped in place, values that follow the same signal kept, memo by default, and benchmarks.
 
-Section 13 plans the phases that remain. [declarative-ui-react.md](declarative-ui-react.md) compares the API with React.
+Section 14 plans the phase that remains. [declarative-ui-react.md](declarative-ui-react.md) compares the API with React.
 
 ## 1. A first look
 
@@ -194,7 +195,8 @@ By default a component runs once, when its element is built: its function is cal
 |---|---|
 | `#[component]` | runs once; what changes afterwards changes through signals |
 | `#[component(rerender)]` | runs when it is mounted and again whenever a signal it read changes or its parent runs again; its parameters are cloned for each run, so they are `Clone` |
-| `#[component(rerender, memo)]` | as `rerender`, and a parent that runs again with parameters equal to the last ones (`PartialEq`) does not run it again |
+| `#[component(rerender, memo)]` | as `rerender`, and a parent that runs again with parameters equal to the last ones (`PartialEq`) does not run it again; since phase 5 that is the default of `rerender` for comparable parameters, and `memo` makes it required |
+| `#[component(rerender, always)]` | as `rerender`, and runs with its parent every time |
 
 ## 6. State
 
@@ -324,7 +326,7 @@ Every instance has an owner of the runtime of section 6, made under the owner of
 ### 8.6 Costs and limits
 
 - **The cost of a run** is the function and a walk of the elements it returned: equal plain values are compared and skipped. Reactive values, bindings and handlers are applied again on each run, so a component that runs often (the timer of the hooks samples runs on every tick) is better off with fine-grained values for what changes most.
-- **Moves.** A keyed list whose order changes is patched by the prefix and suffix rule, which removes and inserts the controls in between. That is correct and keeps the controls, but it is not the minimal number of moves (section 13, phase 5).
+- **Moves.** A keyed list whose order changes is patched by the prefix and suffix rule, which removes and inserts the controls in between. That is correct and keeps the controls, but it is not the minimal number of moves (section 12.1).
 - **Synchronous.** A run happens when the write that caused it ends (or the batch); there is no scheduler that splits or defers work, and no concurrent rendering.
 - **Items controls.** The children of an items control are its items. An items control with virtualization and an item template is not driven by the reconciler; its items are components through a data template (section 9.2).
 
@@ -560,7 +562,58 @@ Each mounted tree registers its roots in a registry of the thread (`Element::mou
 
 ![The inspector](images/declarative-ui/view-inspector.png)
 
-## 12. Samples: 7GUIs
+## 12. Performance and scale (phase 5)
+
+### 12.1 The fewest moves of keyed children
+
+A list host (`Children` of a panel, `Items`) is patched child by child; content, decorator and text hosts keep the splice of section 8.1. After the common prefix and suffix:
+1. the children that are gone are removed, from the end;
+2. the kept children in the longest increasing subsequence of their new places stay where they are (O(n log n), the patience method);
+3. from the end of the new list, each other kept child is moved before the child that follows it, and each new child is inserted there.
+
+The number of moves is the number of kept children minus that subsequence: one for a child moved to the front, n - 1 for a list reversed. A panel moves a control without taking it out of the visual tree (`move_item`), so a moved control keeps its focus and its state, and a `ComponentHost` in it is not unmounted. Places are found through a map from control to index, which each move updates over the range it shifts. When there are more than 16 moves, a scan of the list costs less than keeping the map, and the patch scans instead.
+
+### 12.2 Work a run skips
+
+- **Handlers.** The closure of a handler is in a cell, and the attached trampoline calls what the cell holds (`Handler`). When a run has handlers of the same identities (the routed event, the property of `on_changed`) in the same order, the patch puts the new closures into the cells of the attached handlers and attaches nothing.
+- **Values that follow a signal.** A property set from a signal or a memo (`text: count`), and a two-way value of a signal, carry the identity of their source (`PropValue::Follows`). Two that follow the same source are equal, so a run leaves the effect of the first in place instead of stopping it and starting another.
+- **Memo by default.** `#[component(rerender)]` memoizes a component whose parameters are all `PartialEq` and `Clone`: a parent that runs again with equal parameters does not run it. The macro decides this when the expansion is compiled, with autoref specialization: `(&MemoProbe(parameters)).memo_props()` resolves to the trait implemented for comparable types first and to the fallback otherwise.
+  - `#[component(rerender, memo)]` requires comparable parameters, so it is a compile error otherwise.
+  - `#[component(rerender, always)]` runs with its parent every time.
+  - A component with a parameter that cannot be compared (a closure, `children: Element`) runs with its parent. So does a closure given to `rerender(..)`: what it captures cannot be compared.
+  - Context: a memoized component does not run again because its parent provides another context value. A value that changes is provided as a signal and read in the component.
+
+`view_stats()` counts what the mounting and the reconciler did on the thread: operations on the children of hosts, handlers attached and reactive values started. The tests of this section use it.
+
+### 12.3 Measures
+
+`tests/FerroUI.Benchmarks/declarative/view_benchmark.rs` measures with the harness of the benchmarks crate:
+```sh
+FERROUI_BENCH_FILTER=declarative cargo test --release -p ferroui-benchmarks run_benchmarks -- --ignored --nocapture
+```
+
+The benchmarks use a list of 1,000 rows, and 2,600 components (the cells of the 7GUIs spreadsheet). Medians on an M3 Pro, release build:
+
+| Benchmark | Before phase 5 | Phase 5 |
+|---|---|---|
+| Mount the list: controls made directly (the baseline) | 1.17 ms | 1.07 ms |
+| Mount the list: run-once model | 1.96 ms | 1.46 ms |
+| Mount the list: a component that runs again | 1.56 ms | 1.42 ms |
+| A run with nothing changed | 355 us | 283 us |
+| A run with one row changed | 331 us | 270 us |
+| One keyed row moved to the front | 2.88 ms | 0.46 ms |
+| All keyed rows reversed | 2.78 ms | 1.81 ms |
+| One row changed through its signal (run-once model) | 0.32 us | 0.29 us |
+| A parent that runs again over 2,600 components (not memoized) | 14.56 ms | 14.44 ms |
+| The same, memoized (opt-in before, by default now) | 0.26 ms | 0.23 ms |
+
+What the numbers say:
+- Mounting through elements costs 1.3 to 1.4 times making the controls directly.
+- A run of 1,000 rows with nothing changed costs about 0.28 ms: the function and the comparison of 1,000 elements.
+- A change that follows a signal in the run-once model costs 0.3 us, about a thousand times less. The two models mix (section 7.2), so the parts of a screen that change most often can follow signals.
+- Memo turns the parent of 2,600 components from 14 ms into 0.23 ms, which is why it is the default.
+
+## 13. Samples: 7GUIs
 
 The seven tasks of 7GUIs (<https://eugenkiss.github.io/7guis/tasks>) are written three times, each task a crate of its own so that each stays small:
 
@@ -608,7 +661,7 @@ cargo run -p seven-guis-crud-hooks
 FERROUI_SEVEN_GUIS_SHOTS=/tmp/shots cargo run -p seven-guis-crud-macros   # renders the window into /tmp/shots/macros-crud.png
 ```
 
-## 13. Phases
+## 14. Phases
 
 | Phase | Content | State |
 |---|---|---|
@@ -617,7 +670,7 @@ FERROUI_SEVEN_GUIS_SHOTS=/tmp/shots cargo run -p seven-guis-crud-macros   # rend
 | 2 | Interoperation with XAML and templates: `ComponentHost`, data templates of components, the data context, XAML in a component | done |
 | 3 | The rest of the API: other crates of controls, styles, resources and the theme variant, transitions and animations, popups and context menus | done |
 | 4 | Tools: hot reload of the literals of `rsx!`, diagnostics, an inspector of the mounted trees | done |
-| 5 | Performance and scale | planned |
+| 5 | Performance and scale: the fewest moves, handlers swapped, values kept, memo by default, benchmarks | done |
 | 6 | Patterns of larger applications | planned |
 
 Each phase lands as one or more pull requests with tests, and samples where they show something new. Each also updates this document and [declarative-ui-react.md](declarative-ui-react.md).
@@ -661,12 +714,16 @@ What was built differs from the plan above in three points:
 - The inspector is an element and a window of its own until the DevTools of the port land.
 - The diagnostic of a component that runs too often counts runs in one propagation of changes, not in a frame.
 
-### Phase 5: performance and scale
+### Phase 5: performance and scale (done, section 12)
 
 - **Moves.** Keyed children reordered with the fewest moves (the longest increasing subsequence of the old positions, as Vue and Inferno do), instead of the prefix and suffix rule.
 - **Values that skip work.** Handlers wrapped so that the control keeps one handler and the closure behind it is swapped on each run (no detach and attach). Reactive values compared by the identity of the signal they follow.
 - **Measures.** Benchmarks of mounting and of a run of large trees (the cells of the spreadsheet, a list of 10,000 rows), against the run-once model and against a XAML view, in `scripts/` as the TreeDataGrid benchmarks are.
 - **Memo by default** for components whose parameters are all `Copy` and `PartialEq`, if the measures show a gain.
+
+What was built differs from the plan above in two points:
+- Memo by default needs `PartialEq` and `Clone`, not `Copy`.
+- The benchmarks compare with controls made directly, not with a XAML view: a view loaded from XAML makes the same controls, after the cost of loading.
 
 ### Phase 6: patterns of larger applications
 
@@ -675,7 +732,7 @@ What was built differs from the plan above in three points:
 - **Navigation.** A router of views for single-window applications, with the routing of ReactiveUI as a model.
 - **A larger sample.** TodoMVC and a port of a ReactiveUI sample to components that run again, in the WinUI 3 theme, with screenshots and scenario tests.
 
-## 14. Testing
+## 15. Testing
 
 - `src/FerroUI.View/tests`: the reactive runtime, setters and conversions, mounting, two-way values, handlers, keyed lists, conditions, the macros and components; and for phase 1 (`rerender_tests.rs`):
   - runs again and kept controls;
@@ -707,5 +764,12 @@ What was built differs from the plan above in three points:
   - a component that writes what it reads reported;
   - hot reload of the literals of a component, keeping its controls, with a change of structure reported;
   - the inspector's description of a mounted tree and its view.
+- `src/FerroUI.View/tests/performance_tests.rs` (phase 5):
+  - the fewest moves;
+  - 300 random edits of a keyed list against the expected list and the kept controls;
+  - the longest increasing subsequence;
+  - handlers swapped and values that follow the same signal kept;
+  - memo by default, `always`, and parameters that cannot be compared.
+- `tests/FerroUI.Benchmarks/declarative`: the benchmarks of section 12.3, with a smoke test in `cargo test`.
 - `samples/SevenGuis/Tests`: the scenarios of the seven tasks on the twenty-one crates, on the test application of `ferroui-controls` (a dispatcher of the thread).
 - `samples/SevenGuis/Model`: the logic without user interface.

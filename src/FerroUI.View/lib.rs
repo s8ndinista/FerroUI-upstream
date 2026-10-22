@@ -92,6 +92,7 @@ pub use style::{parse_selector, style, style_of, StyleBuilder};
 pub use inspect::{inspector, mounted_trees, InstanceKind, InstanceNode, MountedTree, PropertyInfo};
 #[cfg(feature = "desktop")]
 pub use inspect::{attach_inspector, open_inspector};
+pub use mount::{view_stats, ViewStats};
 pub use template::template;
 pub use register_types::{register_types, ASSEMBLY};
 #[cfg(feature = "xaml")]

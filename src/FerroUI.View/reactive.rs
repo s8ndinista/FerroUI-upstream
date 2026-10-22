@@ -36,6 +36,12 @@ pub(crate) struct NodeId {
     generation: u32,
 }
 
+impl NodeId {
+    fn as_u64(self) -> u64 {
+        (u64::from(self.generation) << 32) | u64::from(self.index)
+    }
+}
+
 enum Kind {
     /// A value that is written from outside.
     Signal,
@@ -420,6 +426,12 @@ impl<T: 'static> Signal<T> {
     pub fn is_alive(&self) -> bool {
         with_runtime(|runtime| runtime.is_alive(self.id))
     }
+
+    /// The identity of the signal: what values that follow it are compared
+    /// by.
+    pub(crate) fn source_id(&self) -> u64 {
+        self.id.as_u64()
+    }
 }
 
 /// A signal used as a two-way value of a property (see [`Signal::two_way`]).
@@ -501,6 +513,11 @@ impl<T: 'static> Memo<T> {
         T: Clone,
     {
         untrack(|| self.get())
+    }
+
+    /// The identity of the memo: what values that follow it are compared by.
+    pub(crate) fn source_id(&self) -> u64 {
+        self.id.as_u64()
     }
 }
 
