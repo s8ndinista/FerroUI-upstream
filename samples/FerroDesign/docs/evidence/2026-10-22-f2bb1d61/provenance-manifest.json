@@ -11,8 +11,8 @@
   "originalReportsPreservedByteForByte": true,
   "files": {
     "README.md": {
-      "bytes": 27763,
-      "sha256": "2589e714e52407eedb82ab0da506d543fc8ed7b78cf224e2507a079f858d71e5"
+      "bytes": 27824,
+      "sha256": "50a452021e877dd6cbb460b8dfa9441ebbe190a97c325e69293e034201723d7a"
     },
     "Software2D-bucket-hover-face.png": {
       "bytes": 83606,
@@ -122,10 +122,6 @@
       "bytes": 2603,
       "sha256": "9b833fd056e199a6d854c99dada32158a03215d2d058e41f189aa0e77b0b8ef7"
     },
-    "successful-ci-artifact-metadata.json": {
-      "bytes": 36736,
-      "sha256": "4a216db921500f84aee369d3a46277c751be76cc18ae974ad43460cb03be9fb5"
-    },
     "successful-ci-browser-log.zip": {
       "bytes": 44151,
       "sha256": "3cc10ba49280556138c39995c93c4d3812a93938a8864f8a7411ed500ed8f9d8"
@@ -153,6 +149,10 @@
     "validation-source.json": {
       "bytes": 12011,
       "sha256": "f8007efd456247c2caa18106fb0cae9eb60fd5392bc136635b53111d56dfd72b"
+    },
+    "../../../../../docs/ferrodesign-evidence/2026-10-22-f2bb1d61/successful-ci-artifact-metadata.json": {
+      "bytes": 36736,
+      "sha256": "4a216db921500f84aee369d3a46277c751be76cc18ae974ad43460cb03be9fb5"
     }
   },
   "updatedAtUtc": "2026-10-22T17:04:00Z",
@@ -178,5 +178,11 @@
     "scenarioStartsPerMode": 28,
     "nativeCaptureRetryWarnings": 2,
     "proof": "Connector-decoded job log, exact extracted printed JSON and canonical API metadata; official artifact ZIP bytes and detailed sidecars were not retrieved."
+  },
+  "metadataRelocation": {
+    "reason": "Keep verbatim external API repository descriptions in the top-level documentation tree required by the repository source conventions.",
+    "bytesUnchanged": true,
+    "originalPath": "successful-ci-artifact-metadata.json",
+    "currentPath": "../../../../../docs/ferrodesign-evidence/2026-10-22-f2bb1d61/successful-ci-artifact-metadata.json"
   }
 }

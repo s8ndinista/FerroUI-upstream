@@ -27,11 +27,9 @@ jobs:
     env:
       CARGO_BUILD_JOBS: 1
       CARGO_TERM_COLOR: always
-      CARGO_HOME: ${{ runner.temp }}/ferrodesign-tools/cargo
-      RUSTUP_HOME: ${{ runner.temp }}/ferrodesign-tools/rustup
       CARGO_TARGET_DIR: ${{ github.workspace }}/samples/FerroDesign/target
-      CARGO_PROFILE_TEST_DEBUG: 0
-      CARGO_PROFILE_TEST_CODEGEN_UNITS: 16
+      CARGO_PROFILE_TEST_DEBUG: '0'
+      CARGO_PROFILE_TEST_CODEGEN_UNITS: '16'
     defaults:
       run:
         shell: bash
@@ -40,6 +38,10 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.sha }}
+      - name: Configure runner-local toolchain paths
+        run: |
+          echo "CARGO_HOME=$RUNNER_TEMP/ferrodesign-tools/cargo" >> "$GITHUB_ENV"
+          echo "RUSTUP_HOME=$RUNNER_TEMP/ferrodesign-tools/rustup" >> "$GITHUB_ENV"
       - uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: |
