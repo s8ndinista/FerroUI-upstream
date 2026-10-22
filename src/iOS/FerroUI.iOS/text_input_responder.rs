@@ -806,9 +806,10 @@ mod uikit {
                             InputScopeContentType::Password => UITextContentTypePassword,
                         }
                     };
-                    return Some(value.retain());
+                    Some(value.retain())
+                } else {
+                    Some(self.ivars().text_content_type.borrow().clone())
                 }
-                Some(self.ivars().text_content_type.borrow().clone())
             }
 
             #[unsafe(method(setTextContentType:))]

@@ -627,7 +627,12 @@ mod tests {
         assert_eq!(of(TextInputContentType::Search), CLASS_TEXT);
         assert_eq!(of(TextInputContentType::Email), 0x21);
         assert_eq!(of(TextInputContentType::Number), 0x3002);
-        assert_eq!(of(TextInputContentType::Password), 0x81);
+        // Password retains its privacy hints as well as its keyboard purpose,
+        // including when a later scope changes that purpose independently.
+        assert_eq!(
+            of(TextInputContentType::Password),
+            CLASS_TEXT | TEXT_VARIATION_PASSWORD | TEXT_FLAG_NO_SUGGESTIONS
+        );
         assert_eq!(of(TextInputContentType::Pin), 0x12);
         assert_eq!(of(TextInputContentType::Digits), 3);
         assert_eq!(of(TextInputContentType::Url), 0x11);
