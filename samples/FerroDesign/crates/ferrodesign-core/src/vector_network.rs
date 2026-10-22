@@ -17,6 +17,9 @@ use std::collections::{BTreeMap, BTreeSet};
 mod faces;
 pub use faces::{NetworkFaceError, NetworkFaceMap};
 
+#[path = "vector_planarize.rs"]
+mod planarize;
+
 pub type VectorVertexId = u64;
 pub type VectorEdgeId = u64;
 pub type VectorRegionId = u64;

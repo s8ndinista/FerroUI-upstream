@@ -71,12 +71,12 @@ impl DesignCanvas {
         let token = editor.render_change_token();
         let mut state = self.network_bucket.borrow_mut();
         if let Some(cache) = &mut state.cache {
-            if cache.node == id && cache.token != token && cache.map.as_ref().is_ok_and(|map| map.matches_geometry(network)) {
+            if cache.node == id && cache.token != token && cache.map.as_ref().is_ok_and(|map| map.matches_source(network)) {
                 cache.token = token.clone();
             }
         }
         if !state.cache.as_ref().is_some_and(|cache| cache.node == id && cache.token == token) {
-            let map = core::NetworkFaceMap::new(network).map(Rc::new);
+            let map = core::NetworkFaceMap::prepare(network).map(Rc::new);
             state.cache = Some(CachedFaces { node: id, token, map });
             state.hover = None;
             #[cfg(test)] { state.preparations += 1; }

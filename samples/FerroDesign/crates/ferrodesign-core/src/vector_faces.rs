@@ -55,9 +55,11 @@ impl std::error::Error for NetworkFaceError {}
 /// a balanced bounds tree and evaluate the original Bézier winding, retaining
 /// narrow faces and holes without a screen-dependent flattening tolerance.
 /// Paint changes do not invalidate this map; vertex/edge changes do. No stable
-/// region IDs are allocated by preparation or hovering.
+/// region IDs are allocated by preparation or hovering. `prepare` may retain a
+/// checked subdivision plan, but does not apply it to the authored network.
 pub struct NetworkFaceMap {
     source: VectorNetwork,
+    preparation: Option<super::planarize::Preparation>,
     faces: Vec<NetworkRegion>,
     paths: Vec<VectorPath>,
     bounds: Vec<Rect>,
@@ -87,10 +89,27 @@ impl NetworkFaceMap {
         // their potentially large independent paint/image stacks into the cache.
         let source = VectorNetwork { vertices: network.vertices.clone(), edges: network.edges.clone(),
             regions: BTreeMap::new(), fill_rule: network.fill_rule, next_id: network.next_id };
-        let mut result = Self { source, faces, paths, bounds, tree: Vec::new(), root: None };
+        let mut result = Self { source, preparation: None, faces, paths, bounds, tree: Vec::new(), root: None };
         let mut indices: Vec<_> = (0..result.faces.len()).collect();
         if !indices.is_empty() { result.root = Some(result.build_tree(&mut indices)); }
         Ok(result)
+    }
+
+    /// Prepare common line/cubic crossings on an immutable clone, then certify
+    /// the entire resulting embedding with the same strict face builder. This
+    /// does not reserve IDs in the caller, change paints, or create history.
+    pub fn prepare(network: &VectorNetwork) -> Result<Self, NetworkFaceError> {
+        match Self::new(network) {
+            Ok(map) => return Ok(map),
+            Err(NetworkFaceError::UnsplitIntersection(..) | NetworkFaceError::AmbiguousJunction(..)) => {},
+            Err(error) => return Err(error),
+        }
+        let preparation = super::planarize::Preparation::build(network)?;
+        let mut candidate = network.clone();
+        preparation.apply(&mut candidate)?;
+        let mut map = Self::new(&candidate)?;
+        map.preparation = Some(preparation);
+        Ok(map)
     }
 
     pub fn len(&self) -> usize { self.faces.len() }
@@ -100,6 +119,19 @@ impl NetworkFaceMap {
     pub fn matches_geometry(&self, network: &VectorNetwork) -> bool {
         self.source.vertices == network.vertices && self.source.edges == network.edges
             && self.source.fill_rule == network.fill_rule
+    }
+
+    /// A prepared map accepts either its original unmodified allocator/graph
+    /// or its applied geometry. Paint-only changes do not copy stale paints
+    /// back into the document; a newly allocated region forces re-preparation.
+    pub fn matches_source(&self, network: &VectorNetwork) -> bool {
+        self.matches_geometry(network) || self.preparation.as_ref().is_some_and(|plan| plan.matches(network))
+    }
+
+    pub(super) fn apply_preparation(&self, network: &mut VectorNetwork) -> Result<bool, NetworkFaceError> {
+        if self.matches_geometry(network) { return Ok(false); }
+        self.preparation.as_ref().ok_or(NetworkFaceError::StaleFaceMap)?.apply(network)?;
+        Ok(true)
     }
 
     pub fn face_at(&self, point: Point) -> Option<usize> {
@@ -612,10 +644,30 @@ impl VectorNetwork {
         fills: Vec<crate::Fill>,
     ) -> Result<bool, NetworkFaceError> {
         validate_region_fills(&fills).map_err(NetworkFaceError::InvalidRegionFills)?;
-        if !map.matches_geometry(self) { return Err(NetworkFaceError::StaleFaceMap); }
+        if !map.matches_source(self) { return Err(NetworkFaceError::StaleFaceMap); }
         self.validate().map_err(NetworkFaceError::InvalidNetwork)?;
         let Some(face) = map.face_at(point) else { return Ok(false); };
-        self.paint_detected_face_at(map.faces[face].clone(), point, Some(fills))
+        // The subdivision and the paint are one atomic edit, including ID
+        // exhaustion after topology allocation. A no-op never applies a plan.
+        let mut candidate = self.clone();
+        map.apply_preparation(&mut candidate)?;
+        if !candidate.paint_detected_face_at(map.faces[face].clone(), point, Some(fills))? { return Ok(false); }
+        *self = candidate;
+        Ok(true)
+    }
+
+    /// Native point authoring uses the checked preparation path. The strict
+    /// `paint_face_at` API remains available for already planar callers.
+    pub fn paint_prepared_face_at(&mut self, point: Point, fills: Option<Vec<crate::Fill>>) -> Result<bool, NetworkFaceError> {
+        if let Some(fills) = &fills { validate_region_fills(fills).map_err(NetworkFaceError::InvalidRegionFills)?; }
+        if !finite(point) { return Ok(false); }
+        let map = NetworkFaceMap::prepare(self)?;
+        let Some(face) = map.face_at(point) else { return Ok(false); };
+        let mut candidate = self.clone();
+        map.apply_preparation(&mut candidate)?;
+        if !candidate.paint_detected_face_at(map.faces[face].clone(), point, fills)? { return Ok(false); }
+        *self = candidate;
+        Ok(true)
     }
 
     fn paint_detected_face_at(
@@ -657,6 +709,23 @@ impl VectorNetwork {
     /// errors, exhausted IDs and repeated calls leave the entire graph untouched.
     pub fn fill_all_faces(&mut self) -> Result<bool, NetworkFaceError> {
         let faces = self.detect_faces()?;
+        self.fill_detected_faces(faces)
+    }
+
+    /// Atomically prepare crossings and fill the resulting bounded faces.
+    /// An open graph with no bounded face is not rewritten merely by filling.
+    pub fn fill_prepared_faces(&mut self) -> Result<bool, NetworkFaceError> {
+        let map = NetworkFaceMap::prepare(self)?;
+        if map.is_empty() && map.preparation.is_some() { return Ok(false); }
+        let mut candidate = self.clone();
+        let prepared = map.apply_preparation(&mut candidate)?;
+        let changed = candidate.fill_detected_faces(map.faces)?;
+        if !prepared && !changed { return Ok(false); }
+        *self = candidate;
+        Ok(true)
+    }
+
+    fn fill_detected_faces(&mut self, faces: Vec<NetworkRegion>) -> Result<bool, NetworkFaceError> {
         let mut existing: BTreeMap<_, Vec<_>> = BTreeMap::new();
         for (&id, region) in &self.regions { existing.entry(face_key(region)).or_default().push(id); }
         let mut regions = BTreeMap::new();
@@ -686,17 +755,21 @@ impl VectorNetwork {
 }
 
 impl Editor {
-    /// One scoped, reversible fill-only edit. World transforms and bounds do
-    /// not change, and discovery errors preserve selection/history/redo.
+    /// One scoped, reversible topology/fill edit. World transforms and bounds
+    /// do not change; preparation errors preserve selection/history/redo.
     pub fn fill_network_faces(&mut self, id: NodeId) -> Result<bool, NetworkFaceError> {
         if self.document.effective_locked(id) { return Err(NetworkFaceError::NotEditable); }
         let mut node = self.document.nodes.get(&id).cloned().ok_or(NetworkFaceError::NotEditable)?;
         if node.kind != NodeKind::Vector { return Err(NetworkFaceError::NotEditable); }
         let network = node.vector_network.as_mut().ok_or(NetworkFaceError::NotEditable)?;
-        let changed = network.fill_all_faces()?;
+        let changed = network.fill_prepared_faces()?;
         let needs_fill = node.fills.is_empty() && network.regions.values().any(|region| region.fills.is_none());
         if !changed && !needs_fill { return Ok(false); }
         if needs_fill { node.fills.push(crate::Fill::solid(crate::Color::rgb(217, 217, 217))); }
+        if node.component_source.is_some() {
+            if changed { node.overridden_properties.insert("path".into()); }
+            if needs_fill { node.overridden_properties.insert("fills".into()); }
+        }
         // The ordinary property update boundary detaches a conflicting empty
         // fill style when authoring the default fill, within the same history.
         self.update_node(id, "Fill network faces", |existing| *existing = node);
@@ -712,7 +785,7 @@ impl Editor {
         point: Point,
         fills: Option<Vec<crate::Fill>>,
     ) -> Result<bool, NetworkFaceError> {
-        self.edit_network_region_paints(id, "Paint vector region", |network| network.paint_face_at(point, fills))
+        self.edit_network_region_paints(id, "Paint vector region", |network| network.paint_prepared_face_at(point, fills))
     }
 
     pub fn set_network_region_fills(
@@ -739,7 +812,7 @@ impl Editor {
         validate_region_fills(fills).map_err(NetworkFaceError::InvalidRegionFills)?;
         if points.len() > MAX_EDGES { return Err(NetworkFaceError::ComplexityLimit); }
         self.edit_network_region_paints(id, "Paint vector regions", |network| {
-            if !map.matches_geometry(network) { return Err(NetworkFaceError::StaleFaceMap); }
+            if !map.matches_source(network) { return Err(NetworkFaceError::StaleFaceMap); }
             network.validate().map_err(NetworkFaceError::InvalidNetwork)?;
             let mut changed = false;
             let mut seen = BTreeSet::new();
@@ -748,6 +821,7 @@ impl Editor {
                 if !finite(point) { continue; }
                 let Some(face) = map.root.map(|root| map.find_face_checked(root, point, &mut work)).transpose()?.flatten() else { continue; };
                 if seen.insert(face) {
+                    map.apply_preparation(network)?;
                     changed |= network.paint_detected_face_at(map.faces[face].clone(), point, Some(fills.to_vec()))?;
                 }
             }
@@ -916,7 +990,7 @@ fn split_curve(curve: Curve) -> (Curve, Curve) {
     (Curve { points: a, degree: curve.degree }, Curve { points: b, degree: curve.degree })
 }
 
-fn monotone(curve: Curve) -> bool {
+pub(super) fn monotone(curve: Curve) -> bool {
     [false, true].into_iter().any(|y| {
         let mut differences = [0.0; 3];
         for i in 1..=curve.degree {
@@ -991,7 +1065,7 @@ fn certify_disjoint(a: Curve, b: Curve, allowed: &[Point], a_id: VectorEdgeId, b
     Ok(())
 }
 
-fn separated_hulls(a: Curve, b: Curve, allowed: &[Point]) -> bool {
+pub(super) fn separated_hulls(a: Curve, b: Curve, allowed: &[Point]) -> bool {
     if separating_axis(a, b, Point::new(1.0, 0.0), allowed)
         || separating_axis(a, b, Point::new(0.0, 1.0), allowed)
     { return true; }

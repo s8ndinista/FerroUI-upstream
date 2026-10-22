@@ -195,8 +195,10 @@ fn bucket_tool_switch_and_invalid_topology_keep_history_and_cached_failures_stab
     {
         let mut editor = canvas.editor.borrow_mut();
         let graph = editor.document.nodes.get_mut(&id).unwrap().vector_network.as_mut().unwrap();
-        let a = graph.add_vertex(Point::new(50.0, -5.0)).unwrap();
-        let b = graph.add_vertex(Point::new(50.0, 125.0)).unwrap();
+        // A transverse crossing is now prepared automatically. A coincident
+        // subsegment remains an ambiguous overlap and must fail atomically.
+        let a = graph.add_vertex(Point::new(0.0, 20.0)).unwrap();
+        let b = graph.add_vertex(Point::new(0.0, 100.0)).unwrap();
         graph.connect(a, b).unwrap();
         editor.refresh();
     }
@@ -211,5 +213,78 @@ fn bucket_tool_switch_and_invalid_topology_keep_history_and_cached_failures_stab
     assert_eq!(json(&canvas), before);
     assert_eq!(canvas.editor.borrow().history_len(), 0);
     assert!(!canvas.editor.borrow().has_active_transaction());
+    scope.dispose();
+}
+
+fn crossed_fixture() -> (Ref<DesignCanvas>, NodeId) {
+    let (canvas, id) = fixture();
+    let mut network = core::VectorNetwork::default();
+    let vertices = [Point::new(0.0, 0.0), Point::new(100.0, 0.0), Point::new(100.0, 100.0), Point::new(0.0, 100.0)]
+        .map(|point| network.add_vertex(point).unwrap());
+    for i in 0..4 { network.connect(vertices[i], vertices[(i + 1) % 4]).unwrap(); }
+    network.connect_curve(vertices[0], vertices[2], core::NetworkCurve::Cubic {
+        control1: Point::new(20.0, 60.0), control2: Point::new(80.0, 40.0),
+    }).unwrap();
+    network.connect_curve(vertices[1], vertices[3], core::NetworkCurve::Cubic {
+        control1: Point::new(80.0, 60.0), control2: Point::new(20.0, 40.0),
+    }).unwrap();
+    canvas.editor.borrow_mut().document.nodes.get_mut(&id).unwrap().vector_network = Some(network);
+    canvas.editor.borrow_mut().refresh();
+    (canvas, id)
+}
+
+#[test]
+fn bucket_crossing_hover_is_cached_and_preparation_rolls_back_with_the_paint_stroke() {
+    let scope = backend();
+    let (canvas, id) = crossed_fixture();
+    let before = json(&canvas);
+    for _ in 0..50 { canvas.network_bucket_move(world(&canvas, id, 50.0, 10.0), false); }
+    assert_eq!(canvas.network_bucket.borrow().preparations, 1);
+    assert_eq!(json(&canvas), before);
+    assert!(canvas.network_bucket_state().0.is_some(), "unsplit crossings support immutable hover preview");
+    canvas.network_bucket_press(world(&canvas, id, 50.0, 10.0), false);
+    canvas.network_bucket_move(world(&canvas, id, 50.0, 90.0), false);
+    {
+        let editor = canvas.editor.borrow();
+        let network = editor.document.nodes[&id].vector_network.as_ref().unwrap();
+        assert_eq!(network.vertices.len(), 5);
+        assert_eq!(network.edges.len(), 8);
+        assert_eq!(network.regions.len(), 2);
+        assert_eq!(editor.history_len(), 0);
+    }
+    assert_eq!(canvas.network_bucket.borrow().preparations, 1, "the applied topology retains its prepared map");
+    canvas.cancel_network_bucket_gesture();
+    assert_eq!(json(&canvas), before, "cancel restores geometry, paints and the original allocator");
+    assert_eq!(canvas.editor.borrow().history_len(), 0);
+    canvas.network_bucket_press(world(&canvas, id, 50.0, 10.0), false);
+    canvas.network_bucket_move(world(&canvas, id, 50.0, 90.0), false);
+    canvas.finish_network_bucket_gesture(true);
+    let after = json(&canvas);
+    assert_eq!(canvas.editor.borrow().history_len(), 1);
+    assert!(canvas.editor.borrow_mut().undo());
+    assert_eq!(json(&canvas), before);
+    assert!(canvas.editor.borrow_mut().redo());
+    assert_eq!(json(&canvas), after);
+    scope.dispose();
+}
+
+#[test]
+fn bucket_crossing_outside_press_is_a_noop_and_shift_clear_prepares_one_transparent_region() {
+    let scope = backend();
+    let (canvas, id) = crossed_fixture();
+    let before = json(&canvas);
+    canvas.network_bucket_press(world(&canvas, id, -10.0, -10.0), false);
+    canvas.finish_network_bucket_gesture(true);
+    assert_eq!(json(&canvas), before);
+    assert_eq!(canvas.editor.borrow().history_len(), 0);
+    canvas.network_bucket_press(world(&canvas, id, 50.0, 10.0), true);
+    canvas.finish_network_bucket_gesture(true);
+    let editor = canvas.editor.borrow();
+    let network = editor.document.nodes[&id].vector_network.as_ref().unwrap();
+    assert_eq!(network.edges.len(), 8);
+    assert_eq!(network.regions.len(), 1);
+    assert_eq!(network.regions.values().next().unwrap().fills, Some(Vec::new()));
+    assert_eq!(editor.history_len(), 1);
+    drop(editor);
     scope.dispose();
 }

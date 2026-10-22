@@ -200,7 +200,49 @@ export async function vectorNetworkRegressions(page, reference, check, helpers, 
     const crossing = structuredClone(faceNode);
     crossing.vector_network.edges[12] = { start: 2, end: 4, curve: { type: "line" }, stroke: true };
     crossing.vector_network.next_id = 13;
-    await importFixture(page, isolatedDocument(reference, [crossing], "Unsplit network crossing"));
+    await importFixture(page, isolatedDocument(reference, [crossing], "Automatic network intersection splitting"));
+    await selectNetworkRoot();
+    await enterNetwork();
+    const beforeCrossing = await documentState(page), crossingDepth = (await state(page)).historyLength;
+    await clickNative(page, "NetworkDetectFacesButton", "InspectorViewport");
+    await page.waitForFunction(() => {
+        const graph = JSON.parse(globalThis.ferroDesign.ferroDesignExportJson()).nodes[2].vector_network;
+        return Object.keys(graph.regions).length === 4;
+    }, null, { timeout: 10000 });
+    const splitCrossing = await documentState(page), splitGraph = splitCrossing.nodes[2].vector_network;
+    assert.equal(Object.keys(splitGraph.vertices).length, 6);
+    assert.equal(Object.keys(splitGraph.edges).length, 9);
+    assert.equal(splitGraph.next_id, 20);
+    for (const [id, vertex] of Object.entries(graphFixture.vertices)) assert.deepEqual(splitGraph.vertices[id], vertex);
+    for (const id of [6, 7, 8, 9, 11]) assert.deepEqual(splitGraph.edges[id], graphFixture.edges[id]);
+    assert.deepEqual(splitGraph.vertices[13].position, { x: 100, y: 80 });
+    assert.equal(splitGraph.edges[10].start, 1);
+    assert.equal(splitGraph.edges[12].start, 2);
+    assert.equal(splitGraph.edges[10].end, 13);
+    assert.equal(splitGraph.edges[12].end, 13);
+    assert.equal((await state(page)).historyLength, crossingDepth + 1);
+    const crossingImage = PNG.sync.read(await captureNativeScreenshot(mode + "-split-vector-intersections", {
+        controls: ["CanvasHost", "NetworkDetectFacesButton"],
+    }));
+    const crossingView = await state(page);
+    for (const [x, y] of [[140, 60], [220, 120], [140, 180], [60, 120]]) {
+        const pixel = screen(crossingView, x, y), offset = (Math.round(pixel.y) * crossingImage.width + Math.round(pixel.x)) * 4;
+        assert.ok(crossingImage.data[offset] > 200 && crossingImage.data[offset + 1] < 100 && crossingImage.data[offset + 2] < 100,
+            "Every newly split bounded face must paint through the native renderer");
+    }
+    assert.equal(await page.evaluate(() => globalThis.ferroDesign.ferroDesignCommand("network-fill-faces")), false);
+    assert.deepEqual(await documentState(page), splitCrossing);
+    assert.equal((await state(page)).historyLength, crossingDepth + 1);
+    await command("undo");
+    assert.deepEqual(await documentState(page), beforeCrossing, "One undo restores unsplit geometry and its exact allocator");
+    await command("redo");
+    assert.deepEqual(await documentState(page), splitCrossing);
+    check("Native Fill all closed regions splits transverse intersections, preserves original first-edge and branch identities, paints four new faces, and keeps subdivision plus fill in one idempotent undo/redo edit");
+
+    const overlapping = structuredClone(faceNode);
+    overlapping.vector_network.edges[12] = { start: 1, end: 3, curve: { type: "line" }, stroke: true };
+    overlapping.vector_network.next_id = 13;
+    await importFixture(page, isolatedDocument(reference, [overlapping], "Ambiguous overlapping network edges"));
     await selectNetworkRoot();
     await page.keyboard.press("ArrowRight"); await frames(page);
     const redoDocument = await documentState(page);
@@ -218,10 +260,10 @@ export async function vectorNetworkRegressions(page, reference, check, helpers, 
         const { chrome } = JSON.parse(globalThis.ferroDesign.ferroDesignState());
         return chrome.Toast?.visible === true && chrome.ToastText?.text === rejection;
     }, rejection, { timeout: 10000 });
-    assert.deepEqual(await documentState(page), beforeError, "Unsplit intersections must fail before changing graph or allocator");
+    assert.deepEqual(await documentState(page), beforeError, "Ambiguous overlapping edges must fail before changing graph or allocator");
     assert.equal((await state(page)).historyLength, beforeErrorView.historyLength);
     assert.equal((await state(page)).canRedo, true);
     await command("redo");
     assert.deepEqual(await documentState(page), redoDocument);
-    check("Native automatic face discovery rejects unsplit crossings atomically and retains the preceding redo transaction");
+    check("Native automatic intersection preparation rejects ambiguous overlapping edges with a fresh exact error, preserves the entire graph and allocator, and retains the preceding redo transaction");
 }

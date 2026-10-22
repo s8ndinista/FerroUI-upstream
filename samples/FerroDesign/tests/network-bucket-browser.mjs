@@ -236,4 +236,104 @@ export async function networkBucketRegressions(page, reference, check, helpers, 
     }
     assert.deepEqual(await documentState(page), painted);
     check("The downloaded FerroUI PNG includes the painted faces with exact color and dimensions while excluding transient bucket hover adorners");
+
+    const crossingGraph = {
+        vertices: Object.fromEntries([[0, 0], [100, 0], [100, 100], [0, 100]]
+            .map(([x, y], index) => [index + 1, { position: { x, y }, mode: "corner" }])),
+        edges: {
+            5: { start: 1, end: 2, curve: { type: "line" }, stroke: true },
+            6: { start: 2, end: 3, curve: { type: "line" }, stroke: true },
+            7: { start: 3, end: 4, curve: { type: "line" }, stroke: true },
+            8: { start: 4, end: 1, curve: { type: "line" }, stroke: true },
+            9: { start: 1, end: 3, curve: { type: "cubic", control1: { x: 20, y: 60 }, control2: { x: 80, y: 40 } }, stroke: true },
+            10: { start: 2, end: 4, curve: { type: "cubic", control1: { x: 80, y: 60 }, control2: { x: 20, y: 40 } }, stroke: true },
+        },
+        regions: {}, fill_rule: "even_odd", next_id: 11,
+    };
+    await importFixture(page, isolatedDocument(reference, [fixtureNode(reference, 2, {
+        kind: "vector", name: "Crossing cubic bucket faces", x: 40, y: 40, width: 100, height: 100,
+        corner_radius: 0, corner_radii: null, fills: [blue], strokes: [],
+        path: { segments: [], fill_rule: "even_odd" }, vector_network: crossingGraph,
+    })], "Checked cubic bucket preparation"));
+    await clickNative(page, "SelectTool");
+    await page.keyboard.press("Escape");
+    const crossingSelection = await state(page);
+    await page.keyboard.press("Tab");
+    await page.waitForFunction(() => {
+        const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+        return view.selection.join() === "2" && view.chrome.CanvasHost.focusWithin;
+    });
+    await waitForNativeFrame(page, crossingSelection.renderedFrames, "Crossing bucket keyboard selection");
+    await waitForNativeScene(page, crossingSelection.sceneFrames, "Crossing bucket keyboard selection");
+    const crossingVector = await state(page);
+    await clickNative(page, "EditVectorButton", "InspectorViewport");
+    await page.waitForFunction(() => {
+        const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+        return view.vectorNode === 2 && view.chrome.CanvasHost.focusWithin && view.chrome.NetworkBucketButton.visible;
+    });
+    await waitForNativeFrame(page, crossingVector.renderedFrames, "Crossing bucket vector entry");
+    await waitForNativeScene(page, crossingVector.sceneFrames, "Crossing bucket vector entry");
+    await page.keyboard.press("Shift+B");
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).vectorTool === "Bucket");
+    const unsplit = await documentState(page), crossingEntry = await state(page);
+    await moveWorld(page, 90, 50);
+    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).networkBucket.face !== null);
+    assert.deepEqual(await documentState(page), unsplit, "Prepared cubic hover must not split the authored network or reserve IDs");
+    assert.equal((await state(page)).documentRevision, crossingEntry.documentRevision);
+    assert.equal((await state(page)).historyLength, crossingEntry.historyLength);
+    const crossingDrag = async (cancel) => {
+        await moveWorld(page, 90, 50);
+        await page.mouse.down();
+        try {
+            await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).networkBucket.active);
+            await moveWorld(page, 90, 130);
+            await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).networkBucket.visited === 2);
+            const preview = (await documentState(page)).nodes[2].vector_network;
+            assert.equal(Object.keys(preview.vertices).length, 5);
+            assert.equal(Object.keys(preview.edges).length, 8);
+            assert.equal(Object.keys(preview.regions).length, 2);
+            assert.equal((await state(page)).historyLength, crossingEntry.historyLength);
+            if (cancel) await page.keyboard.press("Escape");
+        } finally { await page.mouse.up(); }
+        await page.waitForFunction(() => !JSON.parse(globalThis.ferroDesign.ferroDesignState()).networkBucket.active);
+        await frames(page);
+    };
+    await crossingDrag(true);
+    assert.deepEqual(await documentState(page), unsplit, "Escape rolls back cubic subdivision, paint, provisional IDs and allocator together");
+    assert.equal((await state(page)).historyLength, crossingEntry.historyLength);
+    await crossingDrag(false);
+    const splitPaint = await documentState(page), splitGraph = splitPaint.nodes[2].vector_network;
+    assert.equal((await state(page)).historyLength, crossingEntry.historyLength + 1);
+    assert.equal(splitGraph.next_id, 16);
+    for (const [id, vertex] of Object.entries(crossingGraph.vertices)) assert.deepEqual(splitGraph.vertices[id], vertex);
+    for (const id of [5, 6, 7, 8]) assert.deepEqual(splitGraph.edges[id], crossingGraph.edges[id]);
+    assert.equal(splitGraph.edges[9].curve.type, "cubic");
+    assert.equal(splitGraph.edges[10].curve.type, "cubic");
+    for (const region of Object.values(splitGraph.regions)) assert.deepEqual(region.fills, [blue]);
+    await page.keyboard.press("Control+z"); await frames(page);
+    assert.deepEqual(await documentState(page), unsplit);
+    await page.keyboard.press("Control+Shift+z"); await frames(page);
+    assert.deepEqual(await documentState(page), splitPaint);
+    check("Native cubic bucket hover prepares intersections without mutation; a captured two-face stroke applies subdivision once, Escape restores unsplit IDs and allocator, and exact undo/redo treats geometry plus paint as one edit");
+
+    await clickNative(page, "DoneVectorButton", "InspectorViewport");
+    const [crossingDownload] = await Promise.all([
+        page.waitForEvent("download", { timeout: 60000 }),
+        clickNative(page, "ExportPngButton", "InspectorViewport"),
+    ]);
+    assert.equal(await crossingDownload.failure(), null);
+    const crossingFile = resolve(output, mode + "-bucket-split-cubics-export.png");
+    await crossingDownload.saveAs(crossingFile);
+    const crossingPng = PNG.sync.read(await readFile(crossingFile));
+    assert.deepEqual([crossingPng.width, crossingPng.height], [100, 100]);
+    for (const [x, y] of [[50, 10], [50, 90]]) {
+        const offset = (y * crossingPng.width + x) * 4;
+        assert.deepEqual([...crossingPng.data.subarray(offset, offset + 4)], [37, 99, 235, 255]);
+    }
+    for (const [x, y] of [[10, 50], [90, 50]]) {
+        assert.equal(crossingPng.data[(y * crossingPng.width + x) * 4 + 3], 0,
+            "Unpainted faces stay transparent after cubic intersection preparation");
+    }
+    assert.deepEqual(await documentState(page), splitPaint);
+    check("The native PNG preserves exact cubic face fills and transparent unpainted neighbors after automatic subdivision, without exporting the hover preview");
 }

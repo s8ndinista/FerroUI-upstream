@@ -1,10 +1,12 @@
 # Vector-network faces and paint bucket
 
-FerroDesign discovers bounded faces in a checked planar vector network, supports
-independent region paint stacks, and provides a native paint bucket with hover
-preview and captured drag painting. The authoritative geometry remains the
-network's vertices, edges and oriented region contours. Face authoring preserves
-the original line and cubic Bézier commands, layer identity and world transform.
+FerroDesign prepares supported intersections in vector networks, discovers their
+checked bounded faces, supports independent region paint stacks, and provides a
+native paint bucket with hover preview and captured drag painting. The
+authoritative geometry remains the network's vertices, edges and oriented region
+contours. Intersection preparation subdivides line and cubic Bézier commands
+without converting them into polylines; layer identity and world transform stay
+unchanged.
 The controls are defined in XAML; face adorners and artwork use public FerroUI
 geometry, brush, clipping and `DrawingContext` APIs.
 
@@ -27,13 +29,15 @@ The related native actions have distinct purposes:
 
 | Action | Result |
 | --- | --- |
-| **Fill all closed regions** | Discovers every bounded elementary face and fills the inherited topology. Existing matching regions and explicit paint overrides are retained. If inherited regions need a layer fill and the layer has none, this action adds the neutral fill in the same edit. |
-| **Paint bucket** | Copies the layer's current stack into explicit replacements for the faces visited by a click or drag. Shift-drag creates explicit empty replacements. |
+| **Fill all closed regions** | Prepares supported crossings, discovers every bounded elementary face, and fills the inherited topology. Existing matching regions and explicit paint overrides are retained. If inherited regions need a layer fill and the layer has none, this action adds the neutral fill in the same edit. |
+| **Paint bucket** | Previews checked faces without changing the graph, then applies any required subdivision and copies the layer's current stack into explicit replacements for visited faces. Shift-drag creates explicit empty replacements. |
 | **Region paints** | Opens the existing paint-stack editor for the active region. Edits target that region's stack, with the front paint first. |
 | **Use layer fills** | Removes the active region's explicit paint override when its coverage can safely return to inheritance. The coverage rules below determine whether the region itself is retained. |
 
 Open branches remain editable and stroked. They do not become artificial fill
-boundaries, and pointing outside all bounded faces does not allocate a region.
+boundaries, and pointing outside all bounded faces does not allocate a region or
+apply a subdivision plan. Filling an intersecting open graph with no bounded
+face also leaves its topology unchanged.
 
 ## Paint ownership and inheritance
 
@@ -78,6 +82,55 @@ explicit stack is a value snapshot; it does not keep inheriting later layer
 paint changes. Regional image paints use the paint editor's controls; the
 direct canvas image-crop tool remains a layer-fill operation.
 
+## Automatic intersection preparation
+
+The native fill and bucket paths use `NetworkFaceMap::prepare`. Already planar
+networks retain their existing geometry. For an unsplit network, preparation
+builds a separate candidate, finds supported contacts, subdivides its edges, and
+requires the complete candidate to pass ordinary checked face discovery before
+it can be used. Hover retains this candidate in memory; it does not reserve IDs
+in the document or create history.
+
+The preparation algorithm handles transverse line/line and line/cubic crossings,
+bounded cubic/cubic intersections, and supported cubic self-intersections. A
+control-hull sweep limits candidate pairs. Line/cubic intersections use the
+curve polynomial's bracketed roots and polish them against Bézier evaluation.
+Cubic pairs are recursively isolated; a common monotone projection and separated
+derivative-slope intervals establish a unique transverse crossing in an accepted
+pair. A bounded Newton solve then refines that root. Self-intersection discovery
+compares monotone subpieces of the same curve. Exact end-to-end contacts can also
+be welded when their control hulls are separable except at the endpoint,
+including collinear continuations. Interior tangencies and overlapping runs are
+not inferred into junctions.
+
+Subdivision uses de Casteljau on the authored controls. The first subedge keeps
+the original edge ID; subsequent subedges and shared intersection vertices use
+the serialized monotonic allocator. Exact coincident endpoint vertices retain
+the lowest existing ID and retire the duplicates. Distinct existing endpoint
+coordinates are never snapped together. Each stored region reference expands in
+its original traversal direction, including reversed references, while its
+region ID, contour order, fill stack and replacement priority survive. Stroke
+flags survive on every subedge. New junctions use Corner constraints; subdivision
+relaxes an existing Symmetric handle constraint to Smooth only when valid, or to
+Corner when the new junction requires it.
+
+Root finding and shared-vertex coordinates use `f64`, not arbitrary precision.
+Independent curve evaluations must agree within 256 machine epsilons in
+normalized coordinate space. Root parameters within 128 machine epsilons merge
+only when both their parameter and recorded point are identical. Distinct nearby
+roots reject atomically instead of collapsing a narrow face into one junction.
+These conservative checks allow bounded evaluation round-off without using it
+as permission to merge distinct topology. The limits are unrelated to screen pixels or zoom. Near contacts
+that cannot satisfy these bounds and the final embedding certificate return an
+error. This is a checked subset of curve arrangements, not a claim that every
+cubic degeneracy can be prepared.
+
+`VectorNetwork::planarize_intersections` exposes the topology operation directly.
+`fill_prepared_faces` and `paint_prepared_face_at` combine it atomically with the
+requested authoring action. The strict `detect_faces`, `fill_all_faces`, and
+`paint_face_at` APIs remain available for callers that require an already planar
+network and want an error instead of automatic topology changes.
+
 ## Checked topology and original curves
 
 `VectorNetwork::detect_faces` validates the authoritative network and its planar
@@ -117,19 +170,25 @@ edge with opposite orientations.
 
 ## Cached hover and pointer-segment queries
 
-`NetworkFaceMap::new` runs checked discovery once and retains elementary faces,
+`NetworkFaceMap::new` runs strict checked discovery and retains elementary faces,
 their exact paths, and a balanced median-partitioned bounding-volume hierarchy
 (BVH). Its bounds come from the original curves' control hulls, so a narrow curved
 face cannot be discarded because an approximate flattened bound missed it. The
 map keeps a geometry snapshot of vertices, edges and the fill rule; it does not
 copy existing regions' potentially large paint or embedded-image payloads.
-Preparing or querying the map allocates no stable region IDs.
+`NetworkFaceMap::prepare` adds an optional certified subdivision plan. Preparing
+or querying either map allocates no IDs in the authored network.
 
 `NetworkFaceMap::face_at` prunes that BVH and evaluates original-curve winding for
 candidate faces. `path` exposes the retained contour path for the hover adorner.
 The native canvas caches a prepared map or its discovery error with the selected
 node and editor render token. On a changed token it can retain a successful map
-when `matches_geometry` confirms that the graph and fill rule are unchanged.
+when `matches_source` confirms either the original graph and allocator or the
+applied prepared geometry. A region paint change is retained when a plan is
+applied; preparation never copies cached paints back into the document. A new
+allocation before applying a plan invalidates it so provisional IDs cannot
+collide with an intervening edit. `matches_geometry` continues to identify the
+already prepared geometry alone.
 Continuing bucket hover/painting after a paint-only edit therefore does not
 repeat planar-embedding certification. Geometry changes require a new map;
 stale mapped paint calls are rejected with `StaleFaceMap`.
@@ -153,8 +212,10 @@ visited-face set so revisiting a face does not repaint it.
 
 ## Identity, transactions and persistence
 
-Vertex and edge IDs, controls, stroke visibility, layer bounds and world
-transforms do not change during these paint-only operations. Matching regions
+After a network is planar, paint-only edits leave its vertex and edge IDs,
+controls and stroke visibility unchanged. A required preparation uses the
+subdivision and welding rules above in the same authoring edit; layer bounds and
+world transforms do not change. Matching regions
 keep their IDs and serialized contour order, including matches recognized after
 a global reversal of the contours. New explicit faces use the existing monotonic
 network allocator. **Fill all closed regions** also retains explicit composite
@@ -171,12 +232,15 @@ publishes none of it. Failed core preflight and direct no-op edits preserve the
 document, allocator, history and redo state.
 
 The native bucket opens a scoped node transaction before painting the pressed
-face. Each subsequent segment updates that same transaction. Release commits
-all changed faces as one undo step; an unchanged gesture preserves redo and adds
+face. Its first successful paint applies any required prepared geometry inside
+that transaction. Each subsequent segment reuses the same prepared map and
+updates that same transaction. Release commits all changed faces and subdivision
+as one undo step; an unchanged gesture preserves redo and adds
 no history entry. Normal transaction finalization can still refresh internal
 render revisions even when it creates no authored history entry.
 
-Escape and native pointer-capture loss roll back the owned stroke. Undo or Redo
+Escape and native pointer-capture loss roll back the owned stroke, including
+subdivision, welded vertex identities, paint stacks and allocator. Undo or Redo
 during a stroke cancels that preview before touching earlier history. The canvas
 checks the editor transaction identity and render token, selected node, page,
 tool, visibility, lock state and affine transform before continuing. Reconciliation
@@ -202,10 +266,11 @@ save transaction; no document JSON is serialized for each pointer movement.
 
 ## Limits and failure behavior
 
-Every network crossing must already be represented by shared vertices. These
-operations do not automatically split intersections or weld contacts. Crossing
-edges, coincident or overlapping segments, unwelded contacts and coincident
-outgoing tangents are declined. Very close contacts, singular curves and nearly
+Strict discovery requires crossings to be represented by shared vertices;
+native fill and bucket actions first prepare supported crossings as described
+above. Coincident or overlapping segments, unresolved contacts, interior
+tangencies and coincident outgoing tangents are declined. Very close contacts,
+ill-conditioned roots, singular curves and nearly
 zero-area boundaries can also be declined when certification cannot establish
 reliable separation or orientation. Authored geometry remains available for
 editing after the error.
@@ -213,8 +278,10 @@ editing after the error.
 | Guard | Current limit or behavior |
 | --- | --- |
 | Discovery size | At most 32,768 edges. |
+| Prepared size | At most 32,768 collected intersection events and 32,768 resulting edges; repeated isolation hits count against the event limit. |
+| Intersection preparation work | A separate 1,000,000-unit budget covers pair enumeration, subdivision, collected hits and assembly. Region-contour expansion has its own 1,000,000-unit guard. |
 | Geometric discovery work | At most 1,000,000 counted work units per discovery. |
-| Certification subdivision | At most 40 levels for curve/pair certification. |
+| Subdivision | At most 40 levels for curve/pair isolation and for final embedding certification. |
 | Pointer-segment tracing | A separate 1,000,000-unit budget includes candidate traversal and checked face containment. |
 | Cached batch painting | At most 32,768 supplied sample points, with a separate 1,000,000-unit checked-query budget. |
 | Ambiguous inheritance reset | Returns `AmbiguousRegionReset` and preserves the region instead of partially changing its coverage. |
@@ -233,17 +300,24 @@ than searching across arbitrary layers.
 | Source | Covered behavior |
 | --- | --- |
 | [`vector_faces_tests.rs`](../crates/ferrodesign-core/src/vector_faces_tests.rs) | Adjacent cells, nested/disconnected holes, original cubic geometry, micro annuli, bridge exclusion, rejected crossings, stable IDs, affine transforms, idempotent 16-by-16 cells, immutable cached maps, subpixel intermediate faces, stale maps and atomic batch allocator exhaustion. |
+| [`vector_planarize_tests.rs`](../crates/ferrodesign-core/src/vector_planarize_tests.rs) | Read-only preparation; transverse line/cubic combinations; cubic self-intersections and three roots; shared junctions and exact endpoint welding; preserved Bézier controls, stroke flags and reversed painted contours; atomic overlap/tangency and allocator failure; stale plans; affine geometry; native core fill/paint history and outside no-ops. |
 | [`vector_region_paints_tests.rs`](../crates/ferrodesign-core/src/vector_region_paints_tests.rs) | Legacy JSON, explicit empty stacks, replacement priority, inheritance reset, composite-reset rejection, paint validation, locks, exact history, styles, component overrides and preserved explicit paints during fill-all. |
-| [`network_bucket_tests.rs`](../crates/ferrodesign-app/src/canvas/network_bucket_tests.rs) | Reused hover preparation and actual native bitmap pixels, affine fast drags, one-step history/no-ops, clear, Escape, capture loss, selection changes, transaction ownership, tool changes and cached topology failures. |
+| [`network_bucket_tests.rs`](../crates/ferrodesign-app/src/canvas/network_bucket_tests.rs) | Reused hover preparation and actual native bitmap pixels, affine fast drags, one-step history/no-ops, clear, Escape, capture loss, selection changes, transaction ownership, tool changes, cached overlap failures, and cubic preparation canceled or committed with its stroke. |
 | [`region_tests.rs`](../crates/ferrodesign-app/src/renderer/region_tests.rs), [`region_scaling_tests.rs`](../crates/ferrodesign-app/src/renderer/region_scaling_tests.rs), [`svg_regions_tests.rs`](../crates/ferrodesign-app/src/renderer/svg_regions_tests.rs) | Native alpha replacement, transparent cutouts, paint order, layer opacity, masks, incremental/fresh pixel equivalence, disjoint-region pruning and balanced geometry depth, and regional SVG round-trip pixels. |
-| [`network-browser.mjs`](../tests/network-browser.mjs) | Compiled XAML actions and native canvas input, visible discovered faces, open branches, stable topology, exact undo/redo and atomic rejection of an unsplit crossing. |
+| [`network-browser.mjs`](../tests/network-browser.mjs) | Compiled XAML actions and native canvas input, visible discovered faces, open branches, automatic crossing subdivision with original first-edge IDs, exact undo/redo, and fresh exact-error rejection of ambiguous overlapping edges. |
 | [`region-paints-browser.mjs`](../tests/region-paints-browser.mjs) | Native region paint controls, stack editing, reset/clear behavior, exported artwork, exact history and regional image-target isolation. |
-| [`network-bucket-browser.mjs`](../tests/network-bucket-browser.mjs) | Native hover and a three-face drag with an intermediate face between events; exact undo/redo and no-op history; Shift clear and Escape; clean-baseline pagehide commit and late release; unchanged-stroke autosave resumption after the debounce deadline; exact PNG dimensions/color without hover adorners. |
+| [`network-bucket-browser.mjs`](../tests/network-bucket-browser.mjs) | Native hover and a three-face drag with an intermediate face between events; exact undo/redo and no-op history; Shift clear and Escape; clean-baseline pagehide commit and late release; unchanged-stroke autosave resumption after the debounce deadline; cubic crossing preparation with cancel/undo allocator restoration; exact PNG dimensions, painted colors and transparent unpainted faces without hover adorners. |
 
 Implementation entry points are
 [`vector_faces.rs`](../crates/ferrodesign-core/src/vector_faces.rs),
+[`vector_planarize.rs`](../crates/ferrodesign-core/src/vector_planarize.rs),
 [`canvas/network_bucket.rs`](../crates/ferrodesign-app/src/canvas/network_bucket.rs),
 [`renderer/regions.rs`](../crates/ferrodesign-app/src/renderer/regions.rs), and the
 native shell's draft/save handling. Execution status, renderer modes and
 source-specific evidence belong in [VALIDATION.md](VALIDATION.md); the coverage
 listed here is not a hardware throughput benchmark.
+
+The nearby-root regression checks three lines at one exact shared junction and
+three distinct intersections separated by approximately 1e-14, at two scales
+and both signs. The former succeeds; the ambiguous tiny faces must reject with
+unchanged topology, fill state, allocator and history.
