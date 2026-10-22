@@ -2,15 +2,15 @@
 
 This ledger records bounded evidence for the native FerroUI sample. Page and API
 completion remains governed by `port-status.json` and the framework parity scanner.
-The catalog contains 126 pages: **71 have partial native implementations**, including
-the ScratchPad, and **55 remain pending**. There are **35 explicit partial mappings to
+The catalog contains 126 pages: **72 have partial native implementations**, including
+the ScratchPad, and **54 remain pending**. There are **44 explicit partial mappings to
 original source examples**. No page is marked `ported` or `verified`.
 
 The current [generated API summary](../../docs/porting/winui-gallery/data/summary.json)
-records 1 verified type, 36 partial types, 202 verified members and 172 partial members.
+records 1 verified type, 54 partial types, 202 verified members and 264 partial members.
 The complete `Symbol` enum contributes 197 of those verified members; these counts do
 not certify complete control, page, visual or platform parity.
-The source candidate map separately identifies 297 types and 1,413 members without
+The source candidate map separately identifies 314 types and 1,534 members without
 certifying their signatures, defaults, behavior or WinMD ABI compatibility.
 
 ## Reproducible source inputs
@@ -24,7 +24,7 @@ that exact commit and refuses tracked modifications to its inputs.
 | Original `WinUIGallery/SampleSupport/Data/ControlInfoData.json` | `334896cc85905de1afe64bdac7717218dc6f60607c132443312d1e9d37b0e27b` |
 | Generated `catalog_data.rs` | `451aa227d421cab6eae1a76573ed5c32a8ac55bed6965041bbdffaa850d26416` |
 | Original sample files for 350 catalog definitions | Raw source hashes are retained in every `SampleDefinition` in `catalog_data.rs`. |
-| Explicit mappings for 35 partial source examples | Source paths, raw hashes and named test anchors are in `port-status.json`. |
+| Explicit mappings for 44 partial source examples | Source paths, raw hashes and named test anchors are in `port-status.json`. |
 | Original control images | `assets-manifest.json` records the source path, original filename, byte count, SHA-256 and registered URI paths of every PNG. |
 
 The source browser preserves original handlers, binding expressions and substitution
@@ -49,7 +49,150 @@ the original Windows metadata spells `CheckBox.png` and `AnnotatedScrollbar.png`
 differently from the tracked filenames `Checkbox.png` and `AnnotatedScrollBar.png`.
 Both spellings are explicit aliases; original filenames and image bytes are retained.
 
-## Integration checkpoint: FerroUI 0.4.0
+## NavigationView checkpoint
+
+This increment merges main `d5405346e680e060c9675572efe02df131428c08` and preserves
+the earlier integration evidence below. Its implementation is published in separate
+reviewable commits:
+
+| Source scope | Commit |
+| --- | --- |
+| Native NavigationView, items, events, peers, registrations and focused tests | `9ce7530c2e4cde9d2d04870dda1d9c0afdef5baa` |
+| Opt-in XAML projection and emitted/interpreted fixtures | `fb2fee44afa4325c7097f60b4e3d0af745977e44` |
+| Eight NavigationView compositions, seven destination pages and InfoBadge hosting | `31eba1b629159c55a168ecdcad01e39df40a1eb5` |
+| Explicit API maps, partial evidence and generated inventories | `fdb10276cf93bdfaef9974cf1db7e230a72866d6` |
+| Reopened NavigationView source-style obligations | `e32d933fae7afa20f68d8dd78ba6b56aec061d92` |
+| Named-control capture support and expanded parity workflow | `8365ed0b33252c5169f48d56f0a9f3d511e53908` |
+
+The [navigation validation record](../../docs/porting/winui-gallery/data/navigation-validation.json)
+retains the exact commands, measured results, log hashes and source coverage for
+this increment. It distinguishes the final run with frozen native source hashes
+from earlier local theme/path/migration checks. Those earlier result manifests did
+not record a full execution-time source hash map; their execution commit is not
+inferred retroactively. All results in this section are local Linux x86_64 runs on
+`rustc 1.99.0 (b940084d7 2026-09-28)`. Previous GitHub CI results below belong to
+their stated historical revision.
+
+### Executed tests and source gates
+
+| Suite | Actual result | Evidence scope |
+| --- | --- | --- |
+| Native compatibility controls, 12 serialized targets | **182 passed, 0 failed** | 127 earlier native tests plus **32 NavigationView and 23 item/hierarchy tests**. Seven new implementation/test files were hash-checked before and after every target. |
+| Gallery library | **54 passed, 0 failed** | The previous 42 tests plus ten NavigationView and two InfoBadge integration tests. |
+| XAML migration/runtime | **44 passed, 0 failed** | Opt-in namespace and member policy, native icon literals, diagnostics and construction. |
+| Emitted/interpreted XAML | **7 passed, 0 failed, 1 ignored** | Generated Rust and the runtime loader agree on hierarchy, icon ownership, badges, footer and selection. The ignored task explicitly regenerates the fixture. |
+| WinUI theme library | **294 passed, 0 failed, 2 ignored** | Both complete compiler-reference comparisons and storage checks; explicit ignored regeneration/timing tasks. |
+| Existing Fluent/Simple themes | **1 test passed in each** | Built-in templated-control coverage recognizes native metadata-template fallback without replacing existing theme behavior. |
+| Public Rust paths | **3 passed, 0 failed, 1 ignored** | All registered public paths and generated accessors; the explicit fixture regeneration also completed separately. |
+| View builders | **Compilation and freshness passed** | Existing and WinUI namespaces compile together. |
+| Scanner/comparison tests | **44 passed** | Source snapshots, symbols, namespaces, builders, evidence freshness and compatibility baseline rules. |
+| Theme path-case tests | **2 passed** | Separate source-path accounting checks. |
+| Exact source gates | **Passed** | API scan, event targets, Symbol map, builders, catalog and assets regenerate exactly. |
+| Strict completeness | **Exit 2, expected** | 1,544 public API types, 7,264 members and all 126 pages still lack complete behavioral execution evidence. |
+
+The [native execution record](../../docs/porting/winui-gallery/data/executions/native-controls-004.json)
+contains all 55 new passing test names, seven source hashes and the twelve real
+per-target command/log records. The combined native log SHA-256 is
+`52fc6ba8e9b658544d90d1c372f95b49eebc9f122971b0946b34fa5eaf05c291`.
+Its source commit is `9ce7530c`; later mapping/documentation commits do not relabel
+these tests as having been executed on a different revision.
+
+NavigationView tests cover exact adaptive thresholds and pane modes, cancellable
+and reentrant transitions, selection versus invocation, pending selection completion,
+selection suppression, observable source changes, item identity, footer/settings
+containers, lazy hierarchy, keyboard/focus behavior, RTL, automation, template
+replacement and weak ownership. Regression cases include stale dispatcher callbacks,
+reentrant template changes, clearing a factory before its content, nested data
+contexts and retained automation providers after child removal. These tests exercise
+native property, collection, input, layout and automation objects with mock host
+services; they do not certify the Windows automation bridge or every source style.
+
+The Gallery tests preserve source behavior that can look surprising: the fourth Top
+menu item navigates to SamplePage3; category items navigate to SamplePage1; the
+focus-following tabs use the running C# page's normal journal behavior; and the API
+example starts unselected with an empty Frame. Category template selection, adaptive
+triggers and C# handlers remain explicit Rust adaptations. All four InfoBadge source
+compositions now have native examples, including NavigationView badge hosting.
+
+Existing API preservation still accounts for **3,170 namespaced types, 28,435
+declared member names and 458 source registrations** against the fixed starting
+revision, with **203 additive types** reported separately. This is declaration
+preservation, not complete signature/default/behavior certification. Event-target
+generation records 1,509 public target types and 375 direct events; the complete
+Symbol map retains 197 numeric values, glyphs, markup names and iteration entries.
+The protected upstream snapshots, API baseline and symbol source remain unchanged.
+
+The separate theme ledger now contains **6,912 ported, 1,986 waived and 75 pending
+entries**, with zero unresolved references and duplicate keys. The five NavigationView
+styles move from waived to pending because native target controls now exist. They
+join InfoBadge's 27, ProgressRing's 8 and RatingControl's 35 pending entries. A native
+metadata template does not establish parity with the corresponding WinUI style.
+
+### Rendering and review
+
+The capture executable built successfully, then produced **151 PNGs** with real
+Skia drawing and HarfBuzz shaping: **126 default light pages, nine default dark
+pages and eight named NavigationView controls in each theme**. Every output decoded
+as opaque, nonblank 1280 × 900 content. The
+[capture manifest](../../docs/porting/winui-gallery/captures/navigation-capture-manifest.json)
+records all eighteen actual invocations, source/binary/log hashes, per-frame PNG
+and decoded-pixel hashes, and the eighteen retained images. No image was resized,
+retouched or converted after capture.
+
+Named captures use native `BringIntoView` requests, then verify the actual target's
+visible intersection through its clipping ancestors. They log target bounds and
+ancestor scroll offsets. This resolves the selected source composition into view;
+it does not fabricate scroll offsets or produce a full-document screenshot.
+
+All eight NavigationView compositions were reviewed in light and dark, and the
+InfoBadge page was reviewed in both themes. Left/Top layouts, initial selection,
+footer/settings rows, collapsed hierarchy, options, navigation destinations and
+badge hosting are visibly composed. The API example's Settings row is present in
+both complete frames. Compact mode intentionally hides captions. Narrow destination
+tiles follow the source page's 250-pixel minimum blue tile and `Auto,*,*` columns;
+the source's inner ScrollViewer can contain text below the visible sample viewport.
+Static frames do not independently establish scrolling, popup behavior, focus
+navigation, animation, resizing, upstream pixel equality or platform accessibility.
+Some icons remain missing-glyph rectangles because the Linux host lacks the Segoe
+icon fonts. The [capture review](../../docs/porting/winui-gallery/captures/README.md)
+links the retained images and records these boundaries.
+
+### Reproduction
+
+The local builds used one Cargo job, disabled incremental compilation and development/
+test debug information. The isolated toolchain/cache paths are recorded in the
+checkpoint JSON; other hosts can use their own paths. The local Skia archive SHA-256
+remains `9ebe4c448cc9f789bad241cbd11739cdf759e27db5719c23a7635e096d5807b3`.
+The final native runner enabled the `testing`, `ferroui-base/compiler-metadata` and
+`ferroui-base/markup-functions` features together to share the constrained local
+build graph. The CI workflow retains its normal `testing` command. The execution
+record preserves the exact feature set rather than treating these runs as identical.
+
+```sh
+cargo test --locked --offline -p ferroui-controls \
+  --features testing,ferroui-base/compiler-metadata,ferroui-base/markup-functions \
+  --test winui_navigation_view --test winui_navigation_items
+cargo test --locked --offline -p winui-gallery --lib
+cargo test --locked --offline -p ferroui-markup-xaml-loader --test winui_migration
+cargo test --locked --offline -p ferroui-markup-xaml-loader --features emitter --test winui_compiled
+cargo build --locked --offline -p winui-gallery --features capture --bin winui-gallery-capture
+target/debug/winui-gallery-capture --all --query=Button --output-dir=gallery-captures/light
+target/debug/winui-gallery-capture \
+  --pages=NumberBox,RadioButton,AutoSuggestBox,InfoBar,InfoBadge,ProgressRing,RatingControl,CompactSizing,NavigationView \
+  --dark --query=Button --output-dir=gallery-captures/dark
+target/debug/winui-gallery-capture --pages=NavigationView --control=nvSample8 \
+  --dark --output-dir=gallery-captures/dark
+python3 scripts/winui-gallery/scan.py --check
+python3 scripts/winui-gallery/scan.py --check --require-complete
+```
+
+Run each of `nvSample5`, `nvSample6`, `nvSample2`, `nvSample7`, `nvSample4`,
+`nvSample9`, `nvSample8` and `nvSample` in both themes to reproduce the sixteen named
+frames. The final command above intentionally returns exit 2 while the full port
+is incomplete. Passing partial contracts or rendering a pending source-browser
+page does not satisfy it.
+
+## Prior integration checkpoint: FerroUI 0.4.0
 
 The validated runtime integration checkpoint is
 [`83623379d8aeaa5a87d0417e7ce0823fc6fe9722`](https://github.com/wieslawsoltes/FerroUI/commit/83623379d8aeaa5a87d0417e7ce0823fc6fe9722),
@@ -70,7 +213,7 @@ for that PR head. The
 records both run IDs, job outcomes, Cargo input hashes, exact commands, measured
 counts and log hashes. These reruns do not change any API or page completion status.
 
-## Current framework regression checkpoint
+## Prior framework regression checkpoint: `83623379`
 
 The following results apply to integration `83623379` on Linux x86_64. GitHub CI
 used `rustc 1.99.1 (58cf8f9c3 2026-10-13)`. Local reruns used
@@ -154,7 +297,7 @@ duplicate keys. Its declaration accounting uses the theme's own source pin and
 does not itself certify native behavior or visual equivalence; compiled-theme
 execution is reported separately above.
 
-## Native Gallery behavior tests
+## Prior Native Gallery behavior tests: `83623379`
 
 The library suite passed **42 tests, 0 failures** in integration CI on Linux x86_64
 with `rustc 1.99.1 (58cf8f9c3 2026-10-13)`:
@@ -197,7 +340,7 @@ Mock-renderer construction does not establish bitmap decoding, rendered pixels,
 keyboard traversal, screen-reader interoperability or real operating-system service
 behavior. Each partial mapping retains that distinction.
 
-## Current integration rendering
+## Prior integration rendering: `83623379`
 
 The [successful rendering job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771549215/job/119800058965)
 used real Skia drawing, HarfBuzz shaping and the WinUI theme on Linux with Rust

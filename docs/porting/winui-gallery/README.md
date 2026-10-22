@@ -80,7 +80,7 @@ established.** The PR remains draft until the complete requirement map has execu
 and all strict acceptance gates pass. Subsequent commits update this record with measured
 counts, commands, exact results and limitations.
 
-The current integration checkpoint is
+The prior integration checkpoint is
 [`83623379`](https://github.com/wieslawsoltes/FerroUI/commit/83623379d8aeaa5a87d0417e7ce0823fc6fe9722),
 which merges main at `cfa62aeb` and uses workspace version **0.4.0**. The
 [initial Actions run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771098146)
@@ -94,32 +94,40 @@ CI results from local reruns and retains exact commands, versions and hashes.
 The pinned source inventory contains **1,545 public-source types, 7,466 public-source
 members and 198 separately counted private-source types**. The Gallery has **126 catalog
 pages, 350 exported examples and 355 actual ControlExample instances**. All 126 pages are
-searchable and navigable. The port records **71 partial pages**, including the live
-ScratchPad editor, and **55 pending pages**. There are **35 explicit partial mappings to
+searchable and navigable. The port records **72 partial pages**, including the live
+ScratchPad editor, and **54 pending pages**. There are **44 explicit partial mappings to
 original exported examples**. No complete page is claimed as ported or behaviorally
 verified. The generated [report](data/REPORT.md) and [summary](data/summary.json) are the
 current ledger.
 
-Source comparison identifies **297 type candidates and 1,413 member candidates**.
+Source comparison identifies **314 type candidates and 1,534 member candidates**.
 These are lexical declarations connected through explicit namespace/member maps;
 they do not establish signature, default, behavioral or WinMD ABI equivalence.
 
-Execution-backed API evidence currently covers **1 verified type, 36 partial types,
-202 verified members and 172 partial members**. The verified type is the complete `Symbol`
+Execution-backed API evidence currently covers **1 verified type, 54 partial types,
+202 verified members and 264 partial members**. The verified type is the complete `Symbol`
 enum. Its 197 numeric values account for 197 of the verified members; the remaining five
 are narrowly tested icon members. These figures do not imply that 202 independently
 implemented control operations or any complete Gallery page have been verified.
 
-The current increment adds native `InfoBadge`, `ProgressRing` and `RatingControl`, their
-supporting settings/item descriptors and the two applicable automation peers. The Gallery
-adapts both original ProgressRing examples, both RatingControl examples and three of the
-four InfoBadge examples. It also preserves the CompactSizing example's navigation between
-distinct standard/compact pages, all four text/password fields and its nullable date. The
-compact resource dictionary belongs to the compact page; application density stays under
-the application's control.
+The current increment adds native `NavigationView`, its hierarchical item family,
+pane/selection/invocation events and two automation peers. The control uses the existing
+SplitView, property system, collections, layout, focus, popup and automation services.
+The Gallery now contains all eight original NavigationView compositions and the first
+InfoBadge example's NavigationView composition. Seven distinct Frame/Page destinations,
+source navigation quirks, settings/footer behavior and category models are preserved.
+Category templates, adaptive triggers and C# handlers use documented Rust adaptations.
 
-These remain bounded native adaptations. InfoBadge's NavigationView composition is pending;
-ProgressRing's custom animated-visual sources are absent; RatingControl's Windows number
+The XAML migration recognizes the new opt-in types and their precise automation-peer
+namespace. Plain symbol literals on `NavigationViewItem.Icon` and
+`AutoSuggestBox.QueryIcon` become instance-owned native SymbolIcon elements, with an
+explicit `WXAML2005` source-range diagnostic. Interpreted and emitted Rust fixtures
+exercise the same hierarchy, icons, badge, footer, selection and ownership behavior.
+
+These remain bounded native adaptations. NavigationView top overflow, source template
+settings/presenters, selectors, title-bar integration, acrylic/transitions, localization
+and raw gamepad input remain unfinished. ProgressRing's custom animated-visual sources
+are absent; RatingControl's Windows number
 formatting, text-scale/template-resource details and raw platform gamepad mapping remain
 unsupported or unverified. RatingControl rejects NaN for `Value` and `PlaceholderValue` as
 an explicit native validation exception. CompactSizing retains explicit TextBox/composition
@@ -127,14 +135,54 @@ adapters for PasswordBox and Header. Installed fonts, exact pixels and Windows a
 acceptance remain separate from the passing native tests.
 
 The separate [theme resource/style ledger](../winui-theme/TRACKING.md) records
-**6,912 ported, 1,991 waived and 70 pending entries**. The pending entries belong to
-InfoBadge (27), ProgressRing (8) and RatingControl (35). These counts concern scoped
+**6,912 ported, 1,986 waived and 75 pending entries**. The pending entries belong to
+InfoBadge (27), ProgressRing (8), RatingControl (35) and NavigationView styles (5).
+The five NavigationView styles move from waived to pending because their native target
+controls now exist; native metadata templates do not establish source-style parity.
+These counts concern scoped
 source definitions, with the theme's own reference revision; resource lookup support
 does not supply a missing source dictionary or establish visual parity. The current
 theme suite passes after the reference-fixture storage update, with both compiler
 outputs still compared against the complete reference bytes.
 
-| Validation | Current evidence | Boundary |
+### NavigationView checkpoint
+
+This increment merges main at `d5405346e680e060c9675572efe02df131428c08`.
+Its native contracts are published at `9ce7530c`, XAML migration at `fb2fee44`,
+Gallery examples at `31eba1b6`, API evidence at `fdb10276`, theme accounting at
+`e32d933f`, and named-control capture support at `8365ed0b`. The
+[checkpoint record](data/navigation-validation.json) retains exact commands,
+source coverage, successful and superseded attempts, measured results and log hashes.
+These are local Linux results on Rust 1.99.0; earlier GitHub CI results below retain
+their original revision and are not evidence of a new run on this increment.
+
+| Validation | Measured result | Scope |
+| --- | --- | --- |
+| Native WinUI controls | **182 passed** across 12 serialized targets | Includes **32 NavigationView + 23 item/hierarchy tests** and all 127 earlier native tests. The seven new implementation/test files were hash-checked before and after each target. |
+| Gallery library | **54 passed** | All eight NavigationView compositions, seven destination factories, source navigation quirks, hierarchy, category models, options and all four InfoBadge compositions. |
+| XAML projection | **44 migration tests; 7 compiled/interpreted tests passed**, with one explicit fixture-regeneration test ignored | Opt-in type/peer namespaces, symbol conversion diagnostics, shared hierarchy, ownership and emitted/runtime agreement. |
+| Themes and public paths | **294 WinUI theme tests passed** with two explicit ignored tasks; **two existing-theme fallback tests passed**; **3 Rust-path tests passed** with one explicit ignored regeneration task | Earlier local checks are recorded separately from the final frozen native run. Both complete compiler-reference comparisons remain active. |
+| Declarative builders | Compilation and generated-output freshness passed | Existing and opt-in namespaces remain available. |
+| Source comparison | **44 scanner tests passed**; all freshness/preservation gates passed | Preserves **3,170 existing types, 28,435 declared member names and 458 registrations**; **203 additive types** are reported separately. |
+| Real rendering | **151 PNGs**: 126 default light pages, 9 default dark pages and all 8 NavigationView compositions in both themes | Skia/HarfBuzz rendering with native scrolling; all outputs decode as opaque, nonblank 1280 × 900 images. This is viewport construction/rendering evidence. |
+| Strict completeness | **Expected exit 2** | 1,544 types, 7,264 members and all 126 pages still lack complete behavioral evidence. |
+
+The [fourth native execution record](data/executions/native-controls-004.json)
+records the 55 new passing test names, exact per-target commands, source hashes and
+all 182 native results. The [new capture manifest](captures/navigation-capture-manifest.json)
+records every output, actual command, log, binary and source hash. Eighteen reviewed
+PNGs are retained: the eight NavigationView compositions and InfoBadge in both
+themes. The [capture review](captures/README.md) documents compact versus expanded
+panes, the initial collapsed hierarchy and unselected API example, source-constrained
+content widths, inner scrolling and missing Segoe glyphs. Static captures do not
+establish motion, keyboard interaction, popup behavior, upstream pixels or Windows UIA.
+
+### Prior validation at `83623379`
+
+The following table retains the earlier checkpoint's measured results. The
+NavigationView checkpoint is recorded separately in the Gallery validation ledger.
+
+| Validation | Prior evidence | Boundary |
 | --- | --- | --- |
 | Existing FerroUI API | 3,170 namespaced types, 28,435 declared member names and 458 source registrations preserved against the starting commit; 181 additional types | 82 additions belong to this compatibility branch and 99 came from merged main; source declarations do not establish full signature/default/behavior compatibility |
 | Native WinUI controls | 127 tests pass in CI and locally: 77 existing tests plus 13 InfoBadge, 16 ProgressRing and 21 RatingControl tests | Native properties, templates, input, clock lifetime and automation; every new control type remains partial |
@@ -152,19 +200,19 @@ outputs still compared against the complete reference bytes.
 CI used Rust 1.99.1; local reruns used Rust 1.99.0. The
 [Gallery validation ledger](../../../samples/WinUIGallery/VALIDATION.md) records exact
 commands, source hashes, assets, rendering evidence and platform limits. Durable native
-control executions are stored in [the execution records](data/executions/). The current
-[third record](data/executions/native-controls-003.json) contains the 50 new focused test
+control executions are stored in [the execution records](data/executions/). The
+[third record](data/executions/native-controls-003.json) for that prior checkpoint contains the 50 new focused test
 names and source hashes from the original passing 127-test run. It remains unchanged;
 the integration record documents subsequent reruns. Any supplied execution record is
 checked for freshness even when its API entry is only partial.
 
-The retained capture files predate the 0.4.0 integration and use native source
+The earlier retained capture files predate the 0.4.0 integration and use native source
 checkpoint `3c7ceb81dcc4948f374c05c4757c6cb72ed5de5d`. The unchanged
 [capture manifest](captures/capture-manifest.json) keeps the four dedicated light
 captures separate from the 126-page light sweep and nine-page dark sweep. The eight
 retained frames show InfoBadge, ProgressRing, RatingControl and CompactSizing in
 both themes; CompactSizing is captured in its initial Standard state. Five retained
-`d008845` frames remain explicitly historical. Current CI artifact `12423085701`
+`d008845` frames remain explicitly historical. That integration's CI artifact `12423085701`
 has a separate 126-light/eight-dark scope recorded in the integration record.
 
 ## Review and run
@@ -190,7 +238,8 @@ cargo test --locked --offline -p ferroui-controls \
   --features testing \
   --test winui_navigation --test winui_number_box --test winui_icons --test winui_radio_buttons \
   --test winui_auto_suggest_box --test winui_icon_sources --test winui_info_bar \
-  --test winui_info_badge --test winui_progress_ring --test winui_rating_control
+  --test winui_info_badge --test winui_progress_ring --test winui_rating_control \
+  --test winui_navigation_view --test winui_navigation_items
 python3 -m unittest discover -s scripts/winui-gallery -p 'test_*.py'
 python3 scripts/winui-gallery/scan.py --check
 python3 scripts/winui-gallery/existing_api.py --check

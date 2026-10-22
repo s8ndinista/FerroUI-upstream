@@ -12,8 +12,8 @@ Source and documentation links are available from the page. Back/forward navigat
 and live theme selection use real FerroUI controls.
 
 **This is not a completed port of every Gallery behavior.** `port-status.json`
-separates source coverage from executable page coverage. The initial native subset
-contains 70 explicit markup adaptations and a working ScratchPad editor, for 71 partial
+separates source coverage from executable page coverage. The current native subset
+contains 71 explicit markup adaptations and a working ScratchPad editor, for 72 partial
 pages. Each remains `partial`; it does not imply that
 all examples, events, binding expressions, platform capabilities or exact pixels of
 the original page have been reproduced. The generated framework parity reports are
@@ -60,8 +60,8 @@ include button click output and disabled options, original two/three-state and
 select-all check-box handlers, password validation/reveal, text character counts,
 sliders, selection, layout, dates, menus, flyouts,
 scrolling, resources and element-name binding. The opt-in WinUI NumberBox, RadioButtons,
-FontIcon, SymbolIcon, AutoSuggestBox, InfoBar, InfoBadge, ProgressRing, RatingControl
-and Frame/Page contracts are exercised directly by examples
+FontIcon, SymbolIcon, AutoSuggestBox, InfoBar, InfoBadge, ProgressRing, RatingControl,
+NavigationView and Frame/Page contracts are exercised directly by examples
 adapted from upstream. They use the framework's property, input, layout, drawing,
 popup and automation infrastructure.
 
@@ -74,11 +74,20 @@ CurrentCulture search. Mock-renderer tests verify asset paths/bytes and applicat
 selection behavior; the capture host performs actual bitmap decoding.
 
 `feedback_samples.rs` ports both ProgressRing examples, both RatingControl examples
-and three of the four InfoBadge examples. Activation/background options, cleared
+and all four InfoBadge examples. Activation/background options, cleared
 numeric input, rating captions, fractional placeholders, source badge styles and
 integer badge-value guards run through the new native controls. The InfoBadge
-NavigationView example remains pending. Named badge themes retain the upstream
+NavigationView example preserves the Inbox badge, notification name, opacity toggle
+and pane-mode handlers. Named badge themes retain the upstream
 resource keys and use the explicit Style-to-ControlTheme migration policy.
+
+`navigation_view_samples.rs` ports all eight original NavigationView compositions:
+adaptive left navigation, top navigation, orientation switching, focus-following tabs,
+data-bound categories, footer items, hierarchy and the API-options form. Distinct
+native Frame/Page factories preserve the original destinations. Category template
+selection, adaptive triggers and C# handlers are explicit Rust adaptations; source
+quirks and the remaining overflow, selector, transition and platform requirements
+are documented in the example ledger and control contracts.
 
 `sizing_sample.rs` preserves the CompactSizing page's standard/compact navigation
 and all four text/password values plus its nullable selected date. Compact resources
@@ -136,7 +145,26 @@ preview behavior and actual native event/property interactions. Tests that const
 controls do not claim an interactive desktop run, pixel equality, keyboard traversal,
 screen-reader interoperability or verification on every host.
 
-The **0.4.0 integration checkpoint `83623379`** passed **42 Gallery library tests**,
+The **NavigationView checkpoint** publishes native contracts at `9ce7530c`, XAML
+migration at `fb2fee44`, Gallery compositions at `31eba1b6` and named-control captures
+at `8365ed0b`. Local Rust 1.99.0 validation passed **54 Gallery tests**, **182 native
+control tests** (including 55 NavigationView/item tests), **44 XAML migration tests**
+and **7 compiled/interpreted tests**, with one explicit fixture-regeneration task
+ignored. Earlier local checks in this increment passed the **294-test WinUI theme
+suite** (two explicit ignored tasks), existing Fluent/Simple template fallbacks,
+public Rust paths and view-builder compilation. The
+[checkpoint record](../../docs/porting/winui-gallery/data/navigation-validation.json)
+separates those runs and preserves their commands, coverage and hashes.
+
+Real Skia/HarfBuzz rendering produced **151 decoded, opaque, nonblank 1280 × 900
+PNGs**: all 126 default light pages, nine default dark pages and all eight
+NavigationView compositions in both themes. The
+[new capture manifest](../../docs/porting/winui-gallery/captures/navigation-capture-manifest.json)
+records every output and retains 18 reviewed frames for NavigationView and InfoBadge.
+These viewport captures keep page status partial; missing Segoe glyphs, interactive
+input and upstream Windows visual/accessibility comparison remain separate work.
+
+The **prior 0.4.0 integration checkpoint `83623379`** passed **42 Gallery library tests**,
 **127 native control tests**, **41 XAML migration/runtime tests**, **13 binding-lifecycle
 tests** and **three deferred-resource error-isolation tests** in GitHub CI on Rust
 1.99.1. Five compiled/interpreted XAML tests passed, with one explicitly ignored
@@ -158,8 +186,10 @@ passed. Exact commands, versions and hashes are in the
 
 The separate
 [theme resource/style ledger](../../docs/porting/winui-theme/TRACKING.md) records
-6,912 ported, 1,991 waived and 70 pending entries: InfoBadge 27, ProgressRing 8 and
-RatingControl 35 remain pending in the strict source-definition inventory.
+6,912 ported, 1,986 waived and 75 pending entries: InfoBadge 27, ProgressRing 8,
+RatingControl 35 and NavigationView styles 5 remain pending in the strict
+source-definition inventory. The native NavigationView metadata templates do not
+count as ports of the five pending source styles.
 
 Integration CI rendered **all 126 pages in light** and **eight pages in dark** with
 real Skia/HarfBuzz. All **134 PNGs** decoded as nonblank, opaque 1280 × 900 frames,
@@ -195,6 +225,22 @@ checkpoint, exact commands, source hashes and remaining acceptance boundaries.
 Use `--pages=AutoSuggestBox --query=Button` to submit the source search example and
 capture its native text and image details; the command fails if the selected image
 cannot be decoded by the real renderer.
+
+For a specific NavigationView composition, select exactly one page and name its
+actual native control:
+
+```sh
+cargo run -p winui-gallery --features capture --bin winui-gallery-capture -- \
+  --pages=NavigationView --control=nvSample8 --dark \
+  --output-dir=gallery-captures/dark
+```
+
+The capture host uses native `BringIntoView` requests through the ancestor scroll
+viewers, checks the target's visible viewport intersection, and writes
+`NavigationView--nvSample8.png`. It records actual target bounds and scroll offsets.
+The eight original compositions are `nvSample5`, `nvSample6`, `nvSample2`,
+`nvSample7`, `nvSample4`, `nvSample9`, `nvSample8` and `nvSample`. A named-target
+capture requires one explicit page; it cannot be combined with `--all`.
 
 ## Remaining acceptance
 
