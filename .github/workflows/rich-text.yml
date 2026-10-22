@@ -126,7 +126,22 @@ jobs:
         run: cargo test --locked -p ferroui-win32 --no-default-features --lib exact_hstring --no-fail-fast
       - name: Characterize system MSFTEDIT selection navigation contracts
         if: ${{ !cancelled() }}
-        run: cargo test --locked -p ferroui-win32 --no-default-features --lib rich_text_tom_oracle -- --nocapture --test-threads=1
+        shell: bash
+        run: |
+          git rev-parse HEAD > system-msftedit-source-commit.txt
+          git rev-parse HEAD:src/Windows/FerroUI.Win32/rich_text_tom_oracle_tests.rs > system-msftedit-probe-blob.txt
+          set -o pipefail
+          cargo test --locked -p ferroui-win32 --no-default-features --lib rich_text_tom_oracle -- --nocapture --test-threads=1 2>&1 | tee system-msftedit.log
+      - name: Preserve native observations before the full control suite
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: rich-text-system-msftedit
+          retention-days: 14
+          path: |
+            system-msftedit.log
+            system-msftedit-source-commit.txt
+            system-msftedit-probe-blob.txt
       - name: Rich text control contracts on Windows
         if: ${{ !cancelled() }}
         run: cargo test --locked -p ferroui-controls --lib rich_ --no-fail-fast

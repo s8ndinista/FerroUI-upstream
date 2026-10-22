@@ -29,15 +29,15 @@ use std::mem::{offset_of, size_of};
 use std::ptr::{null, null_mut};
 use windows_sys::Win32::Foundation::{FreeLibrary, GetLastError, HMODULE, HWND};
 use windows_sys::Win32::Storage::FileSystem::{
-    GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW, VS_FIXEDFILEINFO,
+    GetFileVersionInfoSizeW, GetFileVersionInfoW, VS_FIXEDFILEINFO, VerQueryValueW,
 };
 use windows_sys::Win32::System::LibraryLoader::{
-    GetModuleFileNameW, GetModuleHandleW, LoadLibraryExW, LOAD_LIBRARY_SEARCH_SYSTEM32,
+    GetModuleFileNameW, GetModuleHandleW, LOAD_LIBRARY_SEARCH_SYSTEM32, LoadLibraryExW,
 };
 use windows_sys::Win32::System::Ole::{OleInitialize, OleUninitialize};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DestroyWindow, SendMessageW, SetWindowTextW, ES_AUTOHSCROLL, ES_AUTOVSCROLL,
-    ES_MULTILINE, WS_EX_RTLREADING, WS_POPUP,
+    CreateWindowExW, DestroyWindow, ES_AUTOHSCROLL, ES_AUTOVSCROLL, ES_MULTILINE, SendMessageW,
+    SetWindowTextW, WS_EX_RTLREADING, WS_POPUP,
 };
 
 type TestResult<T = ()> = Result<T, String>;
@@ -541,7 +541,9 @@ fn observe(
     let (accepted_anchor, accepted_active) = after.directed();
     println!(
         "SYSTEM_MSFTEDIT_HOME_END fixture={fixture} supplied_utf16_length={text_length} native_story_length={story_length} unit={unit:?} extend={extend} operation={} before={before:?} after={after:?} anchor={accepted_anchor} active={accepted_active} delta={delta} active_displacement={} hresult=0x{:08X}",
-        if end { "End" } else { "Home" }, accepted_active - active, result as u32,
+        if end { "End" } else { "Home" },
+        accepted_active - active,
+        result as u32,
     );
     assert!(0 <= after.start && after.start <= after.end && after.end <= story_length);
     if extend {
@@ -561,7 +563,8 @@ fn observe(
     let repeated = selection.state()?;
     println!(
         "SYSTEM_MSFTEDIT_HOME_END_REPEAT fixture={fixture} unit={unit:?} extend={extend} operation={} after={repeated:?} delta={repeat_delta} hresult=0x{:08X}",
-        if end { "End" } else { "Home" }, repeat_result as u32,
+        if end { "End" } else { "Home" },
+        repeat_result as u32,
     );
     assert_eq!(repeated.directed(), after.directed());
     assert_eq!(repeat_delta, 0);
@@ -592,7 +595,9 @@ fn characterize() -> TestResult {
         );
         let story_length =
             selection.number(selection.table().get_story_length, "GetStoryLength")?;
-        println!("SYSTEM_MSFTEDIT_FIXTURE name={name} text={text:?} utf16_length={text_length} native_story_length={story_length}");
+        println!(
+            "SYSTEM_MSFTEDIT_FIXTURE name={name} text={text:?} utf16_length={text_length} native_story_length={story_length}"
+        );
         assert!(story_length >= text_length);
         for &(anchor, active) in ranges {
             for unit in [Unit::Line, Unit::Story] {
@@ -617,7 +622,9 @@ fn characterize() -> TestResult {
     // Explicit boundary inputs supplement the idempotence checks above.
     window.set_text("abc\rdefg\rhij")?;
     let story_length = selection.number(selection.table().get_story_length, "GetStoryLength")?;
-    println!("SYSTEM_MSFTEDIT_FIXTURE name=boundary text=\"abc\\rdefg\\rhij\" utf16_length=12 native_story_length={story_length}");
+    println!(
+        "SYSTEM_MSFTEDIT_FIXTURE name=boundary text=\"abc\\rdefg\\rhij\" utf16_length=12 native_story_length={story_length}"
+    );
     for (unit, end, position) in [
         (Unit::Line, false, 0),
         (Unit::Line, true, 3),
@@ -669,7 +676,9 @@ fn observe_vertical(
     let (accepted_anchor, accepted_active) = after.directed();
     println!(
         "SYSTEM_MSFTEDIT_VERTICAL fixture={fixture} unit={unit:?} count={count} extend={extend} operation={} before={before:?} after={after:?} anchor={accepted_anchor} active={accepted_active} delta={delta} active_displacement={} hresult=0x{:08X}",
-        if down { "Down" } else { "Up" }, accepted_active - active, result as u32,
+        if down { "Down" } else { "Up" },
+        accepted_active - active,
+        result as u32,
     );
     assert!(0 <= after.start && after.start <= after.end && after.end <= story_length);
     if extend {
@@ -711,7 +720,9 @@ fn characterize_vertical() -> TestResult {
         assert_eq!(selection.text()?, text, "{name}: exact native setup");
         let story_length =
             selection.number(selection.table().get_story_length, "GetStoryLength")?;
-        println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}");
+        println!(
+            "SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}"
+        );
         for &(anchor, active) in ranges {
             for unit in [Unit::Line, Unit::Paragraph] {
                 for extend in [false, true] {
@@ -744,7 +755,10 @@ fn characterize_vertical() -> TestResult {
         "column fixture: exact native setup"
     );
     let story_length = selection.number(selection.table().get_story_length, "GetStoryLength")?;
-    println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name=retained_column text={text:?} supplied_utf16_length={} native_story_length={story_length}", text.encode_utf16().count());
+    println!(
+        "SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name=retained_column text={text:?} supplied_utf16_length={} native_story_length={story_length}",
+        text.encode_utf16().count()
+    );
     // Unlike matrix rows, these calls deliberately retain native navigation state.
     selection.set_range(5, 5)?;
     for down in [true, true, false, false] {
@@ -759,7 +773,10 @@ fn characterize_vertical() -> TestResult {
         )?;
         commands += 1;
     }
-    println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name=vertical_boundary text={text:?} supplied_utf16_length={} native_story_length={story_length}", text.encode_utf16().count());
+    println!(
+        "SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name=vertical_boundary text={text:?} supplied_utf16_length={} native_story_length={story_length}",
+        text.encode_utf16().count()
+    );
     for (position, down) in [(0, false), (text.encode_utf16().count() as i32, true)] {
         for unit in [Unit::Line, Unit::Paragraph] {
             selection.set_range(position, position)?;
@@ -820,7 +837,9 @@ fn characterize_isolated_vertical() -> TestResult<usize> {
             let story_length =
                 selection.number(selection.table().get_story_length, "GetStoryLength")?;
             if index == 0 {
-                println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}");
+                println!(
+                    "SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}"
+                );
             }
             selection.set_range(anchor, active)?;
             assert_eq!(selection.state()?.directed(), (anchor, active));
@@ -849,7 +868,9 @@ fn characterize_isolated_vertical() -> TestResult<usize> {
         assert_eq!(selection.text()?, text, "{name}: exact isolated setup");
         let story_length =
             selection.number(selection.table().get_story_length, "GetStoryLength")?;
-        println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}");
+        println!(
+            "SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}"
+        );
         selection.set_range(5, 5)?;
         for down in [true, true, false, false] {
             observe_vertical(&selection, name, story_length, Unit::Line, 1, extend, down)?;
@@ -876,7 +897,9 @@ fn characterize_isolated_vertical() -> TestResult<usize> {
         assert_eq!(selection.text()?, text, "{name}: exact mixed-column setup");
         let story_length =
             selection.number(selection.table().get_story_length, "GetStoryLength")?;
-        println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}");
+        println!(
+            "SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}"
+        );
         selection.set_range(5, 5)?;
         for (down, extend) in steps {
             observe_vertical(&selection, name, story_length, Unit::Line, 1, extend, down)?;
@@ -1125,7 +1148,9 @@ fn characterize_options_fixture(
             let story_length =
                 selection.number(selection.table().get_story_length, "GetStoryLength")?;
             if commands == 0 {
-                println!("SYSTEM_MSFTEDIT_OPTIONS_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length} window_ex_style=0");
+                println!(
+                    "SYSTEM_MSFTEDIT_OPTIONS_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length} window_ex_style=0"
+                );
             }
             selection.set_range(anchor, active)?;
             let before = selection.state()?;
@@ -1198,7 +1223,55 @@ fn characterize_options() -> TestResult {
         &[0, 4, 16, 20],
         "",
     )?;
-    assert_eq!(commands, 140, "keep the flags/typing matrix complete");
+    // Keep inserted UTF-16 scalars, grapheme clusters and paragraph breaks
+    // distinct. The original ASCII matrix does not establish how a multi-unit
+    // TypeText call consumes following text in overtype mode.
+    for (name, typed) in [
+        ("options_typed_emoji", "😀"),
+        ("options_typed_combining", "e\u{301}"),
+        ("options_typed_zwj", "👩\u{200d}👩\u{200d}👦"),
+        ("options_typed_cr", "\r"),
+        ("options_typed_crlf", "\r\n"),
+        ("options_typed_multiline", "X\rY"),
+        ("options_typed_leading_mark", "\u{301}Z"),
+    ] {
+        commands += characterize_options_fixture(
+            name,
+            "abcdef",
+            &[(1, 1), (2, 2), (1, 4), (4, 1)],
+            &[0, 4, 20],
+            typed,
+        )?;
+    }
+    for (name, typed) in [
+        ("options_paragraph_typed_ascii", "XY"),
+        ("options_paragraph_typed_multiline", "X\rY"),
+        ("options_paragraph_typed_cr", "\r"),
+        ("options_paragraph_typed_crlf", "\r\n"),
+        ("options_paragraph_typed_unicode", "😀e\u{301}"),
+    ] {
+        commands += characterize_options_fixture(
+            name,
+            "ab\rcd",
+            &[(1, 1), (2, 2), (3, 3), (1, 4), (4, 1)],
+            &[4, 20],
+            typed,
+        )?;
+    }
+    for (name, typed) in [
+        ("options_unicode_typed_ascii", "XY"),
+        ("options_unicode_typed_emoji", "😀"),
+        ("options_unicode_typed_combining", "e\u{301}"),
+    ] {
+        commands += characterize_options_fixture(
+            name,
+            "A😀e\u{301}👩\u{200d}👩\u{200d}👦B",
+            &[(1, 1), (3, 3), (4, 4), (5, 5), (13, 13), (1, 5), (5, 1)],
+            &[4, 20],
+            typed,
+        )?;
+    }
+    assert_eq!(commands, 316, "keep the flags/typing matrix complete");
     println!("SYSTEM_MSFTEDIT_OPTIONS_PROBE_COMPLETE commands={commands}");
     Ok(())
 }

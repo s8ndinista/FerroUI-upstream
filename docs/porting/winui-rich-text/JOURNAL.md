@@ -4,6 +4,42 @@ This journal records how the port is developed. [PROGRESS.md](PROGRESS.md) and
 the reviewed mapping remain the authority for implementation status; a checkpoint
 preserves work and does not establish complete parity.
 
+## Current main integrated; selection options recorded — 2026-10-22
+
+The branch incorporates FerroUI main through
+[`cfa62aeb`](https://github.com/wieslawsoltes/FerroUI/commit/cfa62aeb80f5d28990f3d4e4b9e5d1ad9d7fb640)
+in merge commit
+[`1f793521`](https://github.com/wieslawsoltes/FerroUI/commit/1f7935218abd8ca9355a96c0c20c2a717f7856d5).
+The one generated XAML-map conflict was resolved by regenerating the combined
+corpus. Main's unrelated changes are preserved. The subsequent feature work
+remains separate from this merge's validation.
+
+The [Windows job at the merge](https://github.com/wieslawsoltes/FerroUI/actions/runs/39765696678/job/119780463926)
+passed native CoreText compilation, 49 WinUI tests, two exact UTF-16 string
+tests, four system-MSFTEDIT probes and 561 rich Controls tests. The preserved
+[versioned native record](native-msftedit-navigation-options.json) contains
+60 Home/End commands, 60 repeats, 300 horizontal commands, 290 vertical commands
+and 140 selection-options/typing commands. It records the exact commit, probe
+blob, job and Windows/MSFTEDIT versions. All earlier 220 horizontal and 282
+vertical rows reproduce the preceding record exactly.
+
+The added mixed movement sequence distinguishes the desired column saved by a
+collapsed caret move from the actual column used while extending a selection.
+The options matrix records each getter phase and the resulting story. This
+engine keeps Replace set, reports StartActive on an insertion point, accepts
+the writable Active bit without demonstrating OS focus, preserves Overtype,
+and leaves an empty TypeText call unchanged. Nonempty overtype selections and
+paragraph boundaries require distinct treatment. These are observations of the
+recorded system engine; they do not establish full WinUI or platform parity.
+
+The next probe expands TypeText to inserted supplementary scalars, combining
+sequences, ZWJ sequences and paragraph breaks, with and without a preexisting
+selection. Those 176 added commands have no recorded native outcome yet.
+The workflow now uploads the raw probe log and exact source identities before
+the longer Controls suite, so a later cancellation does not hide completed
+native evidence. The extractor's seven integrity tests roundtrip every
+preserved artifact, including the new options record.
+
 ## Native repair confirmed and horizontal probe prepared — 2026-10-21
 
 The [Windows job at 17a84805](https://github.com/wieslawsoltes/FerroUI/actions/runs/39615974131/job/119276997549)
