@@ -761,6 +761,9 @@ pub struct Node {
     pub effects: Vec<Effect>,
     pub corner_radius: f64,
     pub corner_radii: Option<[f64; 4]>,
+    /// Continuous cubic transitions; zero retains ordinary circular corners.
+    #[serde(default, skip_serializing_if = "crate::corners::is_zero")]
+    pub corner_smoothing: f64,
     pub text: String,
     pub font_family: String,
     pub font_size: f64,
@@ -842,6 +845,7 @@ impl Default for Node {
             effects: Vec::new(),
             corner_radius: 0.0,
             corner_radii: None,
+            corner_smoothing: 0.0,
             text: String::new(),
             font_family: "Inter".into(),
             font_size: 14.0,
@@ -1094,10 +1098,13 @@ impl Node {
                 if !self.local_bounds().inflate(tolerance).contains(p) {
                     return false;
                 }
-                let rs = self
-                    .corner_radii
-                    .unwrap_or([self.corner_radius; 4])
-                    .map(|radius| radius.max(0.0).min(self.width / 2.0).min(self.height / 2.0));
+                if self.corner_smoothing > 0.0 {
+                    let path = crate::corner_path(self);
+                    return path.contains(p) || (tolerance > 0.0 && path.flattened(0.1).iter().any(|c|
+                        c.windows(2).any(|s| distance_to_segment(p, s[0], s[1]) <= tolerance)));
+                }
+                let rs = crate::normalized_corner_radii(self.width, self.height,
+                    self.corner_radii.unwrap_or([self.corner_radius; 4]));
                 let corners = [
                     (rs[0], Point::new(rs[0], rs[0]), p.x < rs[0] && p.y < rs[0]),
                     (
@@ -1804,6 +1811,9 @@ impl Document {
                 || n.font_size <= 0.0
                 || !n.corner_radius.is_finite()
                 || n.corner_radius < 0.0
+                || !n.corner_smoothing.is_finite()
+                || !(0.0..=1.0).contains(&n.corner_smoothing)
+                || n.corner_radii.is_some_and(|radii| radii.iter().any(|r| !r.is_finite() || *r < 0.0))
             {
                 return Err(DocumentError::Invalid(format!(
                     "invalid appearance on node {id}"

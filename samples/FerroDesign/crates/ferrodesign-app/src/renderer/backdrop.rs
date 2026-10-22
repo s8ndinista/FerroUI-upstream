@@ -489,10 +489,7 @@ impl BackdropCache {
             let transform = context.push_transform(ui_matrix(ancestor.world));
             paint_shadows(context, &ancestor.visual, false);
             paint_body(context, &ancestor.visual);
-            let clip = ancestor
-                .clip
-                .map(|clip| context.push_rounded_clip(clip))
-                .unwrap_or(PushedState::NONE);
+            let clip = push_content_clip(context, ancestor);
             masks::paint_siblings(
                 context,
                 scene,

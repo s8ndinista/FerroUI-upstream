@@ -223,6 +223,7 @@ impl<'a> MatchKey<'a> {
             SelectionMatch::Appearance => a.kind == b.kind && a.fills == b.fills
                 && a.strokes == b.strokes && a.effects == b.effects
                 && a.opacity == b.opacity && a.blend_mode == b.blend_mode
+                && a.corner_smoothing == b.corner_smoothing
                 && a.corner_radii.unwrap_or([a.corner_radius; 4]) == b.corner_radii.unwrap_or([b.corner_radius; 4])
                 && (a.kind != NodeKind::Text || self.same_text(other)),
         }
@@ -267,6 +268,7 @@ impl<'a> MatchKey<'a> {
         if appearance {
             (n.kind as u8, number(n.opacity), n.blend_mode as u8).hash(&mut hash);
             n.corner_radii.unwrap_or([n.corner_radius; 4]).map(number).hash(&mut hash);
+            number(n.corner_smoothing).hash(&mut hash);
         }
         hash.finish()
     }

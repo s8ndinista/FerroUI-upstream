@@ -1,3 +1,4 @@
+import { cornerRegressions } from "./corners-browser.mjs";
 import { prototypeMotionRegressions } from "./prototype-browser.mjs";
 import { nativeAuthoringRegressions } from "./authoring-browser.mjs";
 import { typographyRegressions } from "./typography-browser.mjs";
@@ -1005,6 +1006,8 @@ try {
             await scenario("vector-network", () => vectorNetworkRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));
             await scenario("native-authoring", () => nativeAuthoringRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("corners", () => cornerRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));
             await scenario("typography", () => typographyRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));

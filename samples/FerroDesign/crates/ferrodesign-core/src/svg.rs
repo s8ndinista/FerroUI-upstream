@@ -397,53 +397,7 @@ pub fn outline_path(node: &Node) -> VectorPath {
             ],
         };
     }
-    let radii = node
-        .corner_radii
-        .unwrap_or([node.corner_radius; 4])
-        .map(|r| r.max(0.0).min(w / 2.0).min(h / 2.0));
-    let [tl, tr, br, bl] = radii;
-    VectorPath {
-        fill_rule: FillRule::NonZero,
-        anchor_modes: Default::default(),
-        segments: vec![
-            PathSegment::MoveTo {
-                point: Point::new(tl, 0.0),
-            },
-            PathSegment::LineTo {
-                point: Point::new(w - tr, 0.0),
-            },
-            PathSegment::CubicTo {
-                control1: Point::new(w - tr + k * tr, 0.0),
-                control2: Point::new(w, tr - k * tr),
-                point: Point::new(w, tr),
-            },
-            PathSegment::LineTo {
-                point: Point::new(w, h - br),
-            },
-            PathSegment::CubicTo {
-                control1: Point::new(w, h - br + k * br),
-                control2: Point::new(w - br + k * br, h),
-                point: Point::new(w - br, h),
-            },
-            PathSegment::LineTo {
-                point: Point::new(bl, h),
-            },
-            PathSegment::CubicTo {
-                control1: Point::new(bl - k * bl, h),
-                control2: Point::new(0.0, h - bl + k * bl),
-                point: Point::new(0.0, h - bl),
-            },
-            PathSegment::LineTo {
-                point: Point::new(0.0, tl),
-            },
-            PathSegment::CubicTo {
-                control1: Point::new(0.0, tl - k * tl),
-                control2: Point::new(tl - k * tl, 0.0),
-                point: Point::new(tl, 0.0),
-            },
-            PathSegment::Close,
-        ],
-    }
+    crate::corner_path(node)
 }
 
 fn node_shape(node: &Node, attributes: &str) -> String {

@@ -384,6 +384,7 @@ fn preserve_overrides(node: &mut Node, old: &Node) {
             "flip_y" => node.flip_y = old.flip_y,
             "affine_transform" => node.affine_transform = old.affine_transform,
             "corner_radius" => { node.corner_radius = old.corner_radius; node.corner_radii = old.corner_radii; }
+            "corner_smoothing" => node.corner_smoothing = old.corner_smoothing,
             "font_family" => node.font_family = old.font_family.clone(),
             "font_size" => {
                 node.font_size = old.font_size;

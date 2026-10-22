@@ -126,7 +126,8 @@ impl ScenePainter {
             prepared.opacity = unit(node.opacity);
             prepared.blend = node.blend_mode;
             prepared.mask = node.is_mask.then_some(node.mask_type);
-            prepared.clip = node.clip_content.then(|| rounded_rect(node));
+            prepared.clip = (node.clip_content && node.corner_smoothing == 0.0).then(|| rounded_rect(node));
+            prepared.content_clip = (node.clip_content && node.corner_smoothing > 0.0).then(|| corner_geometry(node));
             prepared.child_blur_outset = blur_outset_world(&node.effects, world);
             prepared.outline = inherited_outline
                 || node.kind == NodeKind::Boolean

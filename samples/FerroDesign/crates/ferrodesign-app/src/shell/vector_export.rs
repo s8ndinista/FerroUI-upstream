@@ -3,7 +3,7 @@
 use super::*;
 use std::fmt::Write;
 
-fn path_data(path: &core::VectorPath) -> String {
+pub(super) fn path_data(path: &core::VectorPath) -> String {
     let mut data = if path.fill_rule == core::FillRule::EvenOdd { "F0 " } else { "F1 " }.to_string();
     for segment in &path.segments {
         match segment {

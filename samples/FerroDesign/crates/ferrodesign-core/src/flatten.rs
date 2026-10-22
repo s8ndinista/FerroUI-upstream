@@ -246,6 +246,7 @@ impl Editor {
         result.clip_content = false; // Any group/boolean clip is baked into the outline.
         result.corner_radius = 0.0;
         result.corner_radii = None;
+        result.corner_smoothing = 0.0;
         if compound {
             result.fill_style = None;
             // One existing group retains its allocation and parent-layout
@@ -324,7 +325,7 @@ fn validate_single(node: &Node) -> Result<(), DocumentError> {
     if node.kind.is_container() && node.kind != NodeKind::Boolean && !node.children.is_empty() {
         return Err(invalid("Flatten a frame's artwork separately to retain its independent paints, clips and layout."));
     }
-    let box_shape = matches!(
+    let box_shape = node.corner_smoothing == 0.0 && matches!(
         node.kind,
         NodeKind::Rectangle | NodeKind::Frame | NodeKind::Section
     );

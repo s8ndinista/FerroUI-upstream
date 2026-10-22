@@ -262,6 +262,7 @@
                 <StackPanel Spacing="4"><TextBlock Text="Opacity %" Classes="label"/><TextBox Name="OpacityField" Text="100"/></StackPanel>
                 <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Corner radius" Classes="label"/><TextBox Name="RadiusField" Text="0"/></StackPanel>
               </Grid>
+              <Grid Name="CornerSmoothingOptions" ColumnDefinitions="*,72"><TextBlock Text="Corner smoothing %" Classes="label" VerticalAlignment="Center"/><TextBox Name="CornerSmoothingField" Grid.Column="1" Text="0" ToolTip.Tip="Smooth the transition between straight edges and rounded corners (0–100%)"/></Grid>
               <Button Name="IndependentCornersButton" Content="Independent corners" HorizontalContentAlignment="Left"/>
               <Grid Name="CornerOptions" IsVisible="False" ColumnDefinitions="*,8,*,8,*,8,*">
                 <TextBox Name="CornerTLField" ToolTip.Tip="Top left radius"/>

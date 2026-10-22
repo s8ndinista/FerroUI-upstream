@@ -47,6 +47,11 @@ pub fn editor_state() -> String {
     ferrodesign_app::app::with_shell(|s| s.state_json()).unwrap_or_else(|| "null".into())
 }
 #[cfg(target_os = "emscripten")]
+#[wasm_bindgen(js_name = ferroDesignFrameState)]
+pub fn editor_frame_state() -> String {
+    ferrodesign_app::app::with_shell(|s| s.frame_state_json()).unwrap_or_else(|| "null".into())
+}
+#[cfg(target_os = "emscripten")]
 #[wasm_bindgen(js_name = ferroDesignCommand)]
 pub fn editor_command(command: &str) -> bool {
     ferrodesign_app::app::with_shell(|s| s.command(command)).unwrap_or(false)

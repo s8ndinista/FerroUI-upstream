@@ -1,10 +1,14 @@
 import assert from "node:assert/strict";
+import { writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
+import { inlineInputState, startInputObservation, stopInputObservation } from "./input-observations.mjs";
 
 // Actual native TextBoxes/ComboBoxes, keyboard selection and TextPresenter
 // diagnostics. No DOM text editor or test-only command mutates typography.
 export async function typographyRegressions(page, reference, check, helpers, output, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, chooseNative, frames, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, chooseNative, frames, waitForNativeFrame, waitForNativeScene,
+        captureNativeScreenshot } = helpers;
     const waitDocument = (predicate, args) => page.waitForFunction(({ source, args }) => {
         const doc = JSON.parse(globalThis.ferroDesign.ferroDesignExportJson());
         return new Function("doc", "args", "return (" + source + ")(doc, args)")(doc, args);
@@ -17,12 +21,44 @@ export async function typographyRegressions(page, reference, check, helpers, out
         return (await state(page)).chrome[name].typography;
     };
     const sizes = (layout) => layout.runs.flatMap((run) => Array(run.utf16Length).fill(run.fontSize));
+    let inlineEntry = 0;
     const openInline = async () => {
-        await clickWorld(page, 460, 250);
-        await clickWorld(page, 66, 65, { clickCount: 2, delay: 80 });
-        await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).editingText === 2);
-        assert.equal((await state(page)).chrome.InlineTextBox.focused, true,
-            "The public native TextBox must own keyboard focus");
+        const observation = { schemaVersion: 1, operation: "one native text double-click", mode,
+            deadlineMs: 30000, before: inlineInputState(await state(page)) };
+        const path = resolve(output, `${mode}-typography-inline-entry-${++inlineEntry}.json`);
+        await startInputObservation(page);
+        try {
+            await clickWorld(page, 460, 250);
+            const cleared = await state(page);
+            assert.deepEqual(cleared.selection, [], "The reset click must reach the empty native canvas");
+            assert.equal(cleared.chrome.CanvasHost.focusWithin, true);
+            observation.beforeDoubleClick = inlineInputState(cleared);
+            // Keep the same real pointer route, two presses and original delay.
+            // Evidence records their actual browser and native timestamps;
+            // Playwright's clickCount does not override FerroUI's click clock.
+            await clickWorld(page, 66, 65, { clickCount: 2, delay: 80 });
+            observation.afterDoubleClick = inlineInputState(await state(page));
+            await page.waitForFunction(() => {
+                const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+                const field = view.chrome.InlineTextBox;
+                return view.editingText === 2 && field?.visible && field.enabled && field.focused &&
+                    field.measureValid && field.arrangeValid && field.width > 0 && field.height > 0 &&
+                    !view.chrome.ModalBackdrop?.visible;
+            }, undefined, { timeout: 30000 });
+            await waitForNativeFrame(page, cleared.renderedFrames, "Native inline text entry");
+            await waitForNativeScene(page, cleared.sceneFrames, "Native inline text entry");
+            assert.equal((await state(page)).chrome.InlineTextBox.focused, true,
+                "The public native TextBox must own keyboard focus");
+            observation.status = "passed";
+        } catch (error) {
+            observation.status = "failed";
+            observation.error = error.stack || String(error);
+            throw new Error(`Native inline text entry failed; see ${path}`, { cause: error });
+        } finally {
+            observation.input = await stopInputObservation(page);
+            observation.after = inlineInputState(await state(page));
+            await writeFile(path, JSON.stringify(observation, null, 2));
+        }
     };
     const closeInline = async () => {
         await page.keyboard.press("Control+Enter");

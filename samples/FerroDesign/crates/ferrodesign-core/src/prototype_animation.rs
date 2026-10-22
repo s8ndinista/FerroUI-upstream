@@ -467,7 +467,7 @@ fn compatible_nodes(a: &Node, b: &Node) -> bool {
 fn animated_properties_differ(a: &Node, b: &Node) -> bool {
     a.x != b.x || a.y != b.y || a.width != b.width || a.height != b.height
         || a.rotation != b.rotation || a.affine_transform != b.affine_transform
-        || a.opacity != b.opacity || a.corner_radius != b.corner_radius || a.corner_radii != b.corner_radii
+        || a.opacity != b.opacity || a.corner_radius != b.corner_radius || a.corner_radii != b.corner_radii || a.corner_smoothing != b.corner_smoothing
         || a.font_size != b.font_size || a.font_weight != b.font_weight || a.line_height != b.line_height
         || a.letter_spacing != b.letter_spacing || a.star_inner_radius != b.star_inner_radius
         || a.fills != b.fills || a.strokes != b.strokes || a.effects != b.effects || a.path != b.path
@@ -519,6 +519,7 @@ fn interpolate_node(out: &mut Node, a: &Node, b: &Node, t: f64) {
     }
     out.opacity = lerp(a.opacity, b.opacity, t).clamp(0.0, 1.0);
     out.corner_radius = lerp(a.corner_radius, b.corner_radius, t).max(0.0);
+    out.corner_smoothing = lerp(a.corner_smoothing, b.corner_smoothing, t).clamp(0.0, 1.0);
     if a.corner_radii.is_some() || b.corner_radii.is_some() {
         let a = a.corner_radii.unwrap_or([a.corner_radius; 4]);
         let b = b.corner_radii.unwrap_or([b.corner_radius; 4]);

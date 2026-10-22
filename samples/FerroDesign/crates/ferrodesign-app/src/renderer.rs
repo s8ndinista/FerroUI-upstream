@@ -23,6 +23,8 @@ mod region_tests;
 mod svg_regions_tests;
 #[cfg(all(test, not(target_os = "emscripten")))]
 mod shadow_tests;
+#[cfg(all(test, not(target_os = "emscripten")))]
+mod corner_tests;
 
 use std::cell::Cell;
 use std::collections::{hash_map::DefaultHasher, HashMap, HashSet};
@@ -178,6 +180,7 @@ struct PreparedNode {
     mask_scope: Option<usize>,
     vector_clip: Option<Ref<Geometry>>,
     clip: Option<RoundedRect>,
+    content_clip: Option<Ref<Geometry>>,
     child_blur_outset: f64,
     local_subtree_bounds: Rect,
     world_subtree_bounds: Rect,
@@ -570,7 +573,8 @@ impl ScenePainter {
             mask: node.is_mask.then_some(node.mask_type),
             mask_scope: None,
             vector_clip: None,
-            clip: node.clip_content.then(|| rounded_rect(node)),
+            clip: (node.clip_content && node.corner_smoothing == 0.0).then(|| rounded_rect(node)),
+            content_clip: (node.clip_content && node.corner_smoothing > 0.0).then(|| corner_geometry(node)),
             child_blur_outset: blur_outset_world(&node.effects, world),
             local_subtree_bounds: node.local_bounds(),
             world_subtree_bounds: world.transform_rect(node.local_bounds()),
@@ -797,10 +801,7 @@ fn paint_blurs(
     }
     paint_body(context, &node.visual);
     if !node.visual.suppress_children {
-        let clip = node
-            .clip
-            .map(|rect| context.push_rounded_clip(rect))
-            .unwrap_or(PushedState::NONE);
+        let clip = push_content_clip(context, node);
         // A child outside the visible rectangle can still contribute pixels
         // through an ancestor's layer blur. Keep those source pixels alive.
         let child_viewport = viewport.inflate(node.child_blur_outset);
@@ -992,7 +993,7 @@ fn build_visual(
         combined(
             GeometryCombineMode::Intersect,
             geometry,
-            rounded_geometry(rounded_rect(node)),
+            corner_geometry(node),
         )
     } else {
         geometry
@@ -1098,7 +1099,7 @@ fn build_visual(
         | NodeKind::Frame
         | NodeKind::Component
         | NodeKind::Instance
-        | NodeKind::Section => Some(rounded_rect(node)),
+        | NodeKind::Section if node.corner_smoothing == 0.0 => Some(rounded_rect(node)),
         _ => None,
     };
     let mut outer = Vec::new();
@@ -1201,7 +1202,7 @@ fn shape_geometry(node: &Node) -> Ref<Geometry> {
                 path_geometry(&node.path)
             }
         }
-        _ => rounded_geometry(rounded_rect(node)),
+        _ => corner_geometry(node),
     }
 }
 
@@ -1288,6 +1289,16 @@ pub(crate) fn rounded_rect(node: &Node) -> RoundedRect {
         *radius *= scale;
     }
     RoundedRect::from_radii(UiRect::new(0.0, 0.0, w, h), r[0], r[1], r[2], r[3])
+}
+
+pub(crate) fn corner_geometry(node: &Node) -> Ref<Geometry> {
+    if node.corner_smoothing > 0.0 { path_geometry(&ferrodesign_core::corner_path(node)) }
+    else { rounded_geometry(rounded_rect(node)) }
+}
+
+fn push_content_clip(context: &mut DrawingContext<'_>, node: &PreparedNode) -> PushedState {
+    if let Some(geometry) = &node.content_clip { context.push_geometry_clip(geometry) }
+    else { node.clip.map(|rect| context.push_rounded_clip(rect)).unwrap_or(PushedState::NONE) }
 }
 
 fn rounded_geometry(rect: RoundedRect) -> Ref<Geometry> {
@@ -2025,6 +2036,7 @@ fn visual_fingerprint(node: &Node, children: u64, needs_outline: bool, assets: u
         node.width,
         node.height,
         node.corner_radius,
+        node.corner_smoothing,
         node.font_size,
         node.line_height,
         node.letter_spacing,

@@ -5,6 +5,7 @@ mod grids;
 mod image_crop;
 mod layout_drag;
 mod selection;
+mod input_observations;
 use crate::{
     icons::brush,
     renderer::{RenderStats, ScenePainter},
@@ -198,6 +199,7 @@ pub struct DesignCanvas {
     selection_context: RefCell<Option<selection::CachedSelectionContext>>,
     prototype_selection: RefCell<Option<selection::CachedPrototypeSelection>>,
     selection_pointer: Cell<Option<Point>>,
+    pointer_presses: RefCell<input_observations::PointerPresses>,
 }
 ferro_class!(DesignCanvas:Control);
 ferro_impl_classes!(DesignCanvas:FerroObjectImpl,StyledElementImpl,LayoutableImpl,InteractiveImpl,ControlImpl);
@@ -242,6 +244,7 @@ impl DesignCanvas {
             selection_context: RefCell::new(None),
             prototype_selection: RefCell::new(None),
             selection_pointer: Cell::new(None),
+            pointer_presses: RefCell::new(input_observations::PointerPresses::default()),
         });
         this.set_focusable(true);
         this.set_clip_to_bounds(true);
@@ -249,6 +252,11 @@ impl DesignCanvas {
     }
     pub fn on_change(&self, callback: impl Fn(CanvasEvent) + 'static) {
         *self.callback.borrow_mut() = Some(Rc::new(callback));
+    }
+    /// Bounded observations of real routed input; reading this never changes
+    /// selection, focus, capture, history, layout or the render schedule.
+    pub fn pointer_press_observations(&self) -> serde_json::Value {
+        self.pointer_presses.borrow().json()
     }
     fn emit(&self, event: CanvasEvent) {
         let callback = self.callback.borrow().clone();
@@ -709,6 +717,8 @@ impl InputElementImpl for DesignCanvas {
         let screen = Point::new(screen.x, screen.y);
         this.selection_pointer.set(Some(screen));
         let world = this.viewport.get().screen_to_world(screen);
+        this.pointer_presses.borrow_mut().record(e, screen, world, this.viewport.get(),
+            this.editor.borrow().selection.len(), this.frames.get());
         if e.properties().is_right_button_pressed {
             if this.presentation.get().is_none() {
                 this.emit(CanvasEvent::ContextMenu);

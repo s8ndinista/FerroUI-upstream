@@ -49,7 +49,7 @@ pub(super) fn add_vector_children(
         content = combined(
             GeometryCombineMode::Intersect,
             content,
-            rounded_geometry(rounded_rect(node)),
+            corner_geometry(node),
         );
     }
     combined(GeometryCombineMode::Union, own, content)
@@ -171,10 +171,7 @@ pub(super) fn paint_partial(
     let transform = context.push_transform(ui_matrix(node.local));
     paint_shadows(context, &node.visual, false);
     paint_body(context, &node.visual);
-    let clip = node
-        .clip
-        .map(|clip| context.push_rounded_clip(clip))
-        .unwrap_or(PushedState::NONE);
+    let clip = push_content_clip(context, node);
     paint_siblings(
         context,
         scene,

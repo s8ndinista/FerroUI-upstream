@@ -1,6 +1,7 @@
 //! The XAML shell binds real FerroUI controls to the document command layer.
 mod paints;
 mod fields;
+mod diagnostics;
 mod panels;
 mod geometry_authoring;
 mod selection;
@@ -528,6 +529,7 @@ impl EditorShell {
             "PaddingField",
             "OpacityField",
             "RadiusField",
+            "CornerSmoothingField",
             "FillField",
             "PageBackgroundField",
             "StrokeField",
@@ -709,6 +711,7 @@ impl EditorShell {
             "InspectorViewport",
             "PageInspector", "DesignInspector", "PageBackgroundField", "PageBackgroundSwatch",
             "NameField", "WidthField", "HeightField", "FillField", "TextField",
+            "RadiusField", "CornerSmoothingField", "IndependentCornersButton",
             "SelectMatchingButton",
             "XField", "YField", "RotationField", "AffineButton", "FramePresetsButton", "PageFramePresetsButton",
             "ConstraintLeft", "ConstraintRight", "ConstraintTop", "ConstraintBottom", "ConstraintCenterX", "ConstraintCenterY",
@@ -797,6 +800,7 @@ impl EditorShell {
             "networkVertices":*self.canvas.network_vertices.borrow(),
             "networkBucket":{"face":bucket_face,"active":bucket_active,"visited":bucket_visited},
             "imageCrop":self.canvas.image_crop_state(),
+            "pointerPresses":self.canvas.pointer_press_observations(),
             "layoutDrag":self.canvas.layout_drag_state(),
             "editingText":self.inline_text.get(),
             "editingComposition":self.inline_text.get().is_some() && self.field("InlineTextBox").is_composing_text(),
@@ -1356,6 +1360,7 @@ impl EditorShell {
             ("HeightField", node.map(|n| n.height)),
             ("RotationField", node.map(|n| n.rotation)),
             ("RadiusField", node.map(|n| n.corner_radius)),
+            ("CornerSmoothingField", node.map(|n| n.corner_smoothing * 100.0)),
             ("OpacityField", node.map(|n| n.opacity * 100.0)),
             ("FontSizeField", node.map(|n| n.font_size)),
             ("FontWeightField", node.map(|n| n.font_weight as f64)),
@@ -1435,6 +1440,7 @@ impl EditorShell {
                 })
                 .unwrap_or_default(),
         );
+        self.visible("CornerSmoothingOptions", node.is_some_and(|n| matches!(n.kind, NodeKind::Rectangle | NodeKind::Frame | NodeKind::Component | NodeKind::Instance | NodeKind::Section)));
         self.visible("StrokeOptions", node.is_some_and(|n| !n.strokes.is_empty()));
         self.visible(
             "CornerOptions",
@@ -1664,6 +1670,15 @@ impl EditorShell {
                 n.replace_text_preserving_runs(text.clone());
             }),
             "FontFamilyField" => self.modify("Font family", |n| n.font_family = text.clone()),
+            "CornerSmoothingField" => {
+                let Some(value) = number.filter(|v| (0.0..=100.0).contains(v)) else {
+                    return self.reject_inspector_field(name, "Corner smoothing must be between 0 and 100%.");
+                };
+                let ids = self.editor.borrow().selection.clone();
+                if let Err(error) = self.editor.borrow_mut().set_corner_smoothing(&ids, value / 100.0) {
+                    return self.reject_inspector_field(name, &error.to_string());
+                }
+            }
             "DashField" => {
                 let dash = text
                     .split(|c: char| c == ',' || c.is_whitespace())
@@ -2962,8 +2977,12 @@ fn css(n: &Node) -> String {
     if n.opacity < 1.0 {
         output += &format!("opacity: {};\n", number(n.opacity));
     }
-    if n.corner_radius > 0.0 {
-        output += &format!("border-radius: {}px;\n", number(n.corner_radius));
+    if n.corner_radius > 0.0 || n.corner_radii.is_some() {
+        let radii = core::normalized_corner_radii(n.width, n.height, n.corner_radii.unwrap_or([n.corner_radius; 4]));
+        output += &format!("border-radius: {};\n", radii.iter().map(|r| format!("{}px", number(*r))).collect::<Vec<_>>().join(" "));
+    }
+    if n.corner_smoothing > 0.0 {
+        output += "/* Smoothed corners use retained cubic paths. Export SVG for the exact outline; border-radius alone retains circular corners. */\n";
     }
     let regional = n.vector_network.as_ref().is_some_and(|network| {
         network.regions.values().any(|region| region.fills.is_some())
@@ -3129,7 +3148,8 @@ fn xaml_node(doc: &core::Document, id: NodeId, depth: usize, result: &mut String
         attributes += &format!(" RenderTransform=\"rotate({}deg)\" RenderTransformOrigin=\"50%,50%\"", number(n.rotation));
     }
     let container = n.kind.is_container();
-    let tag = if container { "Canvas" } else {
+    let smooth_box = n.corner_smoothing > 0.0 && matches!(n.kind, NodeKind::Rectangle | NodeKind::Frame | NodeKind::Component | NodeKind::Instance | NodeKind::Section);
+    let tag = if container { "Canvas" } else if smooth_box { "Path" } else {
         match n.kind {
             NodeKind::Text => "TextBlock",
             NodeKind::Ellipse => "Ellipse",
@@ -3141,6 +3161,11 @@ fn xaml_node(doc: &core::Document, id: NodeId, depth: usize, result: &mut String
     };
     if container {
         attributes += &format!(" ClipToBounds=\"{}\"", if n.clip_content { "True" } else { "False" });
+        if smooth_box && n.clip_content {
+            attributes += &format!(" Clip=\"{}\"", vector_export::path_data(&core::corner_path(n)));
+        }
+    } else if smooth_box {
+        attributes += &format!(" Data=\"{}\" Stretch=\"None\"", vector_export::path_data(&core::corner_path(n)));
     } else {
         match n.kind {
             NodeKind::Text => attributes += &format!(" Text=\"{}\" FontFamily=\"{}\" FontSize=\"{}\" FontWeight=\"{}\" TextWrapping=\"Wrap\"",
@@ -3170,7 +3195,7 @@ fn xaml_node(doc: &core::Document, id: NodeId, depth: usize, result: &mut String
     let mut properties = String::new();
     if n.kind != NodeKind::Line {
         let property = if container { "Background" } else if n.kind == NodeKind::Text { "Foreground" } else { "Fill" };
-        if let Some(fill) = n.fills.iter().find(|fill| fill.visible) {
+        if let Some(fill) = n.fills.iter().find(|fill| fill.visible).filter(|_| !(container && smooth_box)) {
             xaml_paint(tag, property, &fill.paint, fill.opacity, depth + 1, &mut attributes, &mut properties);
         } else {
             attributes += &format!(" {property}=\"#00000000\"");
@@ -3187,6 +3212,14 @@ fn xaml_node(doc: &core::Document, id: NodeId, depth: usize, result: &mut String
     } else {
         *result += &format!("{pad}<{tag} {attributes}>\n{properties}");
         if container {
+            if smooth_box {
+                for fill in n.fills.iter().rev().filter(|fill| fill.visible && fill.opacity > 0.0) {
+                    let mut attrs = format!("Data=\"{}\" Stretch=\"None\"", vector_export::path_data(&core::corner_path(n)));
+                    let mut props = String::new();
+                    xaml_paint("Path", "Fill", &fill.paint, fill.opacity, depth + 2, &mut attrs, &mut props);
+                    *result += &format!("{pad}  <Path {attrs}>\n{props}{pad}  </Path>\n");
+                }
+            }
             for &child in &n.children { xaml_node(doc, child, depth + 1, result); }
         }
         *result += &format!("{pad}</{tag}>\n");
