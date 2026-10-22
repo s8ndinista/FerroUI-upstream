@@ -7,7 +7,7 @@ import { PNG } from "pngjs";
 // paint-stack edits, clearing and inheritance all use native pointer controls.
 export async function regionPaintRegressions(page, reference, check, helpers, output, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, frames, waitForNativeFrame, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, frames, waitForNativeFrame, waitForNativeScene, captureNativeScreenshot } = helpers;
     const fill = (r, g, b) => ({ paint: { type: "solid", r, g, b, a: 255 }, opacity: 1, visible: true });
     const red = fill(239, 68, 68), blue = fill(37, 99, 235), neutral = fill(217, 217, 217);
     const graph = {
@@ -22,12 +22,32 @@ export async function regionPaintRegressions(page, reference, check, helpers, ou
         corner_radius: 0, corner_radii: null, fills: [red], strokes: [],
         path: { segments: [], fill_rule: "even_odd" }, vector_network: graph,
     })], "Native region paints"));
-    await clickNative(page, "SelectTool");
-    await page.keyboard.press("Escape");
-    await page.keyboard.press("Tab");
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "2");
+    const selectRoot = async () => {
+        await clickNative(page, "SelectTool");
+        await page.keyboard.press("Escape");
+        const before = await state(page);
+        await page.keyboard.press("Tab");
+        await page.waitForFunction(() => {
+            const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+            return view.selection.join() === "2" && view.chrome.CanvasHost.focusWithin;
+        }, null, { timeout: 10000 });
+        // Match clickWorld's publication contract before using the inspector
+        // that keyboard selection has just changed.
+        await waitForNativeFrame(page, before.renderedFrames, "Region fixture keyboard selection");
+        await waitForNativeScene(page, before.sceneFrames, "Region fixture keyboard selection");
+    };
+    await selectRoot();
     const edit = async (shortcut = false) => {
-        if ((await state(page)).vectorNode !== 2) await clickNative(page, "EditVectorButton", "InspectorViewport");
+        const before = await state(page);
+        if (before.vectorNode !== 2) {
+            await clickNative(page, "EditVectorButton", "InspectorViewport");
+            await page.waitForFunction(() => {
+                const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+                return view.vectorNode === 2 && view.chrome.CanvasHost.focusWithin;
+            }, null, { timeout: 10000 });
+            await waitForNativeFrame(page, before.renderedFrames, "Native vector editing entry");
+            await waitForNativeScene(page, before.sceneFrames, "Native vector editing entry");
+        }
         if (shortcut) {
             await page.keyboard.press("Shift+B");
             await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).vectorTool === "Bucket");
@@ -244,10 +264,7 @@ export async function regionPaintRegressions(page, reference, check, helpers, ou
         corner_radius: 0, corner_radii: null, fills: [imageFill], strokes: [],
         path: { segments: [], fill_rule: "even_odd" }, vector_network: graph,
     })], "Native regional image source"));
-    await clickNative(page, "SelectTool");
-    await page.keyboard.press("Escape");
-    await page.keyboard.press("Tab");
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "2");
+    await selectRoot();
     await edit();
     await paint(90);
     const imageBefore = await documentState(page), imageDepth = (await state(page)).historyLength;

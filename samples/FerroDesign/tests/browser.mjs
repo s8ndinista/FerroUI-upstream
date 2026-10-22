@@ -423,7 +423,10 @@ async function captureNativeScreenshot(page, result, name, { controls = [], afte
     };
     const diagnosticPath = resolve(output, name + "-capture.json");
     for (let attempt = 0; attempt < 2; attempt++) {
-        const entry = { attempt: attempt + 1, timeoutMs: attempt === 0 ? 30000 : 15000 };
+        // CI trace frames arrived 27–32 seconds late while native state stayed
+        // responsive. Budget 60 seconds for the single guarded retry; this
+        // measured allowance does not establish the timeout's cause or recovery.
+        const entry = { attempt: attempt + 1, timeoutMs: attempt === 0 ? 30000 : 60000 };
         const started = performance.now();
         record.attempts.push(entry);
         try {

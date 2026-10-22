@@ -7,7 +7,7 @@ import { PNG } from "pngjs";
 // history operations below go through real FerroUI controls and pointer input.
 export async function networkBucketRegressions(page, reference, check, helpers, output, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickNative, moveWorld, frames, waitForNativeFrame, captureNativeScreenshot } = helpers;
+        clickNative, moveWorld, frames, waitForNativeFrame, waitForNativeScene, captureNativeScreenshot } = helpers;
     const storage = () => page.evaluate(() => globalThis.ferroDesignStorage.status());
     const durable = () => page.evaluate(async () =>
         JSON.parse((await globalThis.ferroDesignStorage.backend.load()).text));
@@ -37,9 +37,25 @@ export async function networkBucketRegressions(page, reference, check, helpers, 
     })], "Native bucket gestures"));
     await clickNative(page, "SelectTool");
     await page.keyboard.press("Escape");
+    const beforeSelection = await state(page);
     await page.keyboard.press("Tab");
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "2");
+    await page.waitForFunction(() => {
+        const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+        return view.selection.join() === "2" && view.chrome.CanvasHost.focusWithin;
+    });
+    // Keyboard selection rebuilds the inspector just as pointer selection
+    // does. Its live bounds can precede the published native hit-test scene.
+    await waitForNativeFrame(page, beforeSelection.renderedFrames, "Bucket fixture keyboard selection");
+    await waitForNativeScene(page, beforeSelection.sceneFrames, "Bucket fixture keyboard selection");
+    const beforeVector = await state(page);
     await clickNative(page, "EditVectorButton", "InspectorViewport");
+    await page.waitForFunction(() => {
+        const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+        return view.vectorNode === 2 && view.chrome.CanvasHost.focusWithin &&
+            view.chrome.DoneVectorButton.visible && view.chrome.NetworkBucketButton.visible;
+    });
+    await waitForNativeFrame(page, beforeVector.renderedFrames, "Bucket fixture vector entry");
+    await waitForNativeScene(page, beforeVector.sceneFrames, "Bucket fixture vector entry");
     await page.keyboard.press("Shift+B");
     await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).vectorTool === "Bucket");
 

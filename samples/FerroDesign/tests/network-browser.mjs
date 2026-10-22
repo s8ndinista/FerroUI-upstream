@@ -3,10 +3,35 @@ import { PNG } from "pngjs";
 
 // Pointer coordinates and controls are supplied by the actual FerroUI tree.
 export async function vectorNetworkRegressions(page, reference, check, helpers, output, mode) {
-    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative, frames, captureNativeScreenshot } = helpers;
+    const { fixtureNode, isolatedDocument, importFixture, documentState, state, clickWorld, clickNative,
+        frames, waitForNativeFrame, waitForNativeScene, captureNativeScreenshot } = helpers;
     const command = async (name) => {
         assert.equal(await page.evaluate((name) => globalThis.ferroDesign.ferroDesignCommand(name), name), true);
         await frames(page);
+    };
+    const selectNetworkRoot = async () => {
+        await page.keyboard.press("Escape");
+        const before = await state(page);
+        await page.keyboard.press("Tab");
+        await page.waitForFunction(() => {
+            const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+            return view.selection.join() === "2" && view.chrome.CanvasHost.focusWithin;
+        }, null, { timeout: 10000 });
+        // Keyboard selection changes the inspector before its hit-test scene
+        // is necessarily published, just as pointer selection does.
+        await waitForNativeFrame(page, before.renderedFrames, "Network fixture keyboard selection");
+        await waitForNativeScene(page, before.sceneFrames, "Network fixture keyboard selection");
+    };
+    const enterNetwork = async () => {
+        const before = await state(page);
+        await command("edit-vector");
+        await page.waitForFunction(() => {
+            const view = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+            return view.vectorNode === 2 && view.chrome.CanvasHost.focusWithin &&
+                view.chrome.NetworkDetectFacesButton.visible;
+        }, null, { timeout: 10000 });
+        await waitForNativeFrame(page, before.renderedFrames, "Network fixture vector entry");
+        await waitForNativeScene(page, before.sceneFrames, "Network fixture vector entry");
     };
     const node = async () => (await documentState(page)).nodes[2];
     const screen = (view, x, y) => ({ x: view.chrome.CanvasHost.x + view.pan.x + x * view.zoom, y: view.chrome.CanvasHost.y + view.pan.y + y * view.zoom });
@@ -140,10 +165,8 @@ export async function vectorNetworkRegressions(page, reference, check, helpers, 
         path: { segments: [], fill_rule: "even_odd" }, vector_network: graphFixture,
     });
     await importFixture(page, isolatedDocument(reference, [faceNode], "Automatic vector faces"));
-    await page.keyboard.press("Escape");
-    await page.keyboard.press("Tab");
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "2");
-    await command("edit-vector");
+    await selectNetworkRoot();
+    await enterNetwork();
     const unfilled = await documentState(page), faceDepth = (await state(page)).historyLength;
     await clickNative(page, "NetworkDetectFacesButton", "InspectorViewport");
     await frames(page);
@@ -178,15 +201,23 @@ export async function vectorNetworkRegressions(page, reference, check, helpers, 
     crossing.vector_network.edges[12] = { start: 2, end: 4, curve: { type: "line" }, stroke: true };
     crossing.vector_network.next_id = 13;
     await importFixture(page, isolatedDocument(reference, [crossing], "Unsplit network crossing"));
-    await page.keyboard.press("Escape"); await page.keyboard.press("Tab");
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "2");
+    await selectNetworkRoot();
     await page.keyboard.press("ArrowRight"); await frames(page);
     const redoDocument = await documentState(page);
     await command("undo");
     const beforeError = await documentState(page), beforeErrorView = await state(page);
     assert.equal(beforeErrorView.canRedo, true);
-    await command("edit-vector");
-    await clickNative(page, "NetworkDetectFacesButton", "InspectorViewport"); await frames(page);
+    await enterNetwork();
+    const rejection = "Edges 10 and 12 cross, overlap, touch without a shared vertex, or cannot be separated reliably. Split and weld their intersections before finding faces.";
+    const beforeClick = await state(page);
+    assert.equal(beforeClick.chrome.Toast?.visible === true &&
+        beforeClick.chrome.ToastText?.text === rejection, false,
+    "The expected intersection rejection must not already be visible before face discovery");
+    await clickNative(page, "NetworkDetectFacesButton", "InspectorViewport");
+    await page.waitForFunction((rejection) => {
+        const { chrome } = JSON.parse(globalThis.ferroDesign.ferroDesignState());
+        return chrome.Toast?.visible === true && chrome.ToastText?.text === rejection;
+    }, rejection, { timeout: 10000 });
     assert.deepEqual(await documentState(page), beforeError, "Unsplit intersections must fail before changing graph or allocator");
     assert.equal((await state(page)).historyLength, beforeErrorView.historyLength);
     assert.equal((await state(page)).canRedo, true);

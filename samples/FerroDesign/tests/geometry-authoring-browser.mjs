@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 
 export async function geometryAuthoringRegressions(page, reference, check, helpers, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, frames, waitForNativeScene, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, frames, waitForNativeFrame, waitForNativeScene, captureNativeScreenshot } = helpers;
     const near = (a, b, label) => assert.ok(Math.abs(a - b) < 1e-7, label + ": " + a + " != " + b);
     const edit = async (name, value, container = "ModalViewport") => {
         await clickNative(page, name, container);
@@ -20,6 +20,19 @@ export async function geometryAuthoringRegressions(page, reference, check, helpe
         await frames(page);
         assert.deepEqual(await documentState(page), after, label + " redo restores every field");
     };
+    const selectParent = async (id, label) => {
+        const before = await state(page);
+        await page.keyboard.press("Shift+Enter");
+        await page.waitForFunction((id) => {
+            const selection = JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection;
+            return selection.length === 1 && selection[0] === id;
+        }, id);
+        // Keyboard selection updates the model before the replacement inspector
+        // owns the compositor's hit-test scene. Use the same publication
+        // contract as clickWorld before sending input to its native fields.
+        await waitForNativeFrame(page, before.renderedFrames, label);
+        await waitForNativeScene(page, before.sceneFrames, label);
+    };
 
     await importFixture(page, isolatedDocument(reference, [
         fixtureNode(reference, 2, { kind: "frame", name: "Affine parent", x: 40, y: 40,
@@ -31,8 +44,7 @@ export async function geometryAuthoringRegressions(page, reference, check, helpe
     ], "Native affine transform"));
     await clickWorld(page, 78, 72);
     assert.deepEqual((await state(page)).selection, [4]);
-    await page.keyboard.press("Shift+Enter");
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "3");
+    await selectParent(3, "Affine parent selection");
     const before = await documentState(page), depth = (await state(page)).historyLength;
     await clickNative(page, "AffineButton", "InspectorViewport");
     await edit("AffineC", "0.5");
@@ -90,11 +102,18 @@ export async function geometryAuthoringRegressions(page, reference, check, helpe
     await clickNative(page, "ConstraintCenterY", "InspectorViewport");
     assert.deepEqual((await documentState(page)).nodes[3].constraints, { horizontal: "stretch", vertical: "center" });
     await clickWorld(page, 80, 65);
-    await page.keyboard.press("Shift+Enter");
-    await page.waitForFunction(() => JSON.parse(globalThis.ferroDesign.ferroDesignState()).selection.join() === "2");
+    await selectParent(2, "Constraint parent selection");
     await edit("WidthField", "300", "InspectorViewport");
+    const widened = await documentState(page);
+    assert.deepEqual([widened.nodes[2].width, widened.nodes[2].height], [300, 100],
+        "The native width field must resize the selected constraint frame");
+    assert.deepEqual([widened.nodes[3].x, widened.nodes[3].y, widened.nodes[3].width, widened.nodes[3].height], [20, 10, 140, 30]);
     await edit("HeightField", "160", "InspectorViewport");
-    const constrained = (await documentState(page)).nodes[3];
+    const resized = await documentState(page);
+    assert.deepEqual([resized.nodes[2].width, resized.nodes[2].height], [300, 160],
+        "The native height field must resize the selected constraint frame");
+    assert.deepEqual((await state(page)).selection, [2]);
+    const constrained = resized.nodes[3];
     assert.deepEqual([constrained.x, constrained.y, constrained.width, constrained.height], [20, 40, 140, 30]);
     check("Native graphical edge and center constraints drive actual parent resizing: opposing horizontal pins stretch the child and vertical centering preserves its size");
 
