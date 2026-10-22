@@ -130,6 +130,8 @@ pub mod markers {
     pub struct FromTwoWay<V>(std::marker::PhantomData<V>);
     /// An element held by an object property.
     pub struct FromElement;
+    /// An element held by a property of a control class.
+    pub struct FromControlElement;
     /// A binding.
     pub struct FromBinding;
 }
@@ -190,6 +192,15 @@ impl<T: PropertyValue, V: IntoValue<T> + FromValue<T> + Clone + PartialEq + 'sta
 impl<E: IntoElement> IntoProp<Option<BoxedValue>, markers::FromElement> for E {
     fn into_prop(self) -> PropValue {
         PropValue::Element(Rc::new(RefCell::new(Some(self.into_element()))))
+    }
+}
+
+impl<T: ObjectType + Upcast<Control>, E: IntoElement> IntoProp<Option<Ref<T>>, markers::FromControlElement> for E {
+    fn into_prop(self) -> PropValue {
+        fn wrap<T: ObjectType>(control: Option<Ref<Control>>) -> BoxedValue {
+            Rc::new(control.and_then(|control| control.cast::<T>()))
+        }
+        PropValue::TypedElement { element: Rc::new(RefCell::new(Some(self.into_element()))), wrap: wrap::<T> }
     }
 }
 
@@ -357,6 +368,21 @@ impl<T> El<T> {
         let attach: Attach = Rc::new(move |control: &Ref<Control>| {
             if let Some(control) = control.cast::<T>() {
                 f(&control);
+            }
+        });
+        self.element.on_mount.push(attach);
+        self
+    }
+
+    /// Adds styles to the control (`Styles` of the control): they apply to
+    /// it and to the controls below it. They are added when the control is
+    /// made.
+    pub fn styles(mut self, styles: impl IntoIterator<Item = crate::style::StyleBuilder>) -> Self {
+        let styles: Vec<_> = styles.into_iter().map(crate::style::StyleBuilder::build).collect();
+        let attach: Attach = Rc::new(move |control: &Ref<Control>| {
+            let target = control.styles();
+            for style in &styles {
+                target.add(style.clone());
             }
         });
         self.element.on_mount.push(attach);

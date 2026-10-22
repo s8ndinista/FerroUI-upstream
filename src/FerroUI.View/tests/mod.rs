@@ -7,3 +7,5 @@ mod macro_tests;
 mod reactive_tests;
 mod rerender_tests;
 mod template_tests;
+mod api_tests;
+mod tools_tests;

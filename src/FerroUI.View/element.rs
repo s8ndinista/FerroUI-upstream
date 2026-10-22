@@ -87,6 +87,16 @@ pub enum PropValue {
     /// A binding of the property system (`Binding`, a path on the data
     /// context, a compiled binding).
     Binding(Rc<dyn BindingBase>),
+    /// An element, mounted with its parent, for a property that holds a
+    /// control of a class (`context_menu`): `wrap` makes the value of the
+    /// property from the control.
+    TypedElement {
+        /// The element.
+        element: Rc<RefCell<Option<Element>>>,
+        /// The value of the property for the control (`None` when it is not
+        /// of the class of the property).
+        wrap: fn(Option<Ref<Control>>) -> BoxedValue,
+    },
 }
 
 impl PartialEq for PropValue {
@@ -108,6 +118,7 @@ impl fmt::Debug for PropValue {
             PropValue::TwoWay { .. } => f.write_str("TwoWay"),
             PropValue::Element(_) => f.write_str("Element"),
             PropValue::Binding(_) => f.write_str("Binding"),
+            PropValue::TypedElement { .. } => f.write_str("TypedElement"),
         }
     }
 }
@@ -308,6 +319,9 @@ pub enum Element {
     Text(Rc<str>),
     /// Several elements in place of one.
     Fragment(Vec<Element>),
+    /// The elements of an iteration (`for` in `rsx!`, a `Vec`): a fragment
+    /// whose items are checked for keys in debug builds.
+    List(Vec<Element>),
     /// Children that follow reactive state.
     Dynamic(DynamicChildren),
     /// A control made elsewhere (a XAML user control, a control kept by the
@@ -324,6 +338,7 @@ impl fmt::Debug for Element {
             Element::Control(control) => control.fmt(f),
             Element::Text(text) => write!(f, "Text({text:?})"),
             Element::Fragment(items) => f.debug_tuple("Fragment").field(items).finish(),
+            Element::List(items) => f.debug_tuple("List").field(items).finish(),
             Element::Dynamic(_) => f.write_str("Dynamic"),
             Element::Existing(_) => f.write_str("Existing"),
             Element::Component(component) => write!(f, "Component({})", component.name),
@@ -357,7 +372,7 @@ impl<T: IntoElement> IntoElement for Option<T> {
 
 impl<T: IntoElement> IntoElement for Vec<T> {
     fn into_element(self) -> Element {
-        Element::Fragment(self.into_iter().map(IntoElement::into_element).collect())
+        Element::List(self.into_iter().map(IntoElement::into_element).collect())
     }
 }
 

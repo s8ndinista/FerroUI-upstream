@@ -7,8 +7,15 @@ This document is the design of the crates and the plan of the work (issue #237).
 - **Phase 0**: the element tree, the builders, the macros, fine-grained reactivity, and the 7GUIs samples.
 - **Phase 1**: components that run again, their hooks, and the reconciler (sections 7 and 8).
 - **Phase 2**: XAML and components together, and data templates whose items are components (section 9).
+- **Phase 3**: the rest of the API (section 10):
+  - builders for the other crates of controls;
+  - styles;
+  - the theme variant and resources;
+  - transitions and animations;
+  - popups and context menus as elements.
+- **Phase 4**: tools (section 11): hot reload of the literals of `rsx!`, diagnostics, and an inspector of the mounted trees.
 
-Section 11 plans the phases that remain. [declarative-ui-react.md](declarative-ui-react.md) compares the API with React.
+Section 13 plans the phases that remain. [declarative-ui-react.md](declarative-ui-react.md) compares the API with React.
 
 ## 1. A first look
 
@@ -72,6 +79,8 @@ fn main() {
 |---|---|
 | `ferroui-view` (`src/FerroUI.View`) | The element tree (`element.rs`), mounting and the reconciler (`mount.rs`), the reactive runtime with contexts (`reactive.rs`), the hooks (`hooks.rs`), `ComponentHost` (`component_host.rs`), data templates of components (`template.rs`), the types for markup and, with the feature `xaml`, XAML in a component (`xaml.rs`), the builders (generated), the conversions of values, children that follow state, and with the feature `desktop` the launch of an application |
 | `ferroui-view-macros` (`src/FerroUI.View.Macros`) | `rsx!` and `#[component]` (with `rerender` and `memo`) |
+
+`ferroui-view` also holds styles (`style.rs`), transitions and animations (`animation.rs`), and with the features `treedatagrid`, `color-picker`, `dialogs` and `reactiveui` the builders of those crates (`generated/`).
 
 `ferroui-view` depends on `ferroui-base` and `ferroui-controls`; it adds nothing to them. The builders are generated from their sources by `scripts/generate_view_builders.py`, so a control or a property ported later gets its builder by running the script again (`--check` fails when the generated file is stale; `--report` lists what was left out and why).
 
@@ -315,7 +324,7 @@ Every instance has an owner of the runtime of section 6, made under the owner of
 ### 8.6 Costs and limits
 
 - **The cost of a run** is the function and a walk of the elements it returned: equal plain values are compared and skipped. Reactive values, bindings and handlers are applied again on each run, so a component that runs often (the timer of the hooks samples runs on every tick) is better off with fine-grained values for what changes most.
-- **Moves.** A keyed list whose order changes is patched by the prefix and suffix rule, which removes and inserts the controls in between. That is correct and keeps the controls, but it is not the minimal number of moves (section 11, phase 5).
+- **Moves.** A keyed list whose order changes is patched by the prefix and suffix rule, which removes and inserts the controls in between. That is correct and keeps the controls, but it is not the minimal number of moves (section 13, phase 5).
 - **Synchronous.** A run happens when the write that caused it ends (or the batch); there is no scheduler that splits or defers work, and no concurrent rendering.
 - **Items controls.** The children of an items control are its items. An items control with virtualization and an item template is not driven by the reconciler; its items are components through a data template (section 9.2).
 
@@ -400,17 +409,158 @@ With the feature `xaml` (the XAML runtime library and its run-time loader):
 
 Each registers what it needs (the types of the XAML runtime library and of `ferroui-view`, the run-time loader) the first time it is called.
 
-### 9.5 The sample
+### 9.5 Compiled XAML
+
+XAML that a component loads by its URI can be compiled to Rust when the crate is built. `load_xaml_uri` and `use_xaml("ferres://..")` run the compiled markup of the document when its assembly registered it, and the run-time loader otherwise. `ferroui-view` exports its type model (`build.rs`, `links = "ferroui_view_xaml"`, `register_types.rs`, `rust_paths.rs`), so the compiler knows `ComponentHost`. A crate compiles its documents with the build script of the small samples, then registers the loader table:
+
+```rust
+// build.rs
+fn main() {
+    sample_build::SampleBuild::new("ViewInterop").run();
+}
+
+// lib.rs
+extern crate self as view_interop;
+ferroui_markup_xaml::include_compiled_xaml!();
+// in register_types(): ferroui_markup_xaml::register_types(); ferroui_view::register_types();
+//                      MarkupAssembly::register(&ASSEMBLY); crate::compiled_markup::register();
+```
+
+The details of `samples/ViewInterop` are `Details.xaml`, compiled this way, and the generated code creates `ferroui_view::ComponentHost` directly.
+
+### 9.6 The sample
 
 `samples/ViewInterop` (`cargo run -p view-interop`) puts the three together:
 
 - a directory of 10,000 people in a virtualized `ListBox` whose item template is a component;
-- the details of the selected person are XAML loaded with `use_xaml`, whose named controls the component fills;
+- the details of the selected person are XAML (`Details.xaml`, compiled when the crate is built) loaded with `use_xaml` by its URI, whose named controls the component fills;
 - inside that XAML, a `ComponentHost` shows the registered component `Badge`, which reads the person from its data context.
 
 ![The ViewInterop sample](images/declarative-ui/view-interop.png)
 
-## 10. Samples: 7GUIs
+## 10. The rest of the API (phase 3)
+
+### 10.1 Builders for the other crates of controls
+
+The generator (`scripts/generate_view_builders.py`) writes the builders of the other crates of controls, each into a file of its own behind a feature of `ferroui-view`:
+
+| Feature | Crate | File | Builders |
+|---|---|---|---|
+| `treedatagrid` | `ferroui-controls-treedatagrid` | `generated/treedatagrid.rs` | `tree_data_grid()` and its cells, rows and presenters (10) |
+| `color-picker` | `ferroui-controls-color-picker` | `generated/color_picker.rs` | `color_view()`, `color_picker()`, `color_spectrum()`, `color_slider()`, `color_previewer()` |
+| `dialogs` | `ferroui-dialogs` | `generated/dialogs.rs` | `managed_file_chooser()` and the others (4) |
+| `reactiveui` | `ferroui-reactiveui-controls` | `generated/reactiveui.rs` | `view_model_view_host()`, `routed_view_host()`, the reactive bases (4) |
+
+The classes of a group derive from the classes of `ferroui-controls`, so their elements also have the setters of their bases. The base file is unchanged. A type that a group's `rust_paths.rs` does not list (it is not registered for markup) is given a path in the table of the group (`TreeDataGridSourceRef`, the column and row contracts of the TreeDataGrid, `RoutingState`), so properties such as `TreeDataGrid.source` get their setters. `--check` and `--report` cover every file.
+
+### 10.2 Styles
+
+```rust
+stack_panel().styles([
+    style("Button.accent")
+        .set(TemplatedControl::background_property(), "#0063B1")
+        .set(TemplatedControl::foreground_property(), "White")
+        .nested(style("^:pointerover").set(Visual::opacity_property(), 0.85)),
+])
+```
+
+- `style(selector)` parses a selector in the syntax of XAML with the run-time selector parser of the port (`ferroui-markup`), resolving type names among the registered classes. `style_of(selector)` takes a selector built with the selectors API.
+- `.set(property, value)` takes what converts to the value of the property, as the setters of elements do.
+- `.nested(style("^..."))` adds a nested style; its selector starts with `^`, the selector of the style it is in (`^:pointerover`, `^.selected > TextBlock`). The run-time parser of the port parses `^`, an addition to upstream's, whose run-time parser leaves it to the XAML compiler (DEVIATIONS.md, Parsers of markup).
+- `.styles([..])` of an element (`styles: [..]` in `rsx!`) adds the styles to the `Styles` of the control when it is made.
+
+### 10.3 The theme variant and resources
+
+| Hook | Gives |
+|---|---|
+| `use_parent_property(property)` | The value of a styled property on the control the component is mounted in (the inherited value for an inherited property). The component runs again when it changes. `use_data_context` is built on it. |
+| `use_theme_variant()` | The `ActualThemeVariant` of that control: `Light`, `Dark`, or one of the application. |
+| `use_resource(key)` | The resource as that control finds it (its resources, its ancestors', the application's and the theme's, for its theme variant), followed through the resource observable of the port. |
+| `use_resource_as::<T>(key)` | The same, converted from the markup value (`Rc<dyn IBrush>` for a brush of a theme). |
+
+A `ThemeVariantScope` element (`requested_theme_variant: variant`) switches the variant of a part of the tree; components below it read the new variant and resources.
+
+### 10.4 Transitions and animations
+
+| Function | Gives |
+|---|---|
+| `transition(property, duration)` | A transition of the port for the value type of the property: `f64`, `f32`, `i32`, `bool`, `Thickness`, `CornerRadius`, `Color`, brushes, `Size`, `Point`, `Vector` (the trait `Transitionable`) |
+| `transition_eased(property, duration, easing)` | The same with an easing |
+| `transitions([..])` | The `Transitions` of a control, for its `transitions` setter |
+| `ms(n)` | `Duration::from_millis(n)` |
+| `animation(duration).key_frame(cue, |frame| frame.set(property, value))` | An `Animation` of the port with key frames, `iterations`, `easing`, `fill_mode`, `delay` |
+| `use_animation(node_ref, trigger, || animation(..))` | Runs the animation on the control of the reference once the controls are in place, and again when `trigger` changes. A run in progress is cancelled first, and when the component is taken out. |
+
+In a component that runs again, keep `transitions([..])` in `use_hook`, as the template and the items of section 9.2: a new value on each run is set again.
+
+### 10.5 Popups and context menus
+
+A `Popup` takes its child as an element (`popup().child(..)`, or `Popup { .. }` in `rsx!`). The child is shown in a root of its own above the window: in the logical tree and under the owner of the popup, outside the visual tree of its parent. That is what a portal is in React. A property that holds a control of a class takes an element too: `context_menu: rsx! { ContextMenu { MenuItem { header: "Copy" } } }`. The reconciler patches the element there like any other.
+
+Flyouts (`flyout`, `context_flyout`) are not controls (`FlyoutBase` derives from the object model, not from `Control`), so they are made with their API and given as values.
+
+### 10.6 The sample
+
+`samples/ViewGallery` (`cargo run -p view-gallery`, `-- --dark` to start dark) is a component that runs again under a `ThemeVariantScope` it switches. It shows:
+- styles of an element with a nested style;
+- the theme variant and two resources of the theme;
+- a bar whose width moves with a transition;
+- a button with a context menu given as an element;
+- a `ColorView` and a `TreeDataGrid` written with the generated builders, under the Fluent theme with the themes of their crates.
+
+| Light | Dark |
+|---|---|
+| ![The gallery, light](images/declarative-ui/view-gallery.png) | ![The gallery, dark](images/declarative-ui/view-gallery-dark.png) |
+
+## 11. Tools (phase 4)
+
+### 11.1 Hot reload of `rsx!`
+
+With the feature `hot-reload` of `ferroui-view`, the literals of `rsx!` can be edited while the application runs:
+- the text of a child (`"Count"`);
+- a number, a text or a character given to an attribute (`width: 80.0`, `background: "#0063B1"`, `class: "accent"`).
+
+How it works:
+1. `rsx!` passes each such literal through `ferroui_view::hot::lit(site, index, value)`. The site is the place of the macro (`file!()`, `line!()`, `column!()` of the invocation and the directory of its crate). The index is the number of the literal among the literal tokens of the macro, in the order of the source; the macro counts the literals inside expressions too, to keep the numbers in step with the source.
+2. Without the feature, `lit` returns its value: the cost is nothing.
+3. With it, the first call of a file reads the file and records its `rsx!` invocations as the build saw them: where each starts, its literal tokens, and the shape of its other tokens. `launch` calls `hot::watch()`, which checks the files on the dispatcher every 300 ms.
+4. When a file changes, its invocations are read again with `proc-macro2` (with the locations of tokens). An invocation whose shape is the shape of the build gets its changed literals, and a version signal changes. `lit` reads that signal, so the components that read a changed literal run again, and the reconciler patches their controls: state, focus and scroll positions stay.
+5. An invocation whose shape changed (an attribute added, an element moved) is reported as needing a rebuild (`Diagnostic::NeedsRebuild`). The literals of the other invocations still apply.
+
+Only components that run again, and children that follow state, run again. A component that runs once keeps what it built. Literals inside expressions (`{if dark { "a" } else { "b" }}`) are code, not literals of the tree, and need a rebuild. `hot::apply_source(file, text)` applies a text as if the file had been saved with it: for tests and tools that hold the source.
+
+The gallery of section 10.6, run with `cargo run -p view-gallery --features hot-reload` and its source edited while it ran. The text of the second button and the colour of the bar changed, and the console printed `hot reload, 2 literals differ from the build`:
+
+![The gallery after a hot reload](images/declarative-ui/view-gallery-hot-reload.png)
+
+### 11.2 Diagnostics
+
+Mistakes the framework can see are checked in debug builds and reported as a `Diagnostic`:
+
+| Diagnostic | When |
+|---|---|
+| `MissingKeys` | A list (`for` in `rsx!`, a `Vec` of elements: `Element::List`) has two or more controls or components without keys |
+| `DuplicateKey` | Two siblings have the same key |
+| `RunawayComponent` | A component runs more than 100 times in one propagation of changes (its function writes a signal it reads) |
+| `NeedsRebuild`, `HotReloaded` | Hot reload: an `rsx!` changed more than its literals; literals were applied |
+
+By default each distinct diagnostic is printed once to the standard error. `set_diagnostics_handler(|d| ..)` sends them elsewhere (a test, a log, a tool). `Element::List` is new: an iteration makes it, and it is flattened like a fragment, but its items are checked for keys.
+
+### 11.3 The inspector
+
+`mounted_trees()` describes the live mounted trees of the thread as `InstanceNode`s:
+- components, with their keys, runs and hooks;
+- controls, with their class, `Name`, style classes, and properties: the value on the control now and where the element's value comes from (`value`, `follows state`, `two-way`, `element`, `binding`);
+- text;
+- the lists that follow state, with their items and keys.
+
+Each mounted tree registers its roots in a registry of the thread (`Element::mount`, a window, a `ComponentHost`), and each dynamic list keeps its items in order for it.
+
+`inspector()` is an element that shows them: a list of the instances, indented by depth, and the details of the selected one, refreshed on a click or every second. With the feature `desktop`, `open_inspector()` opens it in a window. `launch` attaches it to the main window on Shift+F12 in debug builds (`attach_inspector`), leaving F12 to the DevTools of the port, which are being ported separately. When they land, the inspector becomes their "Components" page.
+
+![The inspector](images/declarative-ui/view-inspector.png)
+
+## 12. Samples: 7GUIs
 
 The seven tasks of 7GUIs (<https://eugenkiss.github.io/7guis/tasks>) are written three times, each task a crate of its own so that each stays small:
 
@@ -458,15 +608,15 @@ cargo run -p seven-guis-crud-hooks
 FERROUI_SEVEN_GUIS_SHOTS=/tmp/shots cargo run -p seven-guis-crud-macros   # renders the window into /tmp/shots/macros-crud.png
 ```
 
-## 11. Phases
+## 13. Phases
 
 | Phase | Content | State |
 |---|---|---|
 | 0 | Element tree, generated builders, `rsx!`, `#[component]`, signals, children that follow state, 7GUIs in two versions | done (#270) |
 | 1 | Components that run again, hooks, contexts, the reconciler, 7GUIs in a third version | done |
 | 2 | Interoperation with XAML and templates: `ComponentHost`, data templates of components, the data context, XAML in a component | done |
-| 3 | The rest of the API: other crates of controls, styles, resources, animations | planned |
-| 4 | Tools: hot reload, an inspector, diagnostics | planned |
+| 3 | The rest of the API: other crates of controls, styles, resources and the theme variant, transitions and animations, popups and context menus | done |
+| 4 | Tools: hot reload of the literals of `rsx!`, diagnostics, an inspector of the mounted trees | done |
 | 5 | Performance and scale | planned |
 | 6 | Patterns of larger applications | planned |
 
@@ -485,7 +635,7 @@ What was built differs from the plan above in two points:
 - Properties of the host reach the component through the data context, not as parameters.
 - `xaml(..)` takes text or a `ferres://` URI, and the named controls are found with the existing `find_control` / `get_control` of the root.
 
-### Phase 3: the rest of the API
+### Phase 3: the rest of the API (done, section 10)
 
 - **Builders for other crates.** The generator runs over `ferroui-controls-treedatagrid`, `ferroui-controls-color-picker`, `ferroui-dialogs` and the ReactiveUI controls, each set behind a feature of `ferroui-view` or in the crate itself.
 - **Styles.** A builder for `Style` in the form of the element builders (`style("Button.accent").set(Button::background_property(), ..)`), and styles held by an element (`styles: [..]`).
@@ -495,11 +645,21 @@ What was built differs from the plan above in two points:
 
 Acceptance: the ControlCatalog page of one control of each crate written with the builders, and a styled sample with a theme switch.
 
-### Phase 4: tools
+What was built differs from the plan above in three points:
+- The gallery (section 10.6) shows a control of the colour picker and of the TreeDataGrid. The builders of the dialogs and of the ReactiveUI controls are generated and compile, but are not shown there.
+- The hook of animations runs an animation of the port on a control when a value changes (`use_animation`). It does not animate a value itself.
+- Flyouts are not elements (section 10.5).
+
+### Phase 4: tools (done, section 11)
 
 - **Hot reload of `rsx!`.** The static parts of `rsx!` (the classes, the literal values, the layout) are kept in a form the running application can load again. Only expressions need a rebuild. The reconciler applies the new tree to the mounted controls and keeps their state.
 - **An inspector.** The DevTools of FerroUI show the instance tree beside the visual tree: components, their hooks and their keys.
 - **Diagnostics.** In debug builds, warnings for siblings of a list without keys, duplicate keys, and a component that runs again more than a given number of times in one propagation of changes.
+
+What was built differs from the plan above in three points:
+- Hot reload changes literals only. Classes and layout given as literals change; a new element or attribute needs a rebuild and is reported as such.
+- The inspector is an element and a window of its own until the DevTools of the port land.
+- The diagnostic of a component that runs too often counts runs in one propagation of changes, not in a frame.
 
 ### Phase 5: performance and scale
 
@@ -515,7 +675,7 @@ Acceptance: the ControlCatalog page of one control of each crate written with th
 - **Navigation.** A router of views for single-window applications, with the routing of ReactiveUI as a model.
 - **A larger sample.** TodoMVC and a port of a ReactiveUI sample to components that run again, in the WinUI 3 theme, with screenshots and scenario tests.
 
-## 12. Testing
+## 14. Testing
 
 - `src/FerroUI.View/tests`: the reactive runtime, setters and conversions, mounting, two-way values, handlers, keyed lists, conditions, the macros and components; and for phase 1 (`rerender_tests.rs`):
   - runs again and kept controls;
@@ -535,5 +695,17 @@ Acceptance: the ControlCatalog page of one control of each crate written with th
   - XAML that hosts a registered component;
   - a component that hosts XAML and keeps it across runs (feature `xaml`);
   - a virtualized list of 10,000 items whose template recycles its hosts.
+- `src/FerroUI.View/tests/api_tests.rs` (phase 3):
+  - styles of an element with a nested style;
+  - a selector that does not parse;
+  - a component that follows the theme variant and a resource;
+  - transitions and animations;
+  - a popup's child and a context menu as elements;
+  - a builder of another crate (feature `treedatagrid`).
+- `src/FerroUI.View/tests/tools_tests.rs` (phase 4):
+  - a list without keys and duplicate keys reported;
+  - a component that writes what it reads reported;
+  - hot reload of the literals of a component, keeping its controls, with a change of structure reported;
+  - the inspector's description of a mounted tree and its view.
 - `samples/SevenGuis/Tests`: the scenarios of the seven tasks on the twenty-one crates, on the test application of `ferroui-controls` (a dispatcher of the thread).
 - `samples/SevenGuis/Model`: the logic without user interface.

@@ -40,15 +40,22 @@
 // The expansions of the macros name the crate; its own tests use them too.
 extern crate self as ferroui_view;
 
+mod animation;
 pub mod builder;
 mod component_host;
 mod control_flow;
+pub mod diagnostics;
 mod conversions;
 pub mod element;
 mod extras;
 pub mod hooks;
+pub mod hot;
+pub mod inspect;
 mod mount;
 pub mod reactive;
+mod register_types;
+mod rust_paths;
+mod style;
 mod template;
 pub mod xaml;
 
@@ -58,17 +65,35 @@ mod app;
 /// The generated builders (see the module documentation).
 pub mod generated {
     pub mod builders;
+    #[cfg(feature = "color-picker")]
+    pub mod color_picker;
+    #[cfg(feature = "dialogs")]
+    pub mod dialogs;
+    #[cfg(feature = "reactiveui")]
+    pub mod reactiveui;
+    #[cfg(feature = "treedatagrid")]
+    pub mod treedatagrid;
 }
 
 pub use builder::{Bind, Builder, El, ElementBuilder, FromValue, IntoProp, IntoValue, TypedProperty, ViewClass};
 pub use control_flow::{dynamic, for_each, show, show_else, NodeRef};
+pub use diagnostics::{clear_diagnostics_handler, set_diagnostics_handler, Diagnostic};
 pub use element::{rerender, ComponentElement, Element, IntoChild, IntoChildren, IntoElement, Key};
 pub use component_host::{register_component, ComponentHost, View};
 pub use hooks::{
-    use_data_context, use_data_context_value, use_effect, use_effect_with, use_hook, use_memo, use_parent_control, use_signal,
+    use_data_context, use_data_context_value, use_effect, use_effect_with, use_hook, use_memo, use_parent_control,
+    use_parent_property, use_resource, use_resource_as, use_signal, use_theme_variant,
 };
+pub use animation::{
+    animation, ms, transition, transition_eased, transitions, use_animation, AnimationBuilder, KeyFrameBuilder,
+    Transitionable,
+};
+pub use style::{parse_selector, style, style_of, StyleBuilder};
+pub use inspect::{inspector, mounted_trees, InstanceKind, InstanceNode, MountedTree, PropertyInfo};
+#[cfg(feature = "desktop")]
+pub use inspect::{attach_inspector, open_inspector};
 pub use template::template;
-pub use xaml::register_types;
+pub use register_types::{register_types, ASSEMBLY};
 #[cfg(feature = "xaml")]
 pub use xaml::{load_xaml, load_xaml_uri, use_xaml};
 pub use extras::GridDefinitions;
@@ -84,8 +109,17 @@ pub use ferroui_view_macros::{component, rsx};
 /// Everything an application written with the builders or the macro uses.
 pub mod prelude {
     pub use crate::generated::builders::*;
+    #[cfg(feature = "color-picker")]
+    pub use crate::generated::color_picker::*;
+    #[cfg(feature = "dialogs")]
+    pub use crate::generated::dialogs::*;
+    #[cfg(feature = "reactiveui")]
+    pub use crate::generated::reactiveui::*;
+    #[cfg(feature = "treedatagrid")]
+    pub use crate::generated::treedatagrid::*;
     pub use crate::{
-        batch, component, dynamic, effect, for_each, memo, on_cleanup, provide_context, rerender, rsx, show, show_else,
+        animation, batch, component, dynamic, effect, for_each, memo, ms, on_cleanup, provide_context, rerender, rsx, show,
+        show_else, style, transition, transitions, use_animation, use_resource, use_resource_as, use_theme_variant,
         signal, template, untrack, use_context, use_data_context, use_effect, use_effect_with, use_hook, use_memo,
         use_signal, Bind, ComponentHost, El, Element, ElementBuilder, GridDefinitions, IntoChild, IntoChildren, IntoElement, Key, Memo, NodeRef, Owner, Signal, TwoWay,
     };

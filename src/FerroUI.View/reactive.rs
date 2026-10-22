@@ -77,6 +77,8 @@ struct Runtime {
     queue: RefCell<VecDeque<NodeId>>,
     batch_depth: Cell<u32>,
     flushing: Cell<bool>,
+    /// Counts the propagations of changes: what one write (or batch) runs.
+    propagation: Cell<u64>,
 }
 
 ferroui_base::ferro_thread_local! {
@@ -198,6 +200,7 @@ impl Runtime {
             return;
         }
         self.flushing.set(true);
+        self.propagation.set(self.propagation.get() + 1);
         loop {
             let next = self.queue.borrow_mut().pop_front();
             let Some(id) = next else { break };
@@ -521,6 +524,12 @@ pub fn on_cleanup(f: impl FnOnce() + 'static) {
             node.cleanups.push(Box::new(f));
         }
     });
+}
+
+/// The number of the propagation of changes in progress (or the last one):
+/// what the diagnostics count the runs of a component in.
+pub(crate) fn propagation() -> u64 {
+    with_runtime(|runtime| runtime.propagation.get())
 }
 
 /// Runs `f` without recording what it reads.
