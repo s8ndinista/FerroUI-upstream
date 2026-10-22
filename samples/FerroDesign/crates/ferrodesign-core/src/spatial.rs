@@ -164,6 +164,7 @@ pub struct SceneIndex {
     pub draw_order: Vec<NodeId>,
     pub z_order: BTreeMap<NodeId, usize>,
     pub revision: u64,
+    variable_strokes: BTreeMap<NodeId, crate::stroke_hit::VariableStrokeHits>,
 }
 impl SceneIndex {
     pub fn rebuild(&mut self, document: &Document, page: NodeId) {
@@ -171,6 +172,7 @@ impl SceneIndex {
         self.transforms.clear();
         self.draw_order.clear();
         self.z_order.clear();
+        self.variable_strokes.clear();
         let roots = document
             .page(page)
             .map(|page| {
@@ -247,6 +249,13 @@ impl SceneIndex {
             };
             let transform = parent.transform * node.local_transform();
             self.transforms.insert(id, transform);
+            if !self.variable_strokes.get(&id).is_some_and(|widths| widths.matches(node)) {
+                if let Some(widths) = crate::stroke_hit::VariableStrokeHits::prepare(node) {
+                    self.variable_strokes.insert(id, widths);
+                } else {
+                    self.variable_strokes.remove(&id);
+                }
+            }
             let mut indexed = false;
             let visible = parent.visible && node.visible;
             let bounds = transform.transform_rect(node.local_bounds());
@@ -260,7 +269,10 @@ impl SceneIndex {
                 if !parent.clipped {
                     let mut paint = bounds;
                     for stroke in node.strokes.iter().filter(|s| s.visible) {
-                        paint = paint.inflate(stroke.width.max(0.0));
+                        if stroke.width_profile.is_uniform() { paint = paint.inflate(stroke.width.max(0.0)); }
+                    }
+                    if let Some(widths) = self.variable_strokes.get(&id) {
+                        paint = paint.union(transform.transform_rect(widths.bounds()));
                     }
                     for effect in node.effects.iter().filter(|e| e.visible) {
                         paint = paint.union(
@@ -463,7 +475,7 @@ impl SceneIndex {
                     .or_else(|| d.world_transform(pid))
                     .and_then(Transform::inverse)
                 {
-                    if !n.hit_test_local(inv.apply(p), 0.0) {
+                    if !n.contains_clip_point(inv.apply(p)) {
                         return false;
                     }
                 } else {
@@ -474,6 +486,11 @@ impl SceneIndex {
                 break;
             }
             parent = n.parent
+        }
+        if n.kind != NodeKind::Boolean {
+            if let Some(inverse) = self.transforms.get(&id).copied().or_else(|| d.world_transform(id)).and_then(Transform::inverse) {
+                return n.hit_test_local_prepared(inverse.apply(p), tolerance, self.variable_strokes.get(&id));
+            }
         }
         d.hit_test_node(id, p, tolerance)
     }

@@ -175,10 +175,42 @@ fn character_styles(node: &Node) -> Vec<CharacterStyle<'_>> {
     styles
 }
 
+#[derive(Clone, Debug, PartialEq, Eq, Hash)]
+struct ParagraphStyle {
+    alignment: u8,
+    direction: u8,
+    line_height: u64,
+    letter_spacing: u64,
+    before: u64,
+    after: u64,
+    indent: u64,
+}
+
+fn paragraph_styles(node: &Node) -> Vec<ParagraphStyle> {
+    let mut result = Vec::new();
+    let mut explicit = node.text_paragraphs.iter().peekable();
+    for range in crate::text_paragraph_ranges(&node.text) {
+        while explicit.peek().is_some_and(|style| style.start < range.start) { explicit.next(); }
+        let style = explicit.peek().copied().filter(|style| style.start == range.start && style.end == range.end);
+        let resolved = ParagraphStyle {
+            alignment: style.and_then(|style| style.alignment).unwrap_or(node.text_align) as u8,
+            direction: style.and_then(|style| style.direction).or(node.text_direction).unwrap_or(crate::TextDirection::LeftToRight) as u8,
+            line_height: number(style.and_then(|style| style.line_height).unwrap_or(node.line_height)),
+            letter_spacing: number(style.and_then(|style| style.letter_spacing).unwrap_or(node.letter_spacing)),
+            before: number(style.and_then(|style| style.space_before).unwrap_or(0.0)),
+            after: number(style.and_then(|style| style.space_after).unwrap_or(0.0)),
+            indent: number(style.and_then(|style| style.indent).unwrap_or(0.0)),
+        };
+        if result.last() != Some(&resolved) { result.push(resolved); }
+    }
+    result
+}
+
 struct MatchKey<'a> {
     node: &'a Node,
     property: SelectionMatch,
     characters: Vec<CharacterStyle<'a>>,
+    paragraphs: Vec<ParagraphStyle>,
     fonts: BTreeSet<(&'a str, u16, bool)>,
     features: Vec<(&'a str, u32)>,
 }
@@ -196,18 +228,20 @@ impl<'a> MatchKey<'a> {
             node.font_features.iter().map(|feature| (feature.tag.as_str(), feature.value)).collect()
         } else { Vec::new() };
         features.sort_unstable();
-        Self { node, property, characters, fonts, features }
+        let paragraphs = if node.kind == NodeKind::Text && matches!(property,
+            SelectionMatch::Appearance | SelectionMatch::TextProperties) {
+            paragraph_styles(node)
+        } else { Vec::new() };
+        Self { node, property, characters, paragraphs, fonts, features }
     }
 
-    fn paragraph(&self) -> (u64, u64, u8, u8, u8, u8) {
+    fn text_box(&self) -> (u8, u8) {
         let n = self.node;
-        (number(n.line_height), number(n.letter_spacing), n.text_align as u8,
-            n.text_vertical_align as u8, n.text_auto_resize as u8,
-            n.text_direction.unwrap_or(crate::TextDirection::LeftToRight) as u8)
+        (n.text_vertical_align as u8, n.text_auto_resize as u8)
     }
 
     fn same_text(&self, other: &Self) -> bool {
-        self.paragraph() == other.paragraph() && self.characters == other.characters
+        self.text_box() == other.text_box() && self.paragraphs == other.paragraphs && self.characters == other.characters
             && self.features == other.features
     }
 
@@ -249,6 +283,11 @@ impl<'a> MatchKey<'a> {
                     stroke.align as u8, stroke.cap as u8, stroke.join as u8).hash(&mut hash);
                 stroke.dash.len().hash(&mut hash);
                 for &dash in &stroke.dash { number(dash).hash(&mut hash); }
+                std::mem::discriminant(&stroke.width_profile).hash(&mut hash);
+                if let crate::StrokeWidthProfile::Custom { points } = &stroke.width_profile {
+                    points.len().hash(&mut hash);
+                    for point in points { (number(point.position), number(point.width)).hash(&mut hash); }
+                }
             }
         }
         if appearance || self.property == SelectionMatch::Effect {
@@ -259,7 +298,8 @@ impl<'a> MatchKey<'a> {
             }
         }
         if (appearance && n.kind == NodeKind::Text) || self.property == SelectionMatch::TextProperties {
-            self.paragraph().hash(&mut hash);
+            self.text_box().hash(&mut hash);
+            self.paragraphs.hash(&mut hash);
             self.characters.hash(&mut hash);
             self.features.hash(&mut hash);
         }

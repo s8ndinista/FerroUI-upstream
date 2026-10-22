@@ -248,6 +248,27 @@ pub fn point_in_polygon(p: Point, points: &[Point]) -> bool {
     }
     inside
 }
+/// Filled-path containment shared by direct paths and retained picking geometry.
+/// The caller chooses its flattening tolerance and can reuse the contours.
+pub(crate) fn path_contours_contain(rule: crate::FillRule, contours: &[Vec<Point>], p: Point) -> bool {
+    if rule == crate::FillRule::EvenOdd {
+        return contours.iter().filter(|points| point_in_polygon(p, points)).count() % 2 == 1;
+    }
+    let mut winding = 0i32;
+    for points in contours {
+        if points.len() < 3 { continue; }
+        for i in 0..points.len() {
+            let a = points[i]; let b = points[(i + 1) % points.len()];
+            if distance_to_segment(p, a, b) < GEOMETRY_EPSILON { return true; }
+            let cross = (b.x - a.x) * (p.y - a.y) - (p.x - a.x) * (b.y - a.y);
+            if a.y <= p.y {
+                if b.y > p.y && cross > 0.0 { winding += 1; }
+            } else if b.y <= p.y && cross < 0.0 { winding -= 1; }
+        }
+    }
+    winding != 0
+}
+
 pub fn flatten_cubic(
     p0: Point,
     p1: Point,

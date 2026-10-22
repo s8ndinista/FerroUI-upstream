@@ -305,8 +305,10 @@ impl Node {
             }
             runs.extend(parts);
         }
+        let paragraphs = crate::paragraphs::remap(self, &text, prefix, old_end, new_end);
         self.text = text;
         self.text_runs = runs;
+        self.text_paragraphs = paragraphs;
         true
     }
 }

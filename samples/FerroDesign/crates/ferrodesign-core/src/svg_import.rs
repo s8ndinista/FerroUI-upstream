@@ -1081,6 +1081,7 @@ impl<'a, 'input> Importer<'a, 'input> {
                     cap: style.cap,
                     join: style.join,
                     dash: style.dash.clone(),
+                    width_profile: crate::StrokeWidthProfile::Uniform,
                 }]
             })
             .unwrap_or_default();

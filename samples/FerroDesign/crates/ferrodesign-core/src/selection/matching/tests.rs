@@ -156,6 +156,29 @@ fn text_matching_resolves_unicode_ranges_defaults_and_opentype_order_without_con
 }
 
 #[test]
+fn paragraph_matching_uses_effective_styles_without_text_or_byte_offset_identity() {
+    let mut document = Document::new("Paragraph matching");
+    let page = document.pages[0].id;
+    let a = insert(&mut document, page, NodeKind::Text, "A");
+    let b = insert(&mut document, page, NodeKind::Text, "B");
+    for (id, text) in [(a, "A🙂\nRTL"), (b, "Different first paragraph\nAnother\nLast")] {
+        let node = document.nodes.get_mut(&id).unwrap();
+        node.text = text.into();
+        let ranges = text_paragraph_ranges(&node.text);
+        node.text_paragraphs = ranges.iter().skip(1).map(|range| TextParagraph {
+            start: range.start, end: range.end, direction: Some(TextDirection::RightToLeft),
+            space_before: Some(8.0), indent: Some(12.0), ..Default::default()
+        }).collect();
+    }
+    let mut editor = Editor::new(document);
+    editor.selection = vec![a];
+    assert_eq!(editor.matching_selection(SelectionMatch::TextProperties), [b, a]);
+    editor.document.nodes.get_mut(&b).unwrap().text_paragraphs[1].indent = Some(13.0);
+    assert_eq!(editor.matching_selection(SelectionMatch::TextProperties), [a]);
+    assert_eq!(editor.matching_selection(SelectionMatch::Font), [b, a]);
+}
+
+#[test]
 fn font_matching_uses_only_rendered_faces_and_first_starting_overlap_precedence() {
     let mut document = Document::new("Rich fonts");
     let page = document.pages[0].id;

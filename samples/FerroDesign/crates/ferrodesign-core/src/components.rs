@@ -354,7 +354,8 @@ fn preserve_overrides(node: &mut Node, old: &Node) {
     node.overridden_properties = old.overridden_properties.clone();
     for property in &old.overridden_properties {
         match property.as_str() {
-            "text" => { node.text = old.text.clone(); node.text_runs = old.text_runs.clone(); }
+            "text" => { node.text = old.text.clone(); node.text_runs = old.text_runs.clone(); node.text_paragraphs = old.text_paragraphs.clone(); }
+            "text_paragraphs" => node.text_paragraphs = old.text_paragraphs.clone(),
             "fills" => {
                 node.fills = old.fills.clone();
                 node.fill_style = old.fill_style;

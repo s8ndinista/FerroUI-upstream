@@ -185,6 +185,8 @@ pub struct Stroke {
     pub cap: StrokeCap,
     pub join: StrokeJoin,
     pub dash: Vec<f64>,
+    #[serde(default, skip_serializing_if = "crate::StrokeWidthProfile::is_uniform")]
+    pub width_profile: crate::StrokeWidthProfile,
 }
 impl Stroke {
     pub fn new(color: Color, width: f64) -> Self {
@@ -197,6 +199,7 @@ impl Stroke {
             cap: StrokeCap::Butt,
             join: StrokeJoin::Miter,
             dash: Vec::new(),
+            width_profile: crate::StrokeWidthProfile::Uniform,
         }
     }
 }
@@ -663,36 +666,7 @@ impl VectorPath {
             .reduce(|a, b| a.union(b))
     }
     pub fn contains(&self, p: Point) -> bool {
-        let contours = self.flattened(0.35);
-        match self.fill_rule {
-            FillRule::EvenOdd => {
-                contours.iter().filter(|ps| point_in_polygon(p, ps)).count() % 2 == 1
-            }
-            FillRule::NonZero => {
-                let mut winding = 0i32;
-                for ps in contours {
-                    if ps.len() < 3 {
-                        continue;
-                    }
-                    for i in 0..ps.len() {
-                        let a = ps[i];
-                        let b = ps[(i + 1) % ps.len()];
-                        if distance_to_segment(p, a, b) < GEOMETRY_EPSILON {
-                            return true;
-                        }
-                        let cross = (b.x - a.x) * (p.y - a.y) - (p.x - a.x) * (b.y - a.y);
-                        if a.y <= p.y {
-                            if b.y > p.y && cross > 0.0 {
-                                winding += 1
-                            }
-                        } else if b.y <= p.y && cross < 0.0 {
-                            winding -= 1
-                        }
-                    }
-                }
-                winding != 0
-            }
-        }
+        crate::geometry::path_contours_contain(self.fill_rule, &self.flattened(0.35), p)
     }
 }
 /// Editor-only layout guide. Its effective values travel with the frame,
@@ -776,6 +750,8 @@ pub struct Node {
     pub text_decoration: TextDecoration,
     pub text_auto_resize: TextAutoResize,
     pub text_runs: Vec<TextRun>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub text_paragraphs: Vec<crate::TextParagraph>,
     /// Omitted legacy documents retain the original left-to-right paragraph.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub text_direction: Option<crate::TextDirection>,
@@ -858,6 +834,7 @@ impl Default for Node {
             text_decoration: TextDecoration::None,
             text_auto_resize: TextAutoResize::Fixed,
             text_runs: Vec::new(),
+            text_paragraphs: Vec::new(),
             text_direction: None,
             font_features: Vec::new(),
             polygon_sides: 3,
@@ -1051,10 +1028,17 @@ impl Node {
             .collect()
     }
     pub fn hit_test_local(&self, p: Point, tolerance: f64) -> bool {
+        let widths = crate::stroke_hit::VariableStrokeHits::prepare(self);
+        self.hit_test_local_prepared(p, tolerance, widths.as_ref())
+    }
+    pub(crate) fn hit_test_local_prepared(&self, p: Point, tolerance: f64,
+        widths: Option<&crate::stroke_hit::VariableStrokeHits>) -> bool
+    {
+        if widths.is_some_and(|widths| widths.hit(p, tolerance)) { return true; }
         let stroke = self
             .strokes
             .iter()
-            .filter(|s| s.visible)
+            .filter(|s| s.visible && s.width_profile.is_uniform())
             .map(|s| s.width)
             .fold(0.0, f64::max)
             / 2.0
@@ -1131,6 +1115,9 @@ impl Node {
                 true
             }
         }
+    }
+    pub(crate) fn contains_clip_point(&self, point: Point) -> bool {
+        self.local_bounds().contains(point) && crate::corner_path(self).contains(point)
     }
 }
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -1808,6 +1795,9 @@ impl Document {
                     }
                 }
             }
+            for stroke in &n.strokes {
+                crate::validate_variable_width_support(n, stroke)?;
+            }
             if !n.font_size.is_finite()
                 || n.font_size <= 0.0
                 || !n.corner_radius.is_finite()
@@ -1851,6 +1841,7 @@ impl Document {
                 }
             }
             crate::validate_font_features(&n.font_features)?;
+            crate::validate_text_paragraphs(n)?;
         }
         if seen.len() != self.nodes.len() {
             return Err(DocumentError::Invalid(

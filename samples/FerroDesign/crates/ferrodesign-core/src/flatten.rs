@@ -238,6 +238,7 @@ impl Editor {
         result.text_style = None;
         result.text.clear();
         result.text_runs.clear();
+    result.text_paragraphs.clear();
         result.font_features.clear();
         result.layout = None;
         result.layout_grid = None;

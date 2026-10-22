@@ -449,6 +449,7 @@ fn compatible_nodes(a: &Node, b: &Node) -> bool {
     a.kind == b.kind && a.visible == b.visible && a.flip_x == b.flip_x && a.flip_y == b.flip_y
         && a.blend_mode == b.blend_mode && a.clip_content == b.clip_content
         && a.text == b.text && a.font_family == b.font_family && a.text_runs == b.text_runs
+        && a.text_paragraphs == b.text_paragraphs && a.text_direction == b.text_direction && a.font_features == b.font_features
         && a.text_align == b.text_align && a.text_vertical_align == b.text_vertical_align
         && a.italic == b.italic && a.text_decoration == b.text_decoration
         && a.polygon_sides == b.polygon_sides && a.boolean_operation == b.boolean_operation
@@ -459,9 +460,18 @@ fn compatible_nodes(a: &Node, b: &Node) -> bool {
         && a.fills.len() == b.fills.len()
         && a.fills.iter().zip(&b.fills).all(|(a, b)| compatible_paint(&a.paint, &b.paint))
         && a.strokes.len() == b.strokes.len()
-        && a.strokes.iter().zip(&b.strokes).all(|(a, b)| a.align == b.align && a.cap == b.cap && a.join == b.join && a.dash.len() == b.dash.len() && compatible_paint(&a.paint, &b.paint))
+        && a.strokes.iter().zip(&b.strokes).all(|(a, b)| a.align == b.align && a.cap == b.cap && a.join == b.join && a.dash.len() == b.dash.len()
+            && compatible_width_profile(&a.width_profile, &b.width_profile) && compatible_paint(&a.paint, &b.paint))
         && a.effects.len() == b.effects.len()
         && a.effects.iter().zip(&b.effects).all(|(a, b)| a.kind == b.kind)
+}
+
+fn compatible_width_profile(a: &crate::StrokeWidthProfile, b: &crate::StrokeWidthProfile) -> bool {
+    match (a, b) {
+        (crate::StrokeWidthProfile::Custom { points: a }, crate::StrokeWidthProfile::Custom { points: b }) =>
+            a.len() == b.len() && a.iter().zip(b).all(|(a, b)| a.position == b.position),
+        _ => a == b,
+    }
 }
 
 fn animated_properties_differ(a: &Node, b: &Node) -> bool {
@@ -541,6 +551,11 @@ fn interpolate_node(out: &mut Node, a: &Node, b: &Node, t: f64) {
         out.width = lerp(a.width, b.width, t).max(0.0);
         out.opacity = lerp(if a.visible { a.opacity } else { 0.0 }, if b.visible { b.opacity } else { 0.0 }, t).clamp(0.0, 1.0);
         for ((out, a), b) in out.dash.iter_mut().zip(&a.dash).zip(&b.dash) { *out = lerp(*a, *b, t).max(0.0); }
+        if let (crate::StrokeWidthProfile::Custom { points: out }, crate::StrokeWidthProfile::Custom { points: a },
+            crate::StrokeWidthProfile::Custom { points: b }) = (&mut out.width_profile, &a.width_profile, &b.width_profile)
+        {
+            for ((out, a), b) in out.iter_mut().zip(a).zip(b) { out.width = lerp(a.width, b.width, t).max(0.0); }
+        }
     }
     for ((out, a), b) in out.effects.iter_mut().zip(&a.effects).zip(&b.effects) {
         out.visible = a.visible || b.visible;
