@@ -42,6 +42,7 @@ members = [
     "src/FerroUI.Diagnostics",
     "src/FerroUI.Inspect",
     "src/FerroUI.DevTools",
+    "src/FerroUI.Mcp",
     "src/FerroUI.Themes.Simple",
     "src/FerroUI.Themes.Fluent",
     "src/FerroUI.Themes.WinUI",
@@ -149,6 +150,7 @@ categories = ["gui"]
 [workspace.dependencies]
 ferroui-inspect = { version = "=0.4.0", path = "src/FerroUI.Inspect" }
 ferroui-devtools = { version = "=0.4.0", path = "src/FerroUI.DevTools", default-features = false }
+ferroui-mcp = { version = "=0.4.0", path = "src/FerroUI.Mcp" }
 ferroui-system = { version = "=0.4.0", path = "src/FerroUI.System" }
 ferroui-reactive = { version = "=0.4.0", path = "src/FerroUI.Reactive" }
 ferroui-reactive-testing = { version = "=0.4.0", path = "src/FerroUI.Reactive.Testing" }

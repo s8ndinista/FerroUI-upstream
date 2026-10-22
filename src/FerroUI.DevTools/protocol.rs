@@ -6,7 +6,7 @@ use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::{Point, Rect, Ref, StyledElement};
 use ferroui_controls::automation::peers::{AutomationPeer, ControlAutomationPeer};
 use ferroui_controls::{Control, TopLevel};
-use ferroui_inspect::{Inspector, Node, NodeId, TreeKind};
+use ferroui_inspect::target::{Inspector, Node, NodeId, TreeKind};
 use serde_json::{json, Value};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
