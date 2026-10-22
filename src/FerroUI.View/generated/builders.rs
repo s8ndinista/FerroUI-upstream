@@ -1752,6 +1752,19 @@ pub fn win_ui_frame() -> El<ferroui_controls::winui::Frame> {
     El::new()
 }
 
+pub use ferroui_controls::winui::InfoBadge as WinUIInfoBadge;
+
+impl ViewClass for ferroui_controls::winui::InfoBadge {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::InfoBadge>::new()
+    }
+}
+
+/// Starts an element of [`WinUIInfoBadge`](ferroui_controls::winui::InfoBadge).
+pub fn win_ui_info_badge() -> El<ferroui_controls::winui::InfoBadge> {
+    El::new()
+}
+
 pub use ferroui_controls::winui::InfoBar as WinUIInfoBar;
 
 impl ViewClass for ferroui_controls::winui::InfoBar {
@@ -1804,6 +1817,19 @@ pub fn win_ui_page() -> El<ferroui_controls::winui::Page> {
     El::new()
 }
 
+pub use ferroui_controls::winui::ProgressRing as WinUIProgressRing;
+
+impl ViewClass for ferroui_controls::winui::ProgressRing {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::ProgressRing>::new()
+    }
+}
+
+/// Starts an element of [`WinUIProgressRing`](ferroui_controls::winui::ProgressRing).
+pub fn win_ui_progress_ring() -> El<ferroui_controls::winui::ProgressRing> {
+    El::new()
+}
+
 pub use ferroui_controls::winui::RadioButtons as WinUIRadioButtons;
 
 impl ViewClass for ferroui_controls::winui::RadioButtons {
@@ -1814,6 +1840,19 @@ impl ViewClass for ferroui_controls::winui::RadioButtons {
 
 /// Starts an element of [`WinUIRadioButtons`](ferroui_controls::winui::RadioButtons).
 pub fn win_ui_radio_buttons() -> El<ferroui_controls::winui::RadioButtons> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::RatingControl as WinUIRatingControl;
+
+impl ViewClass for ferroui_controls::winui::RatingControl {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::RatingControl>::new()
+    }
+}
+
+/// Starts an element of [`WinUIRatingControl`](ferroui_controls::winui::RatingControl).
+pub fn win_ui_rating_control() -> El<ferroui_controls::winui::RatingControl> {
     El::new()
 }
 
@@ -7777,6 +7816,34 @@ pub trait WinUIIconSourceProps: ElementBuilder {
 }
 impl<T: ObjectType + Upcast<ferroui_controls::winui::IconSource>> WinUIIconSourceProps for El<T> {}
 
+/// The properties and routed events of [`WinUIInfoBadge`](ferroui_controls::winui::InfoBadge).
+pub trait WinUIInfoBadgeProps: ElementBuilder {
+    /// Sets [`WinUIInfoBadge::value_property`](ferroui_controls::winui::InfoBadge::value_property).
+    fn value<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBadge>::value_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBadge::icon_source_property`](ferroui_controls::winui::InfoBadge::icon_source_property).
+    fn icon_source<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::winui::IconSource>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBadge>::icon_source_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::InfoBadge>> WinUIInfoBadgeProps for El<T> {}
+
+/// The properties and routed events of [`WinUIInfoBadgeTemplateSettings`](ferroui_controls::winui::InfoBadgeTemplateSettings).
+pub trait WinUIInfoBadgeTemplateSettingsProps: ElementBuilder {
+    /// Sets [`WinUIInfoBadgeTemplateSettings::info_badge_corner_radius_property`](ferroui_controls::winui::InfoBadgeTemplateSettings::info_badge_corner_radius_property).
+    fn info_badge_corner_radius<M>(self, value: impl IntoProp<ferroui_base::CornerRadius, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBadgeTemplateSettings>::info_badge_corner_radius_property(), value)
+    }
+
+    /// Sets [`WinUIInfoBadgeTemplateSettings::icon_element_property`](ferroui_controls::winui::InfoBadgeTemplateSettings::icon_element_property).
+    fn icon_element<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::IconElement>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::InfoBadgeTemplateSettings>::icon_element_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::InfoBadgeTemplateSettings>> WinUIInfoBadgeTemplateSettingsProps for El<T> {}
+
 /// The properties and routed events of [`WinUIInfoBar`](ferroui_controls::winui::InfoBar).
 pub trait WinUIInfoBarProps: ElementBuilder {
     /// Sets [`WinUIInfoBar::is_open_property`](ferroui_controls::winui::InfoBar::is_open_property).
@@ -7966,6 +8033,35 @@ pub trait WinUIPathIconSourceProps: ElementBuilder {
 }
 impl<T: ObjectType + Upcast<ferroui_controls::winui::PathIconSource>> WinUIPathIconSourceProps for El<T> {}
 
+/// The properties and routed events of [`WinUIProgressRing`](ferroui_controls::winui::ProgressRing).
+pub trait WinUIProgressRingProps: ElementBuilder {
+    /// Sets [`WinUIProgressRing::is_active_property`](ferroui_controls::winui::ProgressRing::is_active_property).
+    fn is_active<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::ProgressRing>::is_active_property(), value)
+    }
+
+    /// Sets [`WinUIProgressRing::is_indeterminate_property`](ferroui_controls::winui::ProgressRing::is_indeterminate_property).
+    fn is_indeterminate<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::ProgressRing>::is_indeterminate_property(), value)
+    }
+
+    /// Sets [`WinUIProgressRing::value_property`](ferroui_controls::winui::ProgressRing::value_property).
+    fn value<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::ProgressRing>::value_property(), value)
+    }
+
+    /// Sets [`WinUIProgressRing::minimum_property`](ferroui_controls::winui::ProgressRing::minimum_property).
+    fn minimum<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::ProgressRing>::minimum_property(), value)
+    }
+
+    /// Sets [`WinUIProgressRing::maximum_property`](ferroui_controls::winui::ProgressRing::maximum_property).
+    fn maximum<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::ProgressRing>::maximum_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::ProgressRing>> WinUIProgressRingProps for El<T> {}
+
 /// The properties and routed events of [`WinUIRadioButtons`](ferroui_controls::winui::RadioButtons).
 pub trait WinUIRadioButtonsProps: ElementBuilder {
     /// Sets [`WinUIRadioButtons::max_columns_property`](ferroui_controls::winui::RadioButtons::max_columns_property).
@@ -7974,6 +8070,118 @@ pub trait WinUIRadioButtonsProps: ElementBuilder {
     }
 }
 impl<T: ObjectType + Upcast<ferroui_controls::winui::RadioButtons>> WinUIRadioButtonsProps for El<T> {}
+
+/// The properties and routed events of [`WinUIRatingControl`](ferroui_controls::winui::RatingControl).
+pub trait WinUIRatingControlProps: ElementBuilder {
+    /// Sets [`WinUIRatingControl::caption_property`](ferroui_controls::winui::RatingControl::caption_property).
+    fn caption<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingControl>::caption_property(), value)
+    }
+
+    /// Sets [`WinUIRatingControl::initial_set_value_property`](ferroui_controls::winui::RatingControl::initial_set_value_property).
+    fn initial_set_value<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingControl>::initial_set_value_property(), value)
+    }
+
+    /// Sets [`WinUIRatingControl::is_clear_enabled_property`](ferroui_controls::winui::RatingControl::is_clear_enabled_property).
+    fn is_clear_enabled<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingControl>::is_clear_enabled_property(), value)
+    }
+
+    /// Sets [`WinUIRatingControl::is_read_only_property`](ferroui_controls::winui::RatingControl::is_read_only_property).
+    fn is_read_only<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingControl>::is_read_only_property(), value)
+    }
+
+    /// Sets [`WinUIRatingControl::max_rating_property`](ferroui_controls::winui::RatingControl::max_rating_property).
+    fn max_rating<M>(self, value: impl IntoProp<i32, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingControl>::max_rating_property(), value)
+    }
+
+    /// Sets [`WinUIRatingControl::placeholder_value_property`](ferroui_controls::winui::RatingControl::placeholder_value_property).
+    fn placeholder_value<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingControl>::placeholder_value_property(), value)
+    }
+
+    /// Sets [`WinUIRatingControl::item_info_property`](ferroui_controls::winui::RatingControl::item_info_property).
+    fn item_info<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::winui::RatingItemInfo>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingControl>::item_info_property(), value)
+    }
+
+    /// Sets [`WinUIRatingControl::value_property`](ferroui_controls::winui::RatingControl::value_property).
+    fn value<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingControl>::value_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::RatingControl>> WinUIRatingControlProps for El<T> {}
+
+/// The properties and routed events of [`WinUIRatingItemFontInfo`](ferroui_controls::winui::RatingItemFontInfo).
+pub trait WinUIRatingItemFontInfoProps: ElementBuilder {
+    /// Sets [`WinUIRatingItemFontInfo::glyph_property`](ferroui_controls::winui::RatingItemFontInfo::glyph_property).
+    fn glyph<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemFontInfo>::glyph_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemFontInfo::disabled_glyph_property`](ferroui_controls::winui::RatingItemFontInfo::disabled_glyph_property).
+    fn disabled_glyph<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemFontInfo>::disabled_glyph_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemFontInfo::pointer_over_glyph_property`](ferroui_controls::winui::RatingItemFontInfo::pointer_over_glyph_property).
+    fn pointer_over_glyph<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemFontInfo>::pointer_over_glyph_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemFontInfo::pointer_over_placeholder_glyph_property`](ferroui_controls::winui::RatingItemFontInfo::pointer_over_placeholder_glyph_property).
+    fn pointer_over_placeholder_glyph<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemFontInfo>::pointer_over_placeholder_glyph_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemFontInfo::placeholder_glyph_property`](ferroui_controls::winui::RatingItemFontInfo::placeholder_glyph_property).
+    fn placeholder_glyph<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemFontInfo>::placeholder_glyph_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemFontInfo::unset_glyph_property`](ferroui_controls::winui::RatingItemFontInfo::unset_glyph_property).
+    fn unset_glyph<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemFontInfo>::unset_glyph_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::RatingItemFontInfo>> WinUIRatingItemFontInfoProps for El<T> {}
+
+/// The properties and routed events of [`WinUIRatingItemImageInfo`](ferroui_controls::winui::RatingItemImageInfo).
+pub trait WinUIRatingItemImageInfoProps: ElementBuilder {
+    /// Sets [`WinUIRatingItemImageInfo::image_property`](ferroui_controls::winui::RatingItemImageInfo::image_property).
+    fn image<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::media::IImage>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemImageInfo>::image_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemImageInfo::disabled_image_property`](ferroui_controls::winui::RatingItemImageInfo::disabled_image_property).
+    fn disabled_image<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::media::IImage>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemImageInfo>::disabled_image_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemImageInfo::pointer_over_image_property`](ferroui_controls::winui::RatingItemImageInfo::pointer_over_image_property).
+    fn pointer_over_image<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::media::IImage>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemImageInfo>::pointer_over_image_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemImageInfo::pointer_over_placeholder_image_property`](ferroui_controls::winui::RatingItemImageInfo::pointer_over_placeholder_image_property).
+    fn pointer_over_placeholder_image<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::media::IImage>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemImageInfo>::pointer_over_placeholder_image_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemImageInfo::placeholder_image_property`](ferroui_controls::winui::RatingItemImageInfo::placeholder_image_property).
+    fn placeholder_image<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::media::IImage>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemImageInfo>::placeholder_image_property(), value)
+    }
+
+    /// Sets [`WinUIRatingItemImageInfo::unset_image_property`](ferroui_controls::winui::RatingItemImageInfo::unset_image_property).
+    fn unset_image<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_base::media::IImage>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::RatingItemImageInfo>::unset_image_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::RatingItemImageInfo>> WinUIRatingItemImageInfoProps for El<T> {}
 
 /// The properties and routed events of [`WinUISymbolIcon`](ferroui_controls::winui::SymbolIcon).
 pub trait WinUISymbolIconProps: ElementBuilder {

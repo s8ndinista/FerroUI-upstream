@@ -147,6 +147,16 @@ const TYPES: &[&TypeInfo] = types![
     crate::winui::InfoBarPanel,
     crate::winui::InfoBarTemplateSettings,
     crate::winui::InfoBarAutomationPeer,
+    crate::winui::InfoBadge,
+    crate::winui::InfoBadgeTemplateSettings,
+    crate::winui::ProgressRing,
+    crate::winui::ProgressRingTemplateSettings,
+    crate::winui::ProgressRingAutomationPeer,
+    crate::winui::RatingControl,
+    crate::winui::RatingControlAutomationPeer,
+    crate::winui::RatingItemInfo,
+    crate::winui::RatingItemFontInfo,
+    crate::winui::RatingItemImageInfo,
     // FerroUI
     crate::application::Application,
     // FerroUI.Animation

@@ -84,3 +84,18 @@ required-features = ["testing"]
 name = "winui_auto_suggest_box"
 path = "tests/winui_auto_suggest_box.rs"
 required-features = ["testing"]
+
+[[test]]
+name = "winui_progress_ring"
+path = "tests/winui_progress_ring.rs"
+required-features = ["testing"]
+
+[[test]]
+name = "winui_info_badge"
+path = "tests/winui_info_badge.rs"
+required-features = ["testing"]
+
+[[test]]
+name = "winui_rating_control"
+path = "tests/winui_rating_control.rs"
+required-features = ["testing"]
