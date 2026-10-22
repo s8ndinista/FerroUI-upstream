@@ -2028,6 +2028,7 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 | `numerics/vector3.rs` | the `System.Numerics` types the composition API takes (Vector2, Vector3, Vector4, Matrix3x2, Matrix4x4, Quaternion) and their scalar helpers: part of the .NET runtime library upstream | `Vector3` |
 | `numerics/vector4.rs` | the `System.Numerics` types the composition API takes (Vector2, Vector3, Vector4, Matrix3x2, Matrix4x4, Quaternion) and their scalar helpers: part of the .NET runtime library upstream | `Vector4` |
 | `platform/i_drawing_context_impl_with_effects.rs` | the contract `IDrawingContextImplWithEffects`, declared in `Platform/IDrawingContextImpl.cs` upstream | `IDrawingContextImplWithEffects` |
+| `platform/i_drawing_context_impl_with_fragments.rs` | **unmapped** | `IDrawingContextImplWithFragments`, `IDrawingFragment` |
 | `platform/native_library.rs` | A shared library opened at run time and its functions resolved by name: what the runtime of the original does for a platform invoke (`DllImport`); the one loader of the X11 (GLib, GTK, libSM, libICE), Wayland (libgbm, libdrm) and Linux framebuffer (libinput, libdrm, libgbm) backends | `NativeLibrary`, `NativeLibraryError` |
 | `platform/render_interface_access.rs` | access to the platform render interface registered by the rendering backend, in one place (a service locator lookup at each site upstream) |  |
 | `platform/storage/file_io/path.rs` | the path string operations of .NET `System.IO.Path` the storage helpers need |  |

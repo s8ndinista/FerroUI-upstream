@@ -36,13 +36,19 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
   - `view_stats()`, the counts of the mounting and the reconciler;
   - benchmarks of the declarative API in `ferroui-benchmarks` (`declarative`);
   - the README gains a section on the declarative API with its features and a comparison with React, and `examples/counter.rs` keeps its example building.
+- **Developer tools** (`ferroui-diagnostics`, a new published crate; `docs/porting/diagnostics.md`): the port of upstream's developer tools at their last open-source version, opened with F12 on a window or an application:
+  - the logical and visual trees with a filter, the details of the selected control (its properties with their priorities and an editor for each, the value frames with their setters and resources, the pseudo-classes, the layout explorer), the routed events with their routes, the hot keys, and screenshots of a control;
+  - the property grid is the TreeDataGrid of the port, grouped and sortable, in place of upstream's DataGrid;
+  - `MainViewModel::register_page` adds pages of other crates to the tools;
+  - the ControlCatalog attaches them in debug builds, and `FERROUI_SMOKE_DEVTOOLS=<directory>` runs them without a person and writes pictures of their window;
+  - the facade has them as the feature `diagnostics`.
 
 ### Changed
 
 - **`#[component(rerender)]` memoizes by default** a component whose parameters are `PartialEq + Clone`; `#[component(rerender, always)]` runs it with its parent every time, and `memo` makes comparable parameters required.
 
-### Changed
-
+- **Markup compiler**: a setter of a style class in a style (`<Setter Property="Classes.name" .../>`) compiles to Rust; it was refused (`FRN3000`).
+- **Markup**: `Binding` returns itself from `BindingBase::as_any`, as the other bindings do; `Window.Close()` can be called from markup.
 - **`ferroui-view`**: mounting is built on instances that the reconciler patches (`mount.rs`). A routed handler attached by an element is detached when the owner of the element ends. A dynamic list may give other dynamic lists.
 
 ## [0.4.0-preview.1] - 2026-10-20

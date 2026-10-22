@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/ferroui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:views="using:FerroUI.Diagnostics.Views"
+        xmlns:diag="using:FerroUI.Diagnostics"
+        xmlns:viewModels="using:FerroUI.Diagnostics.ViewModels"
+        Title="FerroUI DevTools"
+        x:Class="FerroUI.Diagnostics.Views.MainWindow"
+        x:DataType="viewModels:MainViewModel">
+  <Window.DataTemplates>
+    <diag:ViewLocator/>
+  </Window.DataTemplates>
+
+  <Window.Styles>
+    <SimpleTheme />
+    <!-- The property grid of the control details is the TreeDataGrid of the port, in place of the
+         DataGrid of the original; its generic styles go with the Simple theme. -->
+    <StyleInclude Source="ferres://FerroUI.Controls.TreeDataGrid/Themes/Generic.xaml"/>
+    <StyleInclude Source="ferres://FerroUI.Diagnostics/diagnostics/controls/ThicknessEditor.xaml" />
+    <StyleInclude Source="ferres://FerroUI.Diagnostics/diagnostics/controls/FilterTextBox.xaml" />
+    <StyleInclude Source="ferres://FerroUI.Diagnostics/diagnostics/controls/BrushEditor.xaml" />
+    <StyleInclude Source="ferres://FerroUI.Controls.ColorPicker/Themes/Simple/Simple.xaml" />
+  </Window.Styles>
+  <views:MainView/>
+</Window>

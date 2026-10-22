@@ -43,6 +43,7 @@ The state per subsystem is tracked in [docs/porting/CRITICAL-PATH.md](docs/porti
 | XAML | The run-time loader with the upstream test suites, and compilation of markup to Rust source in build scripts (used by the themes, the dialogs and the ControlCatalog sample); hot reload and parts of the build integration are open |
 | Themes | Fluent, Simple and WinUI 3, for every control (WinUI 3: [progress](docs/porting/winui-theme/PROGRESS.md), [deviations](docs/porting/winui-theme/DEVIATIONS.md), [comparison with native WinUI 3](docs/porting/winui-theme-gallery.md)) |
 | Skia and HarfBuzz backends | Ported; Skia is the default and reference renderer |
+| Developer tools | Ported from upstream's last open-source version (`ferroui-diagnostics`), with the TreeDataGrid as the property grid |
 | Vello backend | Experimental: CPU, hybrid and GPU modes, measured against Skia; open work in [vello-backend.md](docs/porting/vello-backend.md), section 13 |
 
 ### Platforms
@@ -135,6 +136,7 @@ Markup is loaded at run time with `ferroui-markup-xaml-loader` (the feature `xam
 | [`ferroui-controls-treedatagrid`](https://crates.io/crates/ferroui-controls-treedatagrid) | The TreeDataGrid control of FerroUI: hierarchical and tabular data in one virtualizing view, with sorting, selection, editing, drag and drop and its control themes | [![version](https://img.shields.io/crates/v/ferroui-controls-treedatagrid.svg)](https://crates.io/crates/ferroui-controls-treedatagrid) | [![downloads](https://img.shields.io/crates/d/ferroui-controls-treedatagrid.svg)](https://crates.io/crates/ferroui-controls-treedatagrid) | [![docs.rs](https://img.shields.io/docsrs/ferroui-controls-treedatagrid)](https://docs.rs/ferroui-controls-treedatagrid) |
 | [`ferroui-themes-simple`](https://crates.io/crates/ferroui-themes-simple) | The FerroUI Simple theme: control themes and resources for the control set, in light and dark variants | [![version](https://img.shields.io/crates/v/ferroui-themes-simple.svg)](https://crates.io/crates/ferroui-themes-simple) | [![downloads](https://img.shields.io/crates/d/ferroui-themes-simple.svg)](https://crates.io/crates/ferroui-themes-simple) | [![docs.rs](https://img.shields.io/docsrs/ferroui-themes-simple)](https://docs.rs/ferroui-themes-simple) |
 | [`ferroui-controls-color-picker`](https://crates.io/crates/ferroui-controls-color-picker) | The colour picker library of FerroUI: ColorPicker, ColorView, ColorSpectrum, ColorSlider, ColorPreviewer, the colour palettes and their control themes | [![version](https://img.shields.io/crates/v/ferroui-controls-color-picker.svg)](https://crates.io/crates/ferroui-controls-color-picker) | [![downloads](https://img.shields.io/crates/d/ferroui-controls-color-picker.svg)](https://crates.io/crates/ferroui-controls-color-picker) | [![docs.rs](https://img.shields.io/docsrs/ferroui-controls-color-picker)](https://docs.rs/ferroui-controls-color-picker) |
+| [`ferroui-diagnostics`](https://crates.io/crates/ferroui-diagnostics) | The developer tools of FerroUI: the logical and visual trees, the properties and their value sources, routed events, the layout explorer and screenshots of a running application | [![version](https://img.shields.io/crates/v/ferroui-diagnostics.svg)](https://crates.io/crates/ferroui-diagnostics) | [![downloads](https://img.shields.io/crates/d/ferroui-diagnostics.svg)](https://crates.io/crates/ferroui-diagnostics) | [![docs.rs](https://img.shields.io/docsrs/ferroui-diagnostics)](https://docs.rs/ferroui-diagnostics) |
 | [`ferroui-themes-winui`](https://crates.io/crates/ferroui-themes-winui) | The FerroUI WinUI theme: the control styles, templates and theme resources of WinUI 3, in light, dark and high contrast variants | [![version](https://img.shields.io/crates/v/ferroui-themes-winui.svg)](https://crates.io/crates/ferroui-themes-winui) | [![downloads](https://img.shields.io/crates/d/ferroui-themes-winui.svg)](https://crates.io/crates/ferroui-themes-winui) | [![docs.rs](https://img.shields.io/docsrs/ferroui-themes-winui)](https://docs.rs/ferroui-themes-winui) |
 | [`ferroui-view`](https://crates.io/crates/ferroui-view) | A declarative Rust API for FerroUI user interfaces without XAML: element builders generated for every control, an rsx! macro, signals that properties follow, components that run again with hooks and a reconciler | [![version](https://img.shields.io/crates/v/ferroui-view.svg)](https://crates.io/crates/ferroui-view) | [![downloads](https://img.shields.io/crates/d/ferroui-view.svg)](https://crates.io/crates/ferroui-view) | [![docs.rs](https://img.shields.io/docsrs/ferroui-view)](https://docs.rs/ferroui-view) |
 
@@ -393,6 +395,25 @@ FerroUI has ports of System.Reactive, DynamicData, Splat and ReactiveUI, one cra
 |---|---|
 | ![ReactiveDemo, the getting-started sample of ReactiveUI as a crate browser, with the WinUI 3 theme on macOS](docs/porting/images/reactive_demo_winui_macos.png) | ![The DynamicData page of the ReactiveUI example: a searchable list of features with favourites sorted first](docs/porting/images/reactiveui_example_dynamicdata_winui_macos.png) |
 
+### Developer tools
+
+`ferroui-diagnostics` is the port of upstream's developer tools at their last open-source version: the logical and visual trees, the properties of the selected control with their value sources and an editor for each, the layout explorer, the routed events with their routes, and screenshots of a control. The property grid is the TreeDataGrid of the port. Attach the tools after the application is set up, usually in debug builds, and press F12 in a window to open them (the ControlCatalog does this in `samples/ControlCatalog.Desktop/program.rs`):
+
+```rust
+use ferroui_diagnostics::DevToolsExtensions;
+
+let builder = builder.after_setup(|builder| {
+    #[cfg(debug_assertions)]
+    if let Some(application) = builder.instance() {
+        application.attach_dev_tools();
+    }
+});
+```
+
+The facade has them as the feature `diagnostics` (`ferroui::diagnostics`). The port and its differences are described in [docs/porting/diagnostics.md](docs/porting/diagnostics.md).
+
+![The developer tools on the ControlCatalog: the visual tree, the property grid of a button and its value frames](docs/images/diagnostics/visual-tree.png)
+
 ## Repository layout
 
 The layout follows the upstream project so that files can be compared side by side; the crate of each directory is in the table of crates above.
@@ -415,6 +436,7 @@ The layout follows the upstream project so that files can be compared side by si
 - [Deviations](docs/porting/DEVIATIONS.md): every place where the port differs from upstream, and why.
 - [XAML design](docs/porting/xaml.md): the markup pipeline, the run-time loader and the compiler of markup to Rust.
 - [Declarative Rust UI](docs/declarative-ui.md): `ferroui-view`, its builders, `rsx!`, signals, components, hooks, the reconciler, XAML interoperation, tools and the phases of the work; [compared with React](docs/declarative-ui-react.md).
+- [Developer tools](docs/porting/diagnostics.md): the port of upstream's developer tools, attached with F12.
 - [MVVM on FerroUI](docs/mvvm.md): ReactiveUI, DynamicData and System.Reactive on FerroUI, with the samples ReactiveDemo and ReactiveUIExample.
 - Platforms: [Windows](docs/porting/win32-platform.md), [WinUI](docs/porting/winui.md), [Linux on X11](docs/porting/x11-platform.md) with [AT-SPI](docs/porting/atspi.md), [Wayland](docs/porting/wayland-platform.md), [Linux framebuffer](docs/porting/linux-framebuffer-platform.md), [OpenGL on macOS and iOS](docs/porting/apple-opengl.md), [iOS](docs/porting/ios-platform.md), [Android](docs/porting/android-platform.md), [browser](docs/porting/browser-platform.md) with its [render worker](docs/porting/browser-render-worker.md), [headless VNC](docs/porting/headless-vnc.md), [Vulkan](docs/porting/vulkan.md).
 - Rendering: [render thread](docs/porting/render-thread.md), [Vello backend](docs/porting/vello-backend.md), [render tests](docs/porting/render-tests.md).

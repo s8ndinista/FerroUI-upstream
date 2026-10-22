@@ -1,0 +1,64 @@
+# Members of the developer tools that the scanner does not find where it looks, and why. The format is that of
+# docs/porting/data/member-waivers.toml; read by `scripts/port-status/port_status.py --reference diagnostics`.
+# Every waiver below names a member that is ported in another shape (docs/porting/diagnostics.md, section 4);
+# none is left out.
+
+[[waive]]
+type = "Avalonia.Diagnostics.*TopLevelGroup"
+member = "GetHashCode"
+reason = "Rust: the groups are compared and hashed by the identity of their top levels (`PartialEq` on the handle), not by an override"
+
+[[waive]]
+type = "Avalonia.Diagnostics.Controls.ControlHighlightAdorner"
+member = ".cctor"
+reason = "the static constructor registers the affects-render properties: `ferro_class_info!` does it when the class is first used"
+
+[[waive]]
+type = "Avalonia.Diagnostics.Converters.BrushSelectorConveter"
+member = "*ConvertBack*"
+reason = "`IValueConverter` is implemented on the handle of the class (`BrushSelectorConveterHandle`), as the converters of resources are shared handles"
+
+[[waive]]
+type = "Avalonia.Diagnostics.Screenshots.BaseRenderToStreamHandler"
+member = "*Take*"
+reason = "the abstract base class is a trait; `Take` is the blanket `impl<T: BaseRenderToStreamHandler> IScreenshotHandler for T`"
+
+[[waive]]
+type = "Avalonia.Diagnostics.ViewModels.ControlDetailsViewModel"
+member = "*IClassesChangedListener.Changed*"
+reason = "the listener is a closure given to `Classes::add_listener`, which calls `classes_changed`"
+
+[[waive]]
+type = "Avalonia.Diagnostics.ViewModels.Event*TreeNode"
+member = "*IsEnabled*"
+reason = "the two overrides are one `is_enabled`/`set_is_enabled` of `EventTreeNodeBase`, which dispatches on the kind of node"
+
+[[waive]]
+type = "Avalonia.Diagnostics.ViewModels.*TreeNode"
+member = "*Children*"
+reason = "the logical and visual nodes are one `TreeNode` with a `TreeNodeKind`: `children` makes the collection of the kind"
+
+[[waive]]
+type = "Avalonia.Diagnostics.ViewModels.VisualTreeNode"
+member = "*IsInTemplate*"
+reason = "a member of the shared `TreeNode` (`is_in_template`), false for a logical node"
+
+[[waive]]
+type = "Avalonia.Diagnostics.ViewModels.PropertyViewModel"
+member = "*"
+reason = "the abstract class is the shared base `PropertyViewModel` plus the handle `PropertyViewModelRef` (an enum of the two deriving classes), whose methods dispatch the abstract members and own `IsPinned`"
+
+[[waive]]
+type = "Avalonia.Diagnostics.ViewModels.TreeNodeCollection"
+member = "*I*List*"
+reason = "the non-generic `IList`/`ICollection` members: the collection is an `IFerroReadOnlyList` and an `IItemsList` for the tree view"
+
+[[waive]]
+type = "Avalonia.Diagnostics.ViewModels.TreeNodeCollection"
+member = "*ICollection*"
+reason = "the non-generic `IList`/`ICollection` members: the collection is an `IFerroReadOnlyList` and an `IItemsList` for the tree view"
+
+[[waive]]
+type = "Avalonia.Diagnostics.ViewModels.TreeNodeCollection"
+member = "*GetEnumerator*"
+reason = "enumeration is `to_vec`/`snapshot` and the iteration of `IFerroReadOnlyList`"
