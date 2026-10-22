@@ -1534,6 +1534,8 @@ dependencies = [
  "ferroui-reactiveui-controls",
  "ferroui-themes-fluent",
  "ferroui-view-macros",
+ "proc-macro2",
+ "syn 2.0.119",
 ]
 
 [[package]]

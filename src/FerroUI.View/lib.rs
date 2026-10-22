@@ -44,10 +44,13 @@ mod animation;
 pub mod builder;
 mod component_host;
 mod control_flow;
+pub mod diagnostics;
 mod conversions;
 pub mod element;
 mod extras;
 pub mod hooks;
+pub mod hot;
+pub mod inspect;
 mod mount;
 pub mod reactive;
 mod register_types;
@@ -74,6 +77,7 @@ pub mod generated {
 
 pub use builder::{Bind, Builder, El, ElementBuilder, FromValue, IntoProp, IntoValue, TypedProperty, ViewClass};
 pub use control_flow::{dynamic, for_each, show, show_else, NodeRef};
+pub use diagnostics::{clear_diagnostics_handler, set_diagnostics_handler, Diagnostic};
 pub use element::{rerender, ComponentElement, Element, IntoChild, IntoChildren, IntoElement, Key};
 pub use component_host::{register_component, ComponentHost, View};
 pub use hooks::{
@@ -85,6 +89,9 @@ pub use animation::{
     Transitionable,
 };
 pub use style::{parse_selector, style, style_of, StyleBuilder};
+pub use inspect::{inspector, mounted_trees, InstanceKind, InstanceNode, MountedTree, PropertyInfo};
+#[cfg(feature = "desktop")]
+pub use inspect::{attach_inspector, open_inspector};
 pub use template::template;
 pub use register_types::{register_types, ASSEMBLY};
 #[cfg(feature = "xaml")]

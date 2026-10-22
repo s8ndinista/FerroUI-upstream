@@ -5,7 +5,7 @@ This document is for developers who know React. It compares `ferroui-view`, the 
 - where the two behave alike and where they differ;
 - what React has that FerroUI does not have yet.
 
-It describes FerroUI after phases 1 to 3 of issue #237 (components that run again, hooks, the reconciler; XAML and data templates of components; styles, themes, transitions, popups) and React 18 and 19.
+It describes FerroUI after phases 1 to 4 of issue #237 (components that run again, hooks, the reconciler; XAML and data templates of components; styles, themes, transitions, popups; hot reload, diagnostics, an inspector) and React 18 and 19.
 
 ## 1. Summary
 
@@ -68,9 +68,9 @@ What sets FerroUI apart from React is where the elements end up. React DOM rende
 | error boundary | not yet (phase 6) | |
 | `Suspense`, `lazy`, `use(promise)` | not yet (phase 6: `use_resource`) | Futures run on the thread's executor, `ferroui_system::threading::tasks`. |
 | `useTransition`, `useDeferredValue` | none: rendering is synchronous | |
-| Fast Refresh | not yet (phase 4: hot reload of `rsx!`) | |
-| React DevTools | FerroUI DevTools show the controls; the instance tree is phase 4 | |
-| `StrictMode` | none | |
+| Fast Refresh | hot reload of the literals of `rsx!` (feature `hot-reload`) | Literals change while the application runs and components keep their state. A change of structure needs a rebuild; Fast Refresh also swaps code. |
+| React DevTools | `inspector()`, `open_inspector()` (Shift+F12 in debug builds) | Components with their runs and hooks, controls with their properties and where each value comes from. |
+| `StrictMode`, the warnings of React (keys) | diagnostics in debug builds: lists without keys, duplicate keys, components that run away | `set_diagnostics_handler` sends them elsewhere. |
 | Server components, server rendering | none: FerroUI renders on the device | |
 
 ## 4. The same programs
@@ -269,8 +269,6 @@ React runs `useLayoutEffect` after the DOM changes and before the browser paints
 |---|---|
 | Error boundaries | phase 6 |
 | Suspense and data loading | phase 6: `use_resource` |
-| Fast Refresh | phase 4: hot reload of the static parts of `rsx!` |
-| DevTools with the component tree | phase 4: the instance tree in the FerroUI DevTools |
 | Fewer moves of reordered keyed children | phase 5 (React's single pass; FerroUI plans the longest increasing subsequence) |
 | Concurrent rendering, transitions | not planned: rendering is synchronous by design |
 | Server components, server rendering | not planned |
