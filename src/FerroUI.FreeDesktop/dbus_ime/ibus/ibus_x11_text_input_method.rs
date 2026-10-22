@@ -1,7 +1,10 @@
 //! The input method of IBus, through its portal (the port of
 //! `IBusX11TextInputMethod.cs`).
 
-use super::dbus::{InputContextProxy, PortalProxy, ServiceProxy};
+use super::dbus::{
+    CommitText, ForwardKeyEvent, HidePreeditText, InputContextProxy, PortalProxy, ServiceProxy,
+    ShowPreeditText, UpdatePreeditText,
+};
 use super::ibus_enums::{IBusCapability, IBusModifierMask};
 use super::ibus_input_options::IBusInputOptions;
 use crate::dbus_call_queue::DBusResult;
@@ -310,7 +313,7 @@ impl DBusTextInputMethodCore for IBusX11TextInputMethod {
                 context.receive_commit_text().await?,
                 signals.handler({
                     let weak = weak.clone();
-                    move |signal| {
+                    move |signal: CommitText| {
                         if let (Some(this), Ok(args)) = (weak.upgrade(), signal.args()) {
                             this.on_commit_text(args.text());
                         }
@@ -321,7 +324,7 @@ impl DBusTextInputMethodCore for IBusX11TextInputMethod {
                 context.receive_forward_key_event().await?,
                 signals.handler({
                     let weak = weak.clone();
-                    move |signal| {
+                    move |signal: ForwardKeyEvent| {
                         if let (Some(this), Ok(args)) = (weak.upgrade(), signal.args()) {
                             this.on_forward_key(*args.keyval(), *args.keycode(), *args.state());
                         }
@@ -332,7 +335,7 @@ impl DBusTextInputMethodCore for IBusX11TextInputMethod {
                 context.receive_update_preedit_text().await?,
                 signals.handler({
                     let weak = weak.clone();
-                    move |signal| {
+                    move |signal: UpdatePreeditText| {
                         if let (Some(this), Ok(args)) = (weak.upgrade(), signal.args()) {
                             this.on_update_preedit(
                                 args.text(),
@@ -347,7 +350,7 @@ impl DBusTextInputMethodCore for IBusX11TextInputMethod {
                 context.receive_show_preedit_text().await?,
                 signals.handler({
                     let weak = weak.clone();
-                    move |_| {
+                    move |_: ShowPreeditText| {
                         if let Some(this) = weak.upgrade() {
                             this.on_show_preedit();
                         }
@@ -358,7 +361,7 @@ impl DBusTextInputMethodCore for IBusX11TextInputMethod {
                 context.receive_hide_preedit_text().await?,
                 signals.handler({
                     let weak = weak.clone();
-                    move |_| {
+                    move |_: HidePreeditText| {
                         if let Some(this) = weak.upgrade() {
                             this.on_hide_preedit();
                         }
