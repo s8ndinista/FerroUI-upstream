@@ -37,7 +37,7 @@ pub fn variable_binding_kind(property: &str) -> Option<VariableKind> {
         "width" | "height" | "opacity" | "corner_radius" | "font_size" => Some(VariableKind::Number),
         "text" => Some(VariableKind::String),
         "visible" => Some(VariableKind::Boolean),
-        _ => None,
+        _ => crate::parse_layout_guide_binding(property).map(|(_, field)| field.kind()),
     }
 }
 
@@ -178,6 +178,12 @@ impl Document {
                 if matches!(property.as_str(), "text" | "font_size") && node.kind != NodeKind::Text {
                     return Err(error(format!("Only text layers can bind {property}.")));
                 }
+                if crate::parse_layout_guide_binding(property).is_some() {
+                    for mode in &modes {
+                        let value = self.resolve_variable(id, mode).ok_or_else(|| error("The guide variable no longer resolves."))?;
+                        crate::validate_layout_guide_variable(node, property, value).map_err(VariableEditError)?;
+                    }
+                }
             }
             for interaction in &node.interactions {
                 if let crate::PrototypeAction::SetVariable { variable, value } = &interaction.action {
@@ -314,6 +320,9 @@ fn apply_edit(document: &mut Document, edit: VariableEdit) -> Result<(&'static s
                 if document.effective_locked(id) { return Err(error("Unlock the selected layers and their parents before binding.")); }
                 if matches!(property.as_str(), "text" | "font_size") && node.kind != NodeKind::Text {
                     return Err(error(format!("Only text layers can bind {property}.")));
+                }
+                if crate::parse_layout_guide_binding(&property).is_some() {
+                    crate::validate_layout_guide_binding_target(node, &property).map_err(VariableEditError)?;
                 }
             }
             // Unbinding freezes the currently resolved appearance.

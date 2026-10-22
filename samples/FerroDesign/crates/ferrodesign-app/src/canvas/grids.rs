@@ -6,6 +6,7 @@
 use super::*;
 use ferrodesign_core::{EditorRenderChanges, EditorRenderToken, LayoutGrid, LayoutGridPattern};
 use std::collections::BTreeSet;
+mod snapping;
 
 const MIN_GRID_SPACING: f64 = 4.0;
 const MAX_AXIS_LINES: usize = 4_096;
@@ -15,6 +16,8 @@ const MAX_FRAME_LINES: usize = 32_768;
 pub(super) struct LayoutGridOverlay {
     grids: BTreeSet<NodeId>,
     token: Option<EditorRenderToken>,
+    snap_index: snapping::GuideSnapIndex,
+    active_snap: Option<core::LayoutGuideSnap>,
     #[cfg(test)]
     examined: usize,
 }
@@ -36,9 +39,13 @@ impl LayoutGridOverlay {
         match changes {
             EditorRenderChanges::Full => {
                 self.grids.clear();
+                self.snap_index.clear();
                 for node in editor.document.nodes.values() {
                     #[cfg(test)] { self.examined += 1; }
-                    if node.layout_guide_count() != 0 { self.grids.insert(node.id); }
+                    if node.layout_guide_count() != 0 {
+                        self.grids.insert(node.id);
+                        self.snap_index.update(editor, node.id);
+                    }
                 }
             }
             EditorRenderChanges::Nodes { nodes, ancestors } => {
@@ -47,6 +54,7 @@ impl LayoutGridOverlay {
                     if editor.document.nodes.get(&id).is_some_and(|node| node.layout_guide_count() != 0) {
                         self.grids.insert(id);
                     } else { self.grids.remove(&id); }
+                    self.snap_index.update(editor, id);
                 }
             }
         }
@@ -92,7 +100,9 @@ impl LayoutGridOverlay {
                 let t = ancestor.local_transform();
                 states.push(ctx.push_transform(Matrix::new(t.a, t.b, t.c, t.d, t.e, t.f)));
                 if ancestor.clip_content || ancestor.id == id {
-                    states.push(ctx.push_rounded_clip(crate::renderer::rounded_rect(ancestor)));
+                    states.push(if ancestor.corner_smoothing > 0.0 {
+                        ctx.push_geometry_clip(&crate::renderer::corner_geometry(ancestor))
+                    } else { ctx.push_rounded_clip(crate::renderer::rounded_rect(ancestor)) });
                 }
             }
             let mut painted = false;
@@ -152,6 +162,7 @@ impl LayoutGridOverlay {
             stats.layers += usize::from(painted);
             if stats.budget_exhausted { break; }
         }
+        self.render_snap(ctx, editor, viewport);
         ctx.pop(camera);
         ctx.pop(canvas_clip);
         stats

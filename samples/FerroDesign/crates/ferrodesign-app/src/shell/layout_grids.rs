@@ -2,6 +2,7 @@
 use super::*;
 use ferrodesign_core::{LayoutGrid, LayoutGridAlignment, LayoutGridAxis, LayoutGridEdit, LayoutGridKind,
     LayoutGridPattern, LayoutGuideEdit, LayoutGuideProperty};
+mod variables;
 
 #[derive(Clone)]
 enum GuideTarget { Frames(Vec<NodeId>), Style(StyleId) }
@@ -56,6 +57,7 @@ impl EditorShell {
         self.updating.set(false);
         let host = self.control::<StackPanel>("ModalContent");
         host.set_spacing(10.0);
+        host.children().add(style_label("With Snap enabled, objects align to guide lines and band edges. Stretch columns and rows are the references for child constraints; hidden guides still work."));
         if mixed { host.children().add(style_label("Mixed guide stacks · each indexed setting updates matching rows on unlocked selected frames.")); }
         let target = GuideTarget::Frames(selection.clone());
         for (index, grid) in grids.iter().copied().enumerate() {
@@ -166,6 +168,11 @@ impl EditorShell {
             });
             panel.children().add(toggle);
         }
+        if let GuideTarget::Frames(selection) = &target {
+            let selection = selection.clone();
+            panel.children().add(self.style_button("Bind variable…", &control_name(&target, "Variables", index), true,
+                move |shell| shell.guide_variables_dialog(selection.clone(), index, core::LayoutGuideVariableField::Size)));
+        }
         let row = style_row();
         for (label, stem, enabled, edit) in [
             ("↑", "Up", index > 0, LayoutGuideEdit::Move { index, to: index.saturating_sub(1) }),
@@ -261,11 +268,14 @@ impl EditorShell {
         let weak_field = field.downgrade();
         let weak_error = error.downgrade();
         let previous = committed.clone();
-        let commit: Rc<dyn Fn()> = Rc::new(move || {
+        let commit_value: Rc<dyn Fn(bool)> = Rc::new(move |explicit| {
             let (Some(shell), Some(field), Some(error)) = (weak.upgrade(), weak_field.upgrade(), weak_error.upgrade()) else { return; };
             if shell.updating.get() || field.is_composing_text() || !field.is_attached_to_visual_tree() || !field.is_effectively_visible() { return; }
             let text = field.text().unwrap_or_default();
-            if text == *previous.borrow() { return; }
+            // Enter is an explicit literal assignment: a bound value must be
+            // detachable even when the typed number equals its current value.
+            // Mere focus loss still leaves an untouched binding in place.
+            if !explicit && text == *previous.borrow() { return; }
             match parse(&text).and_then(|edit| shell.apply_guide_edit(&target, edit)) {
                 Ok(_) => {
                     *previous.borrow_mut() = text;
@@ -280,13 +290,15 @@ impl EditorShell {
             }
             shell.sync_document_draft_dirty();
         });
+        let flush = commit_value.clone();
+        let commit: Rc<dyn Fn()> = Rc::new(move || flush(false));
         let blur = commit.clone();
         field.add_handler(InputElement::lost_focus_event(), move |_, _| blur());
-        let enter = commit.clone();
+        let enter = commit_value;
         let weak_field = field.downgrade();
         field.add_handler_with(InputElement::key_down_event(), move |_, event| {
             if event.key == Key::Enter && !weak_field.upgrade().is_some_and(|field| field.is_composing_text()) {
-                enter();
+                enter(true);
                 event.set_handled(true);
             }
         }, RoutingStrategies::TUNNEL, false);

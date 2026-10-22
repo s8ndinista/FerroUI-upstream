@@ -422,6 +422,7 @@ impl DesignCanvas {
         active
     }
     pub fn cancel(&self) {
+        self.layout_grids.borrow_mut().clear_snap();
         if self.cancel_network_bucket_gesture() { return; }
         // This preview owns no transaction. In particular, Escape must not
         // cancel an unrelated edit opened after its immutable snapshot.
@@ -709,6 +710,7 @@ impl DesignCanvas {
 impl InputElementImpl for DesignCanvas {
     fn on_pointer_pressed(this: &Self, e: &PointerPressedEventArgs) {
         Self::parent_on_pointer_pressed(this, e);
+        this.layout_grids.borrow_mut().clear_snap();
         this.cancel_network_bucket_gesture();
         this.cancel_layout_drag();
         this.focus();
@@ -840,7 +842,13 @@ impl InputElementImpl for DesignCanvas {
                 }
             }
             Tool::Pen => {
-                let p = this.snap_point(world);
+                let mut p = this.snap_point(world);
+                if this.snap.get() {
+                    let editor = this.editor.borrow();
+                    let exclude: Vec<_> = this.pen_node.get().into_iter().collect();
+                    if let Some(snap) = this.layout_grids.borrow_mut().snap(&editor, &[p],
+                        5.0 / this.viewport.get().zoom, &exclude, None) { p = p + snap.delta; }
+                }
                 let id = if let Some(id) = this.pen_node.get() {
                     id
                 } else {
@@ -909,7 +917,12 @@ impl InputElementImpl for DesignCanvas {
                 this.emit(CanvasEvent::Selection);
             }
             tool => {
-                let start = this.snap_point(world);
+                let mut start = this.snap_point(world);
+                if this.snap.get() {
+                    let editor = this.editor.borrow();
+                    if let Some(snap) = this.layout_grids.borrow_mut().snap(&editor, &[start],
+                        5.0 / this.viewport.get().zoom, &[], None) { start = start + snap.delta; }
+                }
                 let id = this.new_node(tool, start);
                 if tool == Tool::Text {
                     this.editor.borrow_mut().commit_transaction();
@@ -1008,6 +1021,7 @@ impl InputElementImpl for DesignCanvas {
                 }
                 let mut editor = this.editor.borrow_mut();
                 this.snap_guides.set((None, None));
+                this.layout_grids.borrow_mut().clear_snap();
                 if this.snap.get() {
                     if let Some(bounds) = bounds {
                         let proposed = Rect::new(
@@ -1016,24 +1030,27 @@ impl InputElementImpl for DesignCanvas {
                             bounds.width,
                             bounds.height,
                         );
-                        let snap =
-                            editor.smart_snap(proposed, 5.0 / this.viewport.get().zoom, exclude);
                         // An axis-constrained drag must stay on its original axis.
                         let snap_x = !shift || delta.x != 0.0;
                         let snap_y = !shift || delta.y != 0.0;
-                        if snap_x {
-                            delta.x += snap.delta.x;
+                        let direction = shift.then_some(if snap_x { Point::new(1.0, 0.0) } else { Point::new(0.0, 1.0) });
+                        let guide = this.layout_grids.borrow_mut().snap_bounds(&editor, proposed,
+                            5.0 / this.viewport.get().zoom, exclude, direction);
+                        if let Some(guide) = guide {
+                            delta = delta + guide.delta;
+                        } else {
+                            let snap = editor.smart_snap(proposed, 5.0 / this.viewport.get().zoom, exclude);
+                            if snap_x { delta.x += snap.delta.x; }
+                            if snap_y { delta.y += snap.delta.y; }
+                            this.snap_guides.set((
+                                if snap_x { snap.vertical_guide } else { None },
+                                if snap_y { snap.horizontal_guide } else { None },
+                            ));
                         }
-                        if snap_y {
-                            delta.y += snap.delta.y;
-                        }
-                        this.snap_guides.set((
-                            if snap_x { snap.vertical_guide } else { None },
-                            if snap_y { snap.horizontal_guide } else { None },
-                        ));
                     }
                 }
                 for original in nodes.iter() {
+                    if editor.document.effective_locked(original.id) { continue; }
                     let parent = original
                         .parent
                         .and_then(|id| editor.document.world_transform(id))
@@ -1055,6 +1072,8 @@ impl InputElementImpl for DesignCanvas {
             }
             Gesture::Resize { node, corner } => {
                 let mut editor = this.editor.borrow_mut();
+                this.layout_grids.borrow_mut().clear_snap();
+                if editor.document.effective_locked(node.id) { return; }
                 let parent = node
                     .parent
                     .and_then(|id| editor.document.world_transform(id))
@@ -1083,6 +1102,24 @@ impl InputElementImpl for DesignCanvas {
                 if this.snap.get() {
                     width = width.round().max(1.0);
                     height = height.round().max(1.0);
+                    // Project the final handle after pixel/aspect calculations.
+                    // A later rounding pass must not undo the guide alignment.
+                    let sign = match *corner {
+                        0 => Point::new(-1.0, -1.0), 1 => Point::new(1.0, -1.0),
+                        2 => Point::new(1.0, 1.0), _ => Point::new(-1.0, 1.0),
+                    };
+                    let handle = transform.apply(opposite + Point::new(sign.x * width, sign.y * height));
+                    let direction = shift.then_some(transform.apply_vector(Point::new(sign.x * width, sign.y * height)));
+                    let guide = this.layout_grids.borrow_mut().snap(&editor, &[handle],
+                        5.0 / this.viewport.get().zoom, &[node.id], direction);
+                    if let (Some(guide), Some(inverse)) = (guide, transform.inverse()) {
+                        let local = inverse.apply(handle + guide.delta);
+                        let adjusted_width = sign.x * (local.x - opposite.x);
+                        let adjusted_height = sign.y * (local.y - opposite.y);
+                        if adjusted_width >= 1.0 && adjusted_height >= 1.0 {
+                            width = adjusted_width; height = adjusted_height;
+                        } else { this.layout_grids.borrow_mut().clear_snap(); }
+                    }
                 }
                 let new_opposite = match *corner {
                     0 => Point::new(width, height),
@@ -1130,6 +1167,13 @@ impl InputElementImpl for DesignCanvas {
                         start.x + size * (end.x - start.x).signum(),
                         start.y + size * (end.y - start.y).signum(),
                     );
+                }
+                this.layout_grids.borrow_mut().clear_snap();
+                if this.snap.get() {
+                    let editor = this.editor.borrow();
+                    let direction = shift.then_some(end - *start);
+                    if let Some(snap) = this.layout_grids.borrow_mut().snap(&editor, &[end],
+                        5.0 / this.viewport.get().zoom, &[*id], direction) { end = end + snap.delta; }
                 }
                 let bounds = Rect::from_points(*start, end);
                 let mut editor = this.editor.borrow_mut();
@@ -1289,6 +1333,7 @@ impl InputElementImpl for DesignCanvas {
             return;
         }
         this.snap_guides.set((None, None));
+        this.layout_grids.borrow_mut().clear_snap();
         let gesture = std::mem::replace(&mut *this.gesture.borrow_mut(), Gesture::None);
         // Clear the gesture before releasing capture: capture-lost is synchronous.
         e.pointer().capture(None);

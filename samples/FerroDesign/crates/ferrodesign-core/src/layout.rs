@@ -355,6 +355,7 @@ impl Document {
         };
         let has_layout = p.layout.is_some();
         let children = p.children.clone();
+        let guides: Vec<_> = p.layout_guides().copied().collect();
         fn axis(p: &mut f64, s: &mut f64, old: f64, new: f64, c: Constraint) {
             let delta = new - old;
             match c {
@@ -373,6 +374,10 @@ impl Document {
         for id in children {
             if let Some(c) = self.nodes.get_mut(&id) {
                 if has_layout && !c.layout_child.absolute {
+                    continue;
+                }
+                if crate::layout_guides::apply_layout_guide_constraints(c, &guides,
+                    crate::Point::new(old_width, old_height), crate::Point::new(new_width, new_height)) {
                     continue;
                 }
                 let (mut x, mut y, mut width, mut height) = (c.x, c.y, c.width, c.height);

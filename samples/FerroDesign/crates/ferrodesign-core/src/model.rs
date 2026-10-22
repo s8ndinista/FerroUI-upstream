@@ -1660,6 +1660,7 @@ impl Document {
             let Some(n) = self.nodes.get_mut(&id) else {
                 continue;
             };
+            if crate::apply_layout_guide_variable(n, &property, &value) { continue; }
             match (property.as_str(), value) {
                 ("fill", VariableValue::Color(c)) => n.fills = vec![Fill::solid(c)],
                 ("stroke", VariableValue::Color(c)) => {

@@ -9,6 +9,13 @@ use crate::{DocumentError, Editor, LayoutGrid, Node, NodeId};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 
+mod constraints;
+pub use constraints::*;
+mod bindings;
+pub use bindings::*;
+mod snapping;
+pub use snapping::*;
+
 pub const MAX_LAYOUT_GUIDES: usize = 64;
 pub const MAX_LAYOUT_GUIDE_SECTIONS: u32 = 1_000_000;
 
@@ -142,6 +149,9 @@ impl Node {
     pub fn layout_guide(&self, index: usize) -> Option<&LayoutGrid> {
         if index == 0 { self.layout_grid.as_ref() } else { self.layout_grid_overlays.get(index - 1) }
     }
+    pub fn layout_guide_mut(&mut self, index: usize) -> Option<&mut LayoutGrid> {
+        if index == 0 { self.layout_grid.as_mut() } else { self.layout_grid_overlays.get_mut(index - 1) }
+    }
     pub fn layout_guide_count(&self) -> usize {
         usize::from(self.layout_grid.is_some()) + self.layout_grid_overlays.len()
     }
@@ -256,8 +266,9 @@ impl Editor {
             let mut grids: Vec<_> = node.layout_guides().copied().collect();
             let before = grids.clone();
             edit.apply(&mut grids)?;
-            if grids != before || (matches!(edit, LayoutGuideEdit::Clear) && node.grid_style.is_some()) {
-                changes.push((id, grids));
+            let bindings = bindings::edited_bindings(node, edit);
+            if grids != before || bindings != node.variable_bindings || (matches!(edit, LayoutGuideEdit::Clear) && node.grid_style.is_some()) {
+                changes.push((id, (grids, bindings)));
             }
         }
         if changes.is_empty() { return Ok(0); }
@@ -265,7 +276,9 @@ impl Editor {
         let map: std::collections::BTreeMap<_, _> = changes.into_iter().collect();
         let ids: Vec<_> = map.keys().copied().collect();
         self.update_nodes(&ids, "Edit layout guides", |node| {
-            node.set_layout_guides(&map[&node.id]);
+            let (grids, bindings) = &map[&node.id];
+            node.set_layout_guides(grids);
+            node.variable_bindings = bindings.clone();
             if node.layout_grid.is_none() { node.grid_style = None; }
             node.overridden_properties.insert(if matches!(edit, LayoutGuideEdit::Set { property: LayoutGuideProperty::Visible(_), .. }) {
                 "layout_grid_visible"

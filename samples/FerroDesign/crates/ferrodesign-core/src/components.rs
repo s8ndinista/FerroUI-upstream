@@ -362,7 +362,10 @@ fn preserve_overrides(node: &mut Node, old: &Node) {
             }
             "strokes" => node.strokes = old.strokes.clone(),
             "effects" => { node.effects = old.effects.clone(); node.effect_style = old.effect_style; }
-            "layout_grid" => { node.layout_grid = old.layout_grid; node.layout_grid_overlays.clone_from(&old.layout_grid_overlays); node.grid_style = old.grid_style; }
+            "layout_grid" => {
+                node.layout_grid = old.layout_grid; node.layout_grid_overlays.clone_from(&old.layout_grid_overlays); node.grid_style = old.grid_style;
+                crate::layout_guides::copy_layout_guide_bindings(old, node, false);
+            }
             "layout_grid_visible" => {
                 if let (Some(grid), Some(old_grid)) = (&mut node.layout_grid, old.layout_grid) {
                     grid.visible = old_grid.visible;
@@ -370,6 +373,7 @@ fn preserve_overrides(node: &mut Node, old: &Node) {
                 for (grid, old_grid) in node.layout_grid_overlays.iter_mut().zip(&old.layout_grid_overlays) {
                     grid.visible = old_grid.visible;
                 }
+                crate::layout_guides::copy_layout_guide_bindings(old, node, true);
             }
             "visible" => node.visible = old.visible,
             "opacity" => node.opacity = old.opacity,

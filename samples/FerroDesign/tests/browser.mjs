@@ -22,6 +22,7 @@ import { flattenRegressions } from "./flatten-browser.mjs";
 import { angularPaintRegressions } from "./angular-paints-browser.mjs";
 import { localStyleRegressions } from "./styles-browser.mjs";
 import { gridStyleRegressions } from "./grid-styles-browser.mjs";
+import { guideBindingRegressions } from "./guide-bindings-browser.mjs";
 import { regionPaintRegressions } from "./region-paints-browser.mjs";
 import { compactAutosaveRegressions } from "./serialization-browser.mjs";
 import { boundedHistoryRegressions } from "./history-browser.mjs";
@@ -1048,6 +1049,8 @@ try {
             await scenario("angular-paints", () => angularPaintRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));
             await scenario("grid-styles", () => gridStyleRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("guide-bindings", () => guideBindingRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));
             await scenario("region-paints", () => regionPaintRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));

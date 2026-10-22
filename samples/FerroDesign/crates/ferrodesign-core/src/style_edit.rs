@@ -286,6 +286,7 @@ impl StyleValue {
                 let visible = node.layout_grid.map_or(true, |grid| grid.visible);
                 node.layout_grid = Some(LayoutGrid { size: *size, color: *color, visible, ..LayoutGrid::default() });
                 node.layout_grid_overlays.clear();
+                crate::layout_guides::prune_layout_guide_bindings(node);
             }
             Self::GridStack { grids } => {
                 let previous: Vec<_> = node.layout_guides().map(|grid| grid.visible).collect();
@@ -293,6 +294,7 @@ impl StyleValue {
                     visible: previous.get(index).copied().unwrap_or(grid.visible), ..*grid
                 }).collect();
                 node.set_layout_guides(&effective);
+                crate::layout_guides::prune_layout_guide_bindings(node);
             }
         }
     }
@@ -388,6 +390,12 @@ impl Editor {
         if let LayoutGridEdit::Size(size) = edit {
             LayoutGrid { size, ..LayoutGrid::default() }.validate()?;
         }
+        let variable_field = match edit {
+            LayoutGridEdit::Size(_) => Some(crate::LayoutGuideVariableField::Size),
+            LayoutGridEdit::Color(_) => Some(crate::LayoutGuideVariableField::Color),
+            LayoutGridEdit::Visible(_) => Some(crate::LayoutGuideVariableField::Visible),
+            _ => None,
+        };
         let mut changed = Vec::new();
         for id in ids.iter().copied().collect::<BTreeSet<_>>() {
             let node = self.document.nodes.get(&id).ok_or(DocumentError::MissingNode(id))?;
@@ -401,7 +409,9 @@ impl Editor {
                 LayoutGridEdit::Visible(value) => node.layout_grid.is_some_and(|grid| grid.visible != value),
                 LayoutGridEdit::Remove => node.layout_grid.is_some() || !node.layout_grid_overlays.is_empty() || node.grid_style.is_some(),
             };
-            if differs { changed.push(id); }
+            if differs || (node.layout_grid.is_some() && variable_field.is_some_and(|field| node.variable_bindings.contains_key(&field.key(0)))) {
+                changed.push(id);
+            }
         }
         if changed.is_empty() { return Ok(0); }
         self.update_nodes(&changed, "Edit layout grid", |node| {
@@ -410,8 +420,12 @@ impl Editor {
                 LayoutGridEdit::Size(value) => node.layout_grid.as_mut().unwrap().size = value,
                 LayoutGridEdit::Color(value) => node.layout_grid.as_mut().unwrap().color = value,
                 LayoutGridEdit::Visible(value) => node.layout_grid.as_mut().unwrap().visible = value,
-                LayoutGridEdit::Remove => { node.layout_grid = None; node.layout_grid_overlays.clear(); node.grid_style = None; }
+                LayoutGridEdit::Remove => {
+                    node.layout_grid = None; node.layout_grid_overlays.clear(); node.grid_style = None;
+                    crate::remove_layout_guide_bindings(node);
+                }
             }
+            if let Some(field) = variable_field { node.variable_bindings.remove(&field.key(0)); }
             node.overridden_properties.insert(
                 if matches!(edit, LayoutGridEdit::Visible(_)) { "layout_grid_visible" } else { "layout_grid" }.into()
             );
@@ -671,7 +685,8 @@ fn apply_definition(node: &mut Node, style: &Style, explicit: bool) {
     };
     let changed = kind.binding(node) != Some(style.id)
         || !style.value.matches_node(node)
-        || variable.is_some_and(|key| node.variable_bindings.contains_key(key));
+        || variable.is_some_and(|key| node.variable_bindings.contains_key(key))
+        || (explicit && kind == LocalStyleKind::Grid && node.variable_bindings.keys().any(|key| crate::parse_layout_guide_binding(key).is_some()));
     if !changed {
         return;
     }
@@ -681,6 +696,7 @@ fn apply_definition(node: &mut Node, style: &Style, explicit: bool) {
         if let Some(variable) = variable {
             node.variable_bindings.remove(variable);
         }
+        if kind == LocalStyleKind::Grid { crate::remove_layout_guide_bindings(node); }
         kind.mark_override(node);
     }
 }
@@ -774,6 +790,15 @@ pub(crate) fn detach_changed_style_bindings(before: &Node, node: &mut Node) {
 /// current document model. Explicit variable application takes ownership even
 /// when its resolved value happens to equal the old style's value.
 pub(crate) fn detach_style_for_variable(node: &mut Node, property: &str) {
+    if let Some((_, field)) = crate::parse_layout_guide_binding(property) {
+        if field == crate::LayoutGuideVariableField::Visible {
+            node.overridden_properties.insert("layout_grid_visible".into());
+        } else {
+            node.grid_style = None;
+            LocalStyleKind::Grid.mark_override(node);
+        }
+        return;
+    }
     match property {
         "fill" => {
             node.fill_style = None;
