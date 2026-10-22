@@ -152,8 +152,17 @@ impl Node {
     }
 }
 
+/// Change guide orientation while retaining the target's current axis settings.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LayoutGridKind {
+    Square,
+    Columns,
+    Rows,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum LayoutGuideProperty {
+    Kind(LayoutGridKind),
     Pattern(LayoutGridPattern),
     Size(f64),
     Color(crate::Color),
@@ -175,6 +184,14 @@ impl LayoutGuideProperty {
 
     fn apply(self, grid: &mut LayoutGrid) {
         match self {
+            Self::Kind(kind) => {
+                let axis = grid.pattern.axis().unwrap_or_default();
+                grid.pattern = match kind {
+                    LayoutGridKind::Square => LayoutGridPattern::Square,
+                    LayoutGridKind::Columns => LayoutGridPattern::Columns { axis },
+                    LayoutGridKind::Rows => LayoutGridPattern::Rows { axis },
+                };
+            }
             Self::Pattern(pattern) => grid.pattern = pattern,
             Self::Size(size) => grid.size = size,
             Self::Color(color) => grid.color = color,

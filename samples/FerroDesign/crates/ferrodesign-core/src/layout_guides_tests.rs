@@ -109,6 +109,45 @@ fn indexed_edits_leave_missing_rows_and_effective_locks_unchanged() {
 }
 
 #[test]
+fn orientation_changes_preserve_each_targets_latest_fields_with_exact_history() {
+    let (mut editor, a, b) = fixture();
+    editor.edit_layout_guides(&[a, b], LayoutGuideEdit::Add(columns(LayoutGridAlignment::Stretch, Some(12)))).unwrap();
+    // The UI constructs this command before fields are edited without rebuilding
+    // its combo box. Applying it must resolve each target's current axis values.
+    let rows = LayoutGuideEdit::Set { index: 0, property: LayoutGuideProperty::Kind(LayoutGridKind::Rows) };
+    for (id, alignment, count, gutter, offset, size, color, visible) in [
+        (a, LayoutGridAlignment::End, Some(3), 8.0, 12.0, 36.0, Color::rgba(34, 197, 94, 128), true),
+        (b, LayoutGridAlignment::Start, None, 6.0, 9.0, 18.0, Color::BLACK, false),
+    ] {
+        for property in [LayoutGuideProperty::Alignment(alignment), LayoutGuideProperty::Count(count),
+            LayoutGuideProperty::Gutter(gutter), LayoutGuideProperty::Offset(offset), LayoutGuideProperty::Size(size),
+            LayoutGuideProperty::Color(color), LayoutGuideProperty::Visible(visible)] {
+            editor.edit_layout_guides(&[id], LayoutGuideEdit::Set { index: 0, property }).unwrap();
+        }
+    }
+    let originals = [a, b].map(|id| *editor.document.nodes[&id].layout_guide(0).unwrap());
+    let before = editor.to_json().unwrap(); let depth = editor.history_len();
+    assert_eq!(editor.edit_layout_guides(&[a, b], rows).unwrap(), 2);
+    for (id, original) in [a, b].into_iter().zip(originals) {
+        assert_eq!(editor.document.nodes[&id].layout_guide(0), Some(&LayoutGrid {
+            pattern: LayoutGridPattern::Rows { axis: original.pattern.axis().unwrap() }, ..original
+        }));
+    }
+    let after = editor.to_json().unwrap();
+    assert_ne!(before, after); assert_eq!(editor.history_len(), depth + 1);
+    assert!(editor.undo()); assert_eq!(editor.to_json().unwrap(), before);
+    assert!(editor.redo()); assert_eq!(editor.to_json().unwrap(), after);
+    assert_eq!(editor.edit_layout_guides(&[a, b], rows).unwrap(), 0);
+    assert_eq!(editor.history_len(), depth + 1);
+    editor.edit_layout_guides(&[a, b], LayoutGuideEdit::Set {
+        index: 0, property: LayoutGuideProperty::Kind(LayoutGridKind::Columns),
+    }).unwrap();
+    for (id, original) in [a, b].into_iter().zip(originals) {
+        assert_eq!(editor.document.nodes[&id].layout_guide(0), Some(&original));
+    }
+}
+
+#[test]
 fn invalid_batches_and_guide_limits_preserve_every_field_and_redo() {
     let (mut editor, a, b) = fixture();
     editor.edit_layout_guides(&[a, b], LayoutGuideEdit::Add(columns(LayoutGridAlignment::Start, Some(3)))).unwrap();

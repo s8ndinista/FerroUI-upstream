@@ -1,6 +1,6 @@
 //! Native frame/style guide stacks sharing inspector draft and lifecycle semantics.
 use super::*;
-use ferrodesign_core::{LayoutGrid, LayoutGridAlignment, LayoutGridAxis, LayoutGridEdit,
+use ferrodesign_core::{LayoutGrid, LayoutGridAlignment, LayoutGridAxis, LayoutGridEdit, LayoutGridKind,
     LayoutGridPattern, LayoutGuideEdit, LayoutGuideProperty};
 
 #[derive(Clone)]
@@ -109,10 +109,10 @@ impl EditorShell {
         panel.set_name(Some(control_name(&target, "Card", index)));
         panel.children().add(style_label(&format!("Guide {}", index + 1)));
         let selected = match grid.pattern { LayoutGridPattern::Square => 0, LayoutGridPattern::Columns { .. } => 1, LayoutGridPattern::Rows { .. } => 2 };
-        let axis = grid.pattern.axis().unwrap_or_default();
+        let kinds = [LayoutGridKind::Square, LayoutGridKind::Columns, LayoutGridKind::Rows];
         panel.children().add(self.layout_guide_choice(target.clone(), &control_name(&target, "Pattern", index),
             &["Square grid", "Columns", "Rows"], selected, move |choice| LayoutGuideEdit::Set {
-                index, property: LayoutGuideProperty::Pattern(pattern(choice, axis)),
+                index, property: LayoutGuideProperty::Kind(kinds[choice]),
             }));
         if let Some(axis) = grid.pattern.axis() {
             let labels = if selected == 1 { ["Left", "Center", "Right", "Stretch"] } else { ["Top", "Center", "Bottom", "Stretch"] };
