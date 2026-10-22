@@ -8,6 +8,11 @@ mod info_badge;
 mod info_bar;
 mod info_bar_panel;
 mod navigation;
+mod navigation_view;
+mod navigation_view_automation_peer;
+mod navigation_view_events;
+mod navigation_view_item;
+mod navigation_view_item_automation_peer;
 mod number_box;
 mod number_box_automation_peer;
 mod number_box_expression;
@@ -35,6 +40,21 @@ pub use navigation::{
     FrameNavigationOptions, NavigatingCancelEventArgs, NavigationCacheMode, NavigationError,
     NavigationEventArgs, NavigationFailedEventArgs, NavigationMode, NavigationStack, PageStackEntry,
 };
+pub use navigation_view::NavigationView;
+pub use navigation_view_automation_peer::NavigationViewAutomationPeer;
+pub use navigation_view_events::{
+    NavigationViewBackButtonVisible, NavigationViewBackRequestedEventArgs,
+    NavigationViewDisplayMode, NavigationViewDisplayModeChangedEventArgs,
+    NavigationViewItemCollapsedEventArgs, NavigationViewItemExpandingEventArgs,
+    NavigationViewItemInvokedEventArgs, NavigationViewPaneClosingEventArgs,
+    NavigationViewPaneDisplayMode, NavigationViewSelectionChangedEventArgs,
+    NavigationViewSelectionFollowsFocus,
+};
+pub use navigation_view_item::{
+    NavigationViewItem, NavigationViewItemBase, NavigationViewItemHeader,
+    NavigationViewItemSeparator,
+};
+pub use navigation_view_item_automation_peer::NavigationViewItemAutomationPeer;
 pub use page::{Page, PageImpl, PageImplExt, PageVTable};
 pub use progress_ring::{ProgressRing, ProgressRingTemplateSettings};
 pub use progress_ring_automation_peer::ProgressRingAutomationPeer;

@@ -79,6 +79,8 @@ const NAMESPACES: &[(&str, &str)] = &[
     ("ferroui_controls::templates", "FerroUI.Controls.Templates"),
     ("ferroui_controls::utils", "FerroUI.Controls.Utils"),
     ("ferroui_controls::winui", "FerroUI.Controls.WinUI"),
+    ("ferroui_controls::winui::navigation_view_automation_peer", "FerroUI.Controls.WinUI.Automation.Peers"),
+    ("ferroui_controls::winui::navigation_view_item_automation_peer", "FerroUI.Controls.WinUI.Automation.Peers"),
 ];
 
 /// What this crate states about itself for markup: its assembly name and
@@ -132,6 +134,13 @@ const TYPES: &[&TypeInfo] = types![
     crate::winui::AutoSuggestBoxAutomationPeer,
     crate::winui::Page,
     crate::winui::Frame,
+    crate::winui::NavigationView,
+    crate::winui::NavigationViewAutomationPeer,
+    crate::winui::NavigationViewItemBase,
+    crate::winui::NavigationViewItem,
+    crate::winui::NavigationViewItemHeader,
+    crate::winui::NavigationViewItemSeparator,
+    crate::winui::NavigationViewItemAutomationPeer,
     crate::winui::PageStackEntry,
     crate::winui::NumberBox,
     crate::winui::NumberBoxAutomationPeer,

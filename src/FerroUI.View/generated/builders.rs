@@ -1791,6 +1791,58 @@ pub fn win_ui_info_bar_panel() -> El<ferroui_controls::winui::InfoBarPanel> {
     El::new()
 }
 
+pub use ferroui_controls::winui::NavigationView as WinUINavigationView;
+
+impl ViewClass for ferroui_controls::winui::NavigationView {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::NavigationView>::new()
+    }
+}
+
+/// Starts an element of [`WinUINavigationView`](ferroui_controls::winui::NavigationView).
+pub fn win_ui_navigation_view() -> El<ferroui_controls::winui::NavigationView> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::NavigationViewItem as WinUINavigationViewItem;
+
+impl ViewClass for ferroui_controls::winui::NavigationViewItem {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::NavigationViewItem>::new()
+    }
+}
+
+/// Starts an element of [`WinUINavigationViewItem`](ferroui_controls::winui::NavigationViewItem).
+pub fn win_ui_navigation_view_item() -> El<ferroui_controls::winui::NavigationViewItem> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::NavigationViewItemHeader as WinUINavigationViewItemHeader;
+
+impl ViewClass for ferroui_controls::winui::NavigationViewItemHeader {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::NavigationViewItemHeader>::new()
+    }
+}
+
+/// Starts an element of [`WinUINavigationViewItemHeader`](ferroui_controls::winui::NavigationViewItemHeader).
+pub fn win_ui_navigation_view_item_header() -> El<ferroui_controls::winui::NavigationViewItemHeader> {
+    El::new()
+}
+
+pub use ferroui_controls::winui::NavigationViewItemSeparator as WinUINavigationViewItemSeparator;
+
+impl ViewClass for ferroui_controls::winui::NavigationViewItemSeparator {
+    fn create() -> ferroui_base::Ref<Self> {
+        <ferroui_controls::winui::NavigationViewItemSeparator>::new()
+    }
+}
+
+/// Starts an element of [`WinUINavigationViewItemSeparator`](ferroui_controls::winui::NavigationViewItemSeparator).
+pub fn win_ui_navigation_view_item_separator() -> El<ferroui_controls::winui::NavigationViewItemSeparator> {
+    El::new()
+}
+
 pub use ferroui_controls::winui::NumberBox as WinUINumberBox;
 
 impl ViewClass for ferroui_controls::winui::NumberBox {
@@ -7935,6 +7987,193 @@ pub trait WinUIInfoBarTemplateSettingsProps: ElementBuilder {
     }
 }
 impl<T: ObjectType + Upcast<ferroui_controls::winui::InfoBarTemplateSettings>> WinUIInfoBarTemplateSettingsProps for El<T> {}
+
+/// The properties and routed events of [`WinUINavigationView`](ferroui_controls::winui::NavigationView).
+pub trait WinUINavigationViewProps: ElementBuilder {
+    /// Sets [`WinUINavigationView::is_pane_open_property`](ferroui_controls::winui::NavigationView::is_pane_open_property).
+    fn is_pane_open<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::is_pane_open_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::compact_mode_threshold_width_property`](ferroui_controls::winui::NavigationView::compact_mode_threshold_width_property).
+    fn compact_mode_threshold_width<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::compact_mode_threshold_width_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::expanded_mode_threshold_width_property`](ferroui_controls::winui::NavigationView::expanded_mode_threshold_width_property).
+    fn expanded_mode_threshold_width<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::expanded_mode_threshold_width_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::is_settings_visible_property`](ferroui_controls::winui::NavigationView::is_settings_visible_property).
+    fn is_settings_visible<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::is_settings_visible_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::is_pane_toggle_button_visible_property`](ferroui_controls::winui::NavigationView::is_pane_toggle_button_visible_property).
+    fn is_pane_toggle_button_visible<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::is_pane_toggle_button_visible_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::always_show_header_property`](ferroui_controls::winui::NavigationView::always_show_header_property).
+    fn always_show_header<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::always_show_header_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::compact_pane_length_property`](ferroui_controls::winui::NavigationView::compact_pane_length_property).
+    fn compact_pane_length<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::compact_pane_length_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::open_pane_length_property`](ferroui_controls::winui::NavigationView::open_pane_length_property).
+    fn open_pane_length<M>(self, value: impl IntoProp<f64, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::open_pane_length_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::is_pane_visible_property`](ferroui_controls::winui::NavigationView::is_pane_visible_property).
+    fn is_pane_visible<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::is_pane_visible_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::is_back_enabled_property`](ferroui_controls::winui::NavigationView::is_back_enabled_property).
+    fn is_back_enabled<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::is_back_enabled_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::is_back_button_visible_property`](ferroui_controls::winui::NavigationView::is_back_button_visible_property).
+    fn is_back_button_visible<M>(self, value: impl IntoProp<ferroui_controls::winui::NavigationViewBackButtonVisible, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::is_back_button_visible_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::pane_display_mode_property`](ferroui_controls::winui::NavigationView::pane_display_mode_property).
+    fn pane_display_mode<M>(self, value: impl IntoProp<ferroui_controls::winui::NavigationViewPaneDisplayMode, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::pane_display_mode_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::selection_follows_focus_property`](ferroui_controls::winui::NavigationView::selection_follows_focus_property).
+    fn selection_follows_focus<M>(self, value: impl IntoProp<ferroui_controls::winui::NavigationViewSelectionFollowsFocus, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::selection_follows_focus_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::pane_title_property`](ferroui_controls::winui::NavigationView::pane_title_property).
+    fn pane_title<M>(self, value: impl IntoProp<String, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::pane_title_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::header_property`](ferroui_controls::winui::NavigationView::header_property).
+    fn header<M>(self, value: impl IntoProp<Option<ferroui_base::BoxedValue>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::header_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::header_template_property`](ferroui_controls::winui::NavigationView::header_template_property).
+    fn header_template<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_controls::templates::IDataTemplate>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::header_template_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::selected_item_property`](ferroui_controls::winui::NavigationView::selected_item_property).
+    fn selected_item<M>(self, value: impl IntoProp<Option<ferroui_base::BoxedValue>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::selected_item_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::pane_header_property`](ferroui_controls::winui::NavigationView::pane_header_property).
+    fn pane_header<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::Control>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::pane_header_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::pane_footer_property`](ferroui_controls::winui::NavigationView::pane_footer_property).
+    fn pane_footer<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::Control>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::pane_footer_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::pane_custom_content_property`](ferroui_controls::winui::NavigationView::pane_custom_content_property).
+    fn pane_custom_content<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::Control>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::pane_custom_content_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::content_overlay_property`](ferroui_controls::winui::NavigationView::content_overlay_property).
+    fn content_overlay<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::Control>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::content_overlay_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::auto_suggest_box_property`](ferroui_controls::winui::NavigationView::auto_suggest_box_property).
+    fn auto_suggest_box<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::winui::AutoSuggestBox>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::auto_suggest_box_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::menu_items_source_property`](ferroui_controls::winui::NavigationView::menu_items_source_property).
+    fn menu_items_source<M>(self, value: impl IntoProp<Option<ferroui_controls::ItemsSource>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::menu_items_source_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::footer_menu_items_source_property`](ferroui_controls::winui::NavigationView::footer_menu_items_source_property).
+    fn footer_menu_items_source<M>(self, value: impl IntoProp<Option<ferroui_controls::ItemsSource>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::footer_menu_items_source_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::menu_item_template_property`](ferroui_controls::winui::NavigationView::menu_item_template_property).
+    fn menu_item_template<M>(self, value: impl IntoProp<Option<std::rc::Rc<dyn ferroui_controls::templates::IDataTemplate>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::menu_item_template_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::pane_toggle_button_style_property`](ferroui_controls::winui::NavigationView::pane_toggle_button_style_property).
+    fn pane_toggle_button_style<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_base::styling::ControlTheme>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::pane_toggle_button_style_property(), value)
+    }
+
+    /// Sets [`WinUINavigationView::menu_item_container_style_property`](ferroui_controls::winui::NavigationView::menu_item_container_style_property).
+    fn menu_item_container_style<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_base::styling::ControlTheme>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationView>::menu_item_container_style_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::NavigationView>> WinUINavigationViewProps for El<T> {}
+
+/// The properties and routed events of [`WinUINavigationViewItem`](ferroui_controls::winui::NavigationViewItem).
+pub trait WinUINavigationViewItemProps: ElementBuilder {
+    /// Sets [`WinUINavigationViewItem::icon_property`](ferroui_controls::winui::NavigationViewItem::icon_property).
+    fn icon<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::IconElement>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationViewItem>::icon_property(), value)
+    }
+
+    /// Sets [`WinUINavigationViewItem::info_badge_property`](ferroui_controls::winui::NavigationViewItem::info_badge_property).
+    fn info_badge<M>(self, value: impl IntoProp<Option<ferroui_base::Ref<ferroui_controls::winui::InfoBadge>>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationViewItem>::info_badge_property(), value)
+    }
+
+    /// Sets [`WinUINavigationViewItem::selects_on_invoked_property`](ferroui_controls::winui::NavigationViewItem::selects_on_invoked_property).
+    fn selects_on_invoked<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationViewItem>::selects_on_invoked_property(), value)
+    }
+
+    /// Sets [`WinUINavigationViewItem::is_expanded_property`](ferroui_controls::winui::NavigationViewItem::is_expanded_property).
+    fn is_expanded<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationViewItem>::is_expanded_property(), value)
+    }
+
+    /// Sets [`WinUINavigationViewItem::has_unrealized_children_property`](ferroui_controls::winui::NavigationViewItem::has_unrealized_children_property).
+    fn has_unrealized_children<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationViewItem>::has_unrealized_children_property(), value)
+    }
+
+    /// Sets [`WinUINavigationViewItem::is_child_selected_property`](ferroui_controls::winui::NavigationViewItem::is_child_selected_property).
+    fn is_child_selected<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationViewItem>::is_child_selected_property(), value)
+    }
+
+    /// Sets [`WinUINavigationViewItem::menu_items_source_property`](ferroui_controls::winui::NavigationViewItem::menu_items_source_property).
+    fn menu_items_source<M>(self, value: impl IntoProp<Option<ferroui_controls::ItemsSource>, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationViewItem>::menu_items_source_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::NavigationViewItem>> WinUINavigationViewItemProps for El<T> {}
+
+/// The properties and routed events of [`WinUINavigationViewItemBase`](ferroui_controls::winui::NavigationViewItemBase).
+pub trait WinUINavigationViewItemBaseProps: ElementBuilder {
+    /// Sets [`WinUINavigationViewItemBase::is_selected_property`](ferroui_controls::winui::NavigationViewItemBase::is_selected_property).
+    fn is_selected<M>(self, value: impl IntoProp<bool, M>) -> Self {
+        self.prop(<ferroui_controls::winui::NavigationViewItemBase>::is_selected_property(), value)
+    }
+}
+impl<T: ObjectType + Upcast<ferroui_controls::winui::NavigationViewItemBase>> WinUINavigationViewItemBaseProps for El<T> {}
 
 /// The properties and routed events of [`WinUINumberBox`](ferroui_controls::winui::NumberBox).
 pub trait WinUINumberBoxProps: ElementBuilder {

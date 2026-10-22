@@ -25,6 +25,16 @@ path = "tests/winui_navigation.rs"
 required-features = ["testing"]
 
 [[test]]
+name = "winui_navigation_view"
+path = "tests/winui_navigation_view.rs"
+required-features = ["testing"]
+
+[[test]]
+name = "winui_navigation_items"
+path = "tests/winui_navigation_items.rs"
+required-features = ["testing"]
+
+[[test]]
 name = "winui_number_box"
 path = "tests/winui_number_box.rs"
 required-features = ["testing"]
