@@ -2494,6 +2494,59 @@ mod native {
         context as ime::HIMC
     }
 
+    /// Replaces a window's input scope hints. The UI thread owns the window;
+    /// Windows rejects a handle owned by another thread. A single default scope
+    /// removes the association and is sent before the window is destroyed.
+    pub fn set_input_scopes(hwnd: isize, scopes: &[i32]) -> bool {
+        use windows_sys::Win32::UI::TextServices::{IS_DEFAULT, InputScope};
+
+        // windows-sys exposes the scope values but not these inputscope.h
+        // exports. Keep the ABI here with the other safe system wrappers.
+        #[cfg_attr(not(target_arch = "x86"), link(name = "msctf", kind = "raw-dylib"))]
+        #[cfg_attr(
+            target_arch = "x86",
+            link(name = "msctf", kind = "raw-dylib", import_name_type = "undecorated")
+        )]
+        unsafe extern "system" {
+            fn SetInputScope(hwnd: wf::HWND, scope: InputScope) -> i32;
+            fn SetInputScopes(
+                hwnd: wf::HWND,
+                scopes: *const InputScope,
+                scope_count: u32,
+                phrases: *mut *mut u16,
+                phrase_count: u32,
+                expression: *mut u16,
+                grammar: *mut u16,
+            ) -> i32;
+        }
+
+        let Ok(count) = u32::try_from(scopes.len()) else {
+            return false;
+        };
+        if hwnd == 0 || count == 0 {
+            return false;
+        }
+        // SAFETY: InputScope is the SDK's signed 32-bit enum representation.
+        // The complete array lives through this synchronous call. No phrases,
+        // regular expression, or grammar are supplied. A stale HWND fails.
+        let result = unsafe {
+            if scopes == [IS_DEFAULT] {
+                SetInputScope(h(hwnd), IS_DEFAULT)
+            } else {
+                SetInputScopes(
+                    h(hwnd),
+                    scopes.as_ptr(),
+                    count,
+                    std::ptr::null_mut(),
+                    0,
+                    std::ptr::null_mut(),
+                    std::ptr::null_mut(),
+                )
+            }
+        };
+        result >= 0
+    }
+
     /// `ImmGetContext`: the input context of a window; 0 if it has none.
     /// It is given back with [`imm_release_context`].
     pub fn imm_get_context(hwnd: isize) -> isize {

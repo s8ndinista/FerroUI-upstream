@@ -7,6 +7,10 @@
 //! every host: on Windows the first is the system and the second the
 //! window implementation.
 
+#[path = "imm32_input_options.rs"]
+mod input_options;
+
+use input_options::ImmInputOptions;
 use super::imm32_caret_manager::Imm32CaretManager;
 use super::imm32_context::{ImmContext, ImmWindowContext, OwnedImmContext};
 use crate::interop::unmanaged_methods::{
@@ -42,6 +46,8 @@ pub(crate) trait ImmSystem {
     fn set_caret_pos(&self, x: i32, y: i32);
     fn destroy_caret(&self);
     fn get_active_window(&self) -> isize;
+    /// Sets or clears the scope association on a window of the calling thread.
+    fn set_input_scopes(&self, hwnd: isize, scopes: &[i32]) -> bool;
     /// Tests the next queued message without removing it (Korean END-before-RESULT).
     fn next_message_is_composition_result(&self, _hwnd: isize) -> bool {
         false
@@ -135,6 +141,7 @@ pub(crate) struct Imm32InputMethod {
     context_generation: Cell<u64>,
     parent: RefCell<Option<Weak<dyn Imm32Parent>>>,
     source_site: RefCell<Option<(Weak<()>, Weak<dyn Imm32Parent>)>>,
+    input_options: ImmInputOptions,
     caret_manager: Imm32CaretManager,
     lang_id: Cell<u16>,
     ignore_composition: Cell<bool>,
@@ -162,6 +169,7 @@ impl Imm32InputMethod {
             context_generation: Cell::new(0),
             parent: RefCell::new(None),
             source_site: RefCell::new(None),
+            input_options: ImmInputOptions::default(),
             caret_manager: Imm32CaretManager::default(),
             lang_id: Cell::new(0),
             ignore_composition: Cell::new(false),
@@ -189,6 +197,7 @@ impl Imm32InputMethod {
             transport: self.clone(),
             identity: Rc::new(()),
             parent,
+            options: RefCell::new(None),
         })
     }
 
@@ -440,6 +449,7 @@ impl Imm32InputMethod {
         if self.is_active() {
             self.enable_imm();
         }
+        self.input_options.apply(self);
     }
 
     pub fn clear_language_and_window(&self) {
@@ -458,6 +468,9 @@ impl Imm32InputMethod {
         if hwnd == 0 {
             return;
         }
+        // Native cleanup may run user callbacks. Stage any replacement scope
+        // until the outgoing association and physical ownership are retired.
+        let options_guard = self.input_options.pause();
         let record = self
             .contexts
             .borrow()
@@ -499,6 +512,7 @@ impl Imm32InputMethod {
                 None
             } else {
                 self.source_site.take();
+                self.input_options.update(None);
                 self.connection.take();
                 self.composition_session.take();
                 self.is_composing.set(false);
@@ -506,7 +520,10 @@ impl Imm32InputMethod {
                 self.set_composition(None);
                 self.client.take()
             };
-            self.caret_manager.try_destroy(&*self.system);
+            self.input_options.retire_window(hwnd, parent, &*self.system);
+            if self.generation.get() == generation {
+                self.caret_manager.try_destroy(&*self.system);
+            }
             if self.generation.get() == generation {
                 if let Some(previous) = previous {
                     previous.set_preedit_text_with_cursor(None, None);
@@ -528,12 +545,15 @@ impl Imm32InputMethod {
             self.source_site.take();
             self.set_client(None);
         }
+        self.input_options.retire_window(hwnd, parent, &*self.system);
         if let Some(record) = record {
             record.dispose();
             self.contexts
                 .borrow_mut()
                 .retain(|current| !Rc::ptr_eq(current, &record));
         }
+        drop(options_guard);
+        self.input_options.apply(self);
     }
 
     // see: https://chromium.googlesource.com/experimental/chromium/src/+/bf09a5036ccfb77d2277247c66dc55daf41df3fe/chrome/browser/ime_input.cc
@@ -923,6 +943,8 @@ struct Imm32InputMethodSite {
     transport: Rc<Imm32InputMethod>,
     identity: Rc<()>,
     parent: Weak<dyn Imm32Parent>,
+    // The manager sends options before SetClient establishes site ownership.
+    options: RefCell<Option<TextInputOptions>>,
 }
 
 impl ITextInputMethodImpl for Imm32InputMethodSite {
@@ -937,6 +959,7 @@ impl ITextInputMethodImpl for Imm32InputMethodSite {
             }
             *self.transport.source_site.borrow_mut() =
                 Some((Rc::downgrade(&self.identity), self.parent.clone()));
+            self.transport.input_options.update(self.options.borrow().clone());
             self.transport.set_client(client);
         } else if self.transport.owns_site(&self.identity) {
             self.transport.source_site.take();
@@ -949,6 +972,7 @@ impl ITextInputMethodImpl for Imm32InputMethodSite {
         }
     }
     fn set_options(&self, options: &TextInputOptions) {
+        self.options.replace(Some(options.clone()));
         if self.transport.owns_site(&self.identity) {
             self.transport.set_options(options);
         }
@@ -972,6 +996,9 @@ impl ITextInputMethodImpl for Imm32InputMethod {
             && (self.is_composing.get() || self.composition_session.borrow().is_some());
         let generation = self.generation.get().wrapping_add(1);
         self.generation.set(generation);
+        if client.is_none() {
+            self.input_options.update(None);
+        }
         self.composition_session.take();
         self.connection.take();
         if self.managed_input.get()
@@ -1011,6 +1038,10 @@ impl ITextInputMethodImpl for Imm32InputMethod {
         *self.connection.borrow_mut() = connection;
         *self.client.borrow_mut() = client;
 
+        self.input_options.apply(self);
+        if self.generation.get() != generation {
+            return;
+        }
         let this = self.this.clone();
         self.system.post(Box::new(move || {
             let Some(this) = this.upgrade() else {
@@ -1059,8 +1090,9 @@ impl ITextInputMethodImpl for Imm32InputMethod {
         }));
     }
 
-    fn set_options(&self, _options: &TextInputOptions) {
-        // we're skipping this. not usable on windows
+    fn set_options(&self, options: &TextInputOptions) {
+        self.input_options.update(Some(options.clone()));
+        self.input_options.apply(self);
     }
 
     fn reset(&self) {
@@ -1145,6 +1177,7 @@ impl Imm32InputMethod {
 
 impl Drop for Imm32InputMethod {
     fn drop(&mut self) {
+        self.input_options.dispose(&*self.system);
         self.caret_manager.try_destroy(&*self.system);
         let contexts = self.contexts.take();
         for context in contexts {
@@ -1229,6 +1262,10 @@ mod imp {
             native::get_active_window()
         }
 
+        fn set_input_scopes(&self, hwnd: isize, scopes: &[i32]) -> bool {
+            native::set_input_scopes(hwnd, scopes)
+        }
+
         fn next_message_is_composition_result(&self, hwnd: isize) -> bool {
             native::next_message_is_composition_result(hwnd)
         }
@@ -1280,6 +1317,7 @@ pub(crate) mod tests {
         CreateCaret(isize, i32, i32),
         SetCaretPos(i32, i32),
         DestroyCaret,
+        SetInputScopes(isize, Vec<i32>),
     }
 
     /// The system as a record of the calls made of it, with the answers a
@@ -1300,6 +1338,9 @@ pub(crate) mod tests {
         pub result_string: RefCell<Option<String>>,
         pub cursor: Cell<i32>,
         pub next_result: Cell<bool>,
+        pub refuse_input_scopes: Cell<bool>,
+        pub complete_input_scopes_after_callback: Cell<bool>,
+        pub input_scopes: RefCell<std::collections::BTreeMap<isize, Vec<i32>>>,
     }
 
     impl FakeSystem {
@@ -1319,6 +1360,9 @@ pub(crate) mod tests {
                 result_string: RefCell::new(None),
                 cursor: Cell::new(-1),
                 next_result: Cell::new(false),
+                refuse_input_scopes: Cell::new(false),
+                complete_input_scopes_after_callback: Cell::new(false),
+                input_scopes: RefCell::new(std::collections::BTreeMap::new()),
             })
         }
 
@@ -1467,6 +1511,28 @@ pub(crate) mod tests {
 
         fn get_active_window(&self) -> isize {
             self.active_window.get()
+        }
+
+        fn set_input_scopes(&self, hwnd: isize, scopes: &[i32]) -> bool {
+            let success = !self.refuse_input_scopes.get();
+            let delayed = self.complete_input_scopes_after_callback.get();
+            let apply = || {
+                if success {
+                    if scopes == [0] {
+                        self.input_scopes.borrow_mut().remove(&hwnd);
+                    } else {
+                        self.input_scopes.borrow_mut().insert(hwnd, scopes.to_vec());
+                    }
+                }
+            };
+            if !delayed {
+                apply();
+            }
+            self.record(Call::SetInputScopes(hwnd, scopes.to_vec()));
+            if delayed {
+                apply();
+            }
+            success
         }
 
         fn next_message_is_composition_result(&self, _hwnd: isize) -> bool {

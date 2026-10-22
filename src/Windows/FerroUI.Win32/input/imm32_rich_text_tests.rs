@@ -393,3 +393,154 @@ fn imm32_rich_reentrant_native_cancellation_preserves_the_replacement_window_cli
     );
     assert!(f.system.borrows.borrow().values().all(|count| *count == 0));
 }
+
+#[test]
+fn imm32_input_scope_live_rich_names_preserve_composition_history_and_plain_text() {
+    use ferroui_base::input::{InputScope, InputScopeName, InputScopeNameValue as Scope};
+    let f = Fixture::new();
+    let connection = f.native.connection.borrow().clone().unwrap();
+    f.native.handle_composition_start();
+    f.preview("preview");
+    let before = f.owner.document().snapshot();
+    let scope = InputScope::with_name_value(Scope::EmailSmtpAddress);
+    scope
+        .names()
+        .add(InputScopeName::with_name_value(Scope::Digits));
+    f.system.take_calls();
+    f.owner.set_input_scope(scope.clone());
+    scope.names().get(0).set_name_value(Scope::NumericPin);
+    let calls = f.system.take_calls();
+    assert_eq!(
+        calls
+            .iter()
+            .filter(|call| matches!(call, Call::SetInputScopes(..)))
+            .cloned()
+            .collect::<Vec<_>>(),
+        vec![
+            Call::SetInputScopes(HWND, vec![5, 28]),
+            Call::SetInputScopes(HWND, vec![64, 28, 61])
+        ]
+    );
+    assert!(!calls.iter().any(|call| matches!(call, Call::NotifyIme(..))));
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert!(Rc::ptr_eq(
+        &connection,
+        f.native.connection.borrow().as_ref().unwrap()
+    ));
+    assert!(f.owner.editor().is_composing());
+    assert!(!f.owner.can_undo());
+    // A numeric or secret keyboard hint does not filter or mask rich text.
+    f.commit("accepted");
+    assert_eq!(f.owner.text(), "aacceptedd");
+    assert!(f.owner.undo().unwrap());
+    assert_eq!(f.owner.text(), "abcd");
+}
+
+#[test]
+fn imm32_input_scope_recipient_release_retains_the_semantic_owners_options() {
+    use ferroui_base::input::InputScopeNameValue as Scope;
+    let f = Fixture::new();
+    let source: Rc<dyn Imm32Parent> = f.parent.clone();
+    let site = f.native.for_window(Rc::downgrade(&source));
+    site.set_options(&TextInputOptions {
+        input_scope_names: Some(Rc::from([Scope::EmailSmtpAddress])),
+        ..Default::default()
+    });
+    site.set_client(f.native.client());
+    let connection = f.native.connection.borrow().clone().unwrap();
+    f.native.handle_composition_start();
+    f.preview("preview");
+
+    let temporary = Rc::new(Parent::default());
+    temporary.hwnd.set(HWND + 1);
+    temporary.scale.set(1.0);
+    let temporary: Rc<dyn Imm32Parent> = temporary;
+    f.native
+        .set_language_and_window(Rc::downgrade(&temporary), HWND + 1, 0x411);
+    f.system.take_calls();
+    f.native
+        .release_window(HWND + 1, &Rc::downgrade(&temporary));
+    assert_eq!(
+        f.system
+            .take_calls()
+            .into_iter()
+            .filter(|call| matches!(call, Call::SetInputScopes(..)))
+            .collect::<Vec<_>>(),
+        vec![Call::SetInputScopes(HWND + 1, vec![0])]
+    );
+    assert!(f.native.is_active());
+    assert_eq!(f.native.hwnd(), 0);
+    assert!(Rc::ptr_eq(
+        &connection,
+        f.native.connection.borrow().as_ref().unwrap()
+    ));
+    assert!(f.owner.editor().is_composing());
+    assert_eq!(f.owner.text(), "apreviewd");
+
+    let replacement = Rc::new(Parent::default());
+    replacement.hwnd.set(HWND + 2);
+    replacement.scale.set(1.0);
+    let replacement: Rc<dyn Imm32Parent> = replacement;
+    f.native
+        .set_language_and_window(Rc::downgrade(&replacement), HWND + 2, 0x411);
+    assert_eq!(
+        f.system
+            .take_calls()
+            .into_iter()
+            .filter(|call| matches!(call, Call::SetInputScopes(..)))
+            .collect::<Vec<_>>(),
+        vec![Call::SetInputScopes(HWND + 2, vec![5])]
+    );
+    assert_eq!(
+        f.system.input_scopes.borrow().get(&(HWND + 2)),
+        Some(&vec![5])
+    );
+    f.commit("accepted");
+    assert_eq!(f.owner.text(), "aacceptedd");
+}
+
+#[test]
+fn imm32_input_scope_source_release_clears_its_distinct_physical_recipient() {
+    use ferroui_base::input::InputScopeNameValue as Scope;
+    let f = Fixture::new();
+    let source: Rc<dyn Imm32Parent> = f.parent.clone();
+    let site = f.native.for_window(Rc::downgrade(&source));
+    site.set_options(&TextInputOptions {
+        input_scope_names: Some(Rc::from([Scope::Digits])),
+        ..Default::default()
+    });
+    site.set_client(f.native.client());
+    f.native.handle_composition_start();
+    f.preview("preview");
+    let recipient = Rc::new(Parent::default());
+    recipient.hwnd.set(HWND + 1);
+    recipient.scale.set(1.0);
+    let recipient: Rc<dyn Imm32Parent> = recipient;
+    f.native
+        .set_language_and_window(Rc::downgrade(&recipient), HWND + 1, 0x411);
+    f.system.take_calls();
+    f.native.release_window(HWND, &Rc::downgrade(&source));
+    assert_eq!(
+        f.system
+            .take_calls()
+            .into_iter()
+            .filter(|call| matches!(call, Call::SetInputScopes(..)))
+            .collect::<Vec<_>>(),
+        vec![Call::SetInputScopes(HWND + 1, vec![0])]
+    );
+    assert!(!f.native.is_active());
+    assert!(f.system.input_scopes.borrow().is_empty());
+    assert_eq!(f.owner.text(), "abcd");
+    assert!(!f.owner.can_undo());
+    site.set_options(&TextInputOptions {
+        input_scope_names: Some(Rc::from([Scope::Url])),
+        ..Default::default()
+    });
+    f.system.run_posted();
+    assert!(
+        !f.system
+            .take_calls()
+            .iter()
+            .any(|call| matches!(call, Call::SetInputScopes(..)))
+    );
+}
