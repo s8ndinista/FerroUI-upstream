@@ -1017,6 +1017,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "ferroui-dependency-injection"
+version = "0.4.0"
+dependencies = [
+ "ferroui-splat",
+ "ferroui-system",
+]
+
+[[package]]
+name = "ferroui-dependency-injection-tests"
+version = "0.4.0"
+dependencies = [
+ "ferroui-dependency-injection",
+ "ferroui-reactiveui",
+ "ferroui-splat",
+ "ferroui-system",
+]
+
+[[package]]
 name = "ferroui-designer-support"
 version = "0.4.0"
 dependencies = [
