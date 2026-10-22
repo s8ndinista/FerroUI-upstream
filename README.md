@@ -419,6 +419,16 @@ let builder = builder.after_setup(|builder| {
 });
 ```
 
+Remote inspection and automation are available through the opt-in [Chrome DevTools Protocol endpoint](docs/devtools-cdp.md):
+
+```sh
+FERROUI_CDP_PORT=9222 cargo run -p control-catalog-desktop --features cdp
+```
+
+Connect Chrome DevTools through `chrome://inspect`, or use a Playwright CDP session. The facade
+feature is `devtools`; `ferroui-inspect` provides the shared inspection core. Browser builds can
+opt into a JavaScript transport bridge. See the guide for supported commands and limitations.
+
 ## Repository layout
 
 The layout follows the upstream project so that files can be compared side by side; the crate of each directory is in the table of crates above.

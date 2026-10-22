@@ -1,0 +1,23 @@
+[package]
+name = "ferroui-inspect"
+description = "UI-thread inspection primitives shared by remote developer tools"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[lib]
+path = "lib.rs"
+
+[dependencies]
+ferroui-base.workspace = true
+ferroui-controls.workspace = true
+ferroui-markup.workspace = true
+
+[package.metadata.release]
+group = "controls"

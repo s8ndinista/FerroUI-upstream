@@ -139,6 +139,7 @@ Two names are not under the `ferroui-` prefix. The owner decided on 2026-10-10 t
   | `winui-theme` | `ferroui-themes-winui` | `themes_winui` | no |
   | `xaml` | `ferroui-markup-xaml` and the run-time loader (`ferroui-markup-xaml-loader` with its feature `runtime`) | `markup_xaml`, `markup_xaml_loader` | no |
   | `color-picker`, `dialogs` | `ferroui-controls-color-picker`, `ferroui-dialogs` | `controls_color_picker`, `dialogs` | no |
+  | `devtools` | `ferroui-devtools`, `ferroui-inspect` (opt-in CDP inspection and automation) | `devtools` | no |
   | `diagnostics` | `ferroui-diagnostics` (added for 0.4) | `diagnostics` | no |
   | `treedatagrid` | `ferroui-controls-treedatagrid` and `ferroui-treedatagrid-core` (added for 0.2) | `controls_treedatagrid`, `treedatagrid_core` | no |
   | `browser` | `ferroui-browser`, with Skia and HarfBuzz | `browser`, `skia`, `harfbuzz` | no |
@@ -355,3 +356,5 @@ Made by the owner on 2026-10-10, before the first preview was released (on 2026-
 6. **The token**: the repository secret `CARGO_REGISTRY_TOKEN`; trusted publishing can replace it now that the crates exist.
 7. **The unfinished platforms**: all are in the first preview (Windows, Linux on X11 with the FreeDesktop services, iOS, Android), with their state in the changelog; Android with the note that its native library needs a nightly toolchain (since 2026-10-15 it builds with stable Rust: `docs/porting/android-platform.md`, section 5.1).
 8. **The changelog entry**: `CHANGELOG.md`, the entry of `0.1.0-preview.1`.
+
+`ferroui-inspect` and `ferroui-devtools` are in the Controls and themes release group. Publish the inspection core before the CDP adapter and the facade. The native adapter uses its optional `server` feature; the browser bridge uses `browser` with default features disabled. See [CDP developer tools](devtools-cdp.md).

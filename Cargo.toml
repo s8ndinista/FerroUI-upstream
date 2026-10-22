@@ -40,6 +40,8 @@ members = [
     "src/FerroUI.Fonts.Inter",
     "src/FerroUI.Dialogs",
     "src/FerroUI.Diagnostics",
+    "src/FerroUI.Inspect",
+    "src/FerroUI.DevTools",
     "src/FerroUI.Themes.Simple",
     "src/FerroUI.Themes.Fluent",
     "src/FerroUI.Themes.WinUI",
@@ -145,6 +147,8 @@ categories = ["gui"]
 # that the crates of a release are only ever resolved together (docs/release.md, "Version scheme").
 # `scripts/release/set-version.sh <version>` writes the version above and these keys.
 [workspace.dependencies]
+ferroui-inspect = { version = "=0.4.0", path = "src/FerroUI.Inspect" }
+ferroui-devtools = { version = "=0.4.0", path = "src/FerroUI.DevTools", default-features = false }
 ferroui-system = { version = "=0.4.0", path = "src/FerroUI.System" }
 ferroui-reactive = { version = "=0.4.0", path = "src/FerroUI.Reactive" }
 ferroui-reactive-testing = { version = "=0.4.0", path = "src/FerroUI.Reactive.Testing" }
