@@ -1,16 +1,33 @@
 //! Port of `Diagnostics/ViewModels/TreePageViewModel.cs`.
+//!
+//! Upstream shows the nodes of a tree page in a tree view whose items are the nodes and whose
+//! selected item is `SelectedNode`. The port shows them in a TreeDataGrid: the page holds a
+//! hierarchical source of the nodes ([`TreePageViewModel::nodes_source`]) with one expander
+//! column, whose children are the children of a node (a
+//! [`TreeNodeCollection`](super::TreeNodeCollection), filled when the row of its node is shown or
+//! expanded) and whose expansion is `IsExpanded` of a node; the selection of the rows and
+//! `SelectedNode` follow each other (docs/porting/DEVIATIONS.md, Developer tools).
 
 use super::{ControlDetailsViewModel, FilterViewModel, MainViewModel, TreeNode, ViewModelBase};
 use ferroui_base::collections::FerroList;
+use ferroui_base::controls::ResourceKey;
 use ferroui_base::data::model::{Event, INotifyPropertyChanged};
 use ferroui_base::metadata::MarkupAssembly;
 use ferroui_base::reactive::{Disposable, IDisposable};
 use ferroui_base::utilities::HandlerList;
 use ferroui_base::{ferro_markup_type, Ref, TypeInfo, Visual};
-use ferroui_controls::Control;
-use std::cell::RefCell;
+use ferroui_controls::{Control, GridLength};
+use ferroui_controls_treedatagrid::models::{HierarchicalExpanderColumn, IViewColumn, TemplateColumn, TemplateColumnOptions};
+use ferroui_controls_treedatagrid::TreeDataGridSourceRef;
+use ferroui_treedatagrid_core::models::ColumnRef;
+use ferroui_treedatagrid_core::selection::TreeSelectionModelSelectionChangedEventArgsOf;
+use ferroui_treedatagrid_core::{Accessor, HierarchicalTreeDataGridSource, IndexPath, Models};
+use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
 use std::rc::{Rc, Weak};
+
+/// The key of the data template of the cells of the nodes, a resource of the view of a tree page.
+pub const TREE_NODE_CELL_TEMPLATE: &str = "TreeNodeCell";
 
 // The list of the root nodes, delivered to the items of the tree view.
 ferroui_controls::ferro_markup_list!(pub TreeNodeList: Rc<TreeNode>);
@@ -30,6 +47,11 @@ pub struct TreePageViewModel {
     setters_filter: Rc<FilterViewModel>,
     nodes: RefCell<FerroList<Rc<TreeNode>>>,
     filter_subscriptions: RefCell<Vec<Rc<dyn IDisposable>>>,
+    // Deviation (DEVIATIONS.md, Developer tools): the source of the TreeDataGrid of the page, in
+    // place of the items of upstream's tree view, and whether the selection of its rows is being
+    // set from `SelectedNode` (or the reverse).
+    nodes_source: Rc<HierarchicalTreeDataGridSource<TreeNode>>,
+    updating_selection: Cell<bool>,
 }
 
 impl PartialEq for TreePageViewModel {
@@ -66,6 +88,11 @@ impl TreePageViewModel {
         nodes: Vec<Rc<TreeNode>>,
         pinned_properties: Rc<RefCell<HashSet<String>>>,
     ) -> Rc<Self> {
+        TreeNode::register_model();
+        let nodes = FerroList::from_items(nodes);
+        let nodes_source = HierarchicalTreeDataGridSource::new(Rc::new(nodes.clone()) as Models<TreeNode>);
+        Self::create_nodes_columns(&nodes_source);
+
         let this = Rc::new_cyclic(|this: &Weak<TreePageViewModel>| TreePageViewModel {
             base: ViewModelBase::new(),
             this: this.clone(),
@@ -76,9 +103,24 @@ impl TreePageViewModel {
             main_view,
             properties_filter: FilterViewModel::new(),
             setters_filter: FilterViewModel::new(),
-            nodes: RefCell::new(FerroList::from_items(nodes)),
+            nodes: RefCell::new(nodes),
             filter_subscriptions: RefCell::new(Vec::new()),
+            nodes_source,
+            updating_selection: Cell::new(false),
         });
+
+        // Deviation (DEVIATIONS.md, Developer tools): the selected row of the TreeDataGrid is the
+        // selected node (the two-way binding of `SelectedItem` of upstream's tree view).
+        if let Some(row_selection) = this.nodes_source.row_selection() {
+            let weak = Rc::downgrade(&this);
+            row_selection.add_selection_changed(Rc::new(
+                move |_: &TreeSelectionModelSelectionChangedEventArgsOf<TreeNode>| {
+                    if let Some(this) = weak.upgrade() {
+                        this.on_row_selection_changed();
+                    }
+                },
+            ));
+        }
 
         let weak = Rc::downgrade(&this);
         let properties = this.properties_filter.refresh_filter(move || {
@@ -135,7 +177,125 @@ impl TreePageViewModel {
 
     /// `protected set` of `Nodes`.
     pub fn set_nodes(&self, value: Vec<Rc<TreeNode>>) {
-        *self.nodes.borrow_mut() = FerroList::from_items(value);
+        let nodes = FerroList::from_items(value);
+        *self.nodes.borrow_mut() = nodes.clone();
+
+        // Deviation (DEVIATIONS.md, Developer tools): the root rows of the TreeDataGrid, with the
+        // selected node selected again when it is still in the tree.
+        self.updating_selection.set(true);
+        self.nodes_source.set_items(Rc::new(nodes) as Models<TreeNode>);
+        let selected = self.selected_node();
+        let reselected = self.select_row(selected.as_ref());
+        self.updating_selection.set(false);
+        if !reselected {
+            self.set_selected_node(None);
+        }
+    }
+
+    /// The column of the TreeDataGrid of the page: the expander of a node, around the cell of the
+    /// node (the data template [`TREE_NODE_CELL_TEMPLATE`] of the view: what the item template of
+    /// upstream's tree view shows), with the children of the node as the child rows and
+    /// `IsExpanded` of the node as the expansion of its row.
+    ///
+    /// Deviation (DEVIATIONS.md, Developer tools): upstream shows the nodes in a tree view.
+    fn create_nodes_columns(source: &HierarchicalTreeDataGridSource<TreeNode>) {
+        let options = TemplateColumnOptions::<TreeNode>::new();
+        options.set_can_user_resize_column(Some(false));
+        options.set_can_user_sort_column(Some(false));
+        let cell_column = TemplateColumn::from_resource_keys(
+            None,
+            ResourceKey::from(TREE_NODE_CELL_TEMPLATE),
+            None,
+            Some(GridLength::AUTO),
+            Some(Rc::new(options)),
+        );
+        source.columns().add(HierarchicalExpanderColumn::new(
+            cell_column as Rc<dyn IViewColumn<TreeNode>>,
+            // The children of a node are filled the first time they are asked for: when the row
+            // of the node is shown (whether it has children decides its expander) or expanded.
+            |node: &Rc<TreeNode>| Some(node.children() as Models<TreeNode>),
+            None,
+            Some(
+                Accessor::member("IsExpanded", |node: &Rc<TreeNode>| node.is_expanded())
+                    .with_setter(|node: &Rc<TreeNode>, value: bool| node.set_is_expanded(value)),
+            ),
+        ) as ColumnRef<TreeNode>);
+    }
+
+    /// The source of the TreeDataGrid of the page: the rows of the nodes.
+    pub fn nodes_source(&self) -> Rc<HierarchicalTreeDataGridSource<TreeNode>> {
+        self.nodes_source.clone()
+    }
+
+    /// The source of the TreeDataGrid of the page, as the grid takes it.
+    pub fn nodes_source_ref(&self) -> TreeDataGridSourceRef {
+        TreeDataGridSourceRef::of::<TreeNode, _>(self.nodes_source.clone())
+    }
+
+    /// The index path of the row of a node in the source: the index of each of its ancestors
+    /// among the children of its parent, from the root node down to the node; `None` when the
+    /// node is not in the trees of the page.
+    pub fn index_path_of(&self, node: &Rc<TreeNode>) -> Option<IndexPath> {
+        let mut indexes = Vec::new();
+        let mut current = node.clone();
+        loop {
+            match current.parent() {
+                Some(parent) => {
+                    let index = parent.children().index_of(&current);
+                    if index < 0 {
+                        return None;
+                    }
+                    indexes.push(index);
+                    current = parent;
+                }
+                None => {
+                    let index = self.nodes().index_of(&current)?;
+                    indexes.push(index as i32);
+                    break;
+                }
+            }
+        }
+        indexes.reverse();
+        Some(IndexPath::from_indexes(&indexes))
+    }
+
+    /// The index of the row of the selected node among the rows the TreeDataGrid shows; `-1`
+    /// when no node is selected or its row is not shown.
+    pub fn selected_row_index(&self) -> i32 {
+        match self.selected_node().and_then(|node| self.index_path_of(&node)) {
+            Some(index) => self.nodes_source.get_row_index(&index, 0),
+            None => -1,
+        }
+    }
+
+    /// Selects the row of a node, expanding the rows of its ancestors; `false` when the node is
+    /// not in the trees of the page (the selection is cleared then).
+    fn select_row(&self, node: Option<&Rc<TreeNode>>) -> bool {
+        let Some(selection) = self.nodes_source.row_selection() else {
+            return false;
+        };
+        match node.and_then(|node| self.index_path_of(node)) {
+            Some(index) => {
+                self.nodes_source.expand(&index.parent());
+                selection.base().set_selected_index(index);
+                true
+            }
+            None => {
+                selection.base().clear();
+                false
+            }
+        }
+    }
+
+    /// The selection of the rows changed: the selected row is the selected node.
+    fn on_row_selection_changed(&self) {
+        if self.updating_selection.get() {
+            return;
+        }
+        let selected = self.nodes_source.row_selection().and_then(|selection| selection.base().selected_item());
+        self.updating_selection.set(true);
+        self.set_selected_node(selected);
+        self.updating_selection.set(false);
     }
 
     pub fn selected_node(&self) -> Option<Rc<TreeNode>> {
@@ -145,7 +305,7 @@ impl TreePageViewModel {
     /// Selects a node, and shows the details of its object.
     pub fn set_selected_node(&self, value: Option<Rc<TreeNode>>) {
         if self.base.raise_and_set_if_changed(&self.selected_node, value.clone(), "SelectedNode") {
-            let details = match (value, self.this.upgrade()) {
+            let details = match (value.clone(), self.this.upgrade()) {
                 (Some(value), Some(this)) => {
                     Some(ControlDetailsViewModel::new(&this, &value.visual(), self.pinned_properties.clone()))
                 }
@@ -155,6 +315,15 @@ impl TreePageViewModel {
             if let Some(details) = self.details() {
                 details.update_properties_view(self.show_implemented_interfaces());
                 details.update_style_filters();
+            }
+
+            // Deviation (DEVIATIONS.md, Developer tools): the row of the node is selected, and the
+            // rows of its ancestors expanded, also when they were not shown (upstream's tree view
+            // selects the item of a node only when its container exists).
+            if !self.updating_selection.get() {
+                self.updating_selection.set(true);
+                self.select_row(value.as_ref());
+                self.updating_selection.set(false);
             }
         }
     }
@@ -191,6 +360,10 @@ impl TreePageViewModel {
         if let Some(details) = self.details() {
             details.dispose();
         }
+
+        // Deviation (DEVIATIONS.md, Developer tools): the rows of the TreeDataGrid end their
+        // subscriptions to the nodes.
+        self.nodes_source.dispose();
     }
 
     /// The node of `control`, searched in the trees of the root nodes.
@@ -383,6 +556,8 @@ ferro_markup_type!(class TreePageViewModel {
         PropertiesFilter: Rc<FilterViewModel> { get: TreePageViewModel::properties_filter },
         SettersFilter: Rc<FilterViewModel> { get: TreePageViewModel::setters_filter },
         Nodes: FerroList<Rc<TreeNode>> { get: TreePageViewModel::nodes },
+        // Deviation (DEVIATIONS.md, Developer tools): the source of the TreeDataGrid of the page.
+        NodesSource: TreeDataGridSourceRef { get: TreePageViewModel::nodes_source_ref },
         SelectedNode: Option<Rc<TreeNode>> {
             get: TreePageViewModel::selected_node,
             set: TreePageViewModel::set_selected_node

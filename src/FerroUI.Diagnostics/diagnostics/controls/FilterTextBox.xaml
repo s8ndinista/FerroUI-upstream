@@ -15,9 +15,11 @@
     <Setter Property="InnerRightContent">
       <Template>
         <StackPanel Orientation="Horizontal" Spacing="1">
+          <!-- Deviation (DEVIATIONS.md, Developer tools): the delete button of a text box of the
+               WinUI 3 theme in place of the clear button of the Simple theme. -->
           <Button Margin="0,0,2,0"
                   Classes="textBoxClearButton"
-                  Theme="{StaticResource SimpleTextBoxClearButtonTheme}"
+                  Theme="{StaticResource TextBoxDeleteButtonStyle}"
                   Focusable="False"
                   ToolTip.Tip="Clear"
                   Cursor="Hand"
@@ -86,8 +88,12 @@
     <Setter Property="Opacity" Value="0.7" />
   </Style>
 
+  <!-- Deviation (DEVIATIONS.md, Developer tools): MinHeight and MinWidth: the toggles of the
+       compact text box, without the minimum size of a WinUI 3 button. -->
   <Style Selector="ToggleButton.filter-text-box-toggle">
     <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
     <Setter Property="Padding" Value="0,1" />
     <Setter Property="Width" Value="24" />
     <Setter Property="BorderThickness" Value="1" />
@@ -98,8 +104,10 @@
     <Setter Property="BorderBrush" Value="Transparent" />
     <Setter Property="CornerRadius" Value="0" />
   </Style>
+  <!-- Deviation (DEVIATIONS.md, Developer tools): the brushes of the WinUI 3 theme in place of
+       ThemeAccentColor and ThemeAccentColor4 of the Simple theme. -->
   <Style Selector="ToggleButton.filter-text-box-toggle:pressed /template/ ContentPresenter, ToggleButton.filter-text-box-toggle:checked /template/ ContentPresenter">
-    <Setter Property="BorderBrush" Value="{DynamicResource ThemeAccentColor}" />
-    <Setter Property="Background" Value="{DynamicResource ThemeAccentColor4}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+    <Setter Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
   </Style>
 </Styles>

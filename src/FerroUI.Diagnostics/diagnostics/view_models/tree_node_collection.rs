@@ -5,6 +5,7 @@ use ferroui_base::collections::{CollectionChangedHandler, FerroList, IFerroReadO
 use ferroui_base::data::model::{CollectionChange, Event, INotifyCollectionChanged, INotifyPropertyChanged};
 use ferroui_base::{ferro_markup_type, BoxedValue};
 use ferroui_controls::{IItemsList, ItemsChangedHandler};
+use ferroui_treedatagrid_core::model_collection::{ModelCollection, ModelsChangedHandler};
 use std::any::Any;
 use std::cell::OnceCell;
 use std::rc::{Rc, Weak};
@@ -109,6 +110,13 @@ impl TreeNodeCollection {
         }
     }
 
+    /// Whether the collection was filled: whether its nodes exist. A collection is filled the first
+    /// time it is used (its count, an item, an enumeration or a subscription to its changes); the
+    /// tree pages ask for the children of a node when its row is shown or expanded.
+    pub fn is_initialized(&self) -> bool {
+        self.inner.get().is_some()
+    }
+
     /// `GetEnumerator()`: the nodes, as they are now.
     pub fn to_vec(&self) -> Vec<Rc<TreeNode>> {
         self.ensure_initialized().to_vec()
@@ -202,6 +210,40 @@ impl IItemsList for TreeNodeCollection {
 
     fn as_any(&self) -> &dyn Any {
         self
+    }
+}
+
+// Deviation (DEVIATIONS.md, Developer tools): the tree pages show the nodes in a TreeDataGrid, not
+// in a tree view; the collection is the collection of the child models of a node for the
+// hierarchical source of a page (`TreePageViewModel::nodes_source`), which subscribes to its
+// changes.
+impl ModelCollection<TreeNode> for TreeNodeCollection {
+    fn count(&self) -> usize {
+        TreeNodeCollection::count(self)
+    }
+
+    fn get(&self, index: usize) -> Rc<TreeNode> {
+        TreeNodeCollection::get(self, index)
+    }
+
+    fn index_of(&self, model: &Rc<TreeNode>) -> Option<usize> {
+        self.ensure_initialized().index_of(model)
+    }
+
+    fn add_collection_changed(&self, handler: Rc<ModelsChangedHandler<TreeNode>>) -> Option<u64> {
+        Some(self.ensure_initialized().add_collection_changed(handler))
+    }
+
+    fn remove_collection_changed(&self, token: u64) {
+        self.ensure_initialized().remove_collection_changed(token);
+    }
+
+    fn is_notifying(&self) -> bool {
+        true
+    }
+
+    fn to_vec(&self) -> Vec<Rc<TreeNode>> {
+        TreeNodeCollection::to_vec(self)
     }
 }
 

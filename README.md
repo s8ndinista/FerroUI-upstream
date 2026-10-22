@@ -397,7 +397,7 @@ FerroUI has ports of System.Reactive, DynamicData, Splat and ReactiveUI, one cra
 
 ### Developer tools
 
-`ferroui-diagnostics` is the port of upstream's developer tools at their last open-source version: the logical and visual trees, the properties of the selected control with their value sources and an editor for each, the layout explorer, the routed events with their routes, and screenshots of a control. The property grid is the TreeDataGrid of the port. Attach the tools after the application is set up, usually in debug builds, and press F12 in a window to open them (the ControlCatalog does this in `samples/ControlCatalog.Desktop/program.rs`):
+`ferroui-diagnostics` is the port of upstream's developer tools at their last open-source version: the logical and visual trees, the properties of the selected control with their value sources and an editor for each, the layout explorer, the routed events with their routes, and screenshots of a control. The trees, the routed events and the property grid are TreeDataGrids of the port, in the WinUI 3 theme in its compact density. Attach the tools after the application is set up, usually in debug builds, and press F12 in a window to open them (the ControlCatalog does this in `samples/ControlCatalog.Desktop/program.rs`):
 
 ```rust
 use ferroui_diagnostics::DevToolsExtensions;

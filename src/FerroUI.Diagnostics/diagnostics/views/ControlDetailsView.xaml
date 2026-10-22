@@ -34,6 +34,7 @@
           </DockPanel.Styles>
           <Panel DockPanel.Dock="Right" IsVisible="{Binding !IsGroup}">
             <ToggleButton
+              Classes="pin"
               IsChecked="{Binding IsPinned}"
               Background="Transparent"
               BorderBrush="Transparent"
@@ -116,6 +117,18 @@
         <TreeDataGrid.Styles>
           <Style Selector="TreeDataGridRow TextBox">
             <Setter Property="SelectionBrush" Value="LightBlue" />
+          </Style>
+          <!-- Deviation (DEVIATIONS.md, Developer tools): the editors and the pin of the compact
+               rows of the grid, without the minimum size of a WinUI 3 check box and the padding
+               of a WinUI 3 button. -->
+          <Style Selector="TreeDataGridRow CheckBox">
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="MinHeight" Value="0" />
+          </Style>
+          <Style Selector="ToggleButton.pin">
+            <Setter Property="Padding" Value="4,0" />
+            <Setter Property="MinHeight" Value="0" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
           </Style>
         </TreeDataGrid.Styles>
       </TreeDataGrid>

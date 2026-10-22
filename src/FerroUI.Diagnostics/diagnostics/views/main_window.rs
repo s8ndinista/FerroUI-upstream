@@ -127,7 +127,7 @@ impl MainWindow {
     /// Creates the window and populates it from its document
     /// (`InitializeComponent()`: the compiled markup of the document, which
     /// the build of the crate generates), with the theme of a window of the
-    /// Simple theme, the observation of the input and the placement on the
+    /// WinUI 3 theme, the observation of the input and the placement on the
     /// startup screen.
     ///
     /// # Panics
@@ -141,6 +141,8 @@ impl MainWindow {
 
         // Apply the SimpleTheme.Window theme; this must be done after the XAML is parsed as
         // the theme is included in the MainWindow's XAML.
+        // Deviation (DEVIATIONS.md, Developer tools): the theme of a window of the WinUI 3 theme,
+        // which the document includes in place of the Simple theme.
         if this.theme().is_none() {
             let window_theme = this
                 .find_resource(&ResourceKey::Type(Window::TYPE))

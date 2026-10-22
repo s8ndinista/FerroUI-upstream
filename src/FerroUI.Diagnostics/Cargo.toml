@@ -32,12 +32,15 @@ ferroui-controls = { workspace = true }
 ferroui-markup = { workspace = true }
 # The runtime library of compiled markup.
 ferroui-markup-xaml = { workspace = true }
-# The theme of the developer tools window, as upstream.
-ferroui-themes-simple = { workspace = true }
+# The theme of the developer tools window: the owner's decision is the WinUI 3 theme in its compact
+# density in place of the Simple theme of upstream (docs/porting/DEVIATIONS.md, Developer tools).
+ferroui-themes-winui = { workspace = true }
 # The brush editor of the property grid, as upstream.
 ferroui-controls-color-picker = { workspace = true }
 # The property grid of the control details: the owner's decision is the TreeDataGrid of the port in
-# place of the DataGrid that upstream compiled into its project (docs/porting/DEVIATIONS.md, Developer tools).
+# place of the DataGrid that upstream compiled into its project; the logical and visual trees and
+# the tree of the routed events are TreeDataGrids too, in place of tree views
+# (docs/porting/DEVIATIONS.md, Developer tools).
 ferroui-controls-treedatagrid = { workspace = true }
 ferroui-treedatagrid-core = { workspace = true }
 # The regular expressions of the filters (upstream uses the regular expressions of .NET; the port has

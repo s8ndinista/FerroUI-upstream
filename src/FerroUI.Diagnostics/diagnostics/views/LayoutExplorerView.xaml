@@ -106,6 +106,11 @@
             </StackPanel.Resources>
 
             <StackPanel.Styles>
+                <!-- Deviation (DEVIATIONS.md, Developer tools): the buttons of the alignments
+                     in the brushes of the WinUI 3 theme, in its light and dark variants
+                     (upstream: a black glyph on WhiteSmoke, ThemeControlHighlightMidBrush and
+                     ThemeAccentBrush4 of the Simple theme), without the minimum size of a
+                     WinUI 3 radio button. -->
                 <Style Selector="RadioButton">
                     <Setter Property="Template">
                         <ControlTemplate>
@@ -114,23 +119,29 @@
                                 BorderThickness="{TemplateBinding BorderThickness}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 Padding="{TemplateBinding Padding}">
-                                <Path x:Name="PART_Path" Fill="Black" Width="16" Height="16" Stretch="Uniform" />
+                                <Path x:Name="PART_Path" Fill="{TemplateBinding Foreground}" Width="16" Height="16" Stretch="Uniform" />
                             </Border>
                         </ControlTemplate>
                     </Setter>
                 </Style>
 
                 <Style Selector="RadioButton">
-                    <Setter Property="Background" Value="WhiteSmoke" />
+                    <Setter Property="MinWidth" Value="0" />
+                    <Setter Property="MinHeight" Value="0" />
+                    <Setter Property="BorderThickness" Value="1" />
+                    <Setter Property="BorderBrush" Value="{DynamicResource ControlStrokeColorDefaultBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource ControlFillColorDefaultBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
                     <Setter Property="Padding" Value="2" />
                 </Style>
 
                 <Style Selector="RadioButton:pointerover">
-                    <Setter Property="Background" Value="{DynamicResource ThemeControlHighlightMidBrush}" />
+                    <Setter Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
                 </Style>
 
                 <Style Selector="RadioButton:checked">
-                    <Setter Property="Background" Value="{DynamicResource ThemeAccentBrush4}" />
+                    <Setter Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                    <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
                 </Style>
 
             </StackPanel.Styles>

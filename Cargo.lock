@@ -1052,7 +1052,7 @@ dependencies = [
  "ferroui-controls-treedatagrid",
  "ferroui-markup",
  "ferroui-markup-xaml",
- "ferroui-themes-simple",
+ "ferroui-themes-winui",
  "ferroui-treedatagrid-core",
  "regex",
 ]

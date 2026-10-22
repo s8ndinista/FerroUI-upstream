@@ -1,11 +1,15 @@
 //! Port of `Diagnostics/Views/EventsPageView.xaml.cs`: the class of the
 //! document `EventsPageView.xaml`.
+//!
+//! The tree of the routed events of the document is a TreeDataGrid, where upstream has a tree
+//! view (docs/porting/DEVIATIONS.md, Developer tools).
 
 use crate::diagnostics::controls::ControlHighlightAdorner;
 use crate::diagnostics::models::EventChainLink;
 use crate::diagnostics::view_models::{EventsPageViewModel, FiredEvent};
 use ferroui_base::collections::NotifyCollectionChangedEventArgs;
 use ferroui_base::data::core::ValueTypes;
+use ferroui_base::data::model::INotifyPropertyChanged;
 use ferroui_base::input::{InputElementImpl, PointerEventArgs, TappedEventArgs};
 use ferroui_base::interactivity::{IRoutedEventArgs, InteractiveImpl, RoutedEvent};
 use ferroui_base::layout::LayoutableImpl;
@@ -18,6 +22,7 @@ use ferroui_base::{
 };
 use ferroui_controls::primitives::TemplatedControlImpl;
 use ferroui_controls::{ContentControlImpl, Control, ControlImpl, ListBox, UserControl};
+use ferroui_controls_treedatagrid::TreeDataGrid;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -28,6 +33,11 @@ pub struct EventsPageView {
     base: UserControl,
     events: RefCell<Option<Ref<ListBox>>>,
     adorner: RefCell<Option<Rc<dyn IDisposable>>>,
+    // Deviation (DEVIATIONS.md, Developer tools): the TreeDataGrid of the routed events, and the
+    // handler of the changes of the selected node of the view model, which brings its row into
+    // view.
+    events_tree: RefCell<Option<Ref<TreeDataGrid>>>,
+    selected_node_changed: RefCell<Option<(Rc<EventsPageViewModel>, u64)>>,
 }
 
 ferro_class!(EventsPageView: UserControl);
@@ -71,7 +81,32 @@ impl StyledElementImpl for EventsPageView {
     fn on_data_context_changed(this: &Self) {
         Self::parent_on_data_context_changed(this);
 
+        let selected_node_changed = this.selected_node_changed.borrow_mut().take();
+        if let Some((old_view_model, token)) = selected_node_changed {
+            old_view_model.property_changed().remove(token);
+        }
+
         if let Some(vm) = this.view_model() {
+            // Deviation (DEVIATIONS.md, Developer tools): the row of a node the view model selects
+            // (a double tap on the name of a recorded event) is brought into view once the grid
+            // has its rows.
+            let view = this.to_ref().downgrade();
+            let token = vm.property_changed().add(Rc::new(move |property_name: &str| {
+                if property_name != "SelectedNode" {
+                    return;
+                }
+                let view = view.clone();
+                Dispatcher::ui_thread().post_local(
+                    move || {
+                        if let Some(view) = view.upgrade() {
+                            view.bring_selected_node_into_view();
+                        }
+                    },
+                    DispatcherPriority::default(),
+                );
+            }));
+            *this.selected_node_changed.borrow_mut() = Some((vm.clone(), token));
+
             // As upstream, the handler is never removed. It reaches the view and the view model
             // through weak references, so that the list of the view model does not keep them
             // alive.
@@ -93,7 +128,13 @@ impl EventsPageView {
     pub const DOCUMENT_URI: &'static str = "ferres://FerroUI.Diagnostics/diagnostics/views/EventsPageView.xaml";
 
     pub fn construct() -> Self {
-        Self { base: UserControl::construct(), events: RefCell::new(None), adorner: RefCell::new(None) }
+        Self {
+            base: UserControl::construct(),
+            events: RefCell::new(None),
+            adorner: RefCell::new(None),
+            events_tree: RefCell::new(None),
+            selected_node_changed: RefCell::new(None),
+        }
     }
 
     /// Creates the view and populates it from its document
@@ -108,7 +149,25 @@ impl EventsPageView {
         let this = instantiate(Self::construct());
         Self::initialize_component(&this);
         *this.events.borrow_mut() = Some(this.get_control::<ListBox>("EventsList"));
+        *this.events_tree.borrow_mut() = Some(this.get_control::<TreeDataGrid>("EventsTree"));
         this
+    }
+
+    /// Brings the row of the selected node of the tree of the routed events into view.
+    ///
+    /// Deviation (DEVIATIONS.md, Developer tools): the tree is a TreeDataGrid.
+    fn bring_selected_node_into_view(&self) {
+        let Some(vm) = self.view_model() else {
+            return;
+        };
+        let row_index = vm.selected_row_index();
+        if row_index < 0 {
+            return;
+        }
+        let events_tree = self.events_tree.borrow().clone();
+        if let Some(rows_presenter) = events_tree.and_then(|events_tree| events_tree.rows_presenter()) {
+            rows_presenter.bring_into_view(row_index, None);
+        }
     }
 
     /// `InitializeComponent()`.
