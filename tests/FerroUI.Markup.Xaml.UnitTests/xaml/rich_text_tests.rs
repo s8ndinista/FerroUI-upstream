@@ -256,3 +256,70 @@ fn rich_text_markup_links_overflow_to_the_same_document() {
     assert!(!overflow.line_metrics().is_empty());
     window.close();
 }
+
+#[test]
+fn rich_input_scope_markup_preserves_objects_order_and_live_name_changes() {
+    use ferroui_base::input::InputScopeNameValue as Scope;
+    use ferroui_base::input::text_input::TextInputOptions;
+    let _scope = xaml_test_base();
+    let root = parse::<Ref<UserControl>>(include_str!("../emitter/fixtures/rich_input_scope.xaml"));
+    let short = root.get_control::<RichEditBox>("shortScope");
+    assert_eq!(&*short.input_scope().unwrap().snapshot(), &[Scope::EmailSmtpAddress]);
+    let full = root.get_control::<RichEditBox>("fullScope");
+    let scope = full.input_scope().unwrap();
+    assert_eq!(&*scope.snapshot(), &[Scope::Hiragana, Scope::KatakanaFullWidth]);
+    let options = TextInputOptions::from_styled_element(&full);
+    assert_eq!(options.effective_input_scope(), Some(Scope::Hiragana));
+    scope.names().get(0).set_name_value(Scope::ChatWithoutEmoji);
+    assert_eq!(TextInputOptions::from_styled_element(&full).effective_input_scope(), Some(Scope::ChatWithoutEmoji));
+    assert_eq!(options.effective_input_scope(), Some(Scope::Hiragana));
+    assert!(root.get_control::<RichEditBox>("nullScope").input_scope().is_none());
+}
+
+#[test]
+fn rich_input_scope_markup_accepts_every_defined_name_and_rejects_invalid_text() {
+    use ferroui_base::input::InputScopeNameValue as Scope;
+    let _scope = xaml_test_base();
+    for scope in Scope::ALL {
+        let source = format!(r#"<RichEditBox xmlns="https://github.com/ferroui" InputScope="{scope:?}" />"#);
+        let editor = parse::<Ref<RichEditBox>>(&source);
+        assert_eq!(&*editor.input_scope().unwrap().snapshot(), &[scope]);
+    }
+    for value in ["unknown", "2", "-1", "Url,Number"] {
+        let source = format!(r#"<RichEditBox xmlns="https://github.com/ferroui" InputScope="{value}" />"#);
+        assert!(try_load(&source).is_err(), "{source}");
+    }
+
+    // The framework drops whitespace-only values of non-string properties
+    // before conversion. An empty attribute is therefore not a request to
+    // parse an empty name or to clear an existing scope; x:Null clears it.
+    use crate::support::helpers::boxed;
+    use crate::support::loader::load_with_root;
+    let editor = RichEditBox::new();
+    editor.set_input_scope(Scope::Url);
+    load_with_root(
+        r#"<RichEditBox xmlns="https://github.com/ferroui" InputScope="" />"#,
+        None,
+        boxed(editor.clone()),
+    );
+    assert_eq!(&*editor.input_scope().unwrap().snapshot(), &[Scope::Url]);
+    load_with_root(
+        r#"<RichEditBox xmlns="https://github.com/ferroui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" InputScope="{x:Null}" />"#,
+        None,
+        boxed(editor.clone()),
+    );
+    assert!(editor.input_scope().is_none());
+}
+
+#[test]
+fn rich_input_scope_name_markup_supports_native_enum_constructor_and_content() {
+    use ferroui_base::input::{InputScopeName, InputScopeNameValue as Scope};
+    let _scope = xaml_test_base();
+    for source in [
+        r#"<InputScopeName xmlns="https://github.com/ferroui" NameValue="TelephoneNumber" />"#,
+        r#"<InputScopeName xmlns="https://github.com/ferroui">TelephoneNumber</InputScopeName>"#,
+        r#"<InputScopeName xmlns="https://github.com/ferroui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"><x:Arguments><InputScopeNameValue>TelephoneNumber</InputScopeNameValue></x:Arguments></InputScopeName>"#,
+    ] {
+        assert_eq!(parse::<Ref<InputScopeName>>(source).name_value(), Scope::TelephoneNumber);
+    }
+}

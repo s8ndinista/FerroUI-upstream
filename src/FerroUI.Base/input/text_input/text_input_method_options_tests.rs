@@ -23,6 +23,7 @@ fn focused_input_options_change_without_replacing_the_client_or_connection() {
         tree.im.options.borrow().as_ref(),
         Some(&TextInputOptions {
             content_type: TextInputContentType::Email,
+            input_scope_names: None,
             return_key_type: TextInputReturnKeyType::Search,
             multiline: true,
             lowercase: true,
@@ -268,4 +269,40 @@ fn disposing_the_input_manager_releases_the_owner_option_subscription() {
     assert!(tree.take_log().is_empty());
     drop(manager);
     assert!(weak.upgrade().is_none());
+}
+
+#[test]
+fn input_scope_snapshot_setter_reentry_keeps_latest_names_and_connection() {
+    use crate::input::InputScopeNameValue as Scope;
+    let tree = ime_tree();
+    let backend = ReentrantOptionsInputMethod::install(&tree);
+    tree.focus(Some(&tree.editor));
+    let connection = tree.client.input_method_connection().unwrap();
+    let owner = tree.editor.clone();
+    *backend.on_options.borrow_mut() = Some(Box::new(move || {
+        TextInputOptions::set_input_scope_names(&owner, Some(Rc::from([Scope::Hiragana, Scope::Text])));
+    }));
+    TextInputOptions::set_input_scope_names(&tree.editor, Some(Rc::from([Scope::Url])));
+    let options = tree.im.options.borrow().clone().unwrap();
+    assert_eq!(options.input_scope_names.as_deref(), Some(&[Scope::Hiragana, Scope::Text][..]));
+    assert!(Rc::ptr_eq(&connection, &tree.client.input_method_connection().unwrap()));
+    assert!(connection.is_current());
+}
+
+#[test]
+fn input_scope_snapshot_inheritance_and_clear_reach_the_focused_backend() {
+    use crate::input::InputScopeNameValue as Scope;
+    let tree = ime_tree();
+    tree.focus(Some(&tree.editor));
+    let connection = tree.client.input_method_connection().unwrap();
+    TextInputOptions::set_input_scope_names(&tree.root.root, Some(Rc::from([Scope::EmailSmtpAddress])));
+    let previous = tree.im.options.borrow().clone().unwrap();
+    assert_eq!(previous.effective_input_scope(), Some(Scope::EmailSmtpAddress));
+    TextInputOptions::set_input_scope_names(&tree.editor, Some(Rc::from([Scope::Url])));
+    TextInputOptions::set_input_scope_names(&tree.root.root, Some(Rc::from([Scope::ChatWithoutEmoji])));
+    assert_eq!(tree.im.options.borrow().as_ref().unwrap().effective_input_scope(), Some(Scope::Url));
+    tree.editor.clear_value(TextInputOptions::input_scope_names_property());
+    assert_eq!(tree.im.options.borrow().as_ref().unwrap().effective_input_scope(), Some(Scope::ChatWithoutEmoji));
+    assert_eq!(previous.effective_input_scope(), Some(Scope::EmailSmtpAddress));
+    assert!(connection.is_current());
 }

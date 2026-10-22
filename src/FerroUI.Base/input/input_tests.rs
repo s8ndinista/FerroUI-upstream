@@ -4997,6 +4997,7 @@ fn the_input_method_gets_the_text_input_options_of_the_focused_element() {
         options,
         TextInputOptions {
             content_type: TextInputContentType::Email,
+            input_scope_names: None,
             return_key_type: TextInputReturnKeyType::Search,
             multiline: true,
             lowercase: false,

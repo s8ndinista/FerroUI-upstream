@@ -144,6 +144,7 @@ pub const DOCUMENTS: &[(&str, &str)] = &[
     ("container_query.xaml", "<StackPanel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>\n  <StackPanel.Styles>\n    <ContainerQuery Name='Host' Query='max-width:400'>\n      <Style Selector='Border'>\n        <Setter Property='Opacity' Value='0.5'/>\n      </Style>\n    </ContainerQuery>\n    <ContainerQuery Name='Host' Query='min-width:400 and max-height:120, height:1'>\n      <Style Selector='Border'>\n        <Setter Property='Opacity' Value='0.25'/>\n      </Style>\n    </ContainerQuery>\n    <ContainerQuery Name='Host' Query='width:800, height:600'>\n      <Style Selector='Border'>\n        <Setter Property='Opacity' Value='0.75'/>\n      </Style>\n    </ContainerQuery>\n  </StackPanel.Styles>\n  <Border Name='Host'/>\n</StackPanel>\n"),
     ("static_resource_element.xaml", "<StackPanel xmlns='https://github.com/ferroui' xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>\n  <StackPanel.Resources>\n    <ControlTheme x:Key='Plain' TargetType='Button'>\n      <Setter Property='Opacity' Value='0.5'/>\n    </ControlTheme>\n    <SolidColorBrush x:Key='Accent' Color='Blue'/>\n  </StackPanel.Resources>\n  <Button>\n    <Button.Theme>\n      <StaticResource ResourceKey='Plain'/>\n    </Button.Theme>\n  </Button>\n  <Border>\n    <Border.Background>\n      <StaticResource ResourceKey='Accent'/>\n    </Border.Background>\n  </Border>\n</StackPanel>\n"),
     ("rich_text_document.xaml", include_str!("fixtures/rich_text_document.xaml")),
+    ("rich_input_scope.xaml", include_str!("fixtures/rich_input_scope.xaml")),
 ];
 
 /// The documents that must be eligible for emission.
@@ -276,6 +277,7 @@ pub const EXPECTED_ELIGIBLE: &[&str] = &[
     "container_query.xaml",
     "static_resource_element.xaml",
     "rich_text_document.xaml",
+    "rich_input_scope.xaml",
 ];
 
 /// The documents whose values depend on the base URI of the document or on a service of

@@ -34,6 +34,7 @@ fn same_input_method(
 fn is_input_options_property(property: &FerroProperty) -> bool {
     [
         TextInputOptions::content_type_property().as_property(),
+        TextInputOptions::input_scope_names_property().as_property(),
         TextInputOptions::return_key_type_property().as_property(),
         TextInputOptions::multiline_property().as_property(),
         TextInputOptions::lowercase_property().as_property(),

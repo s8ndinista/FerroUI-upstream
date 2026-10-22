@@ -5765,6 +5765,89 @@ fn build_rich_text_document_xaml_untyped(
     ::core::result::Result::Ok(::std::rc::Rc::new(root) as ::ferroui_base::BoxedValue)
 }
 
+/// The base URI and the XML namespaces of `rich_input_scope.xaml`.
+static BUILD_RICH_INPUT_SCOPE_XAML_DOCUMENT: rt::DocumentInfo = rt::DocumentInfo { base_uri: ::core::option::Option::Some("ferres://FerroUI.Markup.Xaml.UnitTests/Emitter/rich_input_scope.xaml"), namespaces: XML_NAMESPACES_0 };
+
+/// Generated from `rich_input_scope.xaml`.
+pub fn build_rich_input_scope_xaml(
+    service_provider: ::core::option::Option<::std::rc::Rc<dyn ::ferroui_base::metadata::IServiceProvider>>,
+) -> ::core::result::Result<::ferroui_base::Ref<::ferroui_controls::UserControl>, ::ferroui_markup_xaml::XamlLoadException> {
+    // rich_input_scope.xaml(1,2) UserControl
+    let user_control_0 = ::ferroui_controls::UserControl::new();
+    let context = rt::populate_context(service_provider, &BUILD_RICH_INPUT_SCOPE_XAML_DOCUMENT, rt::to_value(user_control_0.clone()));
+    let name_scope = context.name_scope_field();
+    user_control_0.begin_init();
+    // rich_input_scope.xaml(3,4) Content
+    // rich_input_scope.xaml(3,4) StackPanel
+    let stack_panel_0 = ::ferroui_controls::StackPanel::new();
+    stack_panel_0.begin_init();
+    user_control_0.set_value(::ferroui_controls::ContentControl::content_property(), rt::to_object(::core::clone::Clone::clone(&stack_panel_0)));
+    // rich_input_scope.xaml(4,6) Children
+    let children_collection_0 = ::ferroui_controls::Panel::__markup_get_Children(stack_panel_0.upcast_ref::<::ferroui_controls::Panel>());
+    // rich_input_scope.xaml(4,6) RichEditBox
+    let rich_edit_box_0 = ::ferroui_controls::RichEditBox::new();
+    rich_edit_box_0.begin_init();
+    ::ferroui_controls::Controls::__markup_Add_0(&children_collection_0, ::core::clone::Clone::clone(&rich_edit_box_0).upcast::<::ferroui_controls::Control>());
+    // rich_input_scope.xaml(4,18) Name
+    rich_edit_box_0.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("shortScope")));
+    rt::register_name(name_scope.as_ref(), "shortScope", ::core::clone::Clone::clone(&rich_edit_box_0).upcast::<::ferroui_base::FerroObject>(), 4, 18)?;
+    // rich_input_scope.xaml(4,6) InputScope
+    let value_0 = rt::invoked(::ferroui_base::input::InputScope::__markup_parse(::std::string::String::from("EmailSmtpAddress")), 4, 36)?;
+    rich_edit_box_0.set_value(::ferroui_controls::RichEditBox::input_scope_property(), ::core::option::Option::Some(::core::clone::Clone::clone(&value_0)));
+    rt::invoked(rich_edit_box_0.try_end_init(), 4, 6)?;
+    // rich_input_scope.xaml(5,6) Children
+    let children_collection_1 = ::ferroui_controls::Panel::__markup_get_Children(stack_panel_0.upcast_ref::<::ferroui_controls::Panel>());
+    // rich_input_scope.xaml(5,6) RichEditBox
+    let rich_edit_box_1 = ::ferroui_controls::RichEditBox::new();
+    rich_edit_box_1.begin_init();
+    ::ferroui_controls::Controls::__markup_Add_0(&children_collection_1, ::core::clone::Clone::clone(&rich_edit_box_1).upcast::<::ferroui_controls::Control>());
+    // rich_input_scope.xaml(5,18) Name
+    rich_edit_box_1.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("fullScope")));
+    rt::register_name(name_scope.as_ref(), "fullScope", ::core::clone::Clone::clone(&rich_edit_box_1).upcast::<::ferroui_base::FerroObject>(), 5, 18)?;
+    // rich_input_scope.xaml(7,10) InputScope
+    // rich_input_scope.xaml(7,10) InputScope
+    let input_scope_0 = ::ferroui_base::input::InputScope::new();
+    // rich_input_scope.xaml(9,14) Names
+    let names_collection_0 = ::ferroui_base::input::InputScope::__markup_get_Names(&input_scope_0);
+    // rich_input_scope.xaml(9,14) InputScopeName
+    let input_scope_name_0 = ::ferroui_base::input::InputScopeName::new();
+    // rich_input_scope.xaml(9,14) NameValue
+    input_scope_name_0.set_value(::ferroui_base::input::InputScopeName::name_value_property(), ::ferroui_base::input::InputScopeNameValue::Hiragana);
+    <::ferroui_base::collections::FerroList<::ferroui_base::Ref<::ferroui_base::input::InputScopeName>>>::__markup_Add_0(&names_collection_0, ::core::clone::Clone::clone(&input_scope_name_0));
+    // rich_input_scope.xaml(10,14) Names
+    let names_collection_1 = ::ferroui_base::input::InputScope::__markup_get_Names(&input_scope_0);
+    // rich_input_scope.xaml(10,14) InputScopeName
+    let input_scope_name_1 = ::ferroui_base::input::InputScopeName::new();
+    // rich_input_scope.xaml(10,14) NameValue
+    input_scope_name_1.set_value(::ferroui_base::input::InputScopeName::name_value_property(), ::ferroui_base::input::InputScopeNameValue::KatakanaFullWidth);
+    <::ferroui_base::collections::FerroList<::ferroui_base::Ref<::ferroui_base::input::InputScopeName>>>::__markup_Add_0(&names_collection_1, ::core::clone::Clone::clone(&input_scope_name_1));
+    rich_edit_box_1.set_value(::ferroui_controls::RichEditBox::input_scope_property(), ::core::option::Option::Some(::core::clone::Clone::clone(&input_scope_0)));
+    rt::invoked(rich_edit_box_1.try_end_init(), 5, 6)?;
+    // rich_input_scope.xaml(15,6) Children
+    let children_collection_2 = ::ferroui_controls::Panel::__markup_get_Children(stack_panel_0.upcast_ref::<::ferroui_controls::Panel>());
+    // rich_input_scope.xaml(15,6) RichEditBox
+    let rich_edit_box_2 = ::ferroui_controls::RichEditBox::new();
+    rich_edit_box_2.begin_init();
+    ::ferroui_controls::Controls::__markup_Add_0(&children_collection_2, ::core::clone::Clone::clone(&rich_edit_box_2).upcast::<::ferroui_controls::Control>());
+    // rich_input_scope.xaml(15,18) Name
+    rich_edit_box_2.set_direct_value(::ferroui_base::StyledElement::name_property(), ::core::option::Option::Some(::std::string::String::from("nullScope")));
+    rt::register_name(name_scope.as_ref(), "nullScope", ::core::clone::Clone::clone(&rich_edit_box_2).upcast::<::ferroui_base::FerroObject>(), 15, 18)?;
+    // rich_input_scope.xaml(15,35) InputScope
+    rich_edit_box_2.set_value(::ferroui_controls::RichEditBox::input_scope_property(), ::core::option::Option::None);
+    rt::invoked(rich_edit_box_2.try_end_init(), 15, 6)?;
+    rt::invoked(stack_panel_0.try_end_init(), 3, 4)?;
+    rt::invoked(user_control_0.try_end_init(), 1, 2)?;
+    rt::complete_root_name_scope(::core::option::Option::Some(&user_control_0), name_scope.as_ref(), 1, 2)?;
+    ::core::result::Result::Ok(user_control_0)
+}
+
+fn build_rich_input_scope_xaml_untyped(
+    service_provider: ::core::option::Option<::std::rc::Rc<dyn ::ferroui_base::metadata::IServiceProvider>>,
+) -> ::core::result::Result<::ferroui_base::BoxedValue, ::ferroui_markup_xaml::XamlLoadException> {
+    let root = build_rich_input_scope_xaml(service_provider)?;
+    ::core::result::Result::Ok(::std::rc::Rc::new(root) as ::ferroui_base::BoxedValue)
+}
+
 /// The build function of every eligible public document, by document name.
 pub const DOCUMENTS: &[(&str, BuildDocument)] = &[
     ("border_empty.xaml", build_border_empty_xaml_untyped as BuildDocument),
@@ -5895,6 +5978,7 @@ pub const DOCUMENTS: &[(&str, BuildDocument)] = &[
     ("container_query.xaml", build_container_query_xaml_untyped as BuildDocument),
     ("static_resource_element.xaml", build_static_resource_element_xaml_untyped as BuildDocument),
     ("rich_text_document.xaml", build_rich_text_document_xaml_untyped as BuildDocument),
+    ("rich_input_scope.xaml", build_rich_input_scope_xaml_untyped as BuildDocument),
 ];
 
 /// The loader of the compiled markup of the assembly: builds the document with the URI

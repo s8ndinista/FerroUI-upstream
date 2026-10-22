@@ -29,10 +29,10 @@ use ferroui_base::input::platform::{
     ClipboardError, ClipboardErrorKind, IClipboard, PlatformHotkeyConfiguration,
 };
 use ferroui_base::input::text_input::{
-    TextInputContentType, TextInputMethodClient, TextInputOptions,
+    TextInputMethodClient, TextInputOptions,
 };
 use ferroui_base::input::{
-    FocusChangedEventArgs, InputElement, InputElementImpl, InputElementImplExt, Key, KeyEventArgs,
+    FocusChangedEventArgs, InputElement, InputElementImpl, InputElementImplExt, InputScope, Key, KeyEventArgs,
     KeyGesture, KeyboardDevice, LocalBoxFuture, PointerPressedEventArgs, TextInputEventArgs,
 };
 use ferroui_base::interactivity::{
@@ -286,6 +286,8 @@ pub struct RichEditBox {
     document_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     selection_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     editor_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+    input_scope_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+    input_scope_owns_options: Cell<bool>,
     projecting_selection: Cell<bool>,
     last_input_selection: Cell<EditorSelection>,
     last_text: RefCell<String>,
@@ -321,6 +323,7 @@ impl Drop for RichEditBox {
         }
         for subscription in [
             self.editor_subscription.get_mut().take(),
+            self.input_scope_subscription.get_mut().take(),
             self.context_flyout_closed_subscription.get_mut().take(),
             self.flyout_focus_subscription.get_mut().take(),
         ]
@@ -494,10 +497,12 @@ impl FerroObjectImpl for RichEditBox {
             });
             this.update_command_states();
         }
+        if property == Self::input_scope_property().as_property() {
+            this.refresh_input_scope_subscription();
+        }
         if property == Self::accepts_return_property().as_property()
             || property == Self::character_casing_property().as_property()
             || property == Self::is_text_prediction_enabled_property().as_property()
-            || property == Self::input_scope_property().as_property()
         {
             this.update_input_options();
         }
@@ -763,7 +768,7 @@ ferroui_base::ferro_properties! { impl RichEditBox {
     pub fn disabled_formatting_accelerators_property() -> StyledProperty<DisabledFormattingAccelerators> { FerroProperty::register::<RichEditBox, _>("DisabledFormattingAccelerators", DisabledFormattingAccelerators::NONE) }
     pub fn character_casing_property() -> StyledProperty<RichEditCharacterCasing> { FerroProperty::register::<RichEditBox, _>("CharacterCasing", RichEditCharacterCasing::Normal) }
     pub fn is_text_prediction_enabled_property() -> StyledProperty<bool> { FerroProperty::register::<RichEditBox, _>("IsTextPredictionEnabled", true) }
-    pub fn input_scope_property() -> StyledProperty<TextInputContentType> { FerroProperty::register::<RichEditBox, _>("InputScope", TextInputContentType::Normal) }
+    pub fn input_scope_property() -> StyledProperty<Option<Ref<InputScope>>> { FerroProperty::register::<RichEditBox, _>("InputScope", None) }
     pub fn placeholder_text_property() -> StyledProperty<String> { FerroProperty::register::<RichEditBox, _>("PlaceholderText", String::new()) }
     pub fn placeholder_foreground_property() -> StyledProperty<Option<Rc<dyn IBrush>>> { FerroProperty::register::<RichEditBox, _>("PlaceholderForeground", None) }
     pub fn header_property() -> StyledProperty<Option<BoxedValue>> { FerroProperty::register::<RichEditBox, _>("Header", None) }
@@ -816,6 +821,8 @@ impl RichEditBox {
             document_subscription: RefCell::new(None),
             selection_subscription: RefCell::new(None),
             editor_subscription: RefCell::new(None),
+            input_scope_subscription: RefCell::new(None),
+            input_scope_owns_options: Cell::new(false),
             projecting_selection: Cell::new(false),
             last_input_selection: Cell::new(EditorSelection::default()),
             last_text: RefCell::new(String::new()),
@@ -1312,11 +1319,11 @@ impl RichEditBox {
     pub fn set_is_text_prediction_enabled(&self, value: bool) {
         self.set_value(Self::is_text_prediction_enabled_property(), value);
     }
-    pub fn input_scope(&self) -> TextInputContentType {
+    pub fn input_scope(&self) -> Option<Ref<InputScope>> {
         self.get_value(Self::input_scope_property())
     }
-    pub fn set_input_scope(&self, value: TextInputContentType) {
-        self.set_value(Self::input_scope_property(), value);
+    pub fn set_input_scope(&self, value: impl Into<Option<Ref<InputScope>>>) {
+        self.set_value(Self::input_scope_property(), value.into());
     }
     pub fn placeholder_text(&self) -> String {
         self.get_value(Self::placeholder_text_property())
@@ -1670,6 +1677,32 @@ impl RichEditBox {
         self.update_command_states();
     }
 
+    fn refresh_input_scope_subscription(&self) {
+        let previous = self.input_scope_subscription.borrow_mut().take();
+        if let Some(previous) = previous {
+            previous.dispose();
+        }
+        if let Some(scope) = self.input_scope() {
+            let weak = self.to_ref().downgrade();
+            *self.input_scope_subscription.borrow_mut() = Some(scope.changed(move || {
+                if let Some(this) = weak.upgrade() {
+                    this.update_input_scope_snapshot();
+                }
+            }));
+        }
+        self.update_input_scope_snapshot();
+    }
+
+    fn update_input_scope_snapshot(&self) {
+        if let Some(scope) = self.input_scope() {
+            self.input_scope_owns_options.set(true);
+            TextInputOptions::set_input_scope_names(self, Some(scope.snapshot()));
+        } else if self.input_scope_owns_options.replace(false) {
+            // Expose inherited options again; never overwrite legacy ContentType.
+            self.clear_value(TextInputOptions::input_scope_names_property());
+        }
+    }
+
     fn update_input_options(&self) {
         TextInputOptions::set_multiline(self, self.accepts_return());
         TextInputOptions::set_lowercase(
@@ -1681,7 +1714,6 @@ impl RichEditBox {
             self.character_casing() == RichEditCharacterCasing::Upper,
         );
         TextInputOptions::set_show_suggestions(self, Some(self.is_text_prediction_enabled()));
-        TextInputOptions::set_content_type(self, self.input_scope());
     }
 
     fn update_command_states(&self) {
