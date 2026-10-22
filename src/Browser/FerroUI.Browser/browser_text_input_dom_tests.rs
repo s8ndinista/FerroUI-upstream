@@ -9,7 +9,7 @@ use ferroui_base::interactivity::RoutingStrategies;
 use ferroui_base::media::text_formatting::testing::TextTestScope;
 use ferroui_base::media::FontWeight;
 use ferroui_base::Ref;
-use ferroui_controls::documents::CharacterFormat;
+use ferroui_controls::documents::{CharacterFormat, Paragraph, Run};
 use ferroui_controls::templates::{FuncControlTemplate, FuncTemplateNameScopeExtensions};
 use ferroui_controls::testing::{
     MockWindowingPlatform, TestServices, UnitTestApplication, UnitTestApplicationScope,
@@ -42,7 +42,11 @@ impl ITextInputPage for RecordingPage {
         if let Some(callback) = callback {
             callback();
         }
-        self.0.text.replace(text.to_owned());
+        // Match the real textarea API so a raw CR source cannot accidentally
+        // pass adapter tests by remaining unnormalized in this recorder.
+        self.0
+            .text
+            .replace(text.replace("\r\n", "\n").replace('\r', "\n"));
         self.0.selection.set(TextSelection::new(anchor, active));
         self.0.revision.set(revision);
         self.0.writes.set(self.0.writes.get() + 1);
@@ -188,8 +192,23 @@ impl Fixture {
 
     fn assert_mirror(&self) {
         let state = self.connection().edit_state().unwrap();
-        assert_eq!(*self.page.text.borrow(), state.text);
-        assert_eq!(self.page.selection.get(), state.selection);
+        let projected = DomTextProjection::new(&state).unwrap();
+        assert_eq!(*self.page.text.borrow(), projected.state.text);
+        assert_eq!(self.page.selection.get(), projected.state.selection);
+    }
+
+    fn set_raw_run(&self, text: &str) {
+        let paragraph = Paragraph::new();
+        paragraph.add_child(Run::with_text(Some(text)));
+        self.owner.blocks().clear();
+        self.owner.blocks().add(paragraph);
+        self.owner.select(0, 0);
+        self.owner.editor().clear_history();
+        assert_eq!(
+            self.owner.text(),
+            text,
+            "direct Run text preserves exact model line endings"
+        );
     }
 
     fn record_input(&self) -> Rc<Cell<usize>> {
@@ -304,6 +323,209 @@ fn browser_dom_input_mobile_without_beforeinput_preserves_lf_and_directed_utf16_
     assert!(f.owner.undo().unwrap());
     assert_eq!(f.owner.text(), "a\n😀b");
     assert!(!f.owner.undo().unwrap());
+}
+
+#[test]
+fn browser_dom_input_raw_run_newlines_are_mirrored_without_becoming_a_noop_edit() {
+    let f = Fixture::new();
+    f.set_raw_run("a\r\n😀\rb");
+    f.owner.select(7, 3);
+    let before = f.owner.document().snapshot();
+    let count = f.record_input();
+    assert_eq!(*f.page.text.borrow(), "a\n😀\nb");
+    assert_eq!(f.page.selection.get(), TextSelection::new(6, 2));
+
+    assert!(f.input((f.page.revision.get(), 0), "insertText", "a\n😀\nb", 6, 2));
+
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (7, 3));
+    assert_eq!(count.get(), 0);
+    assert!(!f.owner.can_undo());
+    f.assert_mirror();
+
+    // An actual mobile insertion uses the normalized caret to locate the edit
+    // after the lone CR, retaining both original line-ending spellings.
+    assert!(f.input((f.page.revision.get(), 0), "insertText", "a\n😀\nZb", 6, 5));
+    assert_eq!(f.owner.text(), "a\r\n😀\rZb");
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (7, 6));
+    assert_eq!(count.get(), 1);
+    f.assert_mirror();
+    assert!(f.owner.undo().unwrap());
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert!(!f.owner.undo().unwrap());
+}
+
+#[test]
+fn browser_dom_input_raw_run_replacement_maps_both_selections_and_preserves_tail_formatting() {
+    let f = Fixture::new();
+    f.set_raw_run("head\r\n😀\rtail");
+    f.owner.select(9, 13);
+    f.owner
+        .apply_format(&CharacterFormat {
+            font_weight: Some(FontWeight::Bold),
+            ..Default::default()
+        })
+        .unwrap();
+    f.owner.select(8, 6);
+    f.owner.editor().clear_history();
+    let before = f.owner.document().snapshot();
+    assert_eq!(f.page.selection.get(), TextSelection::new(7, 5));
+    let ticket = f.before("insertReplacementText");
+
+    assert!(f.input(ticket, "insertReplacementText", "head\nX\ntail", 6, 5));
+
+    assert_eq!(f.owner.text(), "head\r\nX\rtail");
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (7, 6));
+    assert_eq!(
+        f.owner
+            .document()
+            .character_format_at(8)
+            .unwrap()
+            .font_weight,
+        Some(FontWeight::Bold)
+    );
+    f.assert_mirror();
+    assert!(f.owner.undo().unwrap());
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert!(!f.owner.undo().unwrap());
+    assert!(f.owner.redo().unwrap());
+    assert_eq!(f.owner.text(), "head\r\nX\rtail");
+}
+
+#[test]
+fn browser_dom_input_deletes_the_whole_raw_crlf_and_preserves_other_line_endings() {
+    let f = Fixture::new();
+    f.set_raw_run("a\r\nb\rc");
+    f.owner.select(3, 3);
+    let before = f.owner.document().snapshot();
+    assert_eq!(f.page.selection.get(), TextSelection::new(2, 2));
+    let ticket = f.before("deleteContentBackward");
+
+    assert!(f.input(ticket, "deleteContentBackward", "ab\nc", 1, 1));
+
+    assert_eq!(f.owner.text(), "ab\rc");
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (1, 1));
+    f.assert_mirror();
+    assert!(f.owner.undo().unwrap());
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert!(!f.owner.undo().unwrap());
+}
+
+#[test]
+fn browser_dom_input_rejects_unrepresentable_crlf_carets_and_projected_surrogate_interiors() {
+    let f = Fixture::new();
+    f.set_raw_run("a\r\n😀\rb");
+    f.owner.select(3, 3);
+    let before = f.owner.document().snapshot();
+    let ticket = f.before("insertText");
+    assert!(!f.input(ticket, "insertText", "a\n😀\nb", 3, 3));
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert!(!f.owner.can_undo());
+
+    f.owner.select(2, 2);
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (2, 2));
+    assert_eq!(f.page.selection.get(), TextSelection::new(1, 1));
+    let revision = f.page.revision.get();
+    assert_eq!(
+        f.method
+            .on_dom_before_input(revision, "insertText", "a\n😀\nb", 1, 1),
+        0
+    );
+    assert!(!f.input((f.page.revision.get(), 0), "insertText", "ax\n😀\nb", 2, 2));
+    assert_eq!(
+        f.method
+            .on_dom_composition_start(f.page.revision.get(), "a\n😀\nb", 1, 1),
+        0
+    );
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (2, 2));
+    assert!(!f.owner.can_undo());
+    assert!(!f.owner.editor().is_composing());
+    f.assert_mirror();
+}
+
+#[test]
+fn browser_dom_input_rejects_new_crlf_pairs_without_rewriting_adjacent_model_content() {
+    let f = Fixture::new();
+    for (source, start, end, input_type, value, caret) in [
+        ("a\rb", 2, 2, "insertLineBreak", "a\n\nb", 3),
+        ("a\rx\nb", 2, 3, "deleteContentBackward", "a\n\nb", 2),
+    ] {
+        f.set_raw_run(source);
+        f.owner.select(start, end);
+        let before = f.owner.document().snapshot();
+        let ticket = f.before(input_type);
+        assert!(!f.input(ticket, input_type, value, caret, caret));
+        assert_eq!(f.owner.document().snapshot(), before);
+        assert_eq!(
+            (f.owner.selection_start(), f.owner.selection_end()),
+            (start, end)
+        );
+        assert!(!f.owner.can_undo());
+        f.assert_mirror();
+    }
+}
+
+#[test]
+fn browser_dom_composition_raw_run_newlines_survive_cancel_commit_and_owner_change() {
+    let f = Fixture::new();
+    f.set_raw_run("a\r\nbc\rd");
+    f.owner.select(3, 5);
+    let before = f.owner.document().snapshot();
+    let token = f.compose();
+    f.method.on_dom_composition_update(token, "候補");
+    assert_eq!(f.owner.text(), "a\r\n候補\rd");
+    f.method.on_dom_composition_end(token, "", "a\nbc\nd", 2, 4);
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert!(!f.owner.can_undo());
+    f.assert_mirror();
+
+    let count = f.record_input();
+    let token = f.compose();
+    f.method.on_dom_composition_update(token, "候補");
+    f.method
+        .on_dom_composition_end(token, "日本", "a\n日本\nd", 4, 2);
+    assert_eq!(f.owner.text(), "a\r\n日本\rd");
+    assert_eq!((f.owner.selection_start(), f.owner.selection_end()), (5, 3));
+    assert_eq!(count.get(), 1);
+    f.assert_mirror();
+    assert!(f.owner.undo().unwrap());
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert!(!f.owner.undo().unwrap());
+
+    f.owner.select(3, 5);
+    let token = f.compose();
+    f.method.on_dom_composition_update(token, "preview");
+    f.other.focus();
+    assert_eq!(f.owner.document().snapshot(), before);
+    f.method
+        .on_dom_composition_end(token, "late", "a\nlate\nd", 6, 6);
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert_eq!(f.other.text(), "abcd");
+    assert_eq!(count.get(), 1);
+    assert!(!f.owner.can_undo());
+    assert!(!f.other.can_undo());
+    f.assert_mirror();
+}
+
+#[test]
+fn browser_dom_composition_rejects_a_new_crlf_pair_and_restores_its_exact_preview_source() {
+    let f = Fixture::new();
+    f.set_raw_run("a\rb");
+    f.owner.select(2, 2);
+    let before = f.owner.document().snapshot();
+    let count = f.record_input();
+    let token = f.compose();
+    f.method.on_dom_composition_update(token, "\n");
+
+    f.method.on_dom_composition_end(token, "\n", "a\n\nb", 3, 3);
+
+    assert_eq!(f.owner.document().snapshot(), before);
+    assert_eq!(count.get(), 0);
+    assert!(!f.owner.can_undo());
+    assert!(!f.method.is_composing());
+    assert!(!f.owner.editor().is_composing());
+    f.assert_mirror();
 }
 
 #[test]

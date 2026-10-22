@@ -62,11 +62,11 @@ function fixture(value = "", anchor = value.length, active = anchor) {
 }
 
 test("canonical LF and directed UTF-16 selection are mirrored idempotently", () => {
-    const { input } = fixture("A😀\r\nB", 4, 1);
+    const { input } = fixture("A😀\nB", 4, 1);
     assert.equal(input.value, "A😀\nB");
     assert.deepEqual([input.selectionStart, input.selectionEnd, input.selectionDirection], [1, 4, "backward"]);
     const writes = [input.valueWrites, input.selectionWrites];
-    setTextInputState(input, "A😀\r\nB", 4, 1, 2);
+    setTextInputState(input, "A😀\nB", 4, 1, 2);
     assert.deepEqual([input.valueWrites, input.selectionWrites], writes);
 });
 

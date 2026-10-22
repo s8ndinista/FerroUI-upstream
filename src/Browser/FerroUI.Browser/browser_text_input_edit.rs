@@ -16,6 +16,9 @@ pub(crate) fn edit_from_dom(
     after: &TextInputMethodState,
     input_type: &str,
 ) -> Result<Option<TextInputMethodEdit>, TextInputMethodError> {
+    if before.text.contains('\r') || after.text.contains('\r') {
+        return Err(TextInputMethodError::InvalidRange);
+    }
     validate_selection(&before.text, before.selection)?;
     validate_selection(&after.text, after.selection)?;
     if let Some(selection) = native_selection {
@@ -155,11 +158,14 @@ fn anchored_edit(
     Ok(Some(edit))
 }
 
-fn utf16_length(text: &str) -> Result<i32, TextInputMethodError> {
+pub(crate) fn utf16_length(text: &str) -> Result<i32, TextInputMethodError> {
     i32::try_from(text.encode_utf16().count()).map_err(|_| TextInputMethodError::InvalidRange)
 }
 
-fn validate_selection(text: &str, selection: TextSelection) -> Result<(), TextInputMethodError> {
+pub(crate) fn validate_selection(
+    text: &str,
+    selection: TextSelection,
+) -> Result<(), TextInputMethodError> {
     byte_offset(text, selection.start)?;
     byte_offset(text, selection.end)?;
     Ok(())

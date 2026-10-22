@@ -39,8 +39,9 @@ function selection(input: TextInputElement): [number, number] {
 }
 
 function writeText(input: TextInputElement, value: string, anchor: number, active: number): void {
-    // A textarea's API value has LF line endings. Compare that value before
-    // assigning it, so a repeated CRLF source does not disrupt native input.
+    // Rust supplies the LF projection and matching DOM UTF-16 offsets; it
+    // retains the exact model line endings and translates edits back there.
+    // Normalize defensively before comparing the textarea's API value.
     value = value.replace(/\r\n?/g, "\n");
     if (input.value !== value) input.value = value;
     const start = Math.max(0, Math.min(anchor, active, input.value.length));
@@ -56,7 +57,7 @@ function restoreText(input: TextInputElement, state: TextState): void {
     writeText(input, state.value, state.anchor, state.active);
 }
 
-/** Publishes one canonical framework snapshot without replacing the element. */
+/** Publishes one LF-projected framework snapshot without replacing the element. */
 export function setTextInputState(input: TextInputElement, text: string,
     anchor: number, active: number, revision: number): void {
     const state = stateFor(input);

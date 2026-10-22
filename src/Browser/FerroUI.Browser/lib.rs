@@ -39,6 +39,7 @@ mod browser_system_navigation_manager;
 mod browser_text_input_edit;
 mod browser_text_input_method;
 mod browser_text_input_options;
+mod browser_text_input_projection;
 mod browser_top_level_impl;
 mod clipboard_impl;
 mod cursor;

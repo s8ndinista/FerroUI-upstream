@@ -1,5 +1,6 @@
 use super::BrowserTextInputMethod;
 use crate::browser_text_input_edit::edit_from_dom;
+use crate::browser_text_input_projection::DomTextProjection;
 use ferroui_base::input::text_input::{
     TextInputMethodClient, TextInputMethodConnection, TextInputMethodEdit, TextInputMethodError,
     TextInputMethodState, TextSelection,
@@ -17,6 +18,7 @@ struct Snapshot {
     connection: Option<Weak<TextInputMethodConnection>>,
     exact: bool,
     state: TextInputMethodState,
+    projection: DomTextProjection,
 }
 
 impl Snapshot {
@@ -47,6 +49,7 @@ struct Composition {
     token: u32,
     generation: u64,
     original: TextInputMethodState,
+    original_dom: String,
 }
 
 #[derive(Default)]
@@ -137,6 +140,7 @@ impl BrowserTextInputMethod {
         {
             return Err(TextInputMethodError::StateChanged);
         }
+        let projection = DomTextProjection::new(&state)?;
         Ok(Snapshot {
             revision: 0,
             generation,
@@ -146,6 +150,7 @@ impl BrowserTextInputMethod {
             connection: connection.as_ref().map(Rc::downgrade),
             exact,
             state,
+            projection,
         })
     }
 
@@ -185,9 +190,9 @@ impl BrowserTextInputMethod {
             }
             if let Some(snapshot) = snapshot {
                 self.page.set_surrounding_text(
-                    &snapshot.state.text,
-                    snapshot.state.selection.start,
-                    snapshot.state.selection.end,
+                    &snapshot.projection.state.text,
+                    snapshot.projection.state.selection.start,
+                    snapshot.projection.state.selection.end,
                     revision,
                 );
             } else {
@@ -242,13 +247,12 @@ impl BrowserTextInputMethod {
         let accepted = snapshot.filter(|snapshot| {
             !self.is_composing.get()
                 && snapshot.exact
+                && snapshot.projection.selection_is_exact
                 && revision != 0
                 && snapshot.revision == revision
-                && snapshot.state.text == value
+                && snapshot.projection.state.text == value
                 && self.snapshot_is_current(snapshot)
-                && TextInputMethodEdit::new(TextSelection::new(0, 0), "", selection)
-                    .apply_to(&snapshot.state.text)
-                    .is_ok()
+                && snapshot.projection.selection_to_model(selection).is_ok()
         });
         let Some(snapshot) = accepted else {
             self.dom.borrow_mut().pending = None;
@@ -304,7 +308,10 @@ impl BrowserTextInputMethod {
                     .ok_or(TextInputMethodError::StaleConnection)?;
                 (snapshot, None)
             };
-            if !snapshot.exact || !self.snapshot_is_current(&snapshot) {
+            if !snapshot.exact
+                || !snapshot.projection.selection_is_exact
+                || !self.snapshot_is_current(&snapshot)
+            {
                 return Err(TextInputMethodError::StateChanged);
             }
             let connection = snapshot
@@ -316,16 +323,22 @@ impl BrowserTextInputMethod {
                 text: value.to_owned(),
                 selection: TextSelection::new(anchor, active),
             };
-            match edit_from_dom(&snapshot.state, selection, &after, input_type)? {
-                Some(edit) => connection.apply_edit(
-                    &edit,
-                    self.input_handler
-                        .upgrade()
-                        .map_or(0, |handler| handler.timestamp()),
-                ),
+            match edit_from_dom(&snapshot.projection.state, selection, &after, input_type)? {
+                Some(edit) => {
+                    let edit = snapshot
+                        .projection
+                        .edit_to_model(&snapshot.state.text, &edit)?;
+                    connection.apply_edit(
+                        &edit,
+                        self.input_handler
+                            .upgrade()
+                            .map_or(0, |handler| handler.timestamp()),
+                    )
+                }
                 None => {
-                    if after.selection != snapshot.state.selection {
-                        connection.select_exact(after.selection)?;
+                    let selection = snapshot.projection.selection_to_model(after.selection)?;
+                    if selection != snapshot.state.selection {
+                        connection.select_exact(selection)?;
                     }
                     Ok(true)
                 }
@@ -347,19 +360,17 @@ impl BrowserTextInputMethod {
         let Some(mut snapshot) = snapshot.filter(|snapshot| {
             snapshot.revision == revision
                 && revision != 0
-                && snapshot.state.text == value
+                && snapshot.projection.selection_is_exact
+                && snapshot.projection.state.text == value
                 && self.snapshot_is_current(snapshot)
         }) else {
             self.synchronize_dom();
             return 0;
         };
-        if TextInputMethodEdit::new(TextSelection::new(0, 0), "", selection)
-            .apply_to(&snapshot.state.text)
-            .is_err()
-        {
+        let Ok(selection) = snapshot.projection.selection_to_model(selection) else {
             self.synchronize_dom();
             return 0;
-        }
+        };
         if selection != snapshot.state.selection {
             let selected = if snapshot.exact {
                 snapshot
@@ -395,6 +406,7 @@ impl BrowserTextInputMethod {
             token,
             generation,
             original: snapshot.state,
+            original_dom: snapshot.projection.state.text,
         });
         token
     }
@@ -426,8 +438,30 @@ impl BrowserTextInputMethod {
         self.dom.borrow_mut().composition = None;
         // Escape restores the original DOM value and reports empty data. An
         // empty accepted replacement instead removes the selected text.
-        let cancelled = data.is_empty() && value == composition.original.text;
-        self.on_composition_end((!cancelled).then_some(data));
+        let cancelled = data.is_empty() && value == composition.original_dom;
+        // The committed range belongs to the original model, while the native
+        // value belongs to its LF projection. Reject a newly formed CRLF across
+        // the replacement boundary before committing the retained preview.
+        let representable = cancelled || !composition.original.text.contains('\r') || {
+            let selection = composition.original.selection;
+            let edit = TextInputMethodEdit::new(
+                TextSelection::new(
+                    selection.start.min(selection.end),
+                    selection.start.max(selection.end),
+                ),
+                data.replace("\r\n", "\n").replace('\r', "\n"),
+                TextSelection::default(),
+            );
+            edit.apply_to(&composition.original.text)
+                .and_then(|text| {
+                    DomTextProjection::new(&TextInputMethodState {
+                        text,
+                        selection: TextSelection::default(),
+                    })
+                })
+                .is_ok_and(|projection| projection.state.text == value)
+        };
+        self.on_composition_end((!cancelled && representable).then_some(data));
         if self.generation.get() == composition.generation {
             // The browser ended this native session and cannot retry a rejected
             // commit. Roll back its retained preview before mirroring the model.
@@ -437,17 +471,20 @@ impl BrowserTextInputMethod {
             }
             if self.generation.get() == composition.generation {
                 self.composition_session.take();
-                if !cancelled {
+                if !cancelled && representable {
                     if let Ok(snapshot) = self.capture_snapshot() {
                         let selection = TextSelection::new(anchor, active);
-                        if snapshot.exact
-                            && snapshot.state.text == value
-                            && snapshot.state.selection != selection
-                        {
+                        if snapshot.exact && snapshot.projection.state.text == value {
                             if let Some(connection) =
                                 snapshot.connection.as_ref().and_then(Weak::upgrade)
                             {
-                                let _ = connection.select_exact(selection);
+                                if let Ok(selection) =
+                                    snapshot.projection.selection_to_model(selection)
+                                {
+                                    if snapshot.state.selection != selection {
+                                        let _ = connection.select_exact(selection);
+                                    }
+                                }
                             }
                         }
                     }
