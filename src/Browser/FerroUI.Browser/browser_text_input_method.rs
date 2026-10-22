@@ -322,6 +322,11 @@ impl BrowserTextInputMethod {
             return;
         }
         client.set_preedit_text(None);
+        // Clearing legacy preedit can run application code that moves focus or
+        // installs another client. The old composition must not commit there.
+        if self.generation.get() != generation {
+            return;
+        }
 
         if let Some(data) = data {
             if let Some(input_handler) = self.input_handler.upgrade() {

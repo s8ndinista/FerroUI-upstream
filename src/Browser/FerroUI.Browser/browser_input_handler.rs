@@ -1412,6 +1412,7 @@ mod tests {
     struct TestClient {
         events: TextInputMethodClientEvents,
         preedit: RefCell<Vec<Option<String>>>,
+        on_clear: RefCell<Option<Box<dyn FnOnce()>>>,
     }
 
     impl TextInputMethodClient for TestClient {
@@ -1447,6 +1448,12 @@ mod tests {
 
         fn set_preedit_text(&self, preedit_text: Option<&str>) {
             self.preedit.borrow_mut().push(preedit_text.map(str::to_string));
+            if preedit_text.is_none() {
+                let callback = self.on_clear.borrow_mut().take();
+                if let Some(callback) = callback {
+                    callback();
+                }
+            }
         }
     }
 
@@ -1573,8 +1580,11 @@ mod tests {
         fixture.handler.text_input_method().on_composition_end(Some("\u{304b}"));
         assert_eq!(0, fixture.event_count());
 
-        let client =
-            Rc::new(TestClient { events: TextInputMethodClientEvents::new(), preedit: RefCell::new(Vec::new()) });
+        let client = Rc::new(TestClient {
+            events: TextInputMethodClientEvents::new(),
+            preedit: RefCell::new(Vec::new()),
+            on_clear: RefCell::new(None),
+        });
         let text_input_client: Rc<dyn TextInputMethodClient> = client.clone();
         fixture.handler.text_input_method().set_client(Some(text_input_client));
 
@@ -1603,6 +1613,7 @@ mod tests {
         let client = Rc::new(TestClient {
             events: TextInputMethodClientEvents::new(),
             preedit: RefCell::new(Vec::new()),
+            on_clear: RefCell::new(None),
         });
         fixture.handler.text_input_method().set_client(Some(client.clone()));
         fixture.handler.text_input_method().on_composition_start();
@@ -1619,6 +1630,41 @@ mod tests {
             fixture.event(1).downcast_ref::<RawTextInputEventArgs>().unwrap().text(),
             "あ"
         );
+        BrowserWindowingPlatform::set_keyboard_for_unit_tests(None);
+    }
+
+    #[test]
+    fn browser_text_input_legacy_composition_end_cannot_commit_to_a_reentrant_new_client() {
+        let _scope = Dispatcher::unit_test_scope();
+        let _keyboard = with_keyboard();
+        let fixture = Fixture::new();
+        let client = Rc::new(TestClient {
+            events: TextInputMethodClientEvents::new(),
+            preedit: RefCell::new(Vec::new()),
+            on_clear: RefCell::new(None),
+        });
+        let next = Rc::new(TestClient {
+            events: TextInputMethodClientEvents::new(),
+            preedit: RefCell::new(Vec::new()),
+            on_clear: RefCell::new(None),
+        });
+        let method = fixture.handler.text_input_method();
+        method.set_client(Some(client.clone()));
+        method.on_composition_start();
+        method.on_composition_update(Some("old preview"));
+        let weak_method = Rc::downgrade(method);
+        let installed = next.clone();
+        client.on_clear.replace(Some(Box::new(move || {
+            weak_method.upgrade().unwrap().set_client(Some(installed));
+        })));
+
+        method.on_composition_end(Some("old commit"));
+
+        assert_eq!(fixture.event_count(), 0, "the retired composition must not dispatch raw text");
+        assert!(!method.is_composing());
+        method.on_composition_start();
+        method.on_composition_update(Some("new preview"));
+        assert_eq!(&*next.preedit.borrow(), &[None, Some("new preview".to_owned())]);
         BrowserWindowingPlatform::set_keyboard_for_unit_tests(None);
     }
 
