@@ -37,7 +37,7 @@
     </Style>
   </UserControl.Styles>
 
-  <Grid ColumnDefinitions="0.35*,4,0.65*">
+  <Grid ColumnDefinitions="0.35*,1,0.65*">
     <TreeDataGrid Name="tree"
                   BorderThickness="0"
                   ShowColumnHeaders="False"
@@ -63,9 +63,9 @@
       </TreeDataGrid.ContextFlyout>
     </TreeDataGrid>
 
-    <!-- Deviation (DEVIATIONS.md, Developer tools): the brush of the WinUI 3 theme in place of
-         ThemeControlMidBrush of the Simple theme. -->
-    <GridSplitter Background="{DynamicResource CardStrokeColorDefaultBrush}" Width="1" Grid.Column="1"/>
+    <!-- Deviation (DEVIATIONS.md, Developer tools): a divider of the sheet of the tools
+         (DevToolsStyles.xaml) in place of a splitter of the Simple theme. -->
+    <GridSplitter Classes="divider vertical" Grid.Column="1"/>
     <ContentControl Content="{Binding Details}" Grid.Column="2"/>
   </Grid>
 </UserControl>

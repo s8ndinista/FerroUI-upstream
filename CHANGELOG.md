@@ -54,12 +54,14 @@ One crate joins, `ferroui-diagnostics`. The additions since the preview are list
   - the logical and visual trees with a filter, the details of the selected control (its properties with their priorities and an editor for each, the value frames with their setters and resources, the pseudo-classes, the layout explorer), the routed events with their routes, the hot keys, and screenshots of a control;
   - the property grid is the TreeDataGrid of the port, grouped and sortable, in place of upstream's DataGrid;
   - the window has the WinUI 3 theme in its compact density, in place of upstream's Simple theme, with compact rows; the logical and visual trees and the tree of the routed events are TreeDataGrids too, in place of tree views: their rows are virtualized, and selecting a node (Ctrl+Shift over a control, a link of an event chain) expands its ancestors and scrolls to its row even when it was not shown;
+  - one design for every view (`DevToolsStyles.xaml`): consistent spacing, section headers, thin dividers, a status bar, and a property grid whose editors share one compact form, with read-only values shown as text and brushes as outlined swatches;
   - `MainViewModel::register_page` adds pages of other crates to the tools;
   - the ControlCatalog attaches them in debug builds, and `FERROUI_SMOKE_DEVTOOLS=<directory>` runs them without a person and writes pictures of their window;
   - the facade has them as the feature `diagnostics`.
 
 ### Changed
 
+- **WinUI 3 theme**: the controls whose WinUI style leaves the content alignments unset centre their content, as WinUI's defaults do (the placeholder of a combo box, the content of stretched buttons, the fields of the date and time pickers); a single-line text box centres its line, which with the fonts of macOS and Linux sat above the middle (`docs/porting/winui-theme/DEVIATIONS.md`, G-27 and G-28).
 - **`#[component(rerender)]` memoizes by default** a component whose parameters are `PartialEq + Clone`; `#[component(rerender, always)]` runs it with its parent every time, and `memo` makes comparable parameters required.
 - **Markup compiler**: a setter of a style class in a style (`<Setter Property="Classes.name" .../>`) compiles to Rust; it was refused (`FRN3000`).
 - **Markup**: `Binding` returns itself from `BindingBase::as_any`, as the other bindings do; `Window.Close()` can be called from markup.

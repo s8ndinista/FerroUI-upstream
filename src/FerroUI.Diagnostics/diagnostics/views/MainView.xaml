@@ -263,7 +263,7 @@
 
     <!-- The tabs of the extension pages are added after these by the code of the view.
          Deviation (DEVIATIONS.md, Developer tools): an addition of the port. -->
-    <TabStrip Name="tabStrip" Grid.Row="2" SelectedIndex="{Binding SelectedTab, Mode=TwoWay}">
+    <TabStrip Name="tabStrip" Grid.Row="2" Margin="8,0" SelectedIndex="{Binding SelectedTab, Mode=TwoWay}">
       <TabStripItem Content="Logical Tree" />
       <TabStripItem Content="Visual Tree" />
       <TabStripItem Content="Events" />
@@ -279,27 +279,25 @@
                   Background="{DynamicResource CardStrokeColorDefaultBrush}"
                   IsVisible="False" />
 
-    <Border Grid.Row="5"
-            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
-            BorderThickness="0,1,0,0">
+    <Border Grid.Row="5" Classes="status-bar">
       <Grid ColumnDefinitions="*, Auto">
-        <StackPanel Grid.Column="0" Spacing="4" Orientation="Horizontal">
-          <TextBlock>Hold Ctrl+Shift over a control to inspect.</TextBlock>
-          <Separator Width="8" />
-          <TextBlock>Focused:</TextBlock>
-          <TextBlock Text="{Binding FocusedControl}" />
-          <Separator Width="8" />
-          <TextBlock>Pointer Over:</TextBlock>
-          <TextBlock Text="{Binding PointerOverElementName}" />
+        <StackPanel Grid.Column="0" Spacing="16" Orientation="Horizontal">
+          <TextBlock Classes="label">Hold Ctrl+Shift over a control to inspect.</TextBlock>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Classes="label">Focused:</TextBlock>
+            <TextBlock Text="{Binding FocusedControl}" />
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <TextBlock Classes="label">Pointer over:</TextBlock>
+            <TextBlock Text="{Binding PointerOverElementName}" />
+          </StackPanel>
         </StackPanel>
 
         <TextBlock Grid.Column="1"
-                   Foreground="Gray"
-                   Margin="2 0"
+                   Classes="label"
                    Text="Popups frozen"
                    IsVisible="{Binding FreezePopups}" />
       </Grid>
-
     </Border>
   </Grid>
 </UserControl>

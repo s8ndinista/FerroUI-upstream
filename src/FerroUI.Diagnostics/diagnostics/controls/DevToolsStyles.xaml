@@ -1,0 +1,147 @@
+<Styles xmlns="https://github.com/ferroui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:FerroUI.Diagnostics.Controls"
+        x:ClassModifier="internal">
+  <!--
+  Deviation (DEVIATIONS.md, Developer tools): the design of the developer tools on the WinUI 3
+  theme, shared by their views: one spacing scale (4, 8, 12, 16), section headers, secondary text,
+  the status bar, the dividers between the panes, and the editors of the property grid, which are
+  one compact form (24 px high, the text in the middle) in rows of 28 px. Upstream's views have no
+  such sheet; their controls took the sizes of the Simple theme.
+  -->
+
+  <!-- Text -->
+  <Style Selector="TextBlock.section-header">
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="TextBlock.secondary">
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+  </Style>
+  <Style Selector="TextBlock.caption">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+  </Style>
+
+  <!-- The status bar at the bottom of the window. -->
+  <Style Selector="Border.status-bar">
+    <Setter Property="Background" Value="{DynamicResource LayerFillColorDefaultBrush}" />
+    <Setter Property="BorderBrush" Value="{DynamicResource CardStrokeColorDefaultBrush}" />
+    <Setter Property="BorderThickness" Value="0,1,0,0" />
+    <Setter Property="Padding" Value="12,4" />
+  </Style>
+  <Style Selector="Border.status-bar TextBlock">
+    <Setter Property="FontSize" Value="12" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+  <Style Selector="Border.status-bar TextBlock.label">
+    <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+  </Style>
+
+  <!-- A pane beside another one: the details, the layout and the frames, the events. -->
+  <Style Selector="Border.pane">
+    <Setter Property="Background" Value="{DynamicResource LayerFillColorDefaultBrush}" />
+  </Style>
+
+  <!-- The dividers between panes: a line of one pixel in a grip of five. -->
+  <Style Selector="GridSplitter.divider">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Template">
+      <ControlTemplate>
+        <Border Background="{TemplateBinding Background}">
+          <Rectangle Fill="{DynamicResource DividerStrokeColorDefaultBrush}" />
+        </Border>
+      </ControlTemplate>
+    </Setter>
+  </Style>
+  <Style Selector="GridSplitter.divider.vertical">
+    <Setter Property="Width" Value="5" />
+    <Setter Property="Margin" Value="-2,0" />
+  </Style>
+  <Style Selector="GridSplitter.divider.vertical /template/ Rectangle">
+    <Setter Property="Width" Value="1" />
+  </Style>
+  <Style Selector="GridSplitter.divider.horizontal">
+    <Setter Property="Height" Value="5" />
+    <Setter Property="Margin" Value="0,-2" />
+  </Style>
+  <Style Selector="GridSplitter.divider.horizontal /template/ Rectangle">
+    <Setter Property="Height" Value="1" />
+  </Style>
+  <Style Selector="GridSplitter.divider:pointerover /template/ Rectangle">
+    <Setter Property="Fill" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+  </Style>
+
+  <!-- The filter boxes above the trees, the properties, the frames and the events. -->
+  <Style Selector="controls|FilterTextBox">
+    <Setter Property="MinHeight" Value="28" />
+  </Style>
+  <Style Selector="controls|FilterTextBox ToggleButton.filter-text-box-toggle">
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Width" Value="22" />
+    <Setter Property="Margin" Value="0,0,2,0" />
+  </Style>
+
+  <!-- The property grid. -->
+  <Style Selector="TreeDataGrid.property-grid :is(TreeDataGridCell)">
+    <Setter Property="MinHeight" Value="28" />
+  </Style>
+  <Style Selector="TreeDataGrid.property-grid TreeDataGridTextCell">
+    <Setter Property="Padding" Value="8,0" />
+  </Style>
+  <Style Selector="TreeDataGrid.property-grid TreeDataGridTemplateCell">
+    <Setter Property="Padding" Value="8,0" />
+  </Style>
+  <Style Selector="TreeDataGrid.property-grid TreeDataGridColumnHeader">
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="MinHeight" Value="28" />
+  </Style>
+
+  <!-- The editors of the values: one compact form. -->
+  <Style Selector=":is(TemplatedControl).editor">
+    <Setter Property="VerticalAlignment" Value="Center" />
+    <Setter Property="HorizontalAlignment" Value="Stretch" />
+    <Setter Property="Margin" Value="0,2" />
+  </Style>
+  <Style Selector="TextBox.editor, ComboBox.editor, NumericUpDown.editor">
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="Height" Value="24" />
+    <Setter Property="FontSize" Value="13" />
+  </Style>
+  <Style Selector="TextBox.editor">
+    <Setter Property="Padding" Value="6,0" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <!-- A value that cannot be edited reads as text, not as a box. -->
+  <Style Selector="TextBox.editor[IsReadOnly=True], TextBox.editor[IsReadOnly=True]:pointerover, TextBox.editor[IsReadOnly=True]:focus">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+  <Style Selector="TextBox.editor[IsReadOnly=True] /template/ Border#BorderElement">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+  </Style>
+  <Style Selector="ComboBox.editor">
+    <Setter Property="Padding" Value="8,0,0,0" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+  </Style>
+  <Style Selector="CheckBox.editor">
+    <Setter Property="MinWidth" Value="0" />
+    <Setter Property="MinHeight" Value="0" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="HorizontalAlignment" Value="Left" />
+  </Style>
+  <Style Selector="controls|BrushEditor.editor">
+    <Setter Property="Height" Value="22" />
+    <Setter Property="Margin" Value="0,3" />
+  </Style>
+  <Style Selector="StackPanel.editor">
+    <Setter Property="Spacing" Value="6" />
+    <Setter Property="VerticalAlignment" Value="Center" />
+  </Style>
+</Styles>
