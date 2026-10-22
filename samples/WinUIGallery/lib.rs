@@ -14,11 +14,13 @@ mod catalog_data;
 pub mod contrast;
 mod control_samples;
 pub mod examples;
+mod feedback_samples;
 mod frame_sample;
 pub mod gallery;
 mod input_samples;
 pub mod navigation;
 mod platform_samples;
+mod sizing_sample;
 
 #[cfg(any(feature = "desktop", feature = "capture"))]
 mod app;
@@ -31,3 +33,6 @@ pub use app::App;
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(test)]
+mod feedback_samples_tests;

@@ -1627,6 +1627,250 @@
       ],
       "notes": "The explicit WinUI style example is adapted to an opt-in ControlTheme; implicit WinUI style semantics are not changed globally. This reviewed subset does not establish every source example, event, binding, accessibility behavior, platform integration or visual state of the upstream page.",
       "examples": []
+    },
+    "ProgressRing": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/ProgressRing.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/feedback_samples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "progress_ring_page_preserves_both_source_modes_and_active_option"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "progress_ring_page_restores_empty_numeric_input_and_updates_the_native_range"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "feedback_pages_and_callbacks_release_their_native_controls"
+        }
+      ],
+      "notes": "Both original examples use the opt-in native ProgressRing, activation and background options, and finite/empty NumberBox handling. The source IsOn option is adapted to the existing native ToggleSwitch.IsChecked. Native arc motion is an explicit adaptation; custom animated visual sources, exact Lottie rendering and complete input/accessibility/visual acceptance remain pending.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/ProgressRing/IndeterminateProgressRing.txt",
+          "source_sha256": "bc98e0aeec2163a1fe2b384b759dd7332f5c2f026d5351fd94c3011d917d7657",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "progress_ring_page_preserves_both_source_modes_and_active_option"
+            }
+          ],
+          "notes": "Both original examples use the opt-in native ProgressRing, activation and background options, and finite/empty NumberBox handling. The source IsOn option is adapted to the existing native ToggleSwitch.IsChecked. Native arc motion is an explicit adaptation; custom animated visual sources, exact Lottie rendering and complete input/accessibility/visual acceptance remain pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/ProgressRing/DeterminateProgressRing.txt",
+          "source_sha256": "d20d2b1e6d5e5140d31ffcff31a159c0be50148bdfe2e4295cd55fc2e72e2ebc",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "progress_ring_page_restores_empty_numeric_input_and_updates_the_native_range"
+            }
+          ],
+          "notes": "Both original examples use the opt-in native ProgressRing, activation and background options, and finite/empty NumberBox handling. The source IsOn option is adapted to the existing native ToggleSwitch.IsChecked. Native arc motion is an explicit adaptation; custom animated visual sources, exact Lottie rendering and complete input/accessibility/visual acceptance remain pending."
+        }
+      ]
+    },
+    "RatingControl": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/RatingControl.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/feedback_samples.rs"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "rating_page_changes_caption_only_for_user_changes_and_obeys_clear_and_readonly"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "rating_page_tracks_fractional_placeholder_in_both_directions"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "feedback_pages_and_callbacks_release_their_native_controls"
+        }
+      ],
+      "notes": "Both source examples use native RatingControl: user changes update the caption, clear/read-only options remain live, and the fractional placeholder is bound in both directions. Native event handlers and ordinary Binding explicitly replace source C# handlers and x:Bind. Segoe glyph availability, exact visual/input/OS accessibility acceptance and locale formatting remain pending.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/RatingControl/RatingControlSimple.txt",
+          "source_sha256": "820289ec44cf35371c434ec8a6c1c747159f3c31455a9ff360a4d5abbee27210",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "rating_page_changes_caption_only_for_user_changes_and_obeys_clear_and_readonly"
+            }
+          ],
+          "notes": "Both source examples use native RatingControl: user changes update the caption, clear/read-only options remain live, and the fractional placeholder is bound in both directions. Native event handlers and ordinary Binding explicitly replace source C# handlers and x:Bind. Segoe glyph availability, exact visual/input/OS accessibility acceptance and locale formatting remain pending."
+        },
+        {
+          "source": "WinUIGallery/Samples/RatingControl/RatingControlPlaceholder.txt",
+          "source_sha256": "b981aefdf6abff1253c309c84e9d816094258c6c1b4b53d3034c43fa589beabc",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "rating_page_tracks_fractional_placeholder_in_both_directions"
+            }
+          ],
+          "notes": "Both source examples use native RatingControl: user changes update the caption, clear/read-only options remain live, and the fractional placeholder is bound in both directions. Native event handlers and ordinary Binding explicitly replace source C# handlers and x:Bind. Segoe glyph availability, exact visual/input/OS accessibility acceptance and locale formatting remain pending."
+        }
+      ]
+    },
+    "InfoBadge": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/InfoBadge.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/feedback_samples.rs",
+        "samples/WinUIGallery/assets.rs",
+        "src/FerroUI.Themes.WinUI/Controls/WinUIInfoBadge.xaml"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "info_badge_page_switches_actual_source_themes_and_keeps_original_icon"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "info_badge_page_preserves_source_integer_guard_for_dynamic_values"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "feedback_pages_and_callbacks_release_their_native_controls"
+        }
+      ],
+      "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/InfoBadge/DifferentInfobadgeStyles.txt",
+          "source_sha256": "933f4cb788aa224b18c091d9b251e2de98d89f92b3e4296b3dd737f4e149fa98",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "info_badge_page_switches_actual_source_themes_and_keeps_original_icon"
+            }
+          ],
+          "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial."
+        },
+        {
+          "source": "WinUIGallery/Samples/InfoBadge/PlacingInfobadgeInsideAnother.txt",
+          "source_sha256": "118bf7c1614efc0582be4d91a4b455afb98acd8edbbc8ac173d51f2c1864d214",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "info_badge_page_switches_actual_source_themes_and_keeps_original_icon"
+            }
+          ],
+          "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial."
+        },
+        {
+          "source": "WinUIGallery/Samples/InfoBadge/InfobadgeDynamicValue.txt",
+          "source_sha256": "d7c1165a43b86a8ec8a4871573bf95e7b87efaef3679182e4a00910dfc2d99c8",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "info_badge_page_preserves_source_integer_guard_for_dynamic_values"
+            }
+          ],
+          "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial."
+        }
+      ]
+    },
+    "CompactSizing": {
+      "status": "partial",
+      "implementation": [
+        "samples/WinUIGallery/Pages/CompactSizing.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/sizing_sample.rs",
+        "samples/WinUIGallery/Pages/SizingForm.xaml",
+        "src/FerroUI.Themes.WinUI/DensityStyles/Compact.xaml"
+      ],
+      "tests": [
+        {
+          "path": "samples/WinUIGallery/tests.rs",
+          "name": "all_reviewed_native_adaptations_load_real_controls"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "compact_sizing_copies_every_field_across_distinct_page_types"
+        },
+        {
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+          "name": "compact_sizing_resources_remain_page_scoped_and_release_with_the_gallery_page"
+        }
+      ],
+      "notes": "The original standard/compact navigation uses distinct native Page types and Frame factories. All four text/password fields and nullable date values copy between forms. The existing native compact dictionary stays local to the compact page. PasswordBox and Header are explicit native TextBox/composition adaptations; Date maps to SelectedDate. Complete original control contracts and visual/input acceptance remain pending.",
+      "examples": [
+        {
+          "source": "WinUIGallery/Samples/CompactSizing/CompactSizingControls.txt",
+          "source_sha256": "b6cf18c491bd8ba66a88f1dea3a5f7dc03598b410088a0f4c471fba72d631ef5",
+          "status": "partial",
+          "tests": [
+            {
+              "path": "samples/WinUIGallery/tests.rs",
+              "name": "all_reviewed_native_adaptations_load_real_controls"
+            },
+            {
+              "path": "samples/WinUIGallery/feedback_samples_tests.rs",
+              "name": "compact_sizing_copies_every_field_across_distinct_page_types"
+            }
+          ],
+          "notes": "The original standard/compact navigation uses distinct native Page types and Frame factories. All four text/password fields and nullable date values copy between forms. The existing native compact dictionary stays local to the compact page. PasswordBox and Header are explicit native TextBox/composition adaptations; Date maps to SelectedDate. Complete original control contracts and visual/input acceptance remain pending."
+        }
+      ]
     }
   }
 }

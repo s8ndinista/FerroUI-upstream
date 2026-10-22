@@ -5,9 +5,29 @@ use ferroui_controls::testing::{TestServices, UnitTestApplication};
 use ferroui_controls::{Button, CheckBox, ComboBox, Slider, TextBlock, TextBox};
 use std::collections::HashSet;
 
-fn start() -> ferroui_controls::testing::UnitTestApplicationScope {
+pub(crate) fn start() -> ferroui_controls::testing::UnitTestApplicationScope {
     ferroui_markup_xaml::register_types();
-    UnitTestApplication::start(TestServices::styled_window())
+    let scope = UnitTestApplication::start(TestServices::styled_window());
+    // These are explicit mock resource contracts. Rendering tests install the
+    // actual compiled WinUI theme and exercise its light/dark resources.
+    let application = ferroui_controls::Application::current().unwrap();
+    for name in [
+        "TextOnAccentFillColorPrimaryBrush",
+        "AccentFillColorDefaultBrush",
+        "SystemControlHighlightAltChromeWhiteBrush",
+        "SystemControlHighlightAccentBrush",
+        "SystemFillColorAttentionBrush",
+        "SystemFillColorSolidNeutralBrush",
+        "SystemFillColorSuccessBrush",
+        "SystemFillColorCautionBrush",
+        "SystemFillColorCriticalBrush",
+    ] {
+        application.resources().add(
+            ferroui_base::controls::ResourceKey::from(name),
+            Some(std::rc::Rc::new(ferroui_base::media::Brushes::blue()) as ferroui_base::BoxedValue),
+        );
+    }
+    scope
 }
 
 #[test]

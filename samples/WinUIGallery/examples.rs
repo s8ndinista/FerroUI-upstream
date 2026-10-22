@@ -32,6 +32,10 @@ macro_rules! page {
 }
 
 pub static ADAPTATIONS: &[PageAdaptation] = &[
+    page!("CompactSizing", "The source standard/compact page navigation copies all four text/password values and the selected date. The existing native compact dictionary is scoped to each compact page; global theme density remains unchanged. Header and PasswordBox are explicit compositions/adaptations; full WinUI control contracts and input/visual acceptance remain pending."),
+    page!("InfoBadge", "The source severity styles, embedded button badge and dynamic NumberBox value use native InfoBadge and audited ControlThemes. The NavigationView composition remains pending. Exact upstream rendering and host accessibility acceptance remain pending."),
+    page!("ProgressRing", "Both source examples use the opt-in native ProgressRing, active state, background options and original NumberBox empty-value recovery. Native arc animation is an explicit adaptation; exact Lottie motion, custom animated sources and platform accessibility acceptance remain pending."),
+    page!("RatingControl", "Both source examples use native RatingControl input, caption changes, clearing/read-only options and half-step placeholder binding. Programmatic updates retain the original caption; user ValueChanged selects Your rating. Exact source animation and host accessibility acceptance remain pending."),
     page!("InfoBar", "All three original compositions use the opt-in InfoBar with severity, short/long messages, optional button/hyperlink and visibility/closability options. x:Bind is explicitly adapted to ordinary TwoWay Binding; final layout, icons and live-region acceptance remain pending."),
     page!("Popup", "The source open/close handlers and offset/light-dismiss options use the native Popup. Placement is explicitly relative to its button; WinUI absolute-placement, acrylic and screen-edge parity remain pending."),
     page!("Clipboard", "Text copy/paste, available formats and clear use the host clipboard service asynchronously. Bitmap/file operations, history/roaming, content-change notifications and original accessibility announcements remain pending."),
@@ -110,9 +114,11 @@ pub fn create(sample: &PageAdaptation) -> Result<Ref<Control>, XamlLoadException
     crate::assets::register();
     let root = FerroRuntimeXamlLoader::parse_as::<Ref<Control>>(sample.xaml, None)?;
     crate::frame_sample::wire(&root)?;
+    crate::sizing_sample::wire(&root)?;
     crate::platform_samples::wire(&root);
     crate::input_samples::wire(&root);
     crate::control_samples::wire(&root);
+    crate::feedback_samples::wire(&root);
     wire(&root);
     Ok(root)
 }
