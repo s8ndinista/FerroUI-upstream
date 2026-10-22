@@ -357,6 +357,108 @@ fn join(parents: &mut [usize], a: usize, b: usize) {
     parents[a.max(b)] = a.min(b);
 }
 
+fn portion(curve: Curve, from: f64, to: f64) -> Curve {
+    let left = if to == 1.0 { curve } else { split(curve, to).0 };
+    if from == 0.0 { left } else { split(left, from / to).1 }
+}
+
+fn ordered_hit(hit: Hit) -> (VectorEdgeId, f64, VectorEdgeId, f64) {
+    if hit.a < hit.b || (hit.a == hit.b && hit.ta <= hit.tb) {
+        (hit.a, hit.ta, hit.b, hit.tb)
+    } else { (hit.b, hit.tb, hit.a, hit.ta) }
+}
+
+/// Repeated Newton solves on adjacent subdivision pieces can differ by a few
+/// ULPs. Proximity only selects events to inspect: a derivative-cone certificate
+/// must prove that their common parameter rectangle has at most one crossing.
+/// Events involving three different lines instead need exact concurrence on
+/// the ORIGINAL coordinates; normalized evaluation equality is insufficient.
+fn same_intersection(network: &VectorNetwork, edges: &[Edge], common: VectorEdgeId,
+    first: Hit, second: Hit, work: &mut Work) -> Result<bool, NetworkFaceError>
+{
+    if !near(first.point, second.point) { return Ok(false); }
+    let a = ordered_hit(first);
+    let b = ordered_hit(second);
+    if a.0 == b.0 && a.2 == b.2 {
+        if (a.1 - b.1).abs() > PARAMETER_ROUND_OFF || (a.3 - b.3).abs() > PARAMETER_ROUND_OFF { return Ok(false); }
+        let curve = |id| edges[edges.binary_search_by_key(&id, |edge| edge.id).unwrap()].curve;
+        let (ca, cb) = (curve(a.0), curve(a.2));
+        let mut padding = 0.25;
+        for _ in 0..24 {
+            work.take()?;
+            let pa = portion(ca, (a.1.min(b.1) - padding).max(0.0), (a.1.max(b.1) + padding).min(1.0));
+            let pb = portion(cb, (a.3.min(b.3) - padding).max(0.0), (a.3.max(b.3) + padding).min(1.0));
+            if unique_crossing(pa, pb) { return Ok(true); }
+            padding *= 0.5;
+        }
+        return Ok(false);
+    }
+    let other = |hit: Hit| if hit.a == common { hit.b } else { hit.a };
+    let curves = [common, other(first), other(second)].map(|id| network.edge_curve(id).unwrap());
+    if curves.iter().any(|curve| curve.degree != 1) { return Ok(false); }
+    // The predicate is small, fixed-degree exact arithmetic, but still charges
+    // work so a large nearly concurrent input cannot escape the global bound.
+    work.0 = work.0.checked_sub(128).ok_or(NetworkFaceError::ComplexityLimit)?;
+    Ok(exact_line_concurrence(curves))
+}
+
+/// Nonoverlapping floating-point expansion, using error-free two-sum and FMA
+/// product residuals. The concurrence caller first scales by a power of two
+/// and bounds input exponents. Its degree-four determinant therefore cannot
+/// overflow or underflow, including the least significant expansion terms.
+struct Exact(Vec<f64>);
+impl Exact {
+    fn number(value: f64) -> Self { Self(if value == 0.0 { Vec::new() } else { vec![value] }) }
+    fn term(&mut self, mut value: f64) {
+        let mut result = Vec::with_capacity(self.0.len() + 1);
+        for &part in &self.0 {
+            let sum = value + part;
+            let virtual_part = sum - value;
+            let error = (value - (sum - virtual_part)) + (part - virtual_part);
+            if error != 0.0 { result.push(error); }
+            value = sum;
+        }
+        if value != 0.0 { result.push(value); }
+        self.0 = result;
+    }
+    fn add(mut self, other: Self) -> Self { for part in other.0 { self.term(part); } self }
+    fn sub(mut self, other: Self) -> Self { for part in other.0 { self.term(-part); } self }
+    fn mul(&self, other: &Self) -> Self {
+        let mut result = Self(Vec::new());
+        for &a in &self.0 { for &b in &other.0 {
+            let product = a * b;
+            result.term(a.mul_add(b, -product));
+            result.term(product);
+        } }
+        result
+    }
+    fn zero(&self) -> bool { self.0.is_empty() }
+}
+
+fn exact_line_concurrence(curves: [Curve; 3]) -> bool {
+    let magnitude = curves.iter().flat_map(|curve| curve.points[..2].iter())
+        .flat_map(|point| [point.x.abs(), point.y.abs()]).fold(0.0, f64::max);
+    if magnitude == 0.0 || !magnitude.is_finite() { return false; }
+    let scale = 2.0_f64.powi(-(magnitude.log2().floor() as i32));
+    if !scale.is_finite() || scale == 0.0 { return false; }
+    let minimum = 2.0_f64.powi(-128);
+    let mut lines = Vec::with_capacity(3);
+    for curve in curves {
+        let (p, q) = (curve.points[0] * scale, curve.points[1] * scale);
+        if [p.x, p.y, q.x, q.y].iter().any(|value| !value.is_finite() || (*value != 0.0 && value.abs() < minimum)) { return false; }
+        // Exact power-of-two scaling must not erase a nonzero input.
+        if [curve.points[0].x, curve.points[0].y, curve.points[1].x, curve.points[1].y]
+            .into_iter().zip([p.x, p.y, q.x, q.y]).any(|(before, after)| before != 0.0 && after == 0.0) { return false; }
+        let e = Exact::number;
+        lines.push([e(p.y).sub(e(q.y)), e(q.x).sub(e(p.x)), e(p.x).mul(&e(q.y)).sub(e(p.y).mul(&e(q.x)))]);
+    }
+    let (a, b, c) = (&lines[0], &lines[1], &lines[2]);
+    let x = a[1].mul(&b[2]).sub(a[2].mul(&b[1]));
+    let y = a[2].mul(&b[0]).sub(a[0].mul(&b[2]));
+    let w = a[0].mul(&b[1]).sub(a[1].mul(&b[0]));
+    !w.zero() && c[0].mul(&x).add(c[1].mul(&y)).add(c[2].mul(&w)).zero()
+}
+
 fn assemble(network: &VectorNetwork, edges: &[Edge], hits: Vec<Hit>, origin: Point, scale: f64, work: &mut Work) -> Result<Preparation, NetworkFaceError> {
     let mut cuts = BTreeMap::<VectorEdgeId, Vec<(f64, usize)>>::new();
     for (index, hit) in hits.iter().enumerate() {
@@ -375,7 +477,7 @@ fn assemble(network: &VectorNetwork, edges: &[Edge], hits: Vec<Hit>, origin: Poi
                 // a real face even though all their coordinates are close.
                 // Final embedding certification cannot detect that face once
                 // it has already been collapsed into a common junction.
-                if pair[0].0 != pair[1].0 || hits[pair[0].1].point != hits[pair[1].1].point {
+                if pair[0].1 != pair[1].1 && !same_intersection(network, edges, edge, hits[pair[0].1], hits[pair[1].1], work)? {
                     return Err(NetworkFaceError::UnsplitIntersection(edge, edge));
                 }
                 join(&mut parents, pair[0].1, pair[1].1);
@@ -394,7 +496,14 @@ fn assemble(network: &VectorNetwork, edges: &[Edge], hits: Vec<Hit>, origin: Poi
     for (vertex, event) in endpoint_events { groups.entry(root(&mut parents, event)).or_default().insert(vertex); }
     for points in cuts.values_mut() {
         for (_, index) in points.iter_mut() { *index = root(&mut parents, *index); }
-        points.dedup_by(|a, b| a.1 == b.1 && a.0 == b.0);
+        points.dedup_by(|a, b| {
+            if a.1 == b.1 && (a.0 - b.0).abs() <= PARAMETER_ROUND_OFF {
+                // These events were independently proved to name one root.
+                // Retain an authored endpoint rather than a nearby estimate.
+                if a.0 == 0.0 || a.0 == 1.0 { b.0 = a.0; }
+                true
+            } else { false }
+        });
     }
     let added_edges: usize = cuts.values().map(|points| points.iter().filter(|(t, _)| *t > 0.0 && *t < 1.0).count()).sum();
     if network.edges.len().checked_add(added_edges).is_none_or(|count| count > MAX_EDGES) { return Err(NetworkFaceError::ComplexityLimit); }

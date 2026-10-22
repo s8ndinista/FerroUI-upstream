@@ -40,8 +40,14 @@ fn guide_bindings_resolve_aliases_modes_and_exact_undo_redo() {
     editor.edit_variables(VariableEdit::AddMode { name: "Wide".into(), copy_from: "Default".into() }).unwrap();
     editor.edit_variables(VariableEdit::Upsert { id: Some(count), name: "Columns".into(), collection: "Guides".into(),
         mode: "Wide".into(), value: VariableValue::Number(8.0), replace_all_modes: false }).unwrap();
+    // Adding a mode activates it. Restore Default so the following activation
+    // is a real edit whose own history entry must restore both mode and value.
+    editor.edit_variables(VariableEdit::ActivateMode { mode: "Default".into() }).unwrap();
+    assert_eq!(editor.document.nodes[&frame].layout_guide(1).unwrap().pattern.axis().unwrap().count, Some(4));
     let before = editor.to_json().unwrap();
+    let depth = editor.history_len();
     editor.edit_variables(VariableEdit::ActivateMode { mode: "Wide".into() }).unwrap();
+    assert_eq!(editor.history_len(), depth + 1);
     assert_eq!(editor.document.nodes[&frame].layout_guide(1).unwrap().pattern.axis().unwrap().count, Some(8));
     let after = editor.to_json().unwrap();
     assert!(editor.undo()); assert_eq!(editor.to_json().unwrap(), before);

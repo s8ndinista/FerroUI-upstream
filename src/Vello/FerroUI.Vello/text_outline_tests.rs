@@ -10,7 +10,7 @@ use ferroui_base::media::immutable::{
 use ferroui_base::media::{AlignmentX, AlignmentY, GradientSpreadMethod, Stretch, TileMode};
 use ferroui_base::platform::AlphaFormat;
 use ferroui_base::{RelativePoint, RelativeUnit};
-use kurbo::{Affine, BezPath, Stroke};
+use kurbo::{Affine, BezPath, Shape, Stroke};
 use peniko::{BlendMode, Fill};
 use skrifa::MetadataProvider;
 

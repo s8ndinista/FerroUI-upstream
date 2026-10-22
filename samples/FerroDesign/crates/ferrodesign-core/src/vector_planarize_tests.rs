@@ -159,6 +159,53 @@ fn planarize_nearby_distinct_crossings_cannot_collapse_a_face_into_one_junction(
 }
 
 #[test]
+fn planarize_exact_nondyadic_line_concurrence_survives_translation() {
+    // The common point is (1/3, 1/3), not an exactly representable f64.
+    // A rounded point-equality test cannot establish this concurrence. The
+    // exact determinant on the authored endpoints can, even after translation.
+    for translation in [p(0.0, 0.0), p(128.0, -256.0)] {
+        let mut network = VectorNetwork::default();
+        for (start, end) in [(p(0.0, 0.0), p(1.0, 1.0)),
+            (p(1.0, 0.0), p(-1.0, 1.0)), (p(0.0, 1.0), p(1.0, -1.0))]
+        {
+            let start = network.add_vertex(start + translation).unwrap();
+            let end = network.add_vertex(end + translation).unwrap();
+            network.connect(start, end).unwrap();
+        }
+        assert!(network.planarize_intersections().unwrap());
+        assert_eq!(network.vertices.len(), 7);
+        assert_eq!(network.edges.len(), 6);
+        assert!(network.detect_faces().unwrap().is_empty());
+        let junctions: Vec<_> = network.vertices.keys().filter(|&&id|
+            network.edges.values().filter(|edge| edge.start == id || edge.end == id).count() == 6).collect();
+        assert_eq!(junctions.len(), 1);
+        let point = network.vertices[junctions[0]].position - translation;
+        assert!(point.distance(p(1.0 / 3.0, 1.0 / 3.0)) < 1e-9);
+        let prepared = network.clone();
+        assert!(!network.planarize_intersections().unwrap());
+        assert_eq!(network, prepared);
+    }
+}
+
+#[test]
+fn planarize_concurrence_predicate_is_exact_even_when_rounded_coordinates_cancel() {
+    let source = [Curve::line(p(0.0, 0.0), p(1.0, 1.0)),
+        Curve::line(p(1.0, 0.0), p(-1.0, 1.0)), Curve::line(p(0.0, 1.0), p(1.0, -1.0))];
+    for translation in [p(0.0, 0.0), p(1_048_576.0, -2_097_152.0)] {
+        let mut curves = source;
+        for curve in &mut curves { curve.points = curve.points.map(|point| point + translation); }
+        assert!(exact_line_concurrence(curves));
+        curves[2].points[1].y += 1e-8;
+        assert!(!exact_line_concurrence(curves));
+    }
+    for offset in [-1e-14, 1e-14] {
+        let curves = [Curve::line(p(0.0, 0.5), p(1.0, 0.5)), Curve::line(p(0.5, 0.0), p(0.5, 1.0)),
+            Curve::line(p(0.0, offset), p(1.0, 1.0 + offset))];
+        assert!(!exact_line_concurrence(curves));
+    }
+}
+
+#[test]
 fn planarize_welds_exact_endpoint_and_t_junction_contacts_without_renumbering() {
     let mut network = VectorNetwork::default();
     let segments = [(p(0.0, 0.0), p(100.0, 0.0)), (p(100.0, 0.0), p(100.0, 100.0)),
