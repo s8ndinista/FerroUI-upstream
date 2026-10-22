@@ -25,6 +25,8 @@ mod text_highlight_range;
 mod text_highlighter;
 mod text_highlighter_collection;
 mod text_position;
+mod typography;
+mod typography_format;
 mod underline;
 
 pub use block::{Block, BlockImpl, BlockImplExt, BlockVTable, LineStackingStrategy};
@@ -57,6 +59,8 @@ pub use text_highlight_range::{TextHighlightError, TextHighlightRange, TextRange
 pub use text_highlighter::TextHighlighter;
 pub use text_highlighter_collection::{TextHighlighterCollection, WeakTextHighlighterCollection};
 pub use text_position::{LogicalDirection, TextGravity, TextPointer, TextPosition, TextRange};
+pub use typography::Typography;
+pub use typography_format::TypographyFormat;
 pub use underline::Underline;
 
 #[cfg(test)]

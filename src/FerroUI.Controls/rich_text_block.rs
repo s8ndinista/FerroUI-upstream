@@ -4,7 +4,7 @@
 use crate::documents::{
     Block, BlockCollection, Hyperlink, IInlineHost, LineStackingStrategy, Paragraph,
     RichTextDocument, Span, TextElement, TextGravity, TextHighlightRegion,
-    TextHighlighterCollection, TextPosition,
+    TextHighlighterCollection, TextPosition, Typography,
 };
 use crate::rich_text_layout::{RichTextBreak, RichTextLayout, RichTextLineMetrics, RichTextSource};
 use crate::{Border, Control, ControlImpl, RichTextBlockOverflow, TextBlock, TopLevel};
@@ -54,6 +54,7 @@ pub struct RichTextBlock {
     base: Control,
     document: RefCell<RichTextDocument>,
     document_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
+    font_features_subscription: RefCell<Option<Rc<dyn IDisposable>>>,
     source: RefCell<Option<Rc<RichTextSource>>>,
     layout: RefCell<Option<Rc<RichTextLayout>>>,
     constraint: Cell<Size>,
@@ -142,10 +143,17 @@ impl FerroObjectImpl for RichTextBlock {
         Self::parent_constructed(this);
         this.attach_document();
         this.attach_view_observers();
+        this.refresh_font_features_subscription();
     }
 
     fn on_property_changed(this: &Self, change: &FerroPropertyChangedEventArgs<'_>) {
         Self::parent_on_property_changed(this, change);
+        if change.property() == TextElement::font_features_property().as_property() {
+            this.refresh_font_features_subscription();
+        }
+        if Typography::is_property(change.property()) {
+            this.invalidate_document_layout();
+        }
         match change.property().name() {
             "FontFamily"
             | "FontSize"
@@ -734,6 +742,7 @@ impl RichTextBlock {
             base: Control::construct(),
             document: RefCell::new(RichTextDocument::new()),
             document_subscription: RefCell::new(None),
+            font_features_subscription: RefCell::new(None),
             source: RefCell::new(None),
             layout: RefCell::new(None),
             constraint: Cell::new(Size::new(f64::INFINITY, f64::INFINITY)),
@@ -759,6 +768,22 @@ impl RichTextBlock {
 
     pub fn new() -> Ref<Self> {
         instantiate(Self::construct())
+    }
+
+    fn refresh_font_features_subscription(&self) {
+        let previous = self.font_features_subscription.borrow_mut().take();
+        if let Some(previous) = previous {
+            previous.dispose();
+        }
+        let subscription = self.font_features().map(|features| {
+            let weak = self.to_ref().downgrade();
+            features.collection_changed(move |_| {
+                if let Some(this) = weak.upgrade() {
+                    this.invalidate_document_layout();
+                }
+            })
+        });
+        *self.font_features_subscription.borrow_mut() = subscription;
     }
 
     pub fn document(&self) -> RichTextDocument {
@@ -1634,6 +1659,9 @@ impl RichTextBlock {
 
 impl Drop for RichTextBlock {
     fn drop(&mut self) {
+        if let Some(subscription) = self.font_features_subscription.get_mut().take() {
+            subscription.dispose();
+        }
         for subscription in self.view_subscriptions.get_mut().drain(..) {
             subscription.dispose();
         }

@@ -305,6 +305,7 @@ const TYPES: &[&TypeInfo] = types![
     crate::documents::Span,
     crate::documents::TextElement,
     crate::documents::TextHighlighter,
+    crate::documents::Typography,
     crate::documents::Underline,
     // FerroUI.Controls.Embedding
     crate::embedding::EmbeddableControlRoot,

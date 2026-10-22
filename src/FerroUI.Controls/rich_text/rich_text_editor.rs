@@ -1,3 +1,4 @@
+use super::{SelectionOptions, SelectionType};
 use crate::documents::{
     CharacterFormat, DocumentError, DocumentSnapshot, ParagraphFormat, RichTextDocument,
     TextGravity,
@@ -156,6 +157,8 @@ pub struct RichTextEditor {
     document: RichTextDocument,
     text_view: RefCell<Option<WeakRef<crate::RichTextBlock>>>,
     selection: Cell<EditorSelection>,
+    selection_options: Cell<SelectionOptions>,
+    selection_options_generation: Cell<u64>,
     navigation_affinity: Cell<Option<NavigationAffinity>>,
     navigation_generation: Cell<u64>,
     typing_format: RefCell<CharacterFormat>,
@@ -201,6 +204,8 @@ impl RichTextEditor {
             document,
             text_view: RefCell::new(None),
             selection: Cell::new(EditorSelection::default()),
+            selection_options: Cell::new(SelectionOptions::NONE),
+            selection_options_generation: Cell::new(0),
             navigation_affinity: Cell::new(None),
             navigation_generation: Cell::new(0),
             typing_format: RefCell::new(CharacterFormat::default()),
@@ -839,6 +844,14 @@ impl RichTextEditor {
         let _operation = self.enter(true)?;
         self.synchronize();
         let range = self.selection().range();
+        if kind == EditKind::Typing
+            && self
+                .selection_options()
+                .contains(SelectionOptions::OVERTYPE)
+        {
+            let (range, text) = self.prepare_overtype_text(text, range)?;
+            return self.replace_text_core(&text, kind, range);
+        }
         self.replace_text_core(text, kind, range)
     }
 
@@ -883,6 +896,11 @@ impl RichTextEditor {
             if length > 0 {
                 self.document
                     .apply_format(range.start..range.start + length, &self.typing_format())?;
+            }
+            if kind == EditKind::Typing && length > 0 {
+                // Clear accepted typing intent before publication. A later
+                // application projection can install its own newer mode state.
+                self.clear_typing_end_of_line();
             }
             self.selection
                 .set(EditorSelection::caret(range.start + length));
@@ -1046,6 +1064,7 @@ impl RichTextEditor {
         self.synchronize();
         let before = self.capture();
         let before_limit = self.max_length();
+        let before_options = self.selection_options.get();
         let external_generation = self.external_change_generation();
         let pending_start = self.pending_composition_changes.borrow().len();
         let depth = self.group_depth.get();
@@ -1067,6 +1086,7 @@ impl RichTextEditor {
             // TOM SetText may grow MaxLength inside a nested group. Failed
             // transactions restore that configuration along with the story.
             self.set_max_length(before_limit);
+            self.store_selection_options(before_options);
             let composition = self.history.borrow_mut().composition.take();
             drop(composition);
             self.pending_composition_changes
@@ -1391,23 +1411,8 @@ fn text_is_deletion(kind: EditKind) -> bool {
     matches!(kind, EditKind::Delete | EditKind::Programmatic)
 }
 
-fn merge_format(mut current: CharacterFormat, update: &CharacterFormat) -> CharacterFormat {
-    macro_rules! update { ($($field:ident),* $(,)?) => { $(if update.$field.is_some() { current.$field = update.$field.clone(); })* }; }
-    update!(
-        language,
-        font_family,
-        font_size,
-        font_style,
-        font_weight,
-        font_stretch,
-        font_features,
-        foreground,
-        background,
-        text_decorations,
-        baseline_alignment,
-        letter_spacing
-    );
-    current
+fn merge_format(current: CharacterFormat, update: &CharacterFormat) -> CharacterFormat {
+    current.overlay(update)
 }
 
 #[cfg(test)]
@@ -1416,3 +1421,6 @@ mod composition_tests;
 
 #[path = "rich_text_exact_edit.rs"]
 mod exact_edit;
+
+#[path = "rich_text_editor_selection.rs"]
+mod selection;

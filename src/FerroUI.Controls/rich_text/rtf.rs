@@ -531,9 +531,9 @@ impl Decoder {
                             return Err(RtfError::UnsupportedFeature("images or embedded objects"));
                         }
                         Some((
-                            "info" | "generator" | "themedata"
-                            | "colorschememapping" | "xmlnstbl" | "datastore" | "latentstyles"
-                            | "header" | "footer" | "headerl" | "headerr" | "footerl" | "footerr",
+                            "info" | "generator" | "themedata" | "colorschememapping" | "xmlnstbl"
+                            | "datastore" | "latentstyles" | "header" | "footer" | "headerl"
+                            | "headerr" | "footerl" | "footerr",
                             _,
                         )) => {}
                         Some(("listtable" | "listoverridetable", _)) => {
@@ -893,7 +893,9 @@ impl Decoder {
     /// consumes a separate bounded work budget to prevent a small stylesheet from
     /// amplifying the parser's token budget through repeated references.
     fn apply_style(&mut self, kind: StyleKind, id: i32, state: &mut State) -> Result<(), RtfError> {
-        let chain = self.styles.resolve(kind, id, self.limits.max_depth.min(512))?;
+        let chain = self
+            .styles
+            .resolve(kind, id, self.limits.max_depth.min(512))?;
         let Some(selected) = chain.last() else {
             // An undeclared Normal style is the RTF default, rather than a
             // reference to a nonexistent document formatting definition.
@@ -903,17 +905,24 @@ impl Decoder {
             work.checked_add(style.controls.len() + 1)
                 .ok_or(RtfError::LimitExceeded("style expansion"))
         })?;
-        self.style_work = self.style_work.checked_add(work)
+        self.style_work = self
+            .style_work
+            .checked_add(work)
             .filter(|work| *work <= self.limits.max_tokens)
             .ok_or(RtfError::LimitExceeded("style expansion"))?;
 
         if kind == StyleKind::Paragraph {
-            self.decode(&[Node::Control("pard", None), Node::Control("plain", None)], state)?;
+            self.decode(
+                &[Node::Control("pard", None), Node::Control("plain", None)],
+                state,
+            )?;
         } else if !selected.additive {
             self.decode(&[Node::Control("plain", None)], state)?;
         }
         for definition in chain {
-            let controls: Vec<_> = definition.controls.iter()
+            let controls: Vec<_> = definition
+                .controls
+                .iter()
                 .map(|control| Node::Control(control.word.as_str(), control.number))
                 .collect();
             self.decode(&controls, state)?;
@@ -1148,12 +1157,15 @@ impl Decoder {
                 // that expansion before cloning: a long URI and many short
                 // paragraphs must not multiply a bounded input into huge output.
                 let segments = self.document.paragraphs[paragraph_index..]
-                    .iter().enumerate()
+                    .iter()
+                    .enumerate()
                     .filter(|(index, paragraph)| {
                         paragraph.inlines.len() > if *index == 0 { inline_index } else { 0 }
                     })
                     .count();
-                let metadata_bytes = target.uri.len()
+                let metadata_bytes = target
+                    .uri
+                    .len()
                     .checked_add(target.name.as_ref().map_or(0, String::len))
                     .and_then(|bytes| bytes.checked_mul(segments))
                     .and_then(|bytes| self.field_metadata_bytes.checked_add(bytes))
@@ -1166,9 +1178,13 @@ impl Decoder {
                 // Empty paragraphs have no navigable text; do not manufacture an
                 // invisible focus/automation target for their paragraph marks.
                 for (index, paragraph) in self.document.paragraphs[paragraph_index..]
-                    .iter_mut().enumerate()
+                    .iter_mut()
+                    .enumerate()
                 {
-                    let inlines = paragraph.inlines.split_off(if index == 0 { inline_index } else { 0 });
+                    let inlines =
+                        paragraph
+                            .inlines
+                            .split_off(if index == 0 { inline_index } else { 0 });
                     if inlines.is_empty() {
                         continue;
                     }
@@ -1536,7 +1552,12 @@ impl Encoder {
                 }
             }
         }
-        if format.font_features.as_ref().is_some_and(Option::is_some) {
+        // Effective insertion formats include resolved typography defaults.
+        // Those render normally in RTF; nondefault OpenType choices cannot be
+        // represented by this encoder and must never be silently discarded.
+        if format.font_features.as_ref().is_some_and(Option::is_some)
+            || !format.typography.is_default()
+        {
             return Err(RtfError::UnsupportedFeature("OpenType feature overrides"));
         }
         if format

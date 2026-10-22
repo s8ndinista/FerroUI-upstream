@@ -1,4 +1,4 @@
-use super::{TextElement, TextElementImpl};
+use super::{TextElement, TextElementImpl, Typography};
 use crate::Control;
 use ferroui_base::media::text_formatting::{GenericTextRunProperties, TextRun, TextRunProperties};
 use ferroui_base::media::{
@@ -106,7 +106,10 @@ ferroui_base::ferro_properties! { impl Inline {
 impl Inline {
     fn invalidate_decoration_change(&self) {
         if let Some(host) = self.inline_host() {
-            if self.get_base_value(Self::text_decorations_property()).is_some() {
+            if self
+                .get_base_value(Self::text_decorations_property())
+                .is_some()
+            {
                 host.invalidate();
             } else {
                 host.invalidate_layout();
@@ -226,7 +229,7 @@ impl Inline {
             parent_or_self_background,
             self.baseline_alignment(),
             Some(self.resolved_language()),
-            self.font_features(),
+            Typography::effective_font_features(self),
         ))
     }
 

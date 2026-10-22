@@ -1,6 +1,6 @@
 # Text document implementation notices
 
-The block, paragraph, block collection, hyperlink and text-position contracts
+The block, paragraph, block collection, hyperlink, typography and text-position contracts
 are derived from Microsoft WinUI, pinned at commit
 `fe244ca6ac4d482712b234a9de3cf771cc6481de`:
 
@@ -11,6 +11,9 @@ are derived from Microsoft WinUI, pinned at commit
 - `dxaml/xcp/core/text/RichTextArea/TextElement.cpp`
 - `dxaml/xcp/core/text/common/text.cpp`
 - `dxaml/xcp/core/text/common/TextFormatting.cpp`
+- `dxaml/xcp/core/text/common/Typography.cpp`
+- `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Documents.cs`
+- `dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.cs`
 - `dxaml/xcp/core/text/RichTextServices/xcp/PALFontAndScriptServices.cpp`
 - `dxaml/xcp/core/text/TextBlock/Hyperlink.cpp`
 - `dxaml/xcp/core/inc/Hyperlink.h`

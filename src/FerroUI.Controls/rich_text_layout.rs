@@ -3,7 +3,7 @@
 
 use crate::documents::{
     Block, EmbeddedControlRun, Inline, LineSpacingRule, LineStackingStrategy, Paragraph,
-    RichTextDocument, TextHighlightRegion,
+    RichTextDocument, TextHighlightRegion, Typography,
 };
 use crate::text_block::InlinesTextSource;
 use crate::RichTextBlockImplExt;
@@ -78,7 +78,7 @@ impl RichTextSource {
                     Some(crate::documents::text_language::resolved_language(
                         &view.language(),
                     )),
-                    view.font_features(),
+                    Typography::effective_font_features(view),
                 ))
             } else {
                 Rc::new(GenericTextRunProperties::with_all(
@@ -94,7 +94,7 @@ impl RichTextSource {
                     block.background(),
                     BaselineAlignment::Baseline,
                     Some(block.resolved_language()),
-                    block.font_features(),
+                    Typography::effective_font_features(&block),
                 ))
             };
             let default_tab_stop = block

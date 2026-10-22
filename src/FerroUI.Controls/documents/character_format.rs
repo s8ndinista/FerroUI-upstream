@@ -1,4 +1,7 @@
-use super::{Block, Inline, LineSpacingRule, LineStackingStrategy, Paragraph, TabAlignment, TabLeader, TextElement, TextTabStop, TextTabStops};
+use super::{
+    Block, Inline, LineSpacingRule, LineStackingStrategy, Paragraph, TabAlignment, TabLeader,
+    TextElement, TextTabStop, TextTabStops, TypographyFormat,
+};
 use ferroui_base::media::{
     BaselineAlignment, FlowDirection, FontFamily, FontFeatureCollection, FontStretch, FontStyle,
     FontWeight, IBrush, MediaCollection, TextAlignment, TextDecoration, TextDecorationCollection,
@@ -19,6 +22,9 @@ pub struct CharacterFormat {
     pub font_weight: Option<FontWeight>,
     pub font_stretch: Option<FontStretch>,
     pub font_features: Option<Option<FontFeatureCollection>>,
+    /// Each assigned typography field is patched independently. Effective
+    /// formats contain all resolved values, including explicit defaults.
+    pub typography: TypographyFormat,
     pub foreground: Option<Option<Rc<dyn IBrush>>>,
     pub background: Option<Option<Rc<dyn IBrush>>>,
     pub text_decorations: Option<Option<TextDecorationCollection>>,
@@ -35,6 +41,7 @@ impl std::fmt::Debug for CharacterFormat {
             .field("font_style", &self.font_style)
             .field("font_weight", &self.font_weight)
             .field("font_stretch", &self.font_stretch)
+            .field("typography", &self.typography)
             .field("foreground", &self.foreground)
             .field("background", &self.background)
             .field("baseline_alignment", &self.baseline_alignment)
@@ -66,6 +73,7 @@ impl Clone for CharacterFormat {
             font_style: self.font_style,
             font_weight: self.font_weight,
             font_stretch: self.font_stretch,
+            typography: self.typography.clone(),
             font_features: self
                 .font_features
                 .as_ref()
@@ -96,6 +104,7 @@ impl PartialEq for CharacterFormat {
             && self.font_style == other.font_style
             && self.font_weight == other.font_weight
             && self.font_stretch == other.font_stretch
+            && self.typography == other.typography
             && self.foreground == other.foreground
             && self.background == other.background
             && self.baseline_alignment == other.baseline_alignment
@@ -133,6 +142,7 @@ impl CharacterFormat {
             font_style: element.get_base_value(TextElement::font_style_property()),
             font_weight: element.get_base_value(TextElement::font_weight_property()),
             font_stretch: element.get_base_value(TextElement::font_stretch_property()),
+            typography: TypographyFormat::from_object(element),
             font_features: element
                 .get_base_value(TextElement::font_features_property())
                 .map(|v| v.as_ref().map(copy_features)),
@@ -159,6 +169,7 @@ impl CharacterFormat {
             font_style: Some(element.font_style()),
             font_weight: Some(element.font_weight()),
             font_stretch: Some(element.font_stretch()),
+            typography: TypographyFormat::effective(element),
             font_features: Some(element.font_features().as_ref().map(copy_features)),
             foreground: Some(element.foreground().as_ref().map(freeze_brush)),
             background: Some(element.background().as_ref().map(freeze_brush)),
@@ -193,6 +204,7 @@ impl CharacterFormat {
             baseline_alignment,
             letter_spacing
         );
+        result.typography = self.typography.overlay(&patch.typography);
         result
     }
 
@@ -226,6 +238,7 @@ impl CharacterFormat {
     }
 
     pub(crate) fn apply_to(&self, element: &TextElement) {
+        self.typography.apply_to(element);
         if let Some(language) = &self.language {
             element.set_language(language.clone());
         }
@@ -268,6 +281,7 @@ impl CharacterFormat {
     }
 
     pub(crate) fn replace_on(&self, element: &TextElement) {
+        TypographyFormat::clear_on(element);
         element.clear_value(TextElement::language_property());
         element.clear_value(TextElement::font_family_property());
         element.clear_value(TextElement::font_size_property());
@@ -386,7 +400,10 @@ impl ParagraphFormat {
         leader: TabLeader,
     ) -> Result<(), super::DocumentError> {
         let stop = TextTabStop::new(position * (96.0 / 72.0), alignment, leader);
-        let tabs = self.tab_stops.clone().unwrap_or_default()
+        let tabs = self
+            .tab_stops
+            .clone()
+            .unwrap_or_default()
             .with_tab(stop)
             .map_err(|error| super::DocumentError::InvalidFormat(error.message()))?;
         self.tab_stops = Some(tabs);
@@ -399,7 +416,10 @@ impl ParagraphFormat {
     }
 
     pub fn delete_tab(&mut self, position: f64) -> Result<(), super::DocumentError> {
-        let tabs = self.tab_stops.clone().unwrap_or_default()
+        let tabs = self
+            .tab_stops
+            .clone()
+            .unwrap_or_default()
             .without_tab(position * (96.0 / 72.0))
             .map_err(|error| super::DocumentError::InvalidFormat(error.message()))?;
         self.tab_stops = Some(tabs);
@@ -411,9 +431,16 @@ impl ParagraphFormat {
     }
 
     /// Zero-based explicit tab query; positions are returned in TOM points.
-    pub fn get_tab(&self, index: usize) -> Result<(f64, TabAlignment, TabLeader), super::DocumentError> {
-        let stop = self.tab_stops.as_ref().ok_or(super::DocumentError::InvalidFormat(
-            "Tab index is outside the explicit tab collection"))?
+    pub fn get_tab(
+        &self,
+        index: usize,
+    ) -> Result<(f64, TabAlignment, TabLeader), super::DocumentError> {
+        let stop = self
+            .tab_stops
+            .as_ref()
+            .ok_or(super::DocumentError::InvalidFormat(
+                "Tab index is outside the explicit tab collection",
+            ))?
             .get(index)
             .map_err(|error| super::DocumentError::InvalidFormat(error.message()))?;
         Ok((stop.position * (72.0 / 96.0), stop.alignment, stop.leader))
@@ -483,8 +510,13 @@ impl ParagraphFormat {
 
     pub fn validate(&self) -> Result<(), super::DocumentError> {
         self.character.validate()?;
-        if self.default_tab_stop.is_some_and(|value| !value.is_finite() || value <= 0.0) {
-            return Err(super::DocumentError::InvalidFormat("DefaultTabStop must be finite and positive"));
+        if self
+            .default_tab_stop
+            .is_some_and(|value| !value.is_finite() || value <= 0.0)
+        {
+            return Err(super::DocumentError::InvalidFormat(
+                "DefaultTabStop must be finite and positive",
+            ));
         }
         self.line_spacing_rule
             .unwrap_or_default()
@@ -542,7 +574,9 @@ impl ParagraphFormat {
             right_indent,
             default_tab_stop
         );
-        if let Some(tabs) = &patch.tab_stops { result.tab_stops = Some(tabs.clone()); }
+        if let Some(tabs) = &patch.tab_stops {
+            result.tab_stops = Some(tabs.clone());
+        }
         result
     }
 
@@ -585,8 +619,12 @@ impl ParagraphFormat {
         if let Some(value) = self.right_indent {
             paragraph.set_right_indent(value);
         }
-        if let Some(tabs) = &self.tab_stops { paragraph.set_tab_stops(tabs.clone()); }
-        if let Some(value) = self.default_tab_stop { paragraph.set_default_tab_stop(value); }
+        if let Some(tabs) = &self.tab_stops {
+            paragraph.set_tab_stops(tabs.clone());
+        }
+        if let Some(value) = self.default_tab_stop {
+            paragraph.set_default_tab_stop(value);
+        }
     }
 
     pub(crate) fn replace_on(&self, paragraph: &Paragraph) {

@@ -56,6 +56,10 @@ impl FerroObjectImpl for TextElement {
             this.refresh_media_subscriptions();
         }
 
+        if super::Typography::is_property(change.property()) {
+            this.invalidate_format_change(change);
+        }
+
         match change.property().name() {
             "Background" | "FontFamily" | "FontSize" | "FontStyle" | "FontWeight"
             | "FontStretch" | "Foreground" | "FontFeatures" | "LetterSpacing" | "Language" => {
@@ -233,7 +237,10 @@ impl TextElement {
             subscriptions.push(features.collection_changed(move |_| {
                 if let Some(element) = weak.upgrade() {
                     if let Some(host) = element.inline_host() {
-                        if element.get_base_value(Self::font_features_property()).is_some() {
+                        if element
+                            .get_base_value(Self::font_features_property())
+                            .is_some()
+                        {
                             host.invalidate();
                         } else {
                             host.invalidate_layout();

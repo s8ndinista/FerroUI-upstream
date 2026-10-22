@@ -35,3 +35,4 @@ mod xaml_il_tests;
 mod xaml_source_info_tests;
 
 mod rich_text_tests;
+mod typography_tests;

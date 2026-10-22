@@ -31,6 +31,10 @@ mod selection_navigation;
 #[path = "rich_edit_text_selection_movement.rs"]
 mod selection_movement;
 
+#[path = "rich_edit_text_selection_options.rs"]
+mod selection_options;
+pub use selection_options::{SelectionOptions, SelectionType};
+
 #[path = "rich_edit_text_units.rs"]
 mod units;
 use units::TextUnits;
@@ -1239,8 +1243,10 @@ impl RichEditTextSelection {
     pub fn select_all(&self) -> Result<(), EditError> {
         self.set_range(0, self.editor.document().text_length())
     }
+    /// Enters typed scalars using the shared selection modes. CR and LF each
+    /// type a paragraph break; an empty call leaves selection and preview intact.
     pub fn type_text(&self, text: &str) -> Result<bool, EditError> {
-        self.editor.insert_text(text, EditKind::Typing)
+        self.editor.type_text(text)
     }
     pub fn delete(&self) -> Result<bool, EditError> {
         self.editor.delete_selection()
@@ -1490,3 +1496,7 @@ fn rtf_text_bytes(text: &str) -> Result<Vec<u8>, RtfError> {
 #[cfg(test)]
 #[path = "rich_edit_text_document_tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "rich_edit_text_selection_options_tests.rs"]
+mod selection_options_tests;

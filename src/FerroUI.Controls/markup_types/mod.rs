@@ -38,6 +38,7 @@ pub(crate) const TYPE_LISTS: &[&[&MarkupType]] =
 /// Rich text metadata is defined alongside the WinUI-derived Rust types. Keep a
 /// normal type table so the public Rust path generator sees the same registry.
 const RICH_TEXT_TYPES: &[&MarkupType] = &[
+    <crate::documents::Typography as MarkupTyped>::MARKUP,
     <crate::documents::BlockCollection as MarkupTyped>::MARKUP,
     <crate::documents::RichTextDocument as MarkupTyped>::MARKUP,
     <crate::documents::LineStackingStrategy as MarkupTyped>::MARKUP,
@@ -60,6 +61,8 @@ const RICH_TEXT_TYPES: &[&MarkupType] = &[
     <crate::RichEditBoxTextChangingRoutedEvent as MarkupTyped>::MARKUP,
     <crate::rich_text::RichEditClipboardFormat as MarkupTyped>::MARKUP,
     <crate::rich_text::FindOptions as MarkupTyped>::MARKUP,
+    <crate::rich_text::SelectionOptions as MarkupTyped>::MARKUP,
+    <crate::rich_text::SelectionType as MarkupTyped>::MARKUP,
     <crate::rich_text::TextGetOptions as MarkupTyped>::MARKUP,
     <crate::rich_text::TextSetOptions as MarkupTyped>::MARKUP,
     <crate::rich_text::TextStreamEncoding as MarkupTyped>::MARKUP,
@@ -116,6 +119,8 @@ fn register_rich_text_value_types() {
     ValueTypes::register_nullable::<crate::DisabledFormattingAccelerators>();
     ValueTypes::register_nullable::<crate::rich_text::RichEditClipboardFormat>();
     ValueTypes::register_nullable::<crate::rich_text::FindOptions>();
+    ValueTypes::register_nullable::<crate::rich_text::SelectionOptions>();
+    ValueTypes::register_nullable::<crate::rich_text::SelectionType>();
     ValueTypes::register_nullable::<crate::rich_text::TextGetOptions>();
     ValueTypes::register_nullable::<crate::rich_text::TextSetOptions>();
     ValueTypes::register_nullable::<crate::rich_text::TextStreamEncoding>();
