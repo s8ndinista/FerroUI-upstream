@@ -4,6 +4,15 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-22
+
+The fourth release. It completes the declarative Rust API of `0.4.0-preview.1` and adds the developer tools:
+- the declarative API in all its phases ([docs/declarative-ui.md](docs/declarative-ui.md)): element builders and `rsx!`, signals, components that run again with hooks and a reconciler, interoperation with XAML and data templates, styles, resources, transitions and popups as elements, hot reload of the literals of `rsx!`, diagnostics and an inspector, the fewest moves of keyed children, asynchronous data, error boundaries and a router;
+- the samples: the 7GUIs in three versions, a gallery, TodoMVC and ReactiveDemo as components;
+- the developer tools, `ferroui-diagnostics`, a port of upstream's last open-source version on the WinUI 3 theme, with the TreeDataGrid for the trees and the property grid.
+
+One crate joins, `ferroui-diagnostics`. The additions since the preview are listed below; the known limitations are those of `0.4.0-preview.1`. Within 0.4 the public API is kept; 0.5.0 may change it.
+
 ### Added
 
 - **Components that run again** in `ferroui-view` (phase 1 of the declarative API, `docs/declarative-ui.md`, sections 7 and 8):
@@ -26,9 +35,34 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
   - a `Popup` holds its child element, and a property that holds a control of a class (`context_menu`) takes an element;
   - `ferroui-view` exports its type model, so compiled XAML names `ComponentHost`; `samples/ViewInterop` compiles its XAML;
   - the sample `samples/ViewGallery`: styles, the theme variant and resources, a transition, a context menu, a `ColorView` and a `TreeDataGrid`, light and dark.
+- **Tools** in `ferroui-view` (phase 4, `docs/declarative-ui.md`, section 11):
+  - hot reload of the literals of `rsx!` (feature `hot-reload`): `hot::lit`, `hot::watch`, `hot::poll`, `hot::apply_source`; `launch` watches the sources;
+  - diagnostics in debug builds: `Diagnostic` (`MissingKeys`, `DuplicateKey`, `RunawayComponent`, `NeedsRebuild`, `HotReloaded`), `set_diagnostics_handler`; `Element::List` for iterations;
+  - the inspector: `mounted_trees()`, `inspector()`, `open_inspector()`, `attach_inspector()` (Shift+F12 in debug builds).
+- **Performance** of `ferroui-view` (phase 5, `docs/declarative-ui.md`, section 12):
+  - keyed children of panels and items controls reordered with the fewest moves (the longest increasing subsequence), a panel moving controls without taking them out of the visual tree;
+  - handlers kept attached with their closures swapped on each run (`Handler`), and values that follow the same signal or memo kept (`PropValue::Follows`);
+  - `view_stats()`, the counts of the mounting and the reconciler;
+  - benchmarks of the declarative API in `ferroui-benchmarks` (`declarative`);
+  - the README gains a section on the declarative API with its features and a comparison with React, and `examples/counter.rs` keeps its example building.
+- **Patterns of larger applications** in `ferroui-view` (phase 6, `docs/declarative-ui.md`, section 13):
+  - asynchronous data: `use_future(deps, make)`, a hook that runs a future on the executor of the thread and starts it again when its dependencies change, abandoning the one before; its state `AsyncState` (`Pending`, `Ready`, `Failed`); `suspense(state, pending, ready, failed)`; `sleep(duration)` on a timer of the dispatcher;
+  - error boundaries: `error_boundary(child, fallback)` shows a fallback when a run of a component below it panics, with `ErrorInfo` (`message`, `reset`), and reports `Diagnostic::ErrorCaught`;
+  - navigation modelled on the routing of ReactiveUI: `router(initial, routes)`, `route(pattern, view)` with `:name` parameters and `*`, `Router` (`navigate`, `navigate_back`, `navigate_and_reset`, `current`, `can_go_back`, `stack`), `use_router`, `try_use_router`, `RouteMatch`;
+  - the samples `samples/TodoMvc` (TodoMVC, its filters as routes) and `samples/ReactiveDemoComponents` (the crate browser of ReactiveDemo as components), in the WinUI 3 theme.
+- **Developer tools** (`ferroui-diagnostics`, a new published crate): the port of upstream's developer tools at their last open-source version, opened with F12 on a window or an application:
+  - the logical and visual trees with a filter, the details of the selected control (its properties with their priorities and an editor for each, the value frames with their setters and resources, the pseudo-classes, the layout explorer), the routed events with their routes, the hot keys, and screenshots of a control;
+  - the property grid is the TreeDataGrid of the port, grouped and sortable, in place of upstream's DataGrid;
+  - the window has the WinUI 3 theme in its compact density, in place of upstream's Simple theme, with compact rows; the logical and visual trees and the tree of the routed events are TreeDataGrids too, in place of tree views: their rows are virtualized, and selecting a node (Ctrl+Shift over a control, a link of an event chain) expands its ancestors and scrolls to its row even when it was not shown;
+  - `MainViewModel::register_page` adds pages of other crates to the tools;
+  - the ControlCatalog attaches them in debug builds, and `FERROUI_SMOKE_DEVTOOLS=<directory>` runs them without a person and writes pictures of their window;
+  - the facade has them as the feature `diagnostics`.
 
 ### Changed
 
+- **`#[component(rerender)]` memoizes by default** a component whose parameters are `PartialEq + Clone`; `#[component(rerender, always)]` runs it with its parent every time, and `memo` makes comparable parameters required.
+- **Markup compiler**: a setter of a style class in a style (`<Setter Property="Classes.name" .../>`) compiles to Rust; it was refused (`FRN3000`).
+- **Markup**: `Binding` returns itself from `BindingBase::as_any`, as the other bindings do; `Window.Close()` can be called from markup.
 - **`ferroui-view`**: mounting is built on instances that the reconciler patches (`mount.rs`). A routed handler attached by an element is detached when the owner of the element ends. A dynamic list may give other dynamic lists.
 
 ## [0.4.0-preview.1] - 2026-10-20
@@ -301,7 +335,8 @@ The preview makes the framework available as crates so that it can be tried outs
 - **Documentation.** The API documentation is the documentation comments carried over by the port; there are no guides beyond the README and the documents under `docs/`. Not every crate is expected to build on docs.rs (see `docs/release.md`).
 - **Tests of the published crates.** The packages hold the sources of the tests but not the test fonts and images of the Skia backend; the test suites are run from the repository.
 
-[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.4.0-preview.1...main
+[Unreleased]: https://github.com/wieslawsoltes/FerroUI/compare/v0.4.0...main
+[0.4.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.4.0
 [0.4.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.4.0-preview.1
 [0.3.0]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0
 [0.3.0-preview.1]: https://github.com/wieslawsoltes/FerroUI/releases/tag/v0.3.0-preview.1

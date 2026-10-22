@@ -66,6 +66,8 @@ The first preview added the five other names of section 2.2 as placeholders (37 
 
 `ferroui-view` (`src/FerroUI.View`, Controls and themes; the declarative API, docs/declarative-ui.md) and `ferroui-view-macros` (`src/FerroUI.View.Macros`, Controls and themes; its procedural macros `rsx!` and `#[component]`) joined on 2026-10-20 for `0.4.0-preview.1`; their tests are in `ferroui-view`, and the 7GUIs samples that use them are not published.
 
+`ferroui-diagnostics` (`src/FerroUI.Diagnostics`, Controls and themes; the developer tools) joined on 2026-10-22. It compiles its markup in its build script (`links = "ferroui_diagnostics_xaml"`) and depends on the simple theme, the colour picker and the TreeDataGrid, so it is published after them; it is an optional part of the facade (`diagnostics`).
+
 Every crate was checked in the same way: packaged, and built from its package, by `scripts/release/publish.sh --dry-run` (section 8). `cargo publish --dry-run -p <crate>` cannot be used for this before the first release: it resolves the dependencies of the package in the registry, where the other crates of the workspace are not yet. `cargo package --workspace` (Cargo 1.90 and later) resolves them among the packages it has just assembled instead, which is what the dry run uses, and so every crate got the full check, not only the ones without dependencies in the workspace.
 
 ### 1.2 The crates that are never published
@@ -137,6 +139,7 @@ Two names are not under the `ferroui-` prefix. The owner decided on 2026-10-10 t
   | `winui-theme` | `ferroui-themes-winui` | `themes_winui` | no |
   | `xaml` | `ferroui-markup-xaml` and the run-time loader (`ferroui-markup-xaml-loader` with its feature `runtime`) | `markup_xaml`, `markup_xaml_loader` | no |
   | `color-picker`, `dialogs` | `ferroui-controls-color-picker`, `ferroui-dialogs` | `controls_color_picker`, `dialogs` | no |
+  | `diagnostics` | `ferroui-diagnostics` (added for 0.4) | `diagnostics` | no |
   | `treedatagrid` | `ferroui-controls-treedatagrid` and `ferroui-treedatagrid-core` (added for 0.2) | `controls_treedatagrid`, `treedatagrid_core` | no |
   | `browser` | `ferroui-browser`, with Skia and HarfBuzz | `browser`, `skia`, `harfbuzz` | no |
   | `vello`, `vello-hybrid`, `vello-gpu` | `ferroui-vello`; the second and third turn on its features `hybrid` and `gpu` | `vello` | no |
