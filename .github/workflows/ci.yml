@@ -662,6 +662,7 @@ jobs:
           npm run typecheck
           npm run lint
           npm run test:input-options
+          npm run test:text-input
           npm run build
           npm run test:pixels
       - name: Skia features of the target

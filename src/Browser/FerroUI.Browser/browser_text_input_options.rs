@@ -2,11 +2,11 @@
 //!
 //! HTML inputmode/enterkeyhint are hints, not validation or input types:
 //! https://html.spec.whatwg.org/multipage/interaction.html#input-modalities:-the-inputmode-attribute
-//! Keeping type=text preserves UTF-16 selection APIs and active composition.
-use ferroui_base::input::InputScopeNameValue;
+//! One persistent textarea preserves UTF-16 selection and native composition.
 use ferroui_base::input::text_input::{
     TextInputContentType, TextInputOptions, TextInputReturnKeyType,
 };
+use ferroui_base::input::InputScopeNameValue;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(crate) struct BrowserTextInputOptions {
@@ -98,10 +98,9 @@ impl BrowserTextInputOptions {
             } else {
                 "none"
             },
-            // DOM replacement edits must reach the framework before correction
-            // can be enabled. The existing bridge handles composition and keys,
-            // but does not yet consume non-composition `input` events.
-            suggestions: false,
+            // The adapter further gates this request on the current client's
+            // transactional exact-edit capability before enabling DOM correction.
+            suggestions: options.show_suggestions == Some(true) && !sensitive,
             sensitive,
             language: options
                 .locale_hints
@@ -227,7 +226,7 @@ mod tests {
         assert!(!BrowserTextInputOptions::from_options(&options).suggestions);
         options.show_suggestions = Some(true);
         options.auto_capitalization = true;
-        assert!(!BrowserTextInputOptions::from_options(&options).suggestions);
+        assert!(BrowserTextInputOptions::from_options(&options).suggestions);
         assert_eq!(
             BrowserTextInputOptions::from_options(&options).capitalization,
             "sentences"

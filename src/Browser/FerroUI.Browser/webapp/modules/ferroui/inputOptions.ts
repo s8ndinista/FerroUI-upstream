@@ -1,7 +1,7 @@
-// InputScope is an IME hint. Changing input.type to number/email would break
-// selectionStart/selectionEnd and can disturb an active native composition.
+// InputScope attributes advise the IME on the same persistent textarea, keeping
+// its UTF-16 selection and native composition intact.
 export function applyTextInputOptions(
-    input: HTMLInputElement,
+    input: HTMLElement,
     inputMode: string,
     enterKeyHint: string,
     capitalization: string,

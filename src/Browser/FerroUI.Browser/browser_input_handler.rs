@@ -615,6 +615,7 @@ impl BrowserInputHandler {
     /// events without them) is an unknown key.
     pub fn on_key_down(&self, code: Option<&str>, key: Option<&str>, modifier: i32) -> bool {
         let (code, key) = (code.unwrap_or_default(), key.unwrap_or_default());
+        let composing = self.text_input_method.is_composing();
         let mut handled =
             self.raw_keyboard_event(RawKeyEventType::KeyDown, code, key, Self::to_raw_input_modifiers(modifier));
 
@@ -624,7 +625,14 @@ impl BrowserInputHandler {
         // not a character (Control with Alt is AltGr and does produce one). Otherwise an
         // unhandled Ctrl+R would type "r" and, being handled as text, keep the browser from
         // reloading.
-        if !handled && key.encode_utf16().count() == 1 && !Self::is_command_chord(modifier) {
+        // An IME may report a literal character while its native composition
+        // still owns text input. Only compositionend commits that character.
+        if !handled
+            && !composing
+            && !self.text_input_method.is_composing()
+            && key.encode_utf16().count() == 1
+            && !Self::is_command_chord(modifier)
+        {
             handled = self.raw_text_event(key);
         }
 
@@ -920,8 +928,8 @@ mod tests {
         fn show_input_element(&self) {}
         fn focus_input_element(&self) {}
         fn focus_container_element(&self) {}
-        fn clear_input_element(&self) {}
-        fn set_surrounding_text(&self, _text: &str, _start: i32, _end: i32) {}
+        fn clear_input_element(&self, _revision: u32) {}
+        fn set_surrounding_text(&self, _text: &str, _start: i32, _end: i32, _revision: u32) {}
         fn set_bounds(&self, _x: i32, _y: i32, _width: i32, _height: i32, _caret: i32) {}
 
         fn selection_start(&self) -> i32 {
@@ -1584,6 +1592,33 @@ mod tests {
         fixture.handler.text_input_method().on_composition_end(None);
         assert_eq!(1, fixture.event_count());
 
+        BrowserWindowingPlatform::set_keyboard_for_unit_tests(None);
+    }
+
+    #[test]
+    fn browser_text_input_composing_character_key_does_not_dispatch_an_extra_raw_text_commit() {
+        let _scope = Dispatcher::unit_test_scope();
+        let _keyboard = with_keyboard();
+        let fixture = Fixture::new();
+        let client = Rc::new(TestClient {
+            events: TextInputMethodClientEvents::new(),
+            preedit: RefCell::new(Vec::new()),
+        });
+        fixture.handler.text_input_method().set_client(Some(client.clone()));
+        fixture.handler.text_input_method().on_composition_start();
+        fixture.handler.text_input_method().on_composition_update(Some("a"));
+
+        assert!(!fixture.handler.on_key_down(Some("KeyA"), Some("a"), 0));
+
+        assert_eq!(fixture.event_count(), 1);
+        assert!(fixture.event(0).downcast_ref::<RawKeyEventArgs>().is_some());
+        assert!(fixture.handler.text_input_method().is_composing());
+        fixture.handler.text_input_method().on_composition_end(Some("あ"));
+        assert_eq!(fixture.event_count(), 2);
+        assert_eq!(
+            fixture.event(1).downcast_ref::<RawTextInputEventArgs>().unwrap().text(),
+            "あ"
+        );
         BrowserWindowingPlatform::set_keyboard_for_unit_tests(None);
     }
 

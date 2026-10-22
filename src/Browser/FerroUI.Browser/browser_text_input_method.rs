@@ -1,12 +1,12 @@
 use crate::browser_input_handler::BrowserInputHandler;
 use crate::browser_text_input_options::BrowserTextInputOptions;
-use crate::interop::{JsObject, input_helper};
-use ferroui_base::Rect;
+use crate::interop::{input_helper, JsObject};
 use ferroui_base::input::text_input::{
     ITextInputMethodImpl, TextInputMethodClient, TextInputMethodComposition,
     TextInputMethodConnection, TextInputOptions, TextSelection,
 };
 use ferroui_base::reactive::IDisposable;
+use ferroui_base::Rect;
 use std::cell::{Cell, RefCell};
 use std::rc::{Rc, Weak};
 
@@ -18,8 +18,8 @@ pub(crate) trait ITextInputPage {
     fn show_input_element(&self);
     fn focus_input_element(&self);
     fn focus_container_element(&self);
-    fn clear_input_element(&self);
-    fn set_surrounding_text(&self, text: &str, start: i32, end: i32);
+    fn clear_input_element(&self, revision: u32);
+    fn set_surrounding_text(&self, text: &str, start: i32, end: i32, revision: u32);
     fn set_bounds(&self, x: i32, y: i32, width: i32, height: i32, caret: i32);
     fn set_input_options(&self, options: &BrowserTextInputOptions);
     fn selection_start(&self) -> i32;
@@ -48,12 +48,12 @@ impl ITextInputPage for TextInputPage {
         input_helper::focus_element(&self.container_element);
     }
 
-    fn clear_input_element(&self) {
-        input_helper::clear_input_element(&self.input_element);
+    fn clear_input_element(&self, revision: u32) {
+        input_helper::clear_input_element(&self.input_element, revision);
     }
 
-    fn set_surrounding_text(&self, text: &str, start: i32, end: i32) {
-        input_helper::set_surrounding_text(&self.input_element, text, start, end);
+    fn set_surrounding_text(&self, text: &str, start: i32, end: i32, revision: u32) {
+        input_helper::set_surrounding_text(&self.input_element, text, start, end, revision);
     }
 
     fn set_bounds(&self, x: i32, y: i32, width: i32, height: i32, caret: i32) {
@@ -98,8 +98,13 @@ pub struct BrowserTextInputMethod {
     /// Set while the page reports that the keyboard focus left the view.
     focus_is_leaving_view: Cell<bool>,
     options: RefCell<Option<BrowserTextInputOptions>>,
+    applied_options: RefCell<Option<BrowserTextInputOptions>>,
     options_revision: Cell<u64>,
     applying_options: Cell<bool>,
+    dom: RefCell<dom::DomState>,
+    client_revision: Cell<u64>,
+    mirroring_dom: Cell<bool>,
+    dom_dirty: Cell<bool>,
 }
 
 impl BrowserTextInputMethod {
@@ -145,8 +150,13 @@ impl BrowserTextInputMethod {
             generation: Cell::new(0),
             focus_is_leaving_view: Cell::new(false),
             options: RefCell::new(None),
+            applied_options: RefCell::new(None),
             options_revision: Cell::new(0),
             applying_options: Cell::new(false),
+            dom: RefCell::new(dom::DomState::default()),
+            client_revision: Cell::new(0),
+            mirroring_dom: Cell::new(false),
+            dom_dirty: Cell::new(false),
         })
     }
 
@@ -211,13 +221,9 @@ impl BrowserTextInputMethod {
     }
 
     fn surrounding_text_changed(&self) {
-        if let Some(client) = self.client() {
-            let surrounding_text = client.surrounding_text();
-            let selection = client.selection();
-
-            self.page
-                .set_surrounding_text(&surrounding_text, selection.start, selection.end);
-        }
+        self.client_revision
+            .set(self.client_revision.get().wrapping_add(1));
+        self.synchronize_dom();
     }
 
     /// The hidden input element is about to change: `input_type` is the
@@ -241,31 +247,31 @@ impl BrowserTextInputMethod {
     }
 
     /// The input method of the browser started composing.
-    pub fn on_composition_start(&self) {
+    pub fn on_composition_start(&self) -> bool {
         let generation = self.generation.get().wrapping_add(1);
         self.generation.set(generation);
         let Some(client) = self.client() else {
-            return;
+            return false;
         };
 
+        self.is_composing.set(true);
         let connection = self.connection.borrow().clone();
         if let Some(connection) = connection {
             self.composition_session.take();
             let result = connection.begin_composition();
             if self.generation.get() != generation {
-                return;
+                return false;
             }
             let Ok(session) = result else {
                 self.is_composing.set(false);
-                return;
+                self.synchronize_dom();
+                return false;
             };
             *self.composition_session.borrow_mut() = Some(session);
         } else {
             client.set_preedit_text(None);
         }
-        if self.generation.get() == generation {
-            self.is_composing.set(true);
-        }
+        self.generation.get() == generation && self.is_composing.get()
     }
 
     /// The text being composed changed.
@@ -329,19 +335,12 @@ impl ITextInputMethodImpl for BrowserTextInputMethod {
     fn set_client(&self, client: Option<Rc<dyn TextInputMethodClient>>) {
         let generation = self.generation.get().wrapping_add(1);
         self.generation.set(generation);
-        if self.connection.borrow().is_some()
-            || client
-                .as_ref()
-                .is_some_and(|client| client.input_method_editing().is_some())
-        {
-            self.is_composing.set(false);
-        }
+        let dom_revision = self.invalidate_dom();
+        self.is_composing.set(false);
         self.composition_session.take();
         self.connection.take();
         if let Some(previous) = self.client() {
-            if previous.input_method_editing().is_some() {
-                previous.set_preedit_text(None);
-            }
+            previous.set_preedit_text(None);
         }
         if self.generation.get() != generation {
             return;
@@ -351,6 +350,9 @@ impl ITextInputMethodImpl for BrowserTextInputMethod {
                 .input_method_editing()
                 .and_then(|_| client.input_method_connection())
         });
+        if self.generation.get() != generation {
+            return;
+        }
         *self.connection.borrow_mut() = connection;
         if self.client().is_some() {
             let subscriptions = std::mem::take(&mut *self.subscriptions.borrow_mut());
@@ -358,18 +360,28 @@ impl ITextInputMethodImpl for BrowserTextInputMethod {
                 subscription.dispose();
             }
         }
+        if self.generation.get() != generation {
+            return;
+        }
 
         if let Some(client) = &client {
             let subscriptions = vec![
                 client.surrounding_text_changed(self.handler(Self::surrounding_text_changed)),
+                client.selection_changed(self.handler(Self::surrounding_text_changed)),
                 client.input_pane_activation_requested(
                     self.handler(Self::input_pane_activation_requested),
                 ),
             ];
+            if self.generation.get() != generation {
+                for subscription in subscriptions {
+                    subscription.dispose();
+                }
+                return;
+            }
             *self.subscriptions.borrow_mut() = subscriptions;
         }
 
-        self.page.clear_input_element();
+        self.page.clear_input_element(dom_revision);
         if self.generation.get() != generation {
             return;
         }
@@ -377,20 +389,17 @@ impl ITextInputMethodImpl for BrowserTextInputMethod {
         let old_client = self.client.replace(client);
         drop(old_client);
 
-        if let Some(client) = self.client() {
+        if self.client().is_some() {
             self.show_ime();
             if self.generation.get() != generation {
                 return;
             }
 
-            let surrounding_text = client.surrounding_text();
-            let selection = client.selection();
-
-            self.page
-                .set_surrounding_text(&surrounding_text, selection.start, selection.end);
+            self.synchronize_dom();
         } else {
             self.hide_ime();
         }
+        self.apply_input_options();
     }
 
     fn set_cursor_rect(&self, rect: Rect) {
@@ -414,48 +423,30 @@ impl ITextInputMethodImpl for BrowserTextInputMethod {
         self.options.replace(Some(options));
         self.options_revision
             .set(self.options_revision.get().wrapping_add(1));
-        if self.applying_options.replace(true) {
-            return;
-        }
-        struct ApplyGuard<'a>(&'a Cell<bool>);
-        impl Drop for ApplyGuard<'_> {
-            fn drop(&mut self) {
-                self.0.set(false);
-            }
-        }
-        let _guard = ApplyGuard(&self.applying_options);
-        loop {
-            let revision = self.options_revision.get();
-            let options = self.options.borrow().as_ref().unwrap().clone();
-            // Attributes only: do not clear text, replace the DOM node, refocus,
-            // reset composition, or retain a borrow across a page callback.
-            self.page.set_input_options(&options);
-            if revision == self.options_revision.get() {
-                break;
-            }
-        }
+        self.apply_input_options();
     }
 
     fn reset(&self) {
         let generation = self.generation.get().wrapping_add(1);
         self.generation.set(generation);
+        let dom_revision = self.invalidate_dom();
         self.is_composing.set(false);
         self.composition_session.take();
-        if let Some(client) = self
-            .client()
-            .filter(|client| client.input_method_editing().is_some())
-        {
+        if let Some(client) = self.client() {
             client.set_preedit_text(None);
         }
         if self.generation.get() != generation {
             return;
         }
-        self.page.clear_input_element();
+        self.page.clear_input_element(dom_revision);
         if self.generation.get() == generation {
-            self.page.set_surrounding_text("", 0, 0);
+            self.synchronize_dom();
         }
     }
 }
+
+#[path = "browser_text_input_dom.rs"]
+mod dom;
 
 #[cfg(test)]
 mod tests {
@@ -494,11 +485,11 @@ mod tests {
             self.log("focus container");
         }
 
-        fn clear_input_element(&self) {
+        fn clear_input_element(&self, _revision: u32) {
             self.log("clear");
         }
 
-        fn set_surrounding_text(&self, text: &str, start: i32, end: i32) {
+        fn set_surrounding_text(&self, text: &str, start: i32, end: i32, _revision: u32) {
             self.log(format!("text '{text}' {start} {end}"));
         }
 
@@ -663,6 +654,34 @@ mod tests {
         options.input_scope_names = None;
         fixture.method.set_options(&options);
         assert_eq!(fixture.take_calls(), ["options text done"]);
+    }
+
+    #[test]
+    fn browser_dom_input_legacy_client_keeps_prediction_disabled_without_exact_edits() {
+        let fixture = Fixture::new();
+        fixture.method.set_options(&TextInputOptions {
+            show_suggestions: Some(true),
+            ..Default::default()
+        });
+        assert!(
+            !fixture
+                .method
+                .applied_options
+                .borrow()
+                .as_ref()
+                .unwrap()
+                .suggestions
+        );
+        fixture.set_client(&TestClient::new("legacy", 6, 6));
+        assert!(
+            !fixture
+                .method
+                .applied_options
+                .borrow()
+                .as_ref()
+                .unwrap()
+                .suggestions
+        );
     }
 
     #[test]
@@ -983,8 +1002,7 @@ mod tests {
     }
 
     #[test]
-    fn a_composition_that_loses_its_client_stays_composing_until_a_client_ends_one() {
-        // As in the original: the end of a composition is only seen with a client.
+    fn a_composition_that_loses_its_client_releases_its_preedit_ownership() {
         let fixture = Fixture::new();
         let client = TestClient::new("", 0, 0);
         fixture.set_client(&client);
@@ -992,7 +1010,8 @@ mod tests {
 
         fixture.method.set_client(None);
         fixture.method.on_composition_end(None);
-        assert!(fixture.method.is_composing());
+        assert!(!fixture.method.is_composing());
+        assert_eq!(client.preedit.borrow().last(), Some(&None));
 
         fixture.set_client(&client);
         fixture.method.on_composition_end(None);

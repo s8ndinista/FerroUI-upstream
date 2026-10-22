@@ -36,6 +36,7 @@ mod browser_screens;
 mod browser_single_threaded_dispatcher_impl;
 mod browser_single_view_lifetime;
 mod browser_system_navigation_manager;
+mod browser_text_input_edit;
 mod browser_text_input_method;
 mod browser_text_input_options;
 mod browser_top_level_impl;
