@@ -3,6 +3,9 @@
 use crate::{Document, Editor, NodeId, NodeKind, Point, MAX_DOCUMENT_DEPTH};
 use std::collections::{BTreeMap, BTreeSet};
 
+mod matching;
+pub use matching::SelectionMatch;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum SelectionNavigation {
     Parent,
