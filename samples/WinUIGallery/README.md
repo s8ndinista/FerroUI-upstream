@@ -136,33 +136,44 @@ preview behavior and actual native event/property interactions. Tests that const
 controls do not claim an interactive desktop run, pixel equality, keyboard traversal,
 screen-reader interoperability or verification on every host.
 
-The current checkpoint passed **42 Gallery library tests**, **127 native control
-tests**, **4,383 Base tests**, **41 XAML migration/runtime tests**, **13 binding-lifecycle
-tests** and **three deferred-resource error-isolation tests**. Five compiled/interpreted
-XAML tests passed, with one explicitly ignored fixture-regeneration task. The WinUI
-theme passed **294 tests**, with two explicitly ignored regeneration/timing tasks;
-its split reference preserves the exact bytes used by both compiler comparisons.
-The view-builder and desktop checks passed. The source gates passed with **44
-scanner/comparison regressions** and **two theme path-case tests**.
-[VALIDATION.md](VALIDATION.md) records the scopes, commands and source hashes.
+The **0.4.0 integration checkpoint `83623379`** passed **42 Gallery library tests**,
+**127 native control tests**, **41 XAML migration/runtime tests**, **13 binding-lifecycle
+tests** and **three deferred-resource error-isolation tests** in GitHub CI on Rust
+1.99.1. Five compiled/interpreted XAML tests passed, with one explicitly ignored
+fixture-regeneration task; the WinUI theme passed **294 tests**, with two explicitly
+ignored regeneration/timing tasks. Its split reference preserves the exact bytes
+used by both compiler comparisons. The view-builder check passed in CI. Local Rust
+1.99.0 runs passed **4,383 Base tests** and repeated the 127 native tests, 13 binding
+tests and 13-test Base subset used by CI. The local desktop compilation check also passed.
+Source gates passed with **44 scanner/comparison regressions** and **two theme
+path-case tests**. [VALIDATION.md](VALIDATION.md) records each execution source.
+
+The [initial Actions run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771098146)
+found a stale Gallery lock version after main advanced to 0.4.0; the native and
+rendering jobs stopped before compilation. Integration `83623379` aligns that entry
+with the workspace. All three jobs in the
+[replacement parity run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771549215)
+passed. Exact commands, versions and hashes are in the
+[integration record](../../docs/porting/winui-gallery/data/integration-validation.json).
 
 The separate
 [theme resource/style ledger](../../docs/porting/winui-theme/TRACKING.md) records
 6,912 ported, 1,991 waived and 70 pending entries: InfoBadge 27, ProgressRing 8 and
 RatingControl 35 remain pending in the strict source-definition inventory.
 
-At native source checkpoint `3c7ceb81dcc4948f374c05c4757c6cb72ed5de5d`, real
-Skia/HarfBuzz captures rendered **all 126 pages in light** and **nine pages in dark**.
-Every sweep output decoded as a nonblank 1280 × 900 PNG, with 126/9 distinct hashes.
-The [eight reviewed current frames](../../docs/porting/winui-gallery/captures/README.md)
-show InfoBadge, ProgressRing, RatingControl and CompactSizing in both themes. Their
-light frames come from a separate four-page run recorded in the
-[capture manifest](../../docs/porting/winui-gallery/captures/capture-manifest.json).
-CompactSizing shows the initial Standard form; its compact-mode navigation and field
-retention are tested separately. Rating stars and some icons visibly lack Segoe
-glyphs on the recorded Linux host. These are native construction/rendering evidence;
-complete visuals, real platform input and accessibility remain pending. Five unchanged
-`d008845` frames are retained separately as historical evidence.
+Integration CI rendered **all 126 pages in light** and **eight pages in dark** with
+real Skia/HarfBuzz. All **134 PNGs** decoded as nonblank, opaque 1280 × 900 frames,
+with 126/8 distinct PNG and pixel hashes. Eight CI frames for InfoBadge, ProgressRing,
+RatingControl and CompactSizing were reviewed. CompactSizing shows the initial
+Standard form; static ProgressRing frames do not establish motion. Rating stars and
+some icons visibly lack Segoe glyphs on the Linux host. Complete visuals, real
+platform input and accessibility remain pending.
+
+The [checked-in frames](../../docs/porting/winui-gallery/captures/README.md) and
+[capture manifest](../../docs/porting/winui-gallery/captures/capture-manifest.json)
+remain unchanged evidence for the earlier native source checkpoint
+`3c7ceb81dcc4948f374c05c4757c6cb72ed5de5d`: 126 light, nine dark and four separately
+captured light frames. Five `d008845` frames remain separately identified as historical.
 
 ### Capture real rendered frames
 

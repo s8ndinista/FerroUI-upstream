@@ -6,7 +6,14 @@ The capture host rendered at **1280 × 900**, scale 1, on Linux x86_64 without a
 display server. The theme selector in each frame identifies the requested theme.
 The upstream Gallery is pinned to `14061eeac21c38ae99f302edf3d9136d4f652c4c`.
 
-## Current checkpoint: native feedback controls and CompactSizing
+The checked-in frames below retain their original checkpoints. Subsequent CI on
+the FerroUI 0.4.0 integration at `83623379` produced **126 light and eight dark
+frames**, all decoded and verified as nonblank 1280 × 900 PNGs. Its artifact, source
+revision and hashes are recorded separately in the
+[integration validation record](../data/integration-validation.json). These earlier
+PNGs and their manifest have not been relabeled or replaced by that CI run.
+
+## Retained checkpoint: native feedback controls and CompactSizing
 
 The Gallery sources for this checkpoint are published at
 [`3c7ceb81`](https://github.com/wieslawsoltes/FerroUI/commit/3c7ceb81dcc4948f374c05c4757c6cb72ed5de5d).

@@ -80,6 +80,17 @@ established.** The PR remains draft until the complete requirement map has execu
 and all strict acceptance gates pass. Subsequent commits update this record with measured
 counts, commands, exact results and limitations.
 
+The current integration checkpoint is
+[`83623379`](https://github.com/wieslawsoltes/FerroUI/commit/83623379d8aeaa5a87d0417e7ce0823fc6fe9722),
+which merges main at `cfa62aeb` and uses workspace version **0.4.0**. The
+[initial Actions run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771098146)
+passed source comparison, but its native-contract and rendering jobs stopped before
+compilation because the Gallery's lock entry still named `0.4.0-preview.1`. The
+integration aligns that entry with the workspace version. All three jobs in the
+[replacement parity run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771549215)
+passed. The [integration record](data/integration-validation.json) separates those
+CI results from local reruns and retains exact commands, versions and hashes.
+
 The pinned source inventory contains **1,545 public-source types, 7,466 public-source
 members and 198 separately counted private-source types**. The Gallery has **126 catalog
 pages, 350 exported examples and 355 actual ControlExample instances**. All 126 pages are
@@ -125,32 +136,36 @@ outputs still compared against the complete reference bytes.
 
 | Validation | Current evidence | Boundary |
 | --- | --- | --- |
-| Existing FerroUI API | 3,170 namespaced types, 28,435 declared member names and 458 source registrations preserved against the starting commit; 82 additive types | Current source-declaration gate passes; full signature/default/behavior compatibility is a separate requirement |
-| Native WinUI controls | 127 tests pass: 77 existing tests plus 13 InfoBadge, 16 ProgressRing and 21 RatingControl tests | Native properties, templates, input, clock lifetime and automation; every new control type remains partial |
-| Base property/framework regression | 4,383 tests pass on the current source | Includes the additive local-value query; existing clearing and priority semantics are preserved |
-| WinUI binding lifecycle | 13 tests pass on the current source | Root/named-element and typed-template property paths with explicit host initialization; unsupported expressions remain diagnosed |
-| XAML migration and runtime | 41 integration tests and three deferred-resource error-isolation tests pass on the current source | Includes native feedback-control construction, audited InfoBadge style mapping, nested error scopes and unchanged ordinary panic behavior |
-| Compiled and interpreted XAML | Five focused tests pass, with one explicitly ignored regeneration task | Real emitted Rust compiles and agrees with interpreted root and typed-template property bindings; standalone DataTemplate document roots are outside the emitter contract |
-| Native view builders | `cargo check -p ferroui-view` passes | Generated typed builders compile; this does not establish every builder's runtime behavior |
-| Native Gallery | 42 tests pass | Catalog, original-example interactions, local compact resources, assets, lifetime and mocked host-service contracts |
-| WinUI theme | 294 tests pass, with two explicitly ignored regeneration/timing tasks | Includes exact joined-reference comparisons and four reference-storage tests; source-resource and visual gaps remain explicit |
-| Native rendering and desktop | Current checkpoint: all 126 light-theme pages and nine dark-theme pages render; desktop compilation passes | Every frame decodes as nonblank 1280 × 900 PNG; 126/9 distinct sweep hashes. Eight new retained frames were reviewed. Missing Segoe glyphs remain visible; interactive desktop, upstream pixels and Windows accessibility are unverified |
+| Existing FerroUI API | 3,170 namespaced types, 28,435 declared member names and 458 source registrations preserved against the starting commit; 181 additional types | 82 additions belong to this compatibility branch and 99 came from merged main; source declarations do not establish full signature/default/behavior compatibility |
+| Native WinUI controls | 127 tests pass in CI and locally: 77 existing tests plus 13 InfoBadge, 16 ProgressRing and 21 RatingControl tests | Native properties, templates, input, clock lifetime and automation; every new control type remains partial |
+| Base property/framework regression | 4,383 tests pass locally; the 13-test local-value subset also passes in CI and locally | Includes the additive local-value query; existing clearing and priority semantics are preserved |
+| WinUI binding lifecycle | 13 tests pass in CI and locally | Root/named-element and typed-template property paths with explicit host initialization; unsupported expressions remain diagnosed |
+| XAML migration and runtime | 41 integration tests and three deferred-resource error-isolation tests pass in CI | Includes native feedback-control construction, audited InfoBadge style mapping, nested error scopes and unchanged ordinary panic behavior |
+| Compiled and interpreted XAML | Five focused tests pass in CI, with one explicitly ignored regeneration task | Real emitted Rust compiles and agrees with interpreted root and typed-template property bindings; standalone DataTemplate document roots are outside the emitter contract |
+| Native view builders | `cargo check --locked -p ferroui-view` passes in CI | Generated typed builders compile; this does not establish every builder's runtime behavior |
+| Native Gallery | 42 tests pass in CI | Catalog, original-example interactions, local compact resources, assets, lifetime and mocked host-service contracts |
+| WinUI theme | 294 tests pass in CI, with two explicitly ignored regeneration/timing tasks | Includes exact joined-reference comparisons and four reference-storage tests; source-resource and visual gaps remain explicit |
+| Native rendering | Integration CI renders all 126 light-theme pages and eight dark-theme pages | All 134 PNGs decode as nonblank, opaque 1280 × 900 frames; 126/8 distinct PNG and pixel hashes. Eight CI frames were reviewed; missing Segoe glyphs remain visible |
+| Desktop host | `cargo check --locked --offline -p winui-gallery --features desktop` passes locally | Interactive desktop, upstream pixel comparison and Windows accessibility remain unverified |
 | Source comparison | 44 scanner/comparison regressions and two theme path-case tests pass; API, event, symbol, builder, theme, catalog and asset freshness gates pass | A source candidate is never automatically promoted to behavioral parity; the strict completeness gate remains closed |
 
-The [Gallery validation ledger](../../../samples/WinUIGallery/VALIDATION.md) records exact
+CI used Rust 1.99.1; local reruns used Rust 1.99.0. The
+[Gallery validation ledger](../../../samples/WinUIGallery/VALIDATION.md) records exact
 commands, source hashes, assets, rendering evidence and platform limits. Durable native
 control executions are stored in [the execution records](data/executions/). The current
 [third record](data/executions/native-controls-003.json) contains the 50 new focused test
-names and source hashes from the passing 127-test run. Any supplied execution record is
+names and source hashes from the original passing 127-test run. It remains unchanged;
+the integration record documents subsequent reruns. Any supplied execution record is
 checked for freshness even when its API entry is only partial.
 
-Current rendered evidence uses native source checkpoint
-`3c7ceb81dcc4948f374c05c4757c6cb72ed5de5d`. The
+The retained capture files predate the 0.4.0 integration and use native source
+checkpoint `3c7ceb81dcc4948f374c05c4757c6cb72ed5de5d`. The unchanged
 [capture manifest](captures/capture-manifest.json) keeps the four dedicated light
 captures separate from the 126-page light sweep and nine-page dark sweep. The eight
-new reviewed frames show InfoBadge, ProgressRing, RatingControl and CompactSizing in
+retained frames show InfoBadge, ProgressRing, RatingControl and CompactSizing in
 both themes; CompactSizing is captured in its initial Standard state. Five retained
-`d008845` frames remain explicitly historical.
+`d008845` frames remain explicitly historical. Current CI artifact `12423085701`
+has a separate 126-light/eight-dark scope recorded in the integration record.
 
 ## Review and run
 
@@ -164,18 +179,18 @@ both themes; CompactSizing is captured in its initial Standard state. Five retai
 cargo run -p winui-gallery --features desktop -- --page=NumberBox
 cargo test --locked --offline -p winui-gallery --lib
 cargo test --locked --offline -p ferroui-base \
-  --features testing,compiler-metadata,markup-functions --lib
-cargo test -p ferroui-markup-xaml --test winui_bindings
-cargo check -p ferroui-view
-cargo test --locked --offline -p ferroui-markup-xaml-loader \
-  --features emitter,ferroui-base/markup-functions --test winui_migration --test winui_compiled
+  --features testing --lib
+cargo test --locked -p ferroui-markup-xaml --test winui_bindings
+cargo check --locked -p ferroui-view
+cargo test --locked -p ferroui-markup-xaml-loader --test winui_migration
+cargo test --locked -p ferroui-markup-xaml-loader --features emitter --test winui_compiled
 cargo test --locked --offline -p ferroui-themes-winui --lib
 cargo check --locked --offline -p winui-gallery --features desktop
 cargo test --locked --offline -p ferroui-controls \
-  --features testing,ferroui-base/compiler-metadata,ferroui-base/markup-functions \
+  --features testing \
   --test winui_navigation --test winui_number_box --test winui_icons --test winui_radio_buttons \
   --test winui_auto_suggest_box --test winui_icon_sources --test winui_info_bar \
-  --test winui_info_badge --test winui_progress_ring --test winui_rating_control --no-fail-fast
+  --test winui_info_badge --test winui_progress_ring --test winui_rating_control
 python3 -m unittest discover -s scripts/winui-gallery -p 'test_*.py'
 python3 scripts/winui-gallery/scan.py --check
 python3 scripts/winui-gallery/existing_api.py --check

@@ -49,56 +49,100 @@ the original Windows metadata spells `CheckBox.png` and `AnnotatedScrollbar.png`
 differently from the tracked filenames `Checkbox.png` and `AnnotatedScrollBar.png`.
 Both spellings are explicit aliases; original filenames and image bytes are retained.
 
+## Integration checkpoint: FerroUI 0.4.0
+
+The validated runtime integration checkpoint is
+[`83623379d8aeaa5a87d0417e7ce0823fc6fe9722`](https://github.com/wieslawsoltes/FerroUI/commit/83623379d8aeaa5a87d0417e7ce0823fc6fe9722),
+which merges main at `cfa62aeb80f5d28990f3d4e4b9e5d1ad9d7fb640` and uses
+workspace version **0.4.0**. In the
+[initial Actions run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771098146),
+source comparison passed, but native-contract and rendering jobs stopped before
+compilation: `Cargo.lock` still named the Gallery as `0.4.0-preview.1` after main's
+workspace version advanced. The integration aligns that entry with 0.4.0, and
+`cargo metadata --locked --offline` passed.
+
+All three jobs in the
+[replacement parity run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771549215)
+passed: pinned source comparison, native/XAML/Gallery contracts and native rendering.
+GitHub checked out merge commit `864083407f12acf9cb845c72b0c7337c52b6141d`
+for that PR head. The
+[integration record](../../docs/porting/winui-gallery/data/integration-validation.json)
+records both run IDs, job outcomes, Cargo input hashes, exact commands, measured
+counts and log hashes. These reruns do not change any API or page completion status.
+
 ## Current framework regression checkpoint
 
-The following suites passed on the current source on Linux x86_64 with
-`rustc 1.99.0 (b940084d7 2026-09-28)`:
+The following results apply to integration `83623379` on Linux x86_64. GitHub CI
+used `rustc 1.99.1 (58cf8f9c3 2026-10-13)`. Local reruns used
+`rustc 1.99.0 (b940084d7 2026-09-28)` and covered native controls, the full Base
+library, the focused Base subset and bindings, plus desktop compilation. The remaining contract-suite results
+come from CI, as identified below.
 
 | Suite | Measured result | Scope |
 | --- | --- | --- |
-| Native WinUI control integration | **127 passed, 0 failed** | 77 existing tests plus InfoBadge 13, ProgressRing 16 and RatingControl 21. |
-| Base library | **4,383 passed, 0 failed** | Includes the additive local-value query; existing priority and clearing semantics remain unchanged. |
-| XAML migration/runtime | **41 passed, 0 failed** | Includes namespace-isolated feedback controls, actual native construction and audited InfoBadge style-key projection. |
-| Compiled/interpreted XAML | **5 passed, 0 failed, 1 ignored** | The ignored task explicitly regenerates a reviewed fixture; emitted and interpreted root/template binding tests pass. |
-| WinUI binding lifecycle | **13 passed, 0 failed** | Explicit initialization, source/target changes, template recycling, error scope and subscription lifetime. |
-| Deferred-resource error isolation | **3 passed, 0 failed** | Typed nested error scopes preserve inner errors; unrelated panics resume and ordinary throwing retains its prior behavior. |
-| Native view builders | **`cargo check -p ferroui-view` passed** | Generated typed builders compile against the current native controls. |
-| Native Gallery library | **42 passed, 0 failed** | Application interactions and mock-service acceptance described below. |
-| WinUI theme library | **294 passed, 0 failed, 2 ignored** | The explicit ignored tasks regenerate the reference and measure load time. Both compiler-output comparisons and four reference-storage tests pass. |
+| Native WinUI control integration | **127 passed, 0 failed**, CI and local | 77 existing tests plus InfoBadge 13, ProgressRing 16 and RatingControl 21. |
+| Base library | **4,383 passed, 0 failed**, local | Includes the additive local-value query; existing priority and clearing semantics remain unchanged. |
+| Base local-value workflow subset | **13 passed, 0 failed**, CI and local | This filtered subset is included in the full Base total above. |
+| XAML migration/runtime | **41 passed, 0 failed**, CI | Includes namespace-isolated feedback controls, actual native construction and audited InfoBadge style-key projection. |
+| Compiled/interpreted XAML | **5 passed, 0 failed, 1 ignored**, CI | The ignored task explicitly regenerates a reviewed fixture; emitted and interpreted root/template binding tests pass. |
+| WinUI binding lifecycle | **13 passed, 0 failed**, CI and local | Explicit initialization, source/target changes, template recycling, error scope and subscription lifetime. |
+| Deferred-resource error isolation | **3 passed, 0 failed**, CI | Typed nested error scopes preserve inner errors; unrelated panics resume and ordinary throwing retains its prior behavior. |
+| Native view builders | **`cargo check --locked -p ferroui-view` passed**, CI | Generated typed builders compile against the current native controls. |
+| Native Gallery library | **42 passed, 0 failed**, CI | Application interactions and mock-service acceptance described below. |
+| WinUI theme library | **294 passed, 0 failed, 2 ignored**, CI | The explicit ignored tasks regenerate the reference and measure load time. Both compiler-output comparisons and four reference-storage tests pass. |
 | Scanner/comparison regression | **44 passed** | API, glyph, namespace-builder and baseline comparison regressions. |
 | Theme path-case regression | **2 passed** | Source dictionary path handling remains explicit and deterministic. |
 | Source and inventory gates | **Passed** | API/event/symbol/builder freshness, existing API preservation, full theme inventory, and exact catalog/asset regeneration. |
-| Desktop host | **Compilation passed** | Existing desktop/X11/Skia/HarfBuzz integration compiles; no interactive desktop session is claimed. |
+| Desktop host | **Compilation passed**, local | Existing desktop/X11/Skia/HarfBuzz integration compiles; interactive desktop acceptance remains unverified. |
 
 The native-control [execution record](../../docs/porting/winui-gallery/data/executions/native-controls-003.json)
-stores the exact command, passing names for all 50 new focused tests, implementation/test
-hashes and the run-log hash. New API contracts remain `partial`; absent ProgressRing
+retains the original command, passing names for all 50 new focused tests,
+implementation/test hashes and the run-log hash. It is unchanged; the integration
+record separately documents the subsequent 127-test reruns. New API contracts
+remain `partial`; absent ProgressRing
 animated-source members and RatingItem state branches without direct assertions remain
 unverified. These recorded tests use actual native objects with mock host services.
 
-The current runs used `CARGO_BUILD_JOBS=1`, `CARGO_INCREMENTAL=0`,
-`CARGO_PROFILE_DEV_DEBUG=0` and `CARGO_PROFILE_TEST_DEBUG=0`. The Base, XAML, theme
-and desktop commands were:
+The local runs used `CARGO_BUILD_JOBS=1`, `CARGO_INCREMENTAL=0`,
+`CARGO_PROFILE_DEV_DEBUG=0` and `CARGO_PROFILE_TEST_DEBUG=0`; the contract CI job
+used the same settings with two Cargo jobs. The exact local Base commands were:
 
 ```sh
-cargo test --locked --offline -p ferroui-base \
-  --features testing,compiler-metadata,markup-functions --lib
-cargo test --locked --offline -p ferroui-markup-xaml-loader \
-  --features emitter,ferroui-base/markup-functions --test winui_migration --test winui_compiled
-cargo test --locked --offline -p ferroui-themes-winui --lib
+cargo test --locked --offline -p ferroui-base --features testing --lib ferro_object_tests_get_value
+cargo test --locked --offline -p ferroui-base --features testing --lib
+```
+
+The remaining exact CI commands include:
+
+```sh
+cargo test --locked -p ferroui-markup-xaml --test winui_bindings
+cargo test --locked -p ferroui-markup-xaml-loader --test winui_migration
+cargo test --locked -p ferroui-markup-xaml-loader --features emitter --test winui_compiled
+cargo test --locked -p ferroui-markup-xaml --lib xaml_error_scope::
+cargo test --locked -p ferroui-themes-winui --lib
+cargo test --locked -p winui-gallery --lib
+cargo check --locked -p ferroui-view
+```
+
+The local desktop compilation check also passed:
+
+```sh
 cargo check --locked --offline -p winui-gallery --features desktop
 ```
 
-The binding-lifecycle, deferred-resource isolation, view-builder, theme and desktop
-checks have all been rerun on the current source. The checked-in compiled-theme
-reference is now stored in five parts, with its former path retained as a short
+The native-control command, local repeats and their individual log hashes are in
+the integration record. No extra compiler-metadata or markup-function features
+were added to the workflow's commands for these reruns. The checked-in compiled-theme
+reference is stored in five parts, with its former path retained as a short
 guide. Tests join the parts byte for byte before both existing build-time/runtime
-compiler comparisons; the production emitter is unchanged. Four additional tests
+compiler comparisons. The reference-storage change leaves production emitter
+behavior unchanged. Four additional tests
 cover reference ordering, chunk boundaries, byte-preserving joining and unexpected
 files. The two ignored theme tasks are explicit regeneration and timing operations.
 
 The existing-API gate preserves 3,170 namespaced types, 28,435 declared member names
-and 458 source registrations against the starting commit, with 82 additive types.
+and 458 source registrations against the starting commit, with **181 additional
+types: 82 from the compatibility branch and 99 inherited from merged main**.
 This source-declaration result does not establish every signature, default or
 behavioral equivalence.
 
@@ -112,11 +156,11 @@ execution is reported separately above.
 
 ## Native Gallery behavior tests
 
-The library suite passed **42 tests, 0 failures** on Linux x86_64 with
-`rustc 1.99.0 (b940084d7 2026-09-28)`:
+The library suite passed **42 tests, 0 failures** in integration CI on Linux x86_64
+with `rustc 1.99.1 (58cf8f9c3 2026-10-13)`:
 
 ```sh
-cargo test --locked --offline -p winui-gallery --lib
+cargo test --locked -p winui-gallery --lib
 ```
 
 The tests use the framework's existing native property, control, event, dispatcher,
@@ -153,18 +197,50 @@ Mock-renderer construction does not establish bitmap decoding, rendered pixels,
 keyboard traversal, screen-reader interoperability or real operating-system service
 behavior. Each partial mapping retains that distinction.
 
-## Current rendering and desktop host
+## Current integration rendering
 
-The current native Gallery source checkpoint is
+The [successful rendering job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771549215/job/119800058965)
+used real Skia drawing, HarfBuzz shaping and the WinUI theme on Linux with Rust
+1.99.1. Its `winui-gallery-rendering` artifact, ID **12423085701**, contains
+**134 PNGs: 126 light-theme pages and eight dark-theme pages**. Every PNG decoded
+as nonblank, opaque 1280 × 900 content. PNG and decoded-pixel hashes were distinct
+for all 126 light frames and all eight dark frames, and logged IDs matched the files.
+
+The exact workflow commands were:
+
+```sh
+cargo run --locked -p winui-gallery --features capture --bin winui-gallery-capture -- \
+  --all --output-dir=gallery-captures/light
+cargo run --locked -p winui-gallery --features capture --bin winui-gallery-capture -- \
+  --pages=NumberBox,RadioButton,AutoSuggestBox,InfoBar,InfoBadge,ProgressRing,RatingControl,CompactSizing \
+  --dark --query=Button --output-dir=gallery-captures/dark
+```
+
+The integration record preserves the artifact/archive hash, render-log hash,
+validation-report hash, summary and hashes of the eight visually reviewed CI frames
+for InfoBadge, ProgressRing, RatingControl and CompactSizing. The dark run submitted
+the AutoSuggestBox `Button` search and decoded its original detail PNG. This run
+did not include WebView2 in its dark selection.
+
+The reviewed integration frames retain the known limitations: missing Segoe rating
+stars and some icons, CompactSizing's initial **Standard** form, and a static
+ProgressRing image that does not establish motion. The results establish construction
+and rendering, with no promotion to full-page, upstream pixel or platform UIA parity.
+The checked-in PNGs and capture manifest remain the earlier evidence described below.
+
+## Retained rendering before the 0.4.0 integration
+
+The retained native Gallery source checkpoint is
 `3c7ceb81dcc4948f374c05c4757c6cb72ed5de5d`. The optional capture executable built
 and ran using the existing headless window platform, real Skia drawing, HarfBuzz
 text shaping and WinUI theme without a display server. The desktop application
 also compiled successfully with its existing desktop, X11, Skia and HarfBuzz host.
-No interactive desktop session is claimed.
+These results were published at documentation checkpoint `8d6c895e` before the
+0.4.0 integration; no interactive desktop session was claimed.
 
 | Gate | Measured result |
 | --- | --- |
-| Desktop host | `cargo check --locked --offline -p winui-gallery --features desktop` passed. |
+| Desktop host before integration | `cargo check --locked --offline -p winui-gallery --features desktop` passed at the earlier checkpoint. |
 | Dedicated light capture | InfoBadge, ProgressRing, RatingControl and CompactSizing rendered; four decoded, nonblank 1280 × 900 PNGs with four distinct hashes. |
 | Full light sweep | All 126 catalog pages rendered; 126 decoded, nonblank 1280 × 900 PNGs with 126 distinct hashes. |
 | Selected dark sweep | All nine requested pages rendered; nine decoded, nonblank 1280 × 900 PNGs with nine distinct hashes. |
@@ -178,7 +254,7 @@ they are recorded separately from the same pages in the full sweep. Three differ
 in bytes between runs, so the hashes identify these observations rather than a
 deterministic pixel baseline for future builds.
 
-The exact current capture commands were:
+The exact pre-integration capture commands were:
 
 ```sh
 cargo run --locked --offline -p winui-gallery --features capture --bin winui-gallery-capture -- \
@@ -217,16 +293,16 @@ not depict the newly added controls or CompactSizing implementation.
 
 ### Renderer dependency
 
-The constrained build environment reused the following public rust-skia binary
+The pre-integration capture environment reused the following public rust-skia binary
 archive through the build script's existing `SKIA_BINARIES_URL` option. Its local
-bytes were checked against this SHA-256 for the current run:
+bytes were checked against this SHA-256 for that run:
 
 ```text
 https://github.com/rust-skia/skia-binaries/releases/download/0.153.3/skia-binaries-b7f043e0b1e2a850e702-x86_64-unknown-linux-gnu-ganesh-gl-jpegd-jpege-pdf-vulkan.tar.gz
 SHA-256: 9ebe4c448cc9f789bad241cbd11739cdf759e27db5719c23a7635e096d5807b3
 ```
 
-The current setting was `SKIA_BINARIES_URL=file:///tmp/ferroui-skia.tar.gz`.
+That run used `SKIA_BINARIES_URL=file:///tmp/ferroui-skia.tar.gz`.
 This selects the same public dependency artifact; no dependency sources or toolchain
 checks were patched. The local build used one Cargo job, no incremental compilation
 and disabled development/test debug information to bound resource usage.
