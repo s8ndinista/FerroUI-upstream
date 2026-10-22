@@ -471,6 +471,18 @@ fn variable_stroke_shape(node: &Node, index: usize, stroke: &Stroke, defs: &mut 
     }
 }
 
+/// Bounds of the same filled bands written by variable_stroke_shape. A base
+/// width or even a fixed miter multiplier cannot bound arbitrary custom width
+/// multipliers. Keep an aligned band's uncut bounds, as the native renderer
+/// does; clipping can reduce its ink but must never introduce a new crop.
+fn variable_stroke_bounds(node: &Node) -> Option<Rect> {
+    node.strokes.iter()
+        .filter(|stroke| stroke.visible && stroke.opacity > 0.0 && stroke.width > 0.0
+            && !stroke.width_profile.is_uniform())
+        .filter_map(|stroke| crate::variable_width_outline(node, stroke).ok()?.tight_bounds())
+        .reduce(Rect::union)
+}
+
 fn text_shape(node: &Node, attributes: &str) -> String {
     // This renderer-independent export retains editable hard paragraphs. Native
     // wrapping, glyph baselines and Auto's logical indentation require the real
@@ -610,6 +622,9 @@ fn text_shape(node: &Node, attributes: &str) -> String {
 #[cfg(test)]
 #[path = "svg_paragraph_tests.rs"]
 mod paragraph_tests;
+#[cfg(test)]
+#[path = "stroke_export_tests.rs"]
+mod stroke_export_tests;
 
 /// Retain selected paint subtrees, their ancestor transforms/clips, and every
 /// preceding mask needed by those subtrees. This also keeps document paint order
@@ -722,7 +737,8 @@ impl Document {
         roots.dedup();
         let bounds = roots
             .iter()
-            .filter_map(|id| self.world_bounds(*id))
+            .filter_map(|id| self.world_transform(*id)
+                .map(|transform| transform.transform_rect(self.svg_export_bounds(*id, 0))))
             .reduce(|a, b| a.union(b))
             .unwrap_or(Rect::new(0.0, 0.0, 1.0, 1.0));
         let mut defs = String::new();
@@ -784,6 +800,26 @@ impl Document {
         SvgExport { source, warnings }
     }
 
+    /// Preserve the authored viewport for ordinary contained artwork, while
+    /// including actual variable-width bands and unclipped child overflow.
+    /// The broader uniform-pen/effect margins used for mask allocation below
+    /// must not add five stroke widths of padding to every exported frame.
+    fn svg_export_bounds(&self, id: NodeId, depth: usize) -> Rect {
+        let Some(node) = self.nodes.get(&id) else { return Rect::default(); };
+        let mut bounds = node.local_bounds();
+        if depth >= MAX_DOCUMENT_DEPTH { return bounds; }
+        if let Some(band) = variable_stroke_bounds(node) { bounds = bounds.union(band); }
+        for child in &node.children {
+            if let Some(child_node) = self.nodes.get(child).filter(|node| node.visible) {
+                let child = child_node.local_transform()
+                    .transform_rect(self.svg_export_bounds(*child, depth + 1));
+                let child = if node.clip_content { child.intersection(node.local_bounds()) } else { Some(child) };
+                if let Some(child) = child { bounds = bounds.union(child); }
+            }
+        }
+        bounds
+    }
+
     /// Conservative ink bounds in the node's own coordinates, including
     /// overflowing descendants. A mask region must not impose a new crop.
     fn svg_ink_bounds(&self, id: NodeId, depth: usize) -> Rect {
@@ -796,7 +832,7 @@ impl Document {
         let stroke = node
             .strokes
             .iter()
-            .filter(|s| s.visible)
+            .filter(|s| s.visible && s.width_profile.is_uniform())
             .map(|s| s.width * 5.0)
             .fold(0.0, f64::max);
         let effect = node
@@ -806,13 +842,13 @@ impl Document {
             .map(|e| e.radius * 3.0 + e.spread.abs() + e.offset.x.abs().max(e.offset.y.abs()))
             .sum::<f64>();
         let mut bounds = node.local_bounds().inflate(stroke);
+        if let Some(band) = variable_stroke_bounds(node) { bounds = bounds.union(band); }
         for child in &node.children {
             if let Some(child_node) = self.nodes.get(child).filter(|n| n.visible) {
-                bounds = bounds.union(
-                    child_node
-                        .local_transform()
-                        .transform_rect(self.svg_ink_bounds(*child, depth + 1)),
-                );
+                let child = child_node.local_transform()
+                    .transform_rect(self.svg_ink_bounds(*child, depth + 1));
+                let child = if node.clip_content { child.intersection(node.local_bounds()) } else { Some(child) };
+                if let Some(child) = child { bounds = bounds.union(child); }
             }
         }
         bounds.inflate(effect)
@@ -852,9 +888,13 @@ impl Document {
         depth: usize,
         vector_mask: bool,
     ) {
-        let region = children
-            .iter()
-            .filter_map(|id| {
+        // A list without a visible mask never uses this allocation region.
+        // In particular, do not retessellate every descendant's variable-width
+        // bands at each ordinary frame level just to discard the bounds.
+        let region = if children.iter().any(|id| self.nodes.get(id)
+            .is_some_and(|node| node.visible && node.is_mask))
+        {
+            children.iter().filter_map(|id| {
                 self.nodes.get(id).filter(|n| n.visible).map(|n| {
                     let transform = if root {
                         self.world_transform(*id).unwrap_or_default()
@@ -863,10 +903,11 @@ impl Document {
                     };
                     transform.transform_rect(self.svg_ink_bounds(*id, depth))
                 })
-            })
-            .reduce(|a, b| a.union(b))
-            .unwrap_or(Rect::new(0.0, 0.0, 1.0, 1.0))
-            .inflate(1.0);
+            }).reduce(|a, b| a.union(b))
+                .unwrap_or(Rect::new(0.0, 0.0, 1.0, 1.0)).inflate(1.0)
+        } else {
+            Rect::default()
+        };
         let mut opened = 0;
         for id in children {
             let Some(node) = self.nodes.get(id).filter(|n| n.visible) else {
@@ -1053,10 +1094,13 @@ impl Document {
         let shape = node_shape(node, "");
         if node.clip_content {
             let _ = write!(defs, r#"<clipPath id="clip-{id}">{shape}</clipPath>"#);
-            let _ = write!(body, r#"<g clip-path="url(#clip-{id})">"#);
         }
         if node.kind == NodeKind::Boolean {
+            // A Boolean's operands form its own derived geometry, which the
+            // native renderer intersects with the node's clip before painting.
+            if node.clip_content { let _ = write!(body, r#"<g clip-path="url(#clip-{id})">"#); }
             self.export_boolean(node, defs, body, warnings);
+            if node.clip_content { body.push_str("</g>"); }
         } else {
             if let Some(network) = &node.vector_network {
                 regions::export_network_fills(node, network, defs, body);
@@ -1077,6 +1121,9 @@ impl Document {
             if node.kind == NodeKind::Text && node.fills.is_empty() {
                 body.push_str(&node_shape(node, r#"fill="none""#));
             }
+            // Match native push_content_clip: descendants are clipped, while
+            // this node's own outside/center stroke remains outside the clip.
+            if node.clip_content { let _ = write!(body, r#"<g clip-path="url(#clip-{id})">"#); }
             self.export_svg_siblings(
                 &node.children,
                 false,
@@ -1086,6 +1133,7 @@ impl Document {
                 depth + 1,
                 vector_mask,
             );
+            if node.clip_content { body.push_str("</g>"); }
             for (i, stroke) in node
                 .strokes
                 .iter()
@@ -1183,9 +1231,6 @@ impl Document {
                     }
                 }
             }
-        }
-        if node.clip_content {
-            body.push_str("</g>")
         }
         if has_filter {
             body.push_str("</g>")

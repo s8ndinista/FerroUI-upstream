@@ -309,12 +309,14 @@ impl TextPresenterImpl for TextPresenter {
             preedit_text.as_ref().map_or(0, |text| text.len() as i32), selected_foreground,
         );
         let paragraph_styles = this.text_paragraph_styles();
-        let paragraph_source = this.current_im_client.borrow().as_ref().and_then(Weak::upgrade)
+        let (paragraph_source, paragraph_removed) = this.current_im_client.borrow().as_ref().and_then(Weak::upgrade)
             .and_then(|client| client.preedit_paragraph_source(paragraph_styles.as_ref()))
-            .or_else(|| this.utf16_text());
+            .map(|(source, removed)| (Some(source), removed))
+            .unwrap_or_else(|| (this.utf16_text(), caret_index.max(0) as usize..caret_index.max(0) as usize));
         let paragraph_styles = super::text_presenter_paragraphs::compose(paragraph_styles,
             paragraph_source.as_ref().map_or(&[], |text| text.span()),
-            text.as_ref().map_or(&[], |text| text.span()));
+            text.as_ref().map_or(&[], |text| text.span()), paragraph_removed, caret_index.max(0) as usize,
+            preedit_text.as_ref().map_or(0, |text| text.len()));
 
         let password_char = this.password_char();
 

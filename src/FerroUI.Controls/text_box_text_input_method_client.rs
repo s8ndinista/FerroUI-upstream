@@ -230,14 +230,17 @@ impl TextBoxTextInputMethodClient {
         Some((start, end - start))
     }
 
-    pub(crate) fn preedit_paragraph_source(&self, styles: Option<&TextParagraphStyles>) -> Option<ReadOnlyMemory<u16>> {
+    pub(crate) fn preedit_paragraph_source(&self, styles: Option<&TextParagraphStyles>)
+        -> Option<(ReadOnlyMemory<u16>, std::ops::Range<usize>)> {
         if !self.pending_preedit.get() { return None; }
         let parent = self.parent()?;
         let confirmed = self.confirmed_preedit.borrow();
         let confirmed = confirmed.as_ref()?;
         if confirmed.paragraph_styles.as_ref() != styles || confirmed.text == confirmed.provisional_text
             || parent.text() != confirmed.provisional_text { return None; }
-        Some(ReadOnlyMemory::<u16>::from_str(confirmed.text.as_deref().unwrap_or_default()))
+        let start = confirmed.selection.start.min(confirmed.selection.end).max(0) as usize;
+        let end = confirmed.selection.start.max(confirmed.selection.end).max(0) as usize;
+        Some((ReadOnlyMemory::<u16>::from_str(confirmed.text.as_deref().unwrap_or_default()), start..end))
     }
 
     pub(crate) fn set_presenter(&self, presenter: Option<&Ref<TextPresenter>>, parent: Option<&Ref<TextBox>>) {
