@@ -361,6 +361,13 @@ CONTROLS = {
             "DependencyResolver: Option<Rc<dyn IFerroDependencyResolver>> { set: Popup::set_dependency_resolver }",
         ],
     },
+    'Window': {
+        # The public method of the managed original without parameters: a binding path that ends
+        # in it is a command (`{Binding $parent[Window].Close}`, the menu of the developer tools).
+        'methods': [
+            "fn Close() => |window: &Ref<Window>| window.close()",
+        ],
+    },
     'WindowBase': {
         # The public methods of the managed original without parameters, in the order of their
         # declaration: a binding path that ends in one is a command

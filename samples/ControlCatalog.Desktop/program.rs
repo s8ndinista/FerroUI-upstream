@@ -161,7 +161,32 @@ pub fn build_ferro_app() -> AppBuilder {
             select_theme_of_the_environment();
             smoke_run()
         })
+        .after_setup(attach_dev_tools)
         .log_to_trace(LogEventLevel::Warning, &[])
+}
+
+/// DevTools on F12 in debug builds, as the reference (`AttachDevTools` with the startup screen 1),
+/// but on the framebuffer platform, whose lifetime has no windows.
+fn attach_dev_tools(builder: &AppBuilder) {
+    #[cfg(debug_assertions)]
+    {
+        use ferroui_diagnostics::diagnostics::DevToolsOptions;
+        use ferroui_diagnostics::DevToolsExtensions;
+
+        if std::env::args().any(|arg| arg == "--fbdev" || arg == "--drm") {
+            return;
+        }
+        if let Some(application) = builder.instance() {
+            let options = DevToolsOptions::new().with_startup_screen_index(Some(1));
+            // The pictures of a smoke run: a window large enough for every column of the grid.
+            let options = match std::env::var_os("FERROUI_SMOKE_DEVTOOLS") {
+                Some(_) => options.with_startup_screen_index(None).with_size(ferroui_base::Size::new(1600.0, 900.0)),
+                None => options,
+            };
+            application.attach_dev_tools_with_options(options);
+        }
+    }
+    let _ = builder;
 }
 
 /// The theme of the catalog asked for with `FERROUI_CATALOG_THEME` (`winui`, the default, `fluent`
@@ -1103,6 +1128,185 @@ fn accessibility_tree_run(path: PathBuf) {
     );
 }
 
+/// `FERROUI_SMOKE_DEVTOOLS=<directory>` (debug builds): F12 goes to the input manager as the
+/// platform passes a key (a raw key down and up on the main window), which opens DevTools; the run
+/// then selects a text block in the logical tree, records the click of a button of the catalog on
+/// the events page, goes from there to the button in the visual tree, shows the hot keys, and
+/// writes the frame of the DevTools window (and nothing else) an interval after each step, once it
+/// is laid out. The main window is closed at the end.
+#[cfg(debug_assertions)]
+fn dev_tools_run(directory: PathBuf) {
+    use ferroui_base::input::raw::{RawKeyEventArgs, RawKeyEventType};
+    use ferroui_base::input::{IInputDevice, Key, RawInputModifiers, KeyDeviceType, KeyboardDevice, PhysicalKey};
+    use ferroui_base::interactivity::RoutedEventArgs;
+    use ferroui_base::metadata::from_markup_value;
+    use ferroui_controls::Button;
+    use ferroui_diagnostics::diagnostics::view_models::{MainViewModel, TreeNode};
+    use ferroui_diagnostics::diagnostics::views::MainWindow;
+    use std::rc::Rc;
+
+    if let Err(error) = std::fs::create_dir_all(&directory) {
+        println!("DevTools: the directory {} could not be created: {error}", directory.display());
+        return;
+    }
+    let interval = Duration::from_millis(environment_milliseconds("FERROUI_SMOKE_PAGES").unwrap_or(1500));
+
+    fn dev_tools() -> Option<(Ref<Window>, Rc<MainViewModel>)> {
+        let lifetime = Application::current().and_then(|application| application.application_lifetime())?;
+        let windows = lifetime.as_classic_desktop_style_application_lifetime()?.windows();
+        let window = windows.into_iter().find(|window| window.cast::<MainWindow>().is_some())?;
+        let view_model = from_markup_value::<Rc<MainViewModel>>(&window.data_context())?;
+        Some((window, view_model))
+    }
+    fn button_of_catalog() -> Option<Ref<Button>> {
+        let window = main_window()?;
+        let visual = window.upcast::<Visual>();
+        // A button of the content, which is in the logical tree too (a part of a template is not).
+        visual
+            .get_visual_descendants()
+            .filter_map(|visual| visual.cast::<Button>())
+            .find(|button| button.templated_parent().is_none())
+    }
+    fn first_text_block(node: &Rc<TreeNode>) -> Option<Ref<ferroui_controls::TextBlock>> {
+        if let Some(text_block) = node.visual().cast::<ferroui_controls::TextBlock>() {
+            return Some(text_block);
+        }
+        node.children().to_vec().iter().find_map(first_text_block)
+    }
+    let save = move |name: &str| match dev_tools() {
+        Some((window, _)) => {
+            let path = directory.join(format!("{name}.png"));
+            match save_frame(&window, &path) {
+                Ok(size) => println!("DevTools: {} ({} by {})", path.display(), size.width, size.height),
+                Err(error) => println!("DevTools: {name} could not be written: {error}"),
+            }
+        }
+        None => println!("DevTools: {name}: no DevTools window is open"),
+    };
+
+    let steps: Vec<Box<dyn Fn()>> = vec![
+        Box::new(|| {
+            let (Some(window), Some(manager), Some(keyboard)) =
+                (main_window(), ferroui_base::input::InputManager::instance(), KeyboardDevice::instance())
+            else {
+                println!("DevTools: no main window, input manager or keyboard");
+                return;
+            };
+            for type_ in [RawKeyEventType::KeyDown, RawKeyEventType::KeyUp] {
+                let device: Rc<dyn IInputDevice> = keyboard.clone();
+                let e = RawKeyEventArgs::new(
+                    device,
+                    0,
+                    window.input_root(),
+                    type_,
+                    Key::F12,
+                    RawInputModifiers::empty(),
+                    PhysicalKey::F12,
+                    None,
+                    KeyDeviceType::Keyboard,
+                );
+                manager.process_input(Rc::new(e));
+            }
+            println!("DevTools: F12 pressed; open: {}", dev_tools().is_some());
+        }),
+        {
+            let save = save.clone();
+            Box::new(move || save("01-logical-tree"))
+        },
+        Box::new(|| {
+            // A text block of the home page: the button above is part of a template, which the
+            // logical tree does not show.
+            if let Some((_, view_model)) = dev_tools() {
+                let text_block = view_model
+                    .logical_tree()
+                    .nodes()
+                    .snapshot()
+                    .iter()
+                    .find_map(|node| first_text_block(node));
+                if let Some(text_block) = text_block {
+                    view_model.request_tree_navigate_to(&text_block.clone().upcast(), false);
+                    println!("DevTools: selected the text block {:?} in the logical tree", text_block.text());
+                }
+            }
+        }),
+        {
+            let save = save.clone();
+            Box::new(move || save("02-logical-tree-details"))
+        },
+        Box::new(|| {
+            if let (Some((_, view_model)), Some(button)) = (dev_tools(), button_of_catalog()) {
+                view_model.set_selected_tab(2);
+                button.raise_event(&RoutedEventArgs::with_event(Button::click_event()));
+                let events = view_model.events();
+                println!("DevTools: {} event(s) recorded", events.recorded_events().count());
+                if let Some(first) = events.recorded_events().to_vec().into_iter().next() {
+                    events.set_selected_event(Some(first));
+                }
+            }
+        }),
+        {
+            let save = save.clone();
+            Box::new(move || save("03-events"))
+        },
+        // From the events page, as a double tap on a link of the route of an event navigates.
+        Box::new(|| {
+            if let (Some((_, view_model)), Some(button)) = (dev_tools(), button_of_catalog()) {
+                view_model.request_tree_navigate_to(&button.clone().upcast(), true);
+                println!("DevTools: selected {:?} in the visual tree", button.get_type().name());
+            }
+        }),
+        {
+            let save = save.clone();
+            Box::new(move || save("04-visual-tree-button-details"))
+        },
+        Box::new(|| {
+            if let Some((_, view_model)) = dev_tools() {
+                view_model.set_selected_tab(3);
+            }
+        }),
+        {
+            let save = save.clone();
+            Box::new(move || save("05-hot-keys"))
+        },
+        Box::new(|| {
+            println!("DevTools: done, closing the windows");
+            if let Some((window, _)) = dev_tools() {
+                window.close();
+            }
+            if let Some(window) = main_window() {
+                window.close();
+            }
+        }),
+    ];
+    let steps = Rc::new(steps);
+    let next = Rc::new(std::cell::Cell::new(0));
+    // Two intervals for the catalog to come up, then a step an interval.
+    let _start = DispatcherTimer::run_once(
+        move || {
+            let (steps, next) = (steps.clone(), next.clone());
+            let _timer = DispatcherTimer::run(
+                move || {
+                    let index = next.get();
+                    next.set(index + 1);
+                    if let Some(step) = steps.get(index) {
+                        step();
+                    }
+                    index + 1 < steps.len()
+                },
+                interval,
+                DispatcherPriority::NORMAL,
+            );
+        },
+        interval * 2,
+        DispatcherPriority::NORMAL,
+    );
+}
+
+#[cfg(not(debug_assertions))]
+fn dev_tools_run(_directory: PathBuf) {
+    println!("DevTools: attached in debug builds only");
+}
+
 /// The smoke run asked for with `FERROUI_SMOKE_EXIT_MS`,
 /// `FERROUI_SMOKE_PAGES` and `FERROUI_SMOKE_SCREENSHOTS`.
 fn smoke_run() {
@@ -1110,6 +1314,8 @@ fn smoke_run() {
         backdrop_run(PathBuf::from(directory));
     } else if let Some(directory) = std::env::var_os("FERROUI_SMOKE_SCREENSHOTS").filter(|directory| !directory.is_empty()) {
         screenshot_run(PathBuf::from(directory));
+    } else if let Some(directory) = std::env::var_os("FERROUI_SMOKE_DEVTOOLS").filter(|directory| !directory.is_empty()) {
+        dev_tools_run(PathBuf::from(directory));
     } else if let Some(ms) = environment_milliseconds("FERROUI_SMOKE_PAGES") {
         control_catalog::show_every_page(Duration::from_millis(ms));
     }

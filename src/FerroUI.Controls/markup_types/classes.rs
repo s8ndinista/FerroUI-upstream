@@ -893,6 +893,9 @@ ferro_class_info!(Window {
             SystemDecorations: WindowDecorations { get: Window::system_decorations, set: Window::set_system_decorations } [Obsolete("Use WindowDecorations instead.")],
             Position: PixelPoint { get: Window::position, set: Window::set_position },
         ],
+        methods: [
+            fn Close() => |window: &Ref<Window>| window.close(),
+        ],
         fields: [
             WindowClosedEvent: RoutedEvent<RoutedEventArgs> => || *Window::window_closed_event(),
             WindowOpenedEvent: RoutedEvent<RoutedEventArgs> => || *Window::window_opened_event(),

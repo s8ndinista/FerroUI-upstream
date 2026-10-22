@@ -73,3 +73,19 @@ test_roots = ["tests/FerroUI.Reactive.Tests", "src/FerroUI.Reactive", "src/Ferro
 test_attributes = ["TestMethod", "DataTestMethod"]
 stated_reasons = true
 test_files = "snake"
+
+[[reference]]
+name = "diagnostics"
+title = "the developer tools"
+# The developer tools left upstream in 71ce62ae32; the extraction was made at its parent
+# (TRACKED_COMMIT=71ce62ae32~1 scripts/port-status/run.sh --reference diagnostics), which
+# upstream-api.json records.
+checkout = "../Avalonia"
+checkout_env = "UPSTREAM"
+projects = "scripts/api-extract/projects-diagnostics.json"
+data = "docs/porting/data/diagnostics"
+tracking = "docs/porting/tracking/diagnostics"
+documents = "library"
+# The overloads of `AttachDevTools` are Rust functions with suffixes (`attach_dev_tools_with_options`).
+overloads = "name"
+test_projects = []
