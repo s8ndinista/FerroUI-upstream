@@ -264,6 +264,9 @@
     <!-- The tabs of the extension pages are added after these by the code of the view.
          Deviation (DEVIATIONS.md, Developer tools): an addition of the port. -->
     <TabStrip Name="tabStrip" Grid.Row="2" Margin="8,0" SelectedIndex="{Binding SelectedTab, Mode=TwoWay}">
+      <!-- Deviation (DEVIATIONS.md, Developer tools): the combined tree, an addition of the port,
+           is the first tab and the default one. -->
+      <TabStripItem Content="Combined Tree" />
       <TabStripItem Content="Logical Tree" />
       <TabStripItem Content="Visual Tree" />
       <TabStripItem Content="Events" />

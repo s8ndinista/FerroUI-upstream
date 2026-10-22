@@ -256,6 +256,7 @@
     ]
    },
    "rustOnly": [
+    "diagnostics/view_models/combined_tree_node.rs",
     "register_types.rs",
     "rust_paths.rs"
    ]

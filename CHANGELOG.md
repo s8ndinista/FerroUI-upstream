@@ -54,6 +54,7 @@ One crate joins, `ferroui-diagnostics`. The additions since the preview are list
   - the logical and visual trees with a filter, the details of the selected control (its properties with their priorities and an editor for each, the value frames with their setters and resources, the pseudo-classes, the layout explorer), the routed events with their routes, the hot keys, and screenshots of a control;
   - the property grid is the TreeDataGrid of the port, grouped and sortable, in place of upstream's DataGrid;
   - the window has the WinUI 3 theme in its compact density, in place of upstream's Simple theme, with compact rows; the logical and visual trees and the tree of the routed events are TreeDataGrids too, in place of tree views: their rows are virtualized, and selecting a node (Ctrl+Shift over a control, a link of an event chain) expands its ancestors and scrolls to its row even when it was not shown;
+  - a combined tree, the first tab and the default view: the logical tree with the parts of the template of each element, greyed out;
   - one design for every view (`DevToolsStyles.xaml`): consistent spacing, section headers, thin dividers, a status bar, and a property grid whose editors share one compact form, with read-only values shown as text and brushes as outlined swatches;
   - `MainViewModel::register_page` adds pages of other crates to the tools;
   - the ControlCatalog attaches them in debug builds, and `FERROUI_SMOKE_DEVTOOLS=<directory>` runs them without a person and writes pictures of their window;
