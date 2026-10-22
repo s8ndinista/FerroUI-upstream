@@ -10,6 +10,8 @@
 //! https://learn.microsoft.com/windows/win32/controls/em-getoleinterface
 //! https://learn.microsoft.com/windows/win32/controls/text-object-model
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-getflags
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-setflags
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-typetext
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-homekey
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-endkey
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-moveup
@@ -19,7 +21,7 @@
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-gettype
 //! https://learn.microsoft.com/windows/win32/controls/em-geteditstyle
 
-use crate::automation::marshalling::{free_bstr, ptr_to_string_bstr};
+use crate::automation::marshalling::{free_bstr, string_to_bstr};
 use crate::interop::unmanaged_methods::rtl_get_version;
 use ferroui_microcom::{ComPtr, Guid, IUnknown, IUnknownVtbl};
 use std::ffi::c_void;
@@ -46,6 +48,11 @@ type MoveMethod = unsafe extern "system" fn(*mut c_void, i32, i32, i32, *mut i32
 const EM_GETOLEINTERFACE: u32 = 1084;
 const IID_TEXT_DOCUMENT: Guid = Guid::from_u128(0x8cc497c0_a1df_11ce_8098_00aa0047be5d);
 const TOM_SEL_START_ACTIVE: i32 = 1;
+
+#[link(name = "oleaut32")]
+unsafe extern "system" {
+    fn SysStringLen(value: *const u16) -> u32;
+}
 
 // Typed prefixes of the SDK's dual interfaces. IDispatch contributes four
 // slots after IUnknown; ITextRange contributes 51 more before ITextSelection.
@@ -74,7 +81,7 @@ struct TextSelectionVTable {
     set_range: unsafe extern "system" fn(*mut c_void, i32, i32) -> i32,
     _in_range_through_get_embedded_object: [*const c_void; 29],
     get_flags: Getter,
-    _set_flags: *const c_void,
+    set_flags: unsafe extern "system" fn(*mut c_void, i32) -> i32,
     get_type: Getter,
     move_left: MoveMethod,
     move_right: MoveMethod,
@@ -82,6 +89,7 @@ struct TextSelectionVTable {
     move_down: MoveMethod,
     home_key: BoundaryMethod,
     end_key: BoundaryMethod,
+    type_text: unsafe extern "system" fn(*mut c_void, *mut u16) -> i32,
 }
 
 const _: () = {
@@ -93,6 +101,7 @@ const _: () = {
     assert!(offset_of!(TextSelectionVTable, get_story_length) == 22 * slot);
     assert!(offset_of!(TextSelectionVTable, set_range) == 28 * slot);
     assert!(offset_of!(TextSelectionVTable, get_flags) == 58 * slot);
+    assert!(offset_of!(TextSelectionVTable, set_flags) == 59 * slot);
     assert!(offset_of!(TextSelectionVTable, get_type) == 60 * slot);
     assert!(offset_of!(TextSelectionVTable, move_left) == 61 * slot);
     assert!(offset_of!(TextSelectionVTable, move_right) == 62 * slot);
@@ -100,6 +109,7 @@ const _: () = {
     assert!(offset_of!(TextSelectionVTable, move_down) == 64 * slot);
     assert!(offset_of!(TextSelectionVTable, home_key) == 65 * slot);
     assert!(offset_of!(TextSelectionVTable, end_key) == 66 * slot);
+    assert!(offset_of!(TextSelectionVTable, type_text) == 67 * slot);
 };
 
 fn check_hresult(result: i32, operation: &str) -> TestResult {
@@ -370,6 +380,25 @@ impl NativeSelection {
         )
     }
 
+    fn set_flags(&self, flags: i32) -> TestResult<i32> {
+        // SAFETY: slot 59 has the SDK's LONG flags input and HRESULT result.
+        let result = unsafe { (self.table().set_flags)(self.0.as_ptr().cast(), flags) };
+        check_hresult(result, "ITextSelection::SetFlags")?;
+        Ok(result)
+    }
+
+    fn type_text(&self, text: &str) -> TestResult<i32> {
+        let text = Bstr(string_to_bstr(text));
+        if text.0.is_null() {
+            return Err("SysAllocStringLen for ITextSelection::TypeText failed".into());
+        }
+        // SAFETY: slot 67 consumes a borrowed BSTR. The guard retains the exact
+        // UTF-16 string through the synchronous call and frees it on all exits.
+        let result = unsafe { (self.table().type_text)(self.0.as_ptr().cast(), text.0) };
+        check_hresult(result, "ITextSelection::TypeText")?;
+        Ok(result)
+    }
+
     fn text(&self) -> TestResult<String> {
         let mut text = Bstr(null_mut());
         // SAFETY: GetText writes an owned BSTR; the guard frees it on all exits.
@@ -377,8 +406,13 @@ impl NativeSelection {
             unsafe { (self.table().get_text)(self.0.as_ptr().cast(), &mut text.0) },
             "ITextRange::GetText",
         )?;
-        // SAFETY: the successful getter returned a live BSTR or null for empty.
-        Ok(unsafe { ptr_to_string_bstr(text.0) }.unwrap_or_default())
+        if text.0.is_null() {
+            return Ok(String::new());
+        }
+        // SAFETY: the successful getter returned a live BSTR. Its explicit
+        // length includes embedded NULs, and the guard owns it through decoding.
+        let units = unsafe { std::slice::from_raw_parts(text.0, SysStringLen(text.0) as usize) };
+        String::from_utf16(units).map_err(|_| "native TOM returned malformed UTF-16".into())
     }
 
     fn navigate(&self, unit: Unit, extend: bool, end: bool) -> TestResult<(i32, i32)> {
@@ -822,6 +856,33 @@ fn characterize_isolated_vertical() -> TestResult<usize> {
             commands += 1;
         }
     }
+    // Switching between collapsed and extended movement distinguishes shared
+    // column state from the per-command column used by continuous extension.
+    for (name, steps) in [
+        (
+            "vertical_isolated_column_collapse_then_extend",
+            [(true, false), (true, true), (false, true), (false, false)],
+        ),
+        (
+            "vertical_isolated_column_extend_then_collapse",
+            [(true, true), (true, false), (false, false), (false, true)],
+        ),
+    ] {
+        let window = HiddenRichEdit::new()?;
+        window.set_text(text)?;
+        let selection = window.selection()?;
+        let length = text.encode_utf16().count() as i32;
+        selection.set_range(0, length)?;
+        assert_eq!(selection.text()?, text, "{name}: exact mixed-column setup");
+        let story_length =
+            selection.number(selection.table().get_story_length, "GetStoryLength")?;
+        println!("SYSTEM_MSFTEDIT_VERTICAL_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length}");
+        selection.set_range(5, 5)?;
+        for (down, extend) in steps {
+            observe_vertical(&selection, name, story_length, Unit::Line, 1, extend, down)?;
+            commands += 1;
+        }
+    }
     Ok(commands)
 }
 
@@ -952,6 +1013,13 @@ fn characterize_horizontal() -> TestResult {
     // Forward/reversed ranges distinguish active-end from directional collapse;
     // 0, 1, 2 and negative counts expose collapse accounting and signed results.
     let mut cases = horizontal_cases(&[(1, 6), (6, 1)], &units, &[0, 1, 2, -1]);
+    // Aligned word endpoints distinguish directional movement from a collapse
+    // which consumes the first unit even when no boundary adjustment is needed.
+    cases.extend(horizontal_cases(
+        &[(0, 4), (4, 8), (4, 0), (8, 4)],
+        &[Unit::Word],
+        &[-2, -1, 1, 2],
+    ));
     cases.extend(horizontal_cases(&[(5, 5)], &units, &[1, -1]));
     for (position, right) in [(0, false), (13, true)] {
         for unit in units {
@@ -972,15 +1040,21 @@ fn characterize_horizontal() -> TestResult {
     // UTF-16 scalar boundaries, a position inside a combining sequence, and an
     // emoji ZWJ sequence distinguish Character keyboard movement from scalar,
     // code-unit and grapheme movement. Their destinations remain observations.
+    let mut grapheme_cases = horizontal_cases(
+        &[(1, 1), (3, 3), (4, 4), (5, 5), (13, 13)],
+        &[Unit::Character],
+        &[1],
+    );
+    grapheme_cases.extend(horizontal_cases(
+        &[(1, 4), (4, 1)],
+        &[Unit::Character],
+        &[1, 2],
+    ));
     commands += characterize_horizontal_fixture(
         "horizontal_graphemes",
         "A😀e\u{301}👩\u{200d}👩\u{200d}👦B",
         0,
-        &horizontal_cases(
-            &[(1, 1), (3, 3), (4, 4), (5, 5), (13, 13)],
-            &[Unit::Character],
-            &[1],
-        ),
+        &grapheme_cases,
     )?;
     commands += characterize_horizontal_fixture(
         "horizontal_word_boundaries",
@@ -1010,7 +1084,7 @@ fn characterize_horizontal() -> TestResult {
         &horizontal_cases(&[(0, 0)], &units, &[1]),
     )?;
     assert_eq!(
-        commands, 220,
+        commands, 300,
         "keep the deterministic characterization matrix complete"
     );
     println!("SYSTEM_MSFTEDIT_HORIZONTAL_PROBE_COMPLETE commands={commands}");
@@ -1026,4 +1100,116 @@ fn rich_text_tom_oracle_system_msftedit_horizontal_characterization() {
         .join()
         .expect("the native horizontal TOM probe thread panicked")
         .expect("the native horizontal TOM probe failed");
+}
+
+/// Flags are observed on fresh, unshown windows. In particular, requesting
+/// tomSelActive here is not evidence of a focused WinUI input session. The
+/// TypeText result is captured before reading the complete native story, which
+/// itself moves the selection and can include the synthetic terminal EOP.
+fn characterize_options_fixture(
+    name: &str,
+    text: &str,
+    ranges: &[(i32, i32)],
+    flags: &[i32],
+    typed: &str,
+) -> TestResult<usize> {
+    let mut commands = 0;
+    let length = text.encode_utf16().count() as i32;
+    for &(anchor, active) in ranges {
+        for &requested_flags in flags {
+            let window = HiddenRichEdit::new()?;
+            window.set_text(text)?;
+            let selection = window.selection()?;
+            selection.set_range(0, length)?;
+            assert_eq!(selection.text()?, text, "{name}: exact options setup");
+            let story_length =
+                selection.number(selection.table().get_story_length, "GetStoryLength")?;
+            if commands == 0 {
+                println!("SYSTEM_MSFTEDIT_OPTIONS_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length} window_ex_style=0");
+            }
+            selection.set_range(anchor, active)?;
+            let before = selection.state()?;
+            assert_eq!(before.directed(), (anchor, active));
+            let before_type =
+                selection.number(selection.table().get_type, "ITextSelection::GetType")?;
+            let set_result = selection.set_flags(requested_flags)?;
+            let after_set = selection.state()?;
+            let after_set_type =
+                selection.number(selection.table().get_type, "ITextSelection::GetType")?;
+            assert_eq!(
+                selection.number(selection.table().get_story_length, "GetStoryLength")?,
+                story_length,
+                "setting flags preserves the story length"
+            );
+            let type_result = selection.type_text(typed)?;
+            let after = selection.state()?;
+            let after_type =
+                selection.number(selection.table().get_type, "ITextSelection::GetType")?;
+            let story_length_after =
+                selection.number(selection.table().get_story_length, "GetStoryLength")?;
+            assert!(after_set.end <= story_length && after.end <= story_length_after);
+
+            selection.set_range(0, story_length_after)?;
+            let story_text = selection.text()?;
+            let story_text_length = story_text.encode_utf16().count();
+            assert!(story_text_length <= story_length_after as usize);
+            println!(
+                "SYSTEM_MSFTEDIT_OPTIONS fixture={name} requested_flags={requested_flags} before={before:?} before_type={before_type} after_set={after_set:?} after_set_type={after_set_type} set_hresult=0x{:08X} typed={typed:?} after={after:?} after_type={after_type} type_hresult=0x{:08X} native_story_length_after={story_length_after} story_text={story_text:?} story_text_utf16_length={story_text_length}",
+                set_result as u32, type_result as u32,
+            );
+            commands += 1;
+        }
+    }
+    Ok(commands)
+}
+
+fn characterize_options() -> TestResult {
+    let _apartment = OleApartment::new()?;
+    let library = SystemRichEditLibrary::load()?;
+    library.describe()?;
+    // All combinations of the five documented bits (1, 2, 4, 8, 16), without
+    // presuming the native getter accepts every requested writable flag.
+    let all_flags: Vec<_> = (0..32).collect();
+    let mut commands = characterize_options_fixture(
+        "options_ascii",
+        "abcdef",
+        &[(2, 2), (1, 4), (4, 1)],
+        &all_flags,
+        "XY",
+    )?;
+    commands += characterize_options_fixture(
+        "options_unicode",
+        "A😀e\u{301}👩\u{200d}👩\u{200d}👦B",
+        &[(1, 1), (3, 3), (4, 4), (5, 5), (13, 13)],
+        &[0, 4, 16, 20],
+        "Z",
+    )?;
+    commands += characterize_options_fixture(
+        "options_paragraph",
+        "ab\rcd",
+        &[(2, 2), (3, 3)],
+        &[0, 2, 4, 6, 16, 18, 20, 22],
+        "Z",
+    )?;
+    commands += characterize_options_fixture(
+        "options_empty_input",
+        "abcdef",
+        &[(1, 4), (4, 1)],
+        &[0, 4, 16, 20],
+        "",
+    )?;
+    assert_eq!(commands, 140, "keep the flags/typing matrix complete");
+    println!("SYSTEM_MSFTEDIT_OPTIONS_PROBE_COMPLETE commands={commands}");
+    Ok(())
+}
+
+#[test]
+fn rich_text_tom_oracle_system_msftedit_options_characterization() {
+    std::thread::Builder::new()
+        .name("system-msftedit-options".into())
+        .spawn(characterize_options)
+        .expect("start the native options TOM probe thread")
+        .join()
+        .expect("the native options TOM probe thread panicked")
+        .expect("the native options TOM probe failed");
 }

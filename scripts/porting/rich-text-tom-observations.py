@@ -21,7 +21,7 @@ ENGINE = re.compile(
     r"file_version=(\d+\.\d+\.\d+\.\d+)"
 )
 FIXTURE = re.compile(
-    r'(VERTICAL_|HORIZONTAL_)?FIXTURE name=(\S+) text=("(?:\\.|[^"\\])*") '
+    r'(VERTICAL_|HORIZONTAL_|OPTIONS_)?FIXTURE name=(\S+) text=("(?:\\.|[^"\\])*") '
     r"(?:supplied_)?utf16_length=(\d+) native_story_length=(\d+)"
     r"(?: window_ex_style=(\d+))?"
 )
@@ -48,6 +48,15 @@ HORIZONTAL = re.compile(
     r"operation=(Left|Right) before=" + STATE + r" before_type=(-?\d+) after="
     + STATE + r" after_type=(-?\d+) anchor=(-?\d+) active=(-?\d+) "
     r"delta=(-?\d+) active_displacement=(-?\d+) hresult=(0x[0-9A-F]{8})"
+)
+OPTIONS = re.compile(
+    r"OPTIONS fixture=(\S+) requested_flags=(\d+) before=" + STATE
+    + r" before_type=(-?\d+) after_set=" + STATE
+    + r" after_set_type=(-?\d+) set_hresult=(0x[0-9A-F]{8}) "
+    r'typed=("(?:\\.|[^"\\])*") after=' + STATE
+    + r" after_type=(-?\d+) type_hresult=(0x[0-9A-F]{8}) "
+    r"native_story_length_after=(\d+) "
+    r'story_text=("(?:\\.|[^"\\])*") story_text_utf16_length=(\d+)'
 )
 
 
@@ -129,6 +138,7 @@ def extract(log: str) -> dict:
     home_end = []
     vertical = []
     horizontal = []
+    options = []
     completed = {}
     for line_number, line in enumerate(log.splitlines(), 1):
         marker = line.find(PREFIX)
@@ -156,18 +166,21 @@ def extract(log: str) -> dict:
                     None: "home_end",
                     "VERTICAL_": "vertical",
                     "HORIZONTAL_": "horizontal",
+                    "OPTIONS_": "options",
                 }[match[1]],
                 "name": match[2],
                 "text": text,
                 "supplied_utf16_length": int(match[4]),
                 "native_story_length": int(match[5]),
             }
-            if fixture["family"] == "horizontal":
+            if fixture["native_story_length"] < fixture["supplied_utf16_length"]:
+                raise ValueError("native story is shorter than its supplied text")
+            if fixture["family"] in ("horizontal", "options"):
                 if match[6] is None or int(match[6]) > 0xFFFFFFFF:
-                    raise ValueError("horizontal fixture needs its native u32 window style")
+                    raise ValueError("horizontal/options fixture needs its native u32 window style")
                 fixture["window_ex_style"] = int(match[6])
             elif match[6] is not None:
-                raise ValueError("unexpected window style outside horizontal fixture")
+                raise ValueError("unexpected window style outside horizontal/options fixture")
             fixtures.append(fixture)
             continue
         match = HOME_END.fullmatch(row)
@@ -229,6 +242,37 @@ def extract(log: str) -> dict:
                 **moved,
             })
             continue
+        match = OPTIONS.fullmatch(row)
+        if match:
+            values = match.groups()
+            before, after_set, after = (state(values[start:start + 3]) for start in (2, 6, 12))
+            before["selection_type"] = int(values[5])
+            after_set["selection_type"] = int(values[9])
+            after["selection_type"] = int(values[15])
+            flags = int(values[1])
+            if flags > 31:
+                raise ValueError("options probe requests undocumented flags")
+            text = rust_string(values[18])
+            text_length = int(values[19])
+            native_length = int(values[17])
+            if len(text.encode("utf-16-le")) // 2 != text_length or text_length > native_length:
+                raise ValueError("typed story disagrees with its native UTF-16 length")
+            if after["end"] > native_length:
+                raise ValueError("typing result exceeds its changed native story")
+            options.append({
+                "fixture": values[0],
+                "requested_flags": flags,
+                "before": before,
+                "after_set": after_set,
+                "set_hresult": values[10],
+                "typed": rust_string(values[11]),
+                "after": after,
+                "type_hresult": values[16],
+                "native_story_length_after": native_length,
+                "story_text": text,
+                "story_text_utf16_length": text_length,
+            })
+            continue
         match = re.fullmatch(r"PROBE_COMPLETE commands=(\d+) repeated_noops=(\d+)", row)
         if match:
             if "home_end" in completed:
@@ -247,6 +291,12 @@ def extract(log: str) -> dict:
                 raise ValueError("duplicate horizontal completion")
             completed["horizontal"] = int(match[1])
             continue
+        match = re.fullmatch(r"OPTIONS_PROBE_COMPLETE commands=(\d+)", row)
+        if match:
+            if "options" in completed:
+                raise ValueError("duplicate options completion")
+            completed["options"] = int(match[1])
+            continue
         raise ValueError(f"unrecognized probe row on log line {line_number}: {row}")
 
     if engine is None or not completed:
@@ -261,27 +311,37 @@ def extract(log: str) -> dict:
     if horizontal or "horizontal" in completed:
         if len(horizontal) != completed.get("horizontal") or not horizontal:
             raise ValueError("horizontal observations do not match the completion count")
+    if options or "options" in completed:
+        if len(options) != completed.get("options") or not options:
+            raise ValueError("options observations do not match the completion count")
     by_fixture = {}
     for fixture in fixtures:
         identity = (fixture["family"], fixture["name"])
         if identity in by_fixture:
             raise ValueError("duplicate fixture identity")
+        if fixture["family"] not in completed:
+            raise ValueError("declared fixture family has no completed probe")
         by_fixture[identity] = fixture
+    used_fixtures = set()
     for family, rows in (
-        ("home_end", home_end), ("vertical", vertical), ("horizontal", horizontal)
+        ("home_end", home_end), ("vertical", vertical), ("horizontal", horizontal),
+        ("options", options),
     ):
         for row in rows:
             fixture = by_fixture.get((family, row["fixture"]))
             if fixture is None:
                 raise ValueError("command has no exact text fixture")
+            used_fixtures.add((family, row["fixture"]))
             for key in ("supplied_utf16_length", "native_story_length"):
                 if key in row and row[key] != fixture[key]:
                     raise ValueError("command lengths disagree with its exact text fixture")
-            states = [row["before"], row["after"]]
+            states = [row["before"], row["after_set"] if family == "options" else row["after"]]
             if "repeat" in row:
                 states.append(row["repeat"]["after"])
             if any(value["end"] > fixture["native_story_length"] for value in states):
                 raise ValueError("command range exceeds its native story")
+    if used_fixtures != by_fixture.keys():
+        raise ValueError("declared fixture has no observed command")
     result = {
         "engine": engine,
         "fixtures": fixtures,
@@ -298,6 +358,9 @@ def extract(log: str) -> dict:
     if horizontal:
         result["horizontal"] = horizontal
         result["counts"]["horizontal"] = len(horizontal)
+    if options:
+        result["options"] = options
+        result["counts"]["options"] = len(options)
     return result
 
 

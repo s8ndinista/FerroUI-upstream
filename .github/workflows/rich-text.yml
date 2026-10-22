@@ -45,6 +45,8 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libfontconfig1-dev libfreetype6-dev pkg-config
+      - name: Native observation extractor contracts
+        run: python3 scripts/porting/test_rich_text_tom_observations.py -v
       - name: Base contracts
         run: cargo test --locked -p ferroui-base --lib --no-fail-fast
       - name: Full controls suite
