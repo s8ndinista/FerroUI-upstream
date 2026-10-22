@@ -98,10 +98,34 @@ fn should_define_control_theme_for_built_in_templated_controls() {
         .collect();
 
     assert!(templated_controls.len() > 1);
-    // Every templated control has a control theme, except the ones whose document is left out of
-    // the theme for now (`Controls/excluded.txt`); a control with a theme is not in that list.
+    // Every ordinary templated control has a control theme, except the ones whose document is
+    // left out for now (`Controls/excluded.txt`); a control with a theme is not in that list.
+    // Opt-in WinUI controls can instead supply a native template in property metadata. Verify
+    // that fallback builds a visual, so registering these controls does not require changing
+    // the existing theme or silently excuse a control that cannot display anything.
     for control in &templated_controls {
         let themed = default_control_themes.iter().any(|themed| std::ptr::eq(*themed, *control));
+        if !themed && control.namespace() == "FerroUI.Controls.WinUI" {
+            assert!(
+                TemplatedControl::template_property().get_default_value(control).is_some(),
+                "{} has neither a control theme nor a metadata template",
+                control.full_name()
+            );
+            let instance = control.create_instance().expect("a default constructor");
+            let templated = instance.cast::<TemplatedControl>().expect("a templated control");
+            assert!(
+                !templated.has_local_value(TemplatedControl::template_property()),
+                "{} fallback template must remain replaceable through styles",
+                control.full_name()
+            );
+            templated.apply_template();
+            assert!(
+                templated.visual_children_count() > 0,
+                "{} metadata template did not build a native visual",
+                control.full_name()
+            );
+            continue;
+        }
         let excluded = crate::assets::is_excluded(&format!("/Controls/{}.xaml", control.name()));
         assert_eq!(!excluded, themed, "{}", control.name());
     }

@@ -5,6 +5,7 @@ on:
     paths:
       - 'src/**'
       - 'samples/WinUIGallery/**'
+      - 'tests/FerroUI.Markup.Xaml.UnitTests/**'
       - 'scripts/winui-gallery/**'
       - 'scripts/generate_view_builders.py'
       - 'scripts/rust_paths.py'
@@ -17,6 +18,7 @@ on:
     paths:
       - 'src/**'
       - 'samples/WinUIGallery/**'
+      - 'tests/FerroUI.Markup.Xaml.UnitTests/**'
       - 'scripts/winui-gallery/**'
       - 'docs/porting/winui-gallery/**'
       - 'Cargo.toml'
@@ -96,6 +98,13 @@ jobs:
         run: 'cargo test --locked -p ferroui-markup-xaml --lib xaml_error_scope::'
       - name: WinUI theme contracts and exact generated reference
         run: cargo test --locked -p ferroui-themes-winui --lib
+      - name: Existing themes preserve native WinUI template fallback
+        run: >-
+          cargo test --locked -p ferroui-themes-fluent -p ferroui-themes-simple
+          --lib tests::control_theme_tests::should_define_control_theme_for_built_in_templated_controls
+          -- --exact
+      - name: Registered public Rust paths and generated accessors
+        run: cargo test --locked -p ferroui-markup-xaml-tests --lib emitter::rust_paths_tests
       - name: Gallery controls, interactions and original source catalog
         run: cargo test --locked -p winui-gallery --lib
       - name: Declarative API compilation
