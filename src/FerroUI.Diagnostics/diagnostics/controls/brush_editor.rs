@@ -8,12 +8,15 @@ use ferroui_base::input::{InputElementImpl, PointerPressedEventArgs};
 use ferroui_base::interactivity::{InteractiveImpl, RoutedEventHandlerToken};
 use ferroui_base::layout::LayoutableImpl;
 use ferroui_base::media::immutable::ImmutableSolidColorBrush;
-use ferroui_base::media::{Brushes, Color, DrawingContext, FlowDirection, FormattedText, IBrush, Typeface};
+use ferroui_base::controls::ResourceKey;
+use ferroui_base::media::immutable::ImmutablePen;
+use ferroui_base::media::{Brushes, Color, DrawingContext, FlowDirection, FormattedText, IBrush, IPen, Typeface};
+use ferroui_base::metadata::from_markup_value;
 use ferroui_base::metadata::MarkupType;
 use ferroui_base::utilities::CultureInfo;
 use ferroui_base::{
     ferro_class, ferro_class_info, ferro_impl_classes, ferro_properties, instantiate, BoxedValue, DirectProperty,
-    FerroObjectImpl, FerroProperty, FerroPropertyChangedEventArgs, Point, Ref, StyledElementImpl, TypeInfo,
+    FerroObjectImpl, FerroProperty, FerroPropertyChangedEventArgs, Point, Rect, Ref, StyledElementImpl, TypeInfo,
     VisualImpl,
 };
 use ferroui_controls::primitives::{FlyoutBase, TemplateAppliedEventArgs, TemplatedControl, TemplatedControlImpl};
@@ -138,27 +141,49 @@ impl VisualImpl for BrushEditor {
     fn render(this: &Self, context: &mut DrawingContext) {
         Self::parent_render(this, context);
 
-        let brush: Rc<dyn IBrush> = this.brush().unwrap_or_else(|| Brushes::black());
+        // Deviation (DEVIATIONS.md, Developer tools): the swatch in the design of the tools: in
+        // the coordinates of the editor (upstream fills `Bounds`, its place in the parent, which
+        // moves the swatch when the editor has a margin), with rounded corners and the outline of
+        // a control of the theme; a null brush is an empty swatch with "(null)" in the secondary
+        // colour (upstream: black), and a brush that is not a solid colour names its type.
+        let size = this.bounds().size();
+        let rect = Rect::new(0.5, 0.5, (size.width - 1.0).max(0.0), (size.height - 1.0).max(0.0));
+        // The resources of the variant of the editor (a lookup without one gets the default
+        // dictionary, the dark one).
+        let theme = this.actual_theme_variant();
+        let resource = |key: &str| {
+            this.try_find_resource(&ResourceKey::from(key), theme.as_ref())
+                .and_then(|value| from_markup_value::<Rc<dyn IBrush>>(&value))
+        };
 
-        let bounds = this.bounds();
-        context.fill_rectangle(&brush, bounds, 0.0);
+        let brush = this.brush();
+        if let Some(brush) = &brush {
+            context.fill_rectangle(brush, rect, 4.0);
+        }
+        let stroke = resource("ControlStrongStrokeColorDefaultBrush")
+            .and_then(|stroke| stroke.as_solid_color_brush().map(|solid| solid.color()))
+            .unwrap_or(Color::from_argb(0x72, 0, 0, 0));
+        let pen: Rc<dyn IPen> = Rc::new(ImmutablePen::with_brush(Some(Rc::new(ImmutableSolidColorBrush::new(stroke))), 1.0));
+        context.draw_rectangle_outline(&pen, rect, 4.0);
 
-        let text = this
-            .brush()
-            .as_ref()
-            .and_then(|brush| brush.as_solid_color_brush().map(|solid| solid.color().to_string()))
-            .unwrap_or_else(|| "(null)".to_string());
+        let (text, text_brush) = match &brush {
+            Some(brush) => (
+                brush.as_solid_color_brush().map(|solid| solid.color().to_string()).unwrap_or_else(|| brush_type_name(&**brush)),
+                Self::get_text_brush(brush),
+            ),
+            None => ("(null)".to_string(), resource("TextFillColorSecondaryBrush").unwrap_or_else(|| Brushes::gray())),
+        };
 
         let ft = FormattedText::new(
             &text,
             CultureInfo::current_culture(),
             FlowDirection::LeftToRight,
             Typeface::default(),
-            10.0,
-            Some(Self::get_text_brush(&brush)),
+            11.0,
+            Some(text_brush),
         );
 
-        context.draw_text(&ft, Point::new(bounds.width / 2.0 - ft.width() / 2.0, bounds.height / 2.0 - ft.height() / 2.0));
+        context.draw_text(&ft, Point::new(size.width / 2.0 - ft.width() / 2.0, size.height / 2.0 - ft.height() / 2.0));
     }
 }
 

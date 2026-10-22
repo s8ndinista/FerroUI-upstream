@@ -139,6 +139,17 @@ impl MainWindow {
         let this = instantiate(Self::construct());
         Self::initialize_component(&this);
 
+        // Deviation (DEVIATIONS.md, Developer tools): the platform as a class of the window, for
+        // the room the header in the title bar leaves to the caption buttons of the system.
+        let platform = if cfg!(target_os = "macos") {
+            "macos"
+        } else if cfg!(windows) {
+            "windows"
+        } else {
+            "other"
+        };
+        this.classes().add(platform);
+
         // Apply the SimpleTheme.Window theme; this must be done after the XAML is parsed as
         // the theme is included in the MainWindow's XAML.
         // Deviation (DEVIATIONS.md, Developer tools): the theme of a window of the WinUI 3 theme,

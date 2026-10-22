@@ -402,9 +402,9 @@ FerroUI has ports of System.Reactive, DynamicData, Splat and ReactiveUI, one cra
 
 ### Developer tools
 
-Press F12 in a window of a debug build to inspect the running application: its logical and visual trees, the properties of the selected control with where each value comes from and an editor for it, the styles and setters that apply, its layout, and the routed events as they travel. The tools are `ferroui-diagnostics`, a port of upstream's last open-source developer tools, in the WinUI 3 theme with TreeDataGrids for the trees and the property grid.
+Press F12 in a window of a debug build to inspect the running application: its logical and visual trees, and a combined tree (the default view) that shows the parts of each template greyed out below the element, the properties of the selected control with where each value comes from and an editor for it, the styles and setters that apply, its layout, and the routed events as they travel. The tools are `ferroui-diagnostics`, a port of upstream's last open-source developer tools, in the WinUI 3 theme with TreeDataGrids for the trees and the property grid.
 
-![The developer tools on the ControlCatalog: the visual tree, the properties of a button with their priorities, its layout and the setters of its theme](docs/images/diagnostics/devtools.png)
+![The developer tools on the ControlCatalog: the combined tree with the parts of the templates greyed out, the properties of a text block with their priorities, its layout and its value frames](docs/images/diagnostics/devtools.png)
 
 Attach them once the application is set up (the ControlCatalog does it in `samples/ControlCatalog.Desktop/program.rs`), or use the feature `diagnostics` of the facade:
 

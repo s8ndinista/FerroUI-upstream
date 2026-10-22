@@ -246,6 +246,7 @@ Rust sources of this crate that no upstream file maps to. Give each a reason in 
 
 | Rust file | Reason | Types defined |
 |---|---|---|
+| `diagnostics/view_models/combined_tree_node.rs` | **unmapped** | `CombinedChildren`, `CombinedTreeNode` |
 | `register_types.rs` | **unmapped** |  |
 | `rust_paths.rs` | **unmapped** |  |
 

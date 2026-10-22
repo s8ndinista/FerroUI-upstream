@@ -179,6 +179,7 @@ impl PropertyValueEditorView {
 
         if property_type.is::<bool>() || property_type.is::<Option<bool>>() {
             let check_box = CheckBox::new();
+            check_box.classes().add("editor");
             self.create_control(&property, &check_box, ToggleButton::is_checked_property().as_property(), None, None);
             return Some(check_box.upcast());
         }
@@ -186,6 +187,7 @@ impl PropertyValueEditorView {
         // TODO (from the original): Infinity, NaN not working with NumericUpDown.
         if is_valid_numeric(property_type) {
             let n = NumericUpDown::new();
+            n.classes().add("editor");
             // `init`.
             n.set_increment(Decimal::from(1));
             let number_format = NumberFormatInfo::new();
@@ -227,6 +229,7 @@ impl PropertyValueEditorView {
             sp.children().add(tbl);
             sp.set_background(Some(Brushes::transparent() as Rc<dyn IBrush>));
             sp.set_cursor(Some(Cursor::new(StandardCursorType::Hand)));
+            sp.classes().add("editor");
             sp.set_is_enabled(!property.is_readonly());
 
             let cv = ColorView::new();
@@ -254,6 +257,7 @@ impl PropertyValueEditorView {
 
         if implements_interface::<Rc<dyn IBrush>>(property_type) {
             let brush_editor = BrushEditor::new();
+            brush_editor.classes().add("editor");
             self.create_control(&property, &brush_editor, BrushEditor::brush_property().as_property(), None, None);
             return Some(brush_editor.upcast());
         }
@@ -285,6 +289,7 @@ impl PropertyValueEditorView {
             sp.set_spacing(2.0);
             sp.children().add(icon);
             sp.children().add(tbl);
+            sp.classes().add("editor");
 
             if is_image {
                 let preview_image = Image::new();
@@ -318,6 +323,7 @@ impl PropertyValueEditorView {
 
         if is_enum(property_type) {
             let c = ComboBox::new();
+            c.classes().add("editor");
             // `init`: `Enum.GetValues(propertyType)`.
             let members = MarkupType::find_by_handle(property_type.id()).map(|markup| markup.enum_members).unwrap_or(&[]);
             c.set_items_source(Some(ItemsSource::from_items(members.iter().map(|member| Some((member.get)())))));
@@ -332,6 +338,9 @@ impl PropertyValueEditorView {
         }
 
         let tb = CommitTextBox::new();
+        // Deviation (DEVIATIONS.md, Developer tools): every editor has the class `editor`, which
+        // the sheet of the tools (DevToolsStyles.xaml) gives one compact form.
+        tb.classes().add("editor");
         // `init`.
         tb.set_placeholder_text(Some("(null)"));
         self.create_control(

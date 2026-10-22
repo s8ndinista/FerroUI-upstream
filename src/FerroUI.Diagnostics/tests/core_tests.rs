@@ -61,7 +61,8 @@ fn the_options_have_the_defaults_of_upstream() {
     assert!(options.show_implemented_interfaces());
     assert!(options.theme_variant().is_none());
     assert!(options.focus_highlighter_brush().is_none());
-    assert_eq!(DevToolsViewKind::LogicalTree, options.launch_view());
+    // Deviation (DEVIATIONS.md, Developer tools): the combined tree, upstream the logical tree.
+    assert_eq!(DevToolsViewKind::CombinedTree, options.launch_view());
     // The default screenshot handler is the one of the conventions, shared by all options.
     assert!(Rc::ptr_eq(&options.screenshot_handler(), &DevToolsOptions::new().screenshot_handler()));
 }

@@ -5,10 +5,14 @@
 #[repr(i32)]
 pub enum DevToolsViewKind {
     /// The Logical Tree diagnostic view
-    #[default]
     LogicalTree = 0,
     /// The Visual Tree diagnostic view
     VisualTree = 1,
     /// Events diagnostic view
     Events = 2,
+    /// The combined tree: the logical tree with the parts of the templates, greyed out.
+    ///
+    /// Deviation (DEVIATIONS.md, Developer tools): an addition of the port, and the default view.
+    #[default]
+    CombinedTree = 3,
 }

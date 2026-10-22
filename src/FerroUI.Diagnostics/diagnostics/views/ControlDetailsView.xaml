@@ -83,18 +83,26 @@
     
     <Grid Grid.Column="0" RowDefinitions="Auto,Auto,*">
 
-      <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto">
-        <Button Grid.Column="0" Grid.RowSpan="2" Content="^" 
+      <!-- Deviation (DEVIATIONS.md, Developer tools): the header of the selected object in the
+           design of the tools (DevToolsStyles.xaml): its name, its type below in the secondary
+           colour, and the button to the parent property as an icon. -->
+      <Grid ColumnDefinitions="Auto, *" RowDefinitions="Auto, Auto" Margin="12,10,12,8">
+        <Button Grid.Column="0" Grid.RowSpan="2"
+                Theme="{StaticResource SubtleButtonStyle}"
+                Width="28" Height="28" Padding="0" MinWidth="0" MinHeight="0"
+                VerticalAlignment="Center"
                 IsEnabled="{Binding CanNavigateToParentProperty}"
-                Margin="0 0 4 0"
+                Margin="0,0,8,0"
                 ToolTip.Tip="Navigate to parent property"
-                Command="{Binding NavigateToParentProperty}" />
-        <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding SelectedEntityName}" FontWeight="Bold" />
-        <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding SelectedEntityType}" FontStyle="Italic" />
+                Command="{Binding NavigateToParentProperty}">
+          <PathIcon Width="12" Height="12" Data="M7.47 3.47a.75.75 0 0 1 1.06 0l5 5a.75.75 0 0 1-1.06 1.06L8 5.06 3.53 9.53a.75.75 0 0 1-1.06-1.06l5-5z" />
+        </Button>
+        <TextBlock Grid.Column="1" Grid.Row="0" Classes="section-header" Text="{Binding SelectedEntityName}" TextTrimming="CharacterEllipsis" />
+        <TextBlock Grid.Column="1" Grid.Row="1" Classes="caption" Text="{Binding SelectedEntityType}" TextTrimming="CharacterEllipsis" />
       </Grid>
-      
+
       <controls:FilterTextBox Grid.Row="1"
-                              BorderThickness="0"
+                              Margin="12,0,12,8"
                               DataContext="{Binding TreePage.PropertiesFilter}"
                               Text="{Binding FilterString}"
                               PlaceholderText="Filter properties"
@@ -109,57 +117,53 @@
       the name and value columns are the templates PropertyNameCell and PropertyValueCell.
       -->
       <TreeDataGrid x:Name="DataGrid"
+                    Classes="property-grid"
                     Source="{Binding PropertiesView.Source}"
                     Grid.Row="2"
                     BorderThickness="0"
                     CanUserResizeColumns="True"
                     DoubleTapped="PropertiesGrid_OnDoubleTapped">
         <TreeDataGrid.Styles>
-          <Style Selector="TreeDataGridRow TextBox">
-            <Setter Property="SelectionBrush" Value="LightBlue" />
-          </Style>
-          <!-- Deviation (DEVIATIONS.md, Developer tools): the editors and the pin of the compact
-               rows of the grid, without the minimum size of a WinUI 3 check box and the padding
-               of a WinUI 3 button. -->
-          <Style Selector="TreeDataGridRow CheckBox">
+          <!-- Deviation (DEVIATIONS.md, Developer tools): the pin of a property, a subtle button of
+               20 px in the compact rows (the editors are styled by DevToolsStyles.xaml). -->
+          <Style Selector="ToggleButton.pin">
+            <Setter Property="Padding" Value="0" />
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="MinHeight" Value="0" />
-          </Style>
-          <Style Selector="ToggleButton.pin">
-            <Setter Property="Padding" Value="4,0" />
-            <Setter Property="MinHeight" Value="0" />
-            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="Width" Value="20" />
+            <Setter Property="Height" Value="20" />
+            <Setter Property="VerticalAlignment" Value="Center" />
           </Style>
         </TreeDataGrid.Styles>
       </TreeDataGrid>
 
     </Grid>
 
-    <GridSplitter Grid.Column="1"/>
+    <GridSplitter Grid.Column="1" Classes="divider vertical"/>
 
     <Grid Grid.Column="2" RowDefinitions="*,Auto,*"
           IsVisible="{Binding Layout, Converter={x:Static ObjectConverters.IsNotNull}}">
 
       <Grid RowDefinitions="Auto,*" Grid.Row="0">
-        <TextBlock FontWeight="Bold" Grid.Row="0" Text="Layout Visualizer" Margin="4" />
+        <TextBlock Classes="section-header" Grid.Row="0" Text="Layout" Margin="12,10,12,4" />
         <local:LayoutExplorerView Grid.Row="1" DataContext="{Binding Layout}" />
       </Grid>
 
-      <GridSplitter Grid.Row="1" />
+      <GridSplitter Grid.Row="1" Classes="divider horizontal" />
 
       <Grid RowDefinitions="Auto,*,Auto" Grid.Row="2">
 
-        <Grid Grid.Row="0" Margin="4" RowDefinitions="Auto,Auto">
+        <Grid Grid.Row="0" Margin="12,10,12,8" RowDefinitions="Auto,Auto,Auto" RowSpacing="8">
 
           <!-- Deviation (DEVIATIONS.md, Developer tools): the controls of WinUI 3 are wider; the
                status takes the room that is left and is trimmed, so the buttons stay visible. -->
-          <Grid Grid.Row="0" Margin="2" ColumnDefinitions="*,0,Auto,Auto">
-            <TextBlock FontWeight="Bold" Grid.Column="0" Text="{Binding FramesStatus}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" />
-            <CheckBox Margin="2,0,0,0" MinWidth="0" Grid.Column="2" Content="Show inactive" IsChecked="{Binding ShowInactiveFrames}" ToolTip.Tip="Show values that are currently inactive" />
-            <ToggleButton Margin="2,0,0,0" Grid.Column="3" ToolTip.Tip="Snapshot current values (Alt+S/Alt+D to enable/disable within debugged window)" Content="Snapshot" IsChecked="{Binding SnapshotFrames}" />
-          </Grid>
+          <TextBlock Grid.Row="0" Classes="section-header" Text="{Binding FramesStatus}" TextTrimming="CharacterEllipsis" />
+          <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="12">
+            <CheckBox MinWidth="0" MinHeight="0" VerticalAlignment="Center" Content="Show inactive" IsChecked="{Binding ShowInactiveFrames}" ToolTip.Tip="Show values that are currently inactive" />
+            <ToggleButton MinHeight="0" Padding="10,3" VerticalAlignment="Center" ToolTip.Tip="Snapshot current values (Alt+S/Alt+D to enable/disable within debugged window)" Content="Snapshot" IsChecked="{Binding SnapshotFrames}" />
+          </StackPanel>
 
-          <controls:FilterTextBox Grid.Row="1" Margin="2" Grid.Column="0"
+          <controls:FilterTextBox Grid.Row="2" Grid.Column="0"
                                   DataContext="{Binding TreePage.SettersFilter}"
                                   Text="{Binding FilterString}"
                                   PlaceholderText="Filter values"
@@ -172,7 +176,7 @@
           <ItemsControl ItemsSource="{Binding AppliedFrames}" >
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <Border BorderThickness="0,0,0,1" BorderBrush="#6C6C6C" Opacity="{Binding IsActive, Converter={StaticResource BoolToOpacity}}">
+                <Border Margin="12,0,12,6" Opacity="{Binding IsActive, Converter={StaticResource BoolToOpacity}}">
                   <Border.IsVisible>
                     <MultiBinding Converter="{x:Static BoolConverters.And}">
                       <MultiBinding Converter="{x:Static BoolConverters.Or}" >
@@ -183,18 +187,26 @@
                       <Binding Path="IsVisible" />
                     </MultiBinding>
                   </Border.IsVisible>
-                  <Expander IsExpanded="True" Margin="0" Padding="8,0" ContentTransition="{x:Null}"
+                  <Expander IsExpanded="True" Margin="0" Padding="12,6" ContentTransition="{x:Null}"
                             HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" >
                     <Expander.Header>
                       <TextBlock Grid.Row="0" Text="{Binding Description}" />
                     </Expander.Header>
 
-                    <ItemsControl Margin="20,0,0,0" Grid.Row="1" ItemsSource="{Binding Setters}">
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding Setters}">
                       
                       <ItemsControl.Styles>
                         <Style Selector="TextBlock.property-name">
                           <Setter Property="FontWeight" Value="SemiBold" />
                           <Setter Property="Background" Value="Transparent" />
+                        </Style>
+                        <!-- Deviation (DEVIATIONS.md, Developer tools): a line of space between
+                             the setters, in the size of the property grid. -->
+                        <Style Selector="ContentPresenter > Panel">
+                          <Setter Property="Margin" Value="0,2" />
+                        </Style>
+                        <Style Selector="TextBlock">
+                          <Setter Property="FontSize" Value="13" />
                         </Style>
                         
                         <Style Selector="TextBlock.property-name:pointerover">
@@ -204,7 +216,7 @@
                         <Style Selector="Rectangle.property-inactive">
                           <Setter Property="IsHitTestVisible" Value="False" />
                           <Setter Property="Height" Value="1" />
-                          <Setter Property="Fill" Value="#6C6C6C" />
+                          <Setter Property="Fill" Value="{DynamicResource TextFillColorSecondaryBrush}" />
                           <Setter Property="VerticalAlignment" Value="Center" />
                         </Style>
                         
@@ -299,7 +311,7 @@
           </ItemsControl>
         </ScrollViewer>
 
-        <Expander Header="Pseudo Classes" Grid.Row="2" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
+        <Expander Header="Pseudo-classes" Grid.Row="2" Margin="12,6,12,12" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
           <ItemsControl ItemsSource="{Binding PseudoClasses}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
@@ -308,7 +320,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
               <DataTemplate>
-                <CheckBox Margin="2" Content="{Binding Name}" IsChecked="{Binding IsActive, Mode=TwoWay}" />
+                <CheckBox Margin="0,0,12,4" MinWidth="0" MinHeight="0" Content="{Binding Name}" IsChecked="{Binding IsActive, Mode=TwoWay}" />
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
