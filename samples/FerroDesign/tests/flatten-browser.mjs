@@ -54,9 +54,9 @@ function compareTextPixels(before, after) {
 
 export async function flattenRegressions(page, reference, check, helpers, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, frames, waitForNativeFrame, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, frames, waitForNativeFrame, waitForNativeScene, captureNativeScreenshot } = helpers;
     const fill = (r, g, b) => ({ paint: { type: "solid", r, g, b, a: 255 }, opacity: 1, visible: true });
-    const action = async () => {
+    const action = async (rejection = null) => {
         await clickNative(page, "ActionsButton");
         await clickNative(page, "ActionSearch", "ModalViewport");
         await page.keyboard.press("Control+a");
@@ -70,8 +70,25 @@ export async function flattenRegressions(page, reference, check, helpers, mode) 
                 ["ModalPanel", "ModalContent", "ModalViewport"].every(name =>
                     chrome[name]?.measureValid && chrome[name]?.arrangeValid);
         });
+        // Live modal bounds can precede compositor hit-test publication. One
+        // older coalesced completion may still be pending; two completions
+        // after the final layout also cover that case. The focused native
+        // search caret continues publishing scenes while we wait.
+        const filtered = await state(page);
+        if (rejection !== null) {
+            assert.equal(filtered.chrome.Toast?.visible === true &&
+                filtered.chrome.ToastText?.text === rejection, false,
+            "The expected rejection must not already be visible before invoking Flatten");
+        }
+        await waitForNativeScene(page, filtered.sceneFrames + 1, "Filtered Flatten action");
         await clickNative(page, "Action-flatten", "ModalViewport");
-        await frames(page);
+        // Failed Flatten intentionally retains the palette. Require its exact
+        // native error, so a missed click cannot satisfy unchanged-state tests.
+        await page.waitForFunction(rejection => {
+            const chrome = JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome;
+            return rejection === null ? chrome.ModalBackdrop?.visible === false :
+                chrome.Toast?.visible === true && chrome.ToastText?.text === rejection;
+        }, rejection, { timeout: 10000 });
     };
     const firstRoot = async (id) => {
         await page.keyboard.press("Escape");
@@ -243,7 +260,7 @@ export async function flattenRegressions(page, reference, check, helpers, mode) 
     try { await clickWorld(page, 190, 70); } finally { await page.keyboard.up("Shift"); }
     const invalidBefore = await documentState(page), invalidDepth = (await state(page)).historyLength;
     assert.equal((await state(page)).selectionCount, 2);
-    await action();
+    await action("Different layer colors need independently painted vector regions; flatten those layers separately.");
     assert.deepEqual(await documentState(page), invalidBefore, "A heterogeneous paint batch must never discard one region's paint");
     assert.equal((await state(page)).historyLength, invalidDepth);
     check("Native Flatten rejects independently colored regions without changing the document or history instead of silently discarding their appearance");

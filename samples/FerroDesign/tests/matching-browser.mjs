@@ -38,6 +38,11 @@ export async function matchingRegressions(page, reference, check, helpers, outpu
     const same = async (control, expected) => {
         await clickNative(page, "SelectMatchingButton", "InspectorViewport");
         await clickNative(page, control, "ModalViewport");
+        // Appearance matching may retain the already-selected source. Require
+        // the native command's dialog closure as well as its exact selection.
+        await page.waitForFunction(() =>
+            JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome.ModalBackdrop?.visible === false,
+        null, { timeout: 10000 });
         await selected(expected);
     };
     const selectSource = async (x = 80, y = 70) => {

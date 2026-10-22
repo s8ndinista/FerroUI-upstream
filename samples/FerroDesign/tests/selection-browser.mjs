@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 // history and gesture cancellation all use the actual native input surface.
 export async function selectionRegressions(page, reference, check, helpers, output, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, frames, waitForNativeFrame, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, frames, waitForNativeFrame, waitForNativeScene, captureNativeScreenshot } = helpers;
     const fill = (r, g, b, a = 255) => ({ paint: { type: "solid", r, g, b, a }, opacity: 1, visible: true });
     const rectangle = (id, properties = {}) => fixtureNode(reference, id, {
         kind: "rectangle", x: 40, y: 40, width: 200, height: 200,
@@ -45,8 +45,17 @@ export async function selectionRegressions(page, reference, check, helpers, outp
                 ["ModalPanel", "ModalContent", "ModalViewport"].every(name =>
                     chrome[name]?.measureValid && chrome[name]?.arrangeValid);
         }, { search, command });
+        // Layout properties can already describe the filtered, recentered
+        // modal while native hit testing still uses the previous scene. There
+        // can be one older coalesced completion pending; require two completed
+        // scenes after the final layout before deriving the click coordinates.
+        // The focused native search caret continues to publish scenes.
+        const filtered = await state(page);
+        await waitForNativeScene(page, filtered.sceneFrames + 1, "Filtered action " + command);
         await clickNative(page, "Action-" + command, "ModalViewport");
-        await frames(page);
+        await page.waitForFunction(() =>
+            JSON.parse(globalThis.ferroDesign.ferroDesignState()).chrome.ActionSearch?.visible !== true,
+        null, { timeout: 10000 });
     };
     const snapshot = async () => {
         const view = await state(page);
