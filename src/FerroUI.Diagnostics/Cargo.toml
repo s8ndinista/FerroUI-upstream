@@ -37,11 +37,11 @@ ferroui-themes-simple = { workspace = true }
 # The brush editor of the property grid, as upstream.
 ferroui-controls-color-picker = { workspace = true }
 # The property grid of the control details: the owner's decision is the TreeDataGrid of the port in
-# place of the DataGrid that upstream compiled into its project (docs/porting/diagnostics.md).
+# place of the DataGrid that upstream compiled into its project (docs/porting/DEVIATIONS.md, Developer tools).
 ferroui-controls-treedatagrid = { workspace = true }
 ferroui-treedatagrid-core = { workspace = true }
 # The regular expressions of the filters (upstream uses the regular expressions of .NET; the port has
-# no engine of its own: docs/porting/diagnostics.md).
+# no engine of its own: docs/porting/DEVIATIONS.md, Developer tools).
 regex = "1"
 
 [build-dependencies]

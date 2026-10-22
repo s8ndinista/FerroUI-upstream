@@ -410,9 +410,13 @@ let builder = builder.after_setup(|builder| {
 });
 ```
 
-The facade has them as the feature `diagnostics` (`ferroui::diagnostics`). The port and its differences are described in [docs/porting/diagnostics.md](docs/porting/diagnostics.md).
+The facade has them as the feature `diagnostics` (`ferroui::diagnostics`). Where the port differs from upstream is in [DEVIATIONS.md](docs/porting/DEVIATIONS.md), section "Developer tools", and its state per upstream member in [the tracking of the developer tools](docs/porting/tracking/diagnostics/TRACKING.md).
 
 ![The developer tools on the ControlCatalog: the visual tree, the property grid of a button and its value frames](docs/images/diagnostics/visual-tree.png)
+
+| The logical tree | The events page |
+|---|---|
+| ![The logical tree with the details of a text block](docs/images/diagnostics/logical-tree.png) | ![The events page: the routed events by owner, a recorded click and its route](docs/images/diagnostics/events.png) |
 
 ## Repository layout
 
@@ -436,7 +440,7 @@ The layout follows the upstream project so that files can be compared side by si
 - [Deviations](docs/porting/DEVIATIONS.md): every place where the port differs from upstream, and why.
 - [XAML design](docs/porting/xaml.md): the markup pipeline, the run-time loader and the compiler of markup to Rust.
 - [Declarative Rust UI](docs/declarative-ui.md): `ferroui-view`, its builders, `rsx!`, signals, components, hooks, the reconciler, XAML interoperation, tools and the phases of the work; [compared with React](docs/declarative-ui-react.md).
-- [Developer tools](docs/porting/diagnostics.md): the port of upstream's developer tools, attached with F12.
+- [Developer tools](docs/porting/tracking/diagnostics/TRACKING.md): the port of upstream's developer tools, attached with F12, member by member.
 - [MVVM on FerroUI](docs/mvvm.md): ReactiveUI, DynamicData and System.Reactive on FerroUI, with the samples ReactiveDemo and ReactiveUIExample.
 - Platforms: [Windows](docs/porting/win32-platform.md), [WinUI](docs/porting/winui.md), [Linux on X11](docs/porting/x11-platform.md) with [AT-SPI](docs/porting/atspi.md), [Wayland](docs/porting/wayland-platform.md), [Linux framebuffer](docs/porting/linux-framebuffer-platform.md), [OpenGL on macOS and iOS](docs/porting/apple-opengl.md), [iOS](docs/porting/ios-platform.md), [Android](docs/porting/android-platform.md), [browser](docs/porting/browser-platform.md) with its [render worker](docs/porting/browser-render-worker.md), [headless VNC](docs/porting/headless-vnc.md), [Vulkan](docs/porting/vulkan.md).
 - Rendering: [render thread](docs/porting/render-thread.md), [Vello backend](docs/porting/vello-backend.md), [render tests](docs/porting/render-tests.md).

@@ -1333,7 +1333,7 @@ The references are `ReactiveDemo`, the getting-started sample of ReactiveUI (Rea
 
 ### Developer tools (`src/FerroUI.Diagnostics/`)
 
-The port of upstream's developer tools at their last open-source version (`docs/porting/diagnostics.md`). The sources mark each entry with `Deviation (DEVIATIONS.md, Developer tools)`.
+The port of upstream's developer tools at their last open-source version (`src/Avalonia.Diagnostics` at the parent of `71ce62ae32`, where upstream removed them). The sources mark each entry with `Deviation (DEVIATIONS.md, Developer tools)`.
 
 | Upstream | Port | Kind | Why | Since |
 |---|---|---|---|---|

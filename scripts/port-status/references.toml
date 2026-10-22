@@ -77,7 +77,6 @@ test_files = "snake"
 [[reference]]
 name = "diagnostics"
 title = "the developer tools"
-plan = "docs/porting/diagnostics.md"
 # The developer tools left upstream in 71ce62ae32; the extraction was made at its parent
 # (TRACKED_COMMIT=71ce62ae32~1 scripts/port-status/run.sh --reference diagnostics), which
 # upstream-api.json records.

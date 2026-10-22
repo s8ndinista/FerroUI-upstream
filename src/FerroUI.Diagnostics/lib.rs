@@ -1,7 +1,7 @@
 //! ferroui-diagnostics
 //!
 //! The developer tools of FerroUI, a port of the last open-source version of
-//! upstream's developer tools (docs/porting/diagnostics.md): a window that
+//! upstream's developer tools (docs/porting/DEVIATIONS.md, Developer tools): a window that
 //! shows the logical and visual trees of a running application, the
 //! properties of the selected control with their value sources and
 //! priorities, the styles and setters that apply to it, its layout, the
