@@ -2,11 +2,11 @@
 
 This file distinguishes implemented paths, completed checks and measurements. Each observation belongs to its stated source, runtime and run; older successful runs do not validate later changes. The branch incorporates FerroUI `ab7a15b8` / `0.4.0-preview.1` and uses Vello for every application target through public FerroUI APIs. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the complete source and current review status. Current continuation evidence is recorded first; earlier checkpoints remain below with their original scope.
 
-## Current continuation: `f2bb1d61` harness / `3a0bf1f1` build (2026-10-22)
+## Current continuation: `f8e0471e` matching correction / `3a0bf1f1` build (2026-10-22)
 
 The continuation adds native [stacked layout guides](LAYOUT_GUIDES.md), [matching and inverse selection](SELECTION.md), and [vector-face bucket painting](VECTOR_FACES.md). Guide stacks retain legacy square-grid JSON, support row/column geometry and shared styles, preserve local per-index visibility, and render through public FerroUI drawing and clipping APIs. Each guide has one RGBA hex field including alpha. Matching queries respect effective visibility and locks without changing document history. Bucket gestures preserve original vector geometry, preview faces, query between pointer samples, and commit or cancel as one transaction. The implementation guides describe exact semantics, validation limits and remaining feature gaps; these features do not establish complete Figma compatibility or pixel parity.
 
-The browser harness checkpoint is [`f2bb1d618843bf777b76859d2e06bf361bef009b`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b). It changes five browser-test files relative to [`3a0bf1f13c6ede9abe5360bc3691085a3bc981f0`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0); application build inputs are unchanged. A fresh native CI job at this exact checkout succeeded. The first complete browser attempt with the recovered `3a0bf1f1` distribution failed after Software2D passed 141 checks and WebGL2 passed 21. A focused instrumented-copy diagnostic then passed. The second unchanged full attempt also **failed**: Software2D passed 141 checks and all 28 scenarios, while WebGL2 passed 27 checks before a component-control readiness failure. No complete current two-mode browser pass is recorded here.
+The original browser harness checkpoint is [`f2bb1d618843bf777b76859d2e06bf361bef009b`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b). It changes five browser-test files relative to [`3a0bf1f13c6ede9abe5360bc3691085a3bc981f0`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0); application build inputs are unchanged. A native CI job at exact source `f2bb1d61` succeeded. Its recovered-runtime full attempts failed after Software2D passed 141 checks and WebGL2 passed 21, then 27 checks. A separate fresh WebGL2-only attempt requested all 28 scenarios and failed after 82 checks and 16 completed scenarios at the matching-dialog opener. The subsequent test-only [`f8e0471e` checkpoint](https://github.com/wieslawsoltes/FerroUI/commit/f8e0471eb4301a9b893e8185810550ebba5ddafc) adds an Escape publication boundary and explicit dialog-open outcome to that regression; focused validation passed **25 Software2D / 22 WebGL2** checks. The separate attempt to cover the remaining 11 WebGL2 feature scenarios was blocked before Chromium started, so those scenarios remain outstanding. No complete current two-mode browser pass is recorded here.
 
 The [current evidence index](evidence/2026-10-22-f2bb1d61/README.md) records these outcomes separately. Its input-equivalence manifest also identifies documentation-only checkpoint `177f92cd` and verifies that the frozen harness/package files are unchanged by that documentation commit.
 
@@ -19,7 +19,7 @@ The [current evidence index](evidence/2026-10-22-f2bb1d61/README.md) records the
 | Persistence host | All **19** tests passed in the successful native jobs at `f2bb1d61` and `3a0bf1f1` |
 | Actual Chromium IndexedDB | All **5** checks passed at `3a0bf1f1`, including migration/rollback/conflict handling and reload of **12,000,042** document characters |
 | Framework browser bridge | Type checking, all **10** input/composition cases and bundling passed during the `3a0bf1f1` WASM build |
-| Actual Vello WebAssembly application | The CI browser builds completed at both checkpoints; completing the build did not make their later editor browser suites pass |
+| Actual Vello WebAssembly application | CI browser builds completed at `f36dabf7` and `3a0bf1f1`; completing the build did not make their later editor browser suites pass |
 | Resolved application dependencies | The exact `f2bb1d61` native job verified locked normal/build graphs containing Vello and no active Skia packages for Emscripten, Linux x64, Windows x64, macOS ARM64 and macOS x64 |
 | Repository framework CI | All **14** jobs passed at `f36dabf7` in [run 39765413203](https://github.com/wieslawsoltes/FerroUI/actions/runs/39765413203), and all **14** passed at `3a0bf1f1` in [run 39771211233](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771211233) |
 
@@ -37,6 +37,9 @@ The fresh [native job 119894677519 in run 39799180117](https://github.com/wiesla
 | First full recovered-runtime attempt, original `f2bb1d61` harness / `3a0bf1f1` runtime | 141 checks passed | 21 checks passed, then the alias-deletion document predicate timed out | Failed; `full: true` |
 | Focused native-authoring diagnostic, instrumented copy of `f2bb1d61` / same runtime | Not requested | 21 checks passed, including both native-authoring cases and common gates | Passed only its requested scope; `full: false` |
 | Second full recovered-runtime attempt, original `f2bb1d61` harness / same runtime | 141 checks and all 28 scenarios passed | 27 checks passed, including native-authoring and typography, then `ComponentValue2` readiness failed in component authoring | Failed; `full: true` |
+| Fresh WebGL2-only attempt, original `f2bb1d61` harness / same runtime, all 28 scenarios requested | Not requested | 82 checks and 16 scenarios passed; matching was the 17th scenario entered and its second dialog cycle failed | Failed; `full: false` |
+| Focused matching validation, corrected `f8e0471e` harness / same runtime | 25 checks passed, including all three matching cases | 22 checks passed, including all three matching cases | Passed only matching plus common gates; `full: false` |
+| Additional `f8e0471e` WebGL2 coverage, remaining 11 feature scenarios | Not requested | Zero checks or scenarios; Chromium did not start | Environment blocked before validation |
 
 Both earlier CI runs at `f36dabf7` and `3a0bf1f1` completed as failures; neither is treated as cancelled by a later push. The [preserved reports, traces, failure documents and decoded CI logs](evidence/2026-10-22-f36dabf7/README.md#preserved-browser-outcomes) retain those failures. A completed mode inside an overall failed run is not a passing complete run. Earlier focused counts also do not cover scenarios they skipped.
 
@@ -52,30 +55,71 @@ The [focused diagnostic](evidence/2026-10-22-f2bb1d61/README.md#focused-diagnost
 
 The [second full attempt](evidence/2026-10-22-f2bb1d61/README.md#second-full-browser-attempt) completed at **15:39:17 UTC** with a failed result. Software2D passed all 28 scenarios and 141 checks. WebGL2 passed vector-network, native-authoring and typography, then stopped at `ComponentValue2` readiness in `components-browser.mjs`. All **53** shared native captures—46 Software2D and 7 WebGL2—passed on their first attempt. There were no page errors; Software2D retained one resource-404 console message, and WebGL2 reported no console errors. Post-run integrity checks found all **31 source files and 16 runtime files unchanged**. The cause remains under investigation; no application or test correction is attributed to this result.
 
-The second attempt's resource samples reached the shared cgroup memory limit of **8,589,934,592 bytes**. `memory.events.max` increased by **1,631,582**, while `oom` and `oom_kill` did not increase. The peak sum of owned-process RSS was **2,373,701,632 bytes**. Cgroup totals can include other work and cache; summed RSS can count shared pages more than once. These observations do not identify the cause of the readiness failure.
+The second attempt's resource samples reached the shared cgroup memory limit of **8,589,934,592 bytes**. `memory.events.max` increased by **1,631,582**, while `oom` and `oom_kill` did not increase. The peak summed RSS of PID/path-matched processes was **2,373,701,632 bytes**. The [sampler audit](evidence/2026-10-22-f2bb1d61/resource-sampler-audit.json) establishes that the selection matches the launched Node PID or Chromium directory in visible process command lines; it is not a complete descendant or ownership inventory. It includes matching reparented helpers, but can miss nonmatching, unreadable or namespace-invisible processes and can include another invocation using the same binary path. Cgroup totals can include other work and cache; summed RSS can count shared pages more than once. These observations do not identify an exclusive editor heap, a leak or the cause of the readiness failure.
+
+### WebGL2-only matching failure and test correction
+
+The [fresh WebGL2-only summary](evidence/2026-10-22-f2bb1d61/failed-webgl2-all-scenarios-summary.json) records a failed run of the original `f2bb1d61` harness against the same recovered runtime. It requested all 28 scenarios in a fresh Chromium process, but only one mode, so `scope.full` is **false**. It passed **82 checks and 16 scenarios**, then failed during the 17th scenario at `matching-browser.mjs:83`. All **29** shared native captures passed on their first attempt. There were no page errors and one resource-404 console message. All **31 source files and 16 runtime files** remained unchanged. The [selected raw evidence archive](evidence/2026-10-22-f2bb1d61/failed-webgl2-all-scenarios-report.zip) retains the report, failure document/PNG, original test, manifests, resource records and selected trace images; it omits the large original Playwright trace ZIP.
+
+The [matching diagnosis](evidence/2026-10-22-f2bb1d61/failed-matching-diagnosis.json) distinguishes live properties from the presented inspector. Escape cleared selection without a separate publication wait. The next canvas click changed live selection to `[2]` and advanced counters from frame/scene **6/8 to 7/9**, satisfying the existing waits immediately. A trace image with swap time **1,264,418.613 ms** still showed empty selection and the page inspector. The single matching-opener click followed at **1,264,521.535 ms**; the first later image showing the selected source and Rectangle inspector has swap time **1,264,935.260 ms**, after that click. The modal remained hidden and no stroke-row click occurred. The configured 10-second readiness wait returned after **10.005 seconds**, with surrounding state evaluations taking **8–12 ms**. Near this failure cgroup memory was **4.18–4.27 GB** and its `max`, `oom` and `oom_kill` counters were stable; the whole-run memory peak is not evidence that pressure caused this event.
+
+The supported inference is that the unseparated Escape transition can satisfy a later selection's frame/scene floors while its newly selected inspector has not yet been presented. The scene counter is a coalesced notification, not a per-control generation. The trace does not expose the actual native hit-test target, pointer-capture owner or button callback, and presentation timestamps alone do not prove the input scene used. The evidence therefore identifies a missing test boundary without establishing a particular application defect or complete event-consumption path.
+
+Checkpoint `f8e0471e` changes only the matching test: when a selection exists, it snapshots state before Escape, requires exact empty selection and both newer frame/scene counters, and checks the page/layer/action visibility before the existing source click. When selection is already empty, it omits the redundant Escape. After the single opener click, it requires `ModalBackdrop` to become visible before the existing named-control readiness check and row click. Exact selection, modal closure, authored-document, history, redo and revision assertions remain intact. The 10-second deadlines remain unchanged; no retry, fixed delay, extra click or runtime modification was added.
+
+The corrected [focused matching run](evidence/2026-10-22-f8e0471e/matching-focused-summary.json) **passed 25 Software2D / 22 WebGL2 checks**, including all three matching cases in each mode, in **180.13 seconds**. Its scope is both modes with matching plus common gates only (`full: false`). All **four** shared native captures passed on their first attempt. There were no page errors; Software2D retained one resource-404 console message and WebGL2 had no console errors. All **31 source files and 16 runtime files** remained unchanged during the run. The [separate raw evidence archive](evidence/2026-10-22-f8e0471e/matching-focused-report.zip) preserves this corrected-source result without replacing the original failure. It validates the corrected test path under these conditions, not the original native event target or every feature scenario.
+
+The separate attempt to cover the **11 WebGL2 feature scenarios after matching** was **blocked before Chromium startup**: the local HTTP server could not listen on `127.0.0.1` (`EPERM`). The [launch summary](evidence/2026-10-22-f8e0471e/remaining-webgl2-launch-summary.json) records **zero checks, zero entered scenarios and no browser `report.json`**, with all **31 source files and 16 runtime files unchanged**. The [launch evidence archive](evidence/2026-10-22-f8e0471e/remaining-webgl2-launch-block.zip) preserves the error, runner, manifests and resource/terminal records. No escalation, alternative execution path or further attempt followed the denial. This is an environment block, not a failed application assertion. Geometry authoring, Flatten, local styles, angular paints, grid styles, region paints, network bucket, compact autosave, prototype input, prototype motion and bounded history remain outstanding for that coverage attempt. The focused 25/22 pass stands separately; different invocations and harness versions are not combined into a complete-suite pass.
 
 ### Recovered runtime identity and terminal browser result
 
 | Input | Exact identity |
 | --- | --- |
 | Browser test harness | `f2bb1d618843bf777b76859d2e06bf361bef009b` |
+| Corrected focused matching harness | `f8e0471eb4301a9b893e8185810550ebba5ddafc` |
 | CI distribution build source | `3a0bf1f13c6ede9abe5360bc3691085a3bc981f0` |
 | Recovered build artifact | GitHub artifact `12427798904` |
 | Actual WASM payload | **51,205,801 bytes** |
 | WASM SHA-256 | `7880a628e7117ab88f896f69baa9c9ccedcdc33792302a01f653b4465e1499b9` |
-| Requested modes and scope | Software2D and WebGL2; unfiltered complete suite |
-| Latest local attempt | Unchanged full rerun from **15:27:24 to 15:39:17 UTC**, after the original failure and focused diagnostic above |
-| Result | **Failed**: Software2D 141 checks / all 28 scenarios passed; WebGL2 stopped after 27 checks at component-control readiness |
+| Latest completed full attempt | Both modes, all scenarios; **failed** with Software2D 141 checks / all 28 scenarios passed and WebGL2 27 checks before component-control readiness failed |
+| Latest completed single-mode attempt | WebGL2, all 28 scenarios requested; **failed** with 82 checks / 16 scenarios passed before the matching failure; `full: false` |
+| Corrected focused matching attempt | `f8e0471e`, both modes, matching plus common gates; **passed 25/22 checks**, `full: false` |
+| Additional remaining-scenario coverage | `f8e0471e`, WebGL2 only, 11 feature scenarios; **blocked before Chromium**, zero checks/scenarios |
 
 This recovered CI runtime is a different binary from the earlier local runtime; their digests are not interchangeable. Its application source is compatible with the test-only `f2bb1d61` change, and the run records the build and harness identities separately. WebGL2 uses Chromium's ANGLE/Vulkan/SwiftShader path in these runs, so the results cannot establish physical-GPU throughput. No matched Figma document/reference screenshot was available for a numerical visual-parity comparison.
 
-The independent exact-`f2bb1d61` CI browser job in run 39799180117 was still running at **15:40 UTC**. Its completed native job is recorded above; no complete browser or overall workflow pass is inferred from that native success.
+The independent exact-`f2bb1d61` CI browser job in run 39799180117 was still running at **16:19 UTC**. Its completed native job is recorded above; no complete browser or overall workflow pass is inferred from that native success. At the same observation, the new `f8e0471e` [framework run 39812425327](https://github.com/wieslawsoltes/FerroUI/actions/runs/39812425327) was active and [FerroDesign run 39812414651](https://github.com/wieslawsoltes/FerroUI/actions/runs/39812414651) was pending without returned jobs. Neither workflow has a completed result recorded here.
+
+### Source-delivery audit
+
+The [read-only audit at `b83deee6`](evidence/2026-10-22-f2bb1d61/source-delivery-audit.json) inspected the tracked repository and build scripts. It found **31 Cargo manifests and 151 path-dependency edges** in a conservative closure across all targets, optional dependencies and development dependencies, all inside the repository and tracked. Required application XAML, embedded fonts, framework themes, browser bridge/loader inputs and lockfiles were present. There were no gitlinks, LFS pointers or archive-exclusion rules, and all 96 symlinks resolved. This source inventory is distinct from the active Vello/no-Skia graph checks.
+
+The inspected build logic does not require FerroUI's `.git` metadata, but it does require the complete repository layout, including root `.cargo` configuration. Setup uses Git to fetch Emscripten and still downloads external toolchains and packages. The pinned public archive URL returned HTTP 200; no archive body, extraction or build from that ZIP was tested. This audit does not replace the separately recorded native and browser build evidence.
 
 ### Local history and restored documents
 
 The production editor defaults to **100 committed undo entries**. Starting from an autosaved document constructs `Editor::new` from the restored document, with empty undo/redo history; startup does not create an undoable import from the demo. Undo history belongs to the editor session and is not part of portable JSON or durable document storage.
 
 The [browser history regression](../tests/history-browser.mjs) crosses the production cap, makes one additional edit and checks exact one-step undo/redo with the expected history lengths. It does **not** traverse to or verify the oldest reachable undo state. The harness also starts each feature scenario from a durable restored document with fresh session history. These are local-session contracts, not remote collaborative or cloud version-history coverage. The latest full attempt passed the bounded-history case in Software2D; WebGL2 failed earlier before reaching it. The complete two-mode gate is not passing.
+
+### Browser workload from the second recovered full attempt
+
+The [second full-run terminal summary](evidence/2026-10-22-f2bb1d61/failed-second-full-summary.json) records a completed Software2D mode with all 141 checks and 28 feature scenarios. The overall two-mode run failed later in WebGL2; these measurements belong only to its completed Software2D workload. They are single observations on this shared host, not medians, FPS or physical-GPU measurements.
+
+| Software2D workload | Observed result |
+| --- | --- |
+| Document and layer model | 10,000 nodes / 10,000 layer rows |
+| Realized native layer controls | 25 before scrolling; 25 after scrolling |
+| Import through first-frame/state verification | 1,217 ms |
+| Keyboard nudge through preparation verification | 181 ms |
+| Nudge / undo / redo preparation | Each prepared one node incrementally; zero full preparation and zero visual rebuilds |
+| Layer projection on those three commands | Zero rebuilds; one reuse each |
+| Zoomed root query | One candidate and 27 bounds tests among 10,000 roots, with one visible node |
+| Compact autosave serialization | 42.6 ms; 13,192,068 bytes |
+| Reload through exact restored-document verification | 2,135 ms |
+| Portable JSON export | 20,712,219 bytes |
+
+The browser timing boundaries include automation/protocol work and the waits in [the actual fixture](../tests/browser.mjs). The nudge measurement includes keyboard dispatch and the native preparation/frame verification; it is not the engine-only command cost measured below. The summary also records a 4 ms explicit persistence flush wait at that point in the workload; background serialization or saving may already have progressed before that wait begins, so it is not a complete end-to-end save measurement. The reloaded export digest matches the authored document exactly. This browser fixture differs from the native release benchmark's document and process.
 
 ### Paired release measurements at `f2bb1d61`
 

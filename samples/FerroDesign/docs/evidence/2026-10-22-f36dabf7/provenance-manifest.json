@@ -3,7 +3,7 @@
   "repository": "wieslawsoltes/FerroUI",
   "applicationSource": "93a896797a37dd965a988c9e80e9187800d803fb",
   "currentHarness": "f2bb1d618843bf777b76859d2e06bf361bef009b",
-  "scope": "Mixed source-tagged prior results and illustrative pre-recovery screenshots; see README for exact per-record identities and limits. The current full run is pending.",
+  "scope": "Mixed source-tagged prior results and illustrative pre-recovery screenshots; see README for exact per-record identities and limits. Subsequent recovered-runtime terminal results are preserved in the f2bb1d61 evidence index.",
   "recovery": {
     "originalUploadedBlobs": 26,
     "method": "Recovered uploaded Git blobs after loss of local checkout; subsequent CI decoded logs restored from retained tool responses or retrieved again. Original archived raw reports/logs are kept byte-for-byte.",
@@ -13,8 +13,8 @@
   "selfExcluded": true,
   "files": {
     "README.md": {
-      "bytes": 10342,
-      "sha256": "2514d56897397cf03da5489a3e61a4814484a6cb0ca3148ea5cda325675e95bf"
+      "bytes": 10646,
+      "sha256": "ca242be83e06012cd5dea0a2b0dac2f66cc0e6b2d17a8f37366bac73236510be"
     },
     "Software2D-bucket-hover-face.png": {
       "bytes": 83606,
@@ -148,5 +148,6 @@
       "bytes": 30952,
       "sha256": "10466f77d45a3b0470574189bea1817da72abe67a0c605b5b0ba36723444b8d6"
     }
-  }
+  },
+  "updatedAtUtc": "2026-10-22T16:19:22.908703+00:00"
 }

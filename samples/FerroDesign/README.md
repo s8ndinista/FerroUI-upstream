@@ -19,9 +19,11 @@ cd FerroUI/samples/FerroDesign
 
 The implementation began from upstream commit `325b3ce4b0fcf154eba79cbd92262536daf77e71` and incorporates upstream `ab7a15b8641a54c8964b6ec10a3efe9af38d29b5` (FerroUI 0.4.0-preview.1), including its Vello performance improvements. The branch contains the complete application, independent browser backend selection, native text-input fixes, public isolated compositing and editable geometry/text-outline APIs. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the branch changes.
 
+The [source-delivery audit at `b83deee6`](docs/evidence/2026-10-22-f2bb1d61/source-delivery-audit.json) found the required framework path dependencies and assets in the tracked repository, with no submodules, LFS pointers or build-script dependence on FerroUI's `.git` directory. Extract the complete repository, including its root `.cargo` configuration. This was a source-tree audit, not a build from an independently downloaded ZIP; toolchain and third-party dependency downloads are still required.
+
 ## Build and run in a browser
 
-Required host tools: a C/C++ build toolchain, `git`, `curl`, Python 3, and Node.js 22/npm (the CI configuration). The setup script installs its own pinned Rust and Emscripten tools without editing shell profiles.
+Required host tools: a C/C++ build toolchain, `git`, `curl`, Python 3, and Node.js 22/npm (the CI configuration), plus Bash, `tar`, `install` and either `sha256sum` or `shasum`. The setup script installs its own pinned Rust and Emscripten tools without editing shell profiles.
 
 ```sh
 ./scripts/setup.sh
@@ -142,13 +144,22 @@ Export options include editable JSON, SVG, PNG rendered through FerroUI's `Rende
 
 The fresh native CI job at [`f2bb1d61`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b) passed **394 core tests and 155 native application tests**, including Vello pixel assertions, plus **19 persistence-host tests**. Its locked dependency audits verified Vello and no active Skia packages on all five supported target graphs. [Exact-source native evidence](docs/evidence/2026-10-22-f2bb1d61/README.md#exact-source-native-ci) records the successful job and its decoded log; this native result is separate from the browser gate.
 
-The first full attempt using the original `f2bb1d61` browser harness and the recovered `3a0bf1f1` CI distribution passed **141 Software2D checks**, then failed in WebGL2 after **21 checks** at a variable-deletion predicate deadline. A separate copy with read-only timing instrumentation passed **21 focused WebGL2 checks**, retaining the same deadline, polling, input and assertions. The [new browser evidence](docs/evidence/2026-10-22-f2bb1d61/README.md) preserves both outcomes and their diagnostic limits.
+The current local browser evidence uses the recovered `3a0bf1f1` CI distribution. The [evidence index](docs/evidence/2026-10-22-f2bb1d61/README.md) and [validation history](docs/VALIDATION.md) preserve the source identities, reports and diagnostic limits separately:
 
-The second unchanged, unfiltered run also **failed**. Software2D passed **141 checks and all 28 scenarios**; WebGL2 passed **27 checks**, including native-authoring and typography, then failed the `ComponentValue2` readiness check in component authoring. All **53** shared native captures passed on their first attempt. Neither mode reported a page error; Software2D retained one resource-404 console message. Post-run hashes confirm all **31 source files and 16 runtime files** remained unchanged. The cause of this second failure is under investigation. The independent exact-`f2bb1d61` CI browser job was still running at **15:40 UTC**; no passing result is attributed to it. [Validation details](docs/VALIDATION.md) preserve these separate outcomes and the recovered CI runtime's identity. No complete current two-mode browser pass or same-document Figma pixel comparison is claimed.
+| Browser attempt | Completed observation | Result |
+| --- | --- | --- |
+| First full run, original `f2bb1d61` harness | Software2D **141** checks; WebGL2 **21**, then an alias-deletion predicate deadline | Failed |
+| Focused authoring diagnostic, instrumented copy | WebGL2 **21** checks with the original inputs, deadlines and assertions | Passed only its selected scope |
+| Second unchanged full run | Software2D **141** checks and all **28** scenarios; WebGL2 **27**, then component-control readiness failed | Failed |
+| Fresh WebGL2-only run, all 28 scenarios requested | **82** checks and **16** scenarios completed; the 17th, matching selection, failed to reopen its dialog | Failed; `full: false` |
+| Corrected `f8e0471e` matching test, both modes | **25 Software2D / 22 WebGL2** checks, including all three matching cases in each mode | Passed only its selected scope; `full: false` |
+| Additional `f8e0471e` WebGL2 coverage | Local HTTP listen denied before Chromium; **zero checks or scenarios ran** | Environment blocked; eleven scenarios outstanding |
 
-Earlier checkpoints [`f36dabf7`](https://github.com/wieslawsoltes/FerroUI/commit/f36dabf795f9e7b42ada46e34878b3ae5fd50697) and [`3a0bf1f1`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0) also passed 394 core / 155 application tests and all 14 jobs of their separate framework workflows. Their actual WebAssembly builds completed, but their FerroDesign browser runs failed. The [earlier continuation evidence](docs/evidence/2026-10-22-f36dabf7/README.md) retains those source-specific results.
+All **29** shared captures in the failed WebGL2-only attempt passed on their first attempt. Its trace shows the page inspector still presented before the matching-opener click, with the selected-layer inspector first presented afterward, despite live state already reporting selection and valid button bounds. The test-only [`f8e0471e` correction](https://github.com/wieslawsoltes/FerroUI/commit/f8e0471eb4301a9b893e8185810550ebba5ddafc) separates Escape publication from the next selection and requires the dialog-open outcome after one click. Its [focused both-mode pass](docs/evidence/2026-10-22-f8e0471e/matching-focused-summary.json) retains all assertions and deadlines; all four shared captures passed on their first attempt. This supports the corrected test boundary without proving the original native event target or an application defect. The application and runtime are unchanged.
 
-Vello implementation `945283ef` passed the complete [FerroDesign workflow](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306364660): 219 core tests, 17 host tests, 64 native application tests, the actual Vello WebAssembly build, 5 Chromium IndexedDB checks, and 62 Software2D / 59 WebGL2 interaction checks with no page or console errors. The separate [framework CI](https://github.com/wieslawsoltes/FerroUI/actions/runs/39306373798) also passed all 14 jobs. [Source-tagged screenshots and raw evidence](docs/evidence/2026-10-19-945283ef/README.md) and [measurement details](docs/VALIDATION.md) preserve the exact test scope and source revision.
+The [remaining-scenario launch record](docs/evidence/2026-10-22-f8e0471e/remaining-webgl2-launch-summary.json) reports `EPERM` while listening on `127.0.0.1`, before Chromium startup. No browser report was produced; all 31 source and 16 runtime files remained unchanged. This is an environment block, not an application-test failure. The [corrected-source evidence index](docs/evidence/2026-10-22-f8e0471e/README.md) keeps it separate from the focused pass.
+
+The exact-`f2bb1d61` CI browser job was still running at **16:19 UTC**; `f8e0471e` workflow results are pending. No complete current two-mode browser pass or same-document Figma pixel comparison is claimed. Earlier `f36dabf7` and `3a0bf1f1` native/framework successes and browser failures remain in the [continuation evidence](docs/evidence/2026-10-22-f36dabf7/README.md). The older `945283ef` implementation's complete **62 Software2D / 59 WebGL2** pass remains in its [historical evidence](docs/evidence/2026-10-19-945283ef/README.md), with its original source and smaller test scope.
 
 ```sh
 cargo test --locked -p ferrodesign-core
@@ -165,6 +176,8 @@ npm run test:browser
 ```
 
 `tests/browser.mjs` serves the actual `dist` build and exercises both requested browser rendering modes. It checks native pixels, pointer drawing, vector-point and pen-handle gestures, bucket strokes, on-canvas Unicode text editing, paint/effect controls, stacked guides, matching selection, auto-layout drag previews and drops, prototype pointer/key/delay interactions, keyboard history, document import/export, durable reload, and a 10,000-layer document larger than the usual localStorage allowance. ComboBox checks verify the actual native popup item focus. Canvas selection, filtered action palettes and the tested keyboard-to-inspector transitions wait for the relevant native frame and input scene. The suite also checks startup exceptions and render-thread panics, and writes PNG screenshots, traces and JSON/HTML reports to `browser-report`. The separate IndexedDB test verifies real transaction rollback, migration and conflicting tab writes.
+
+On a bare Linux validation host, use `npx playwright install --with-deps chromium` to install Chromium's required OS libraries as well as the browser. The shorter install command above assumes those libraries are already available.
 
 Both Chromium suites accept `FERRODESIGN_CHROMIUM=/absolute/path/to/chrome` to use an existing executable. Without this variable, they use Playwright's installed Chromium. The editor suite also exercises native local-style definition editing and text/Boolean flattening, including rejected conversions and exact undo/redo.
 

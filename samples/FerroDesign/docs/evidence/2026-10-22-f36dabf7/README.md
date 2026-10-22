@@ -2,7 +2,7 @@
 
 This directory preserves the native results, browser failures, focused palette result and source identities for the layout-guide, matching-selection and vector-bucket continuation. The directory name identifies the first browser-test checkpoint; individual records below identify later checkpoints explicitly. It is not a claim that every file was produced by `f36dabf7`, nor a claim of complete Figma parity.
 
-The current complete browser revalidation uses harness [`f2bb1d61`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b) against the distribution built by CI at [`3a0bf1f1`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0). Only five browser-test files changed between those two commits. That complete run is in progress; it is not yet recorded as a pass here. [Validation](../../VALIDATION.md) distinguishes the current gate from historical results.
+The subsequent recovered-runtime revalidation used harness [`f2bb1d61`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b) against the distribution built by CI at [`3a0bf1f1`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0). Only five browser-test files changed between those two commits. Its two unfiltered local attempts failed overall, although Software2D passed all 28 scenarios and 141 checks in each. The [separate recovered-runtime evidence index](../2026-10-22-f2bb1d61/README.md) preserves those terminal reports, the focused authoring diagnostic, the later WebGL2-only failure and the exact-source native results. [Validation](../../VALIDATION.md) distinguishes current gates from this historical checkpoint.
 
 ## Source and runtime identities
 
@@ -32,7 +32,7 @@ The second local failure and both CI geometry/region failures exposed keyboard-s
 
 The `f36dabf7` CI screenshot trace showed responsive native state, loaded fonts, an intact rendering context, unchanged document/view state and continuing frame delivery. Some trace frames arrived 27–32 seconds after their recorded swap time. That observation supports extending the existing single guarded retry from 15 to 60 seconds; it does not identify the exact queue responsible or establish that the longer retry recovers the failure. Diagnostic JPEGs in the archive are not substitutes for passing PNG captures.
 
-Two later focused local runs passed before the local workspace was lost: four keyboard/paint scenarios at 46/43 checks and vector-network at 26/23 checks. Their latest raw reports were not recovered, so they are contextual observations rather than downloadable proof in this directory. The fresh full run is intended to replace them as the primary current browser evidence.
+Two later focused local runs passed before the local workspace was lost: four keyboard/paint scenarios at 46/43 checks and vector-network at 26/23 checks. Their latest raw reports were not recovered, so they are contextual observations rather than downloadable proof in this directory. The later recovered-runtime reports are preserved separately with their actual successes, failures and filtering scopes.
 
 ## Native and dependency evidence
 

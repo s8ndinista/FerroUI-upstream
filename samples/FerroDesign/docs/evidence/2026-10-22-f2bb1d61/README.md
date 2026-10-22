@@ -1,6 +1,6 @@
 # 2026-10-22 `f2bb1d61` browser and native evidence
 
-This directory records two failed full browser attempts, the intervening successful focused diagnostic, and the completed native CI gate for the keyboard-selection test checkpoint. In the latest unchanged full attempt, Software2D passed **141 checks and all 28 scenarios**; WebGL2 passed **27 checks** before a component-control readiness failure. The focused diagnostic does not replace a complete two-mode gate. The independent exact-source CI browser job was still running at **15:40 UTC**. [Validation and measurements](../../VALIDATION.md) contains the wider continuation history and implementation limits.
+This directory records two failed full browser attempts, the intervening successful focused authoring diagnostic, a later failed WebGL2-only attempt requesting all 28 scenarios, and the completed native CI gate for the original `f2bb1d61` test checkpoint. The two full attempts completed Software2D with **141 checks**; their WebGL2 portions failed after **21** and **27** checks. The fresh WebGL2-only attempt completed **82 checks and 16 scenarios** before its matching-dialog failure. The corrected `f8e0471e` matching test subsequently passed **25 Software2D / 22 WebGL2** focused checks, preserved separately. The additional filtered WebGL2 attempt was blocked before browser startup, with zero checks or scenarios; no current complete two-mode browser pass is recorded. [Validation and measurements](../../VALIDATION.md) contains the wider history and implementation limits.
 
 ## Source and runtime identity
 
@@ -10,6 +10,7 @@ This directory records two failed full browser attempts, the intervening success
 | Recovered CI distribution | Built at [`3a0bf1f13c6ede9abe5360bc3691085a3bc981f0`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0), from GitHub artifact `12427798904` |
 | Actual WASM payload | **51,205,801 bytes**, SHA-256 `7880a628e7117ab88f896f69baa9c9ccedcdc33792302a01f653b4465e1499b9` |
 | Documentation checkpoint | [`177f92cdb743d1897aa65a8c8c92e5b4b844e521`](https://github.com/wieslawsoltes/FerroUI/commit/177f92cdb743d1897aa65a8c8c92e5b4b844e521), containing documentation and evidence changes only |
+| Later matching-test correction | [`f8e0471eb4301a9b893e8185810550ebba5ddafc`](https://github.com/wieslawsoltes/FerroUI/commit/f8e0471eb4301a9b893e8185810550ebba5ddafc); one test file changes, with the same application/runtime inputs |
 | Browser tools | Chromium **156.0.8078.4**, Playwright **1.64.1**, Node **24.19.0** |
 | Rendering | FerroUI Vello; requested Software2D and WebGL2 surfaces. WebGL2 reports ANGLE/Vulkan/SwiftShader |
 
@@ -57,7 +58,9 @@ This run used a separate copy of the `f2bb1d61` harness. Only that copy of `test
 
 [resource-pressure-observations.json](resource-pressure-observations.json) records cgroup snapshots during cleanup after the failed full attempt. The shared memory limit was **8,589,934,592 bytes**. Between **15:16:41 and 15:17:47 UTC**, cumulative `oom` increased from **16 to 18** and `oom_kill` from **11 to 12**. That delta establishes new events in that interval, but identifies neither the killed process nor the cause of the earlier predicate timeout.
 
-The focused diagnostic collected 37 resource samples. Its observed cgroup memory peak was **8,437,272,576 bytes**; the peak sum of its owned processes' RSS was **1,556,766,720 bytes**. The cgroup `max`, `oom` and `oom_kill` counters did not change during that diagnostic. Cgroup memory includes cache and other processes, while summed process RSS can count shared pages more than once. These figures are not a measurement of the editor's exclusive heap or a demonstrated explanation for the failed full run.
+The focused diagnostic collected 37 resource samples. Its observed cgroup memory peak was **8,437,272,576 bytes**; peak summed RSS for PID/path-matched processes was **1,556,766,720 bytes**. The cgroup `max`, `oom` and `oom_kill` counters did not change during that diagnostic. Cgroup memory includes cache and other processes, while summed process RSS can count shared pages more than once. These figures are not a measurement of the editor's exclusive heap or a demonstrated explanation for the failed full run.
+
+[resource-sampler-audit.json](resource-sampler-audit.json) examines the second full attempt's saved sampler and browser lifecycle. It matches the launched Node PID or the recovered Chromium directory in visible process command lines; it does not traverse descendants or establish exclusive ownership. Matching reparented helpers are included. Nonmatching, unreadable or namespace-invisible processes may be missed, and another invocation using the same directory may be included. No complete process inventory, PSS or per-PID cgroup breakdown was recorded; skipped reads were not counted. The two modes share one browser/GPU process while creating and closing separate contexts, and the saved renderer PIDs change between modes. The final sample has no matched processes but still reports substantial cgroup anonymous memory. Neither this discrepancy nor later cleanup identifies an owner, an editor leak or the timeout cause.
 
 ## Exact-source native CI
 
@@ -92,9 +95,44 @@ The unchanged unfiltered rerun ran from **15:27:24 to 15:39:17 UTC**, using the 
 
 [failed-second-full-summary.json](failed-second-full-summary.json) preserves the terminal result and integrity/resource observations. [failed-second-full-browser-report.zip](failed-second-full-browser-report.zip) preserves the report and supporting evidence. All **53** shared native captures passed on their first attempt. Neither mode reported a page error; Software2D retained one resource-404 console message, and WebGL2 had no console errors. Post-run hashes confirm that all **31 source files and 16 runtime files** remained unchanged. The second failure's cause is under investigation; no application or test correction is attributed to this result.
 
-Resource sampling was separate from the original test inputs. Across 143 samples at five-second intervals, the shared cgroup reached its **8,589,934,592-byte** memory limit. `memory.events.max` increased by **1,631,582**, while `oom` and `oom_kill` had zero delta. Peak summed RSS for owned processes was **2,373,701,632 bytes**. These shared-cgroup and summed-RSS observations have the attribution limits described above and do not establish the cause of the readiness failure.
+Resource sampling was separate from the original test inputs. Across 143 samples at five-second intervals, the shared cgroup reached its **8,589,934,592-byte** memory limit. `memory.events.max` increased by **1,631,582**, while `oom` and `oom_kill` had zero delta. Peak summed RSS for PID/path-matched processes was **2,373,701,632 bytes**. These shared-cgroup and summed-RSS observations have the attribution limits described above and do not establish the cause of the readiness failure.
 
-The independent exact-`f2bb1d61` CI browser job in run 39799180117 was still running at **15:40 UTC**. The native job's successful result remains separate. Neither this failed local run nor the focused diagnostic is recorded as a complete browser success.
+The independent exact-`f2bb1d61` CI browser job in run 39799180117 was still running at **16:19 UTC**. The native job's successful result remains separate. At that observation the later `f8e0471e` framework workflow was active and its FerroDesign workflow was pending; no completed workflow result is attributed to that source yet.
+
+## WebGL2-only attempt with all scenarios
+
+The original, uninstrumented `f2bb1d61` harness then ran in a fresh Chromium process with **WebGL2 only and all 28 scenarios requested**. Because Software2D was not requested, its `scope.full` is **false**. The run **failed after 82 checks and 16 completed scenarios**; matching was the 17th scenario entered. The first matching dialog and Same fill case succeeded, but the second dialog did not open after one `SelectMatchingButton` click, so `SelectSameStroke` never became ready. No stroke-row click was reached.
+
+All **29** shared native captures passed on their first attempt. The report has no page errors and one resource-404 console message. All **31 source files and 16 runtime files** remained unchanged. [failed-webgl2-all-scenarios-summary.json](failed-webgl2-all-scenarios-summary.json) records this terminal result. [failed-webgl2-all-scenarios-report.zip](failed-webgl2-all-scenarios-report.zip) preserves the raw report/log, original matching test, failure document/PNG, manifests, resource samples, five selected trace JPEGs and derived timing/resource records. Its per-member manifest identifies the bytes. This selected archive omits the large original Playwright trace ZIP.
+
+### Matching publication evidence and its limits
+
+[failed-matching-diagnosis.json](failed-matching-diagnosis.json) records the exact event and image observations. After Escape, live state reported empty selection at frame/scene **6/8** without a separate native publication barrier. The next canvas click changed live state to selection `[2]`, frame/scene **7/9** and valid visible matching-button bounds; both existing waits returned immediately.
+
+| Trace event | Trace monotonic time | Observed content |
+| --- | ---: | --- |
+| Source canvas click | 1,264,401.413–1,264,415.912 ms | One real canvas click |
+| Presented image swap | 1,264,418.613 ms | Empty selection and page inspector |
+| Matching-opener click | 1,264,521.535–1,264,525.986 ms | One click inside the live button bounds at `(1373.5, 188)` |
+| Later presented image swap | 1,264,935.260 ms | Selected source and Rectangle inspector, with Select same visible |
+
+The modal remained hidden. The configured 10-second row-readiness wait timed out after **10.005 seconds**; surrounding state evaluations took **8–12 ms**, and the final failure PNG succeeded. Cgroup memory near this event was **4.18–4.27 GB**, with stable `max`, `oom` and `oom_kill` counters. The larger whole-run memory peak does not explain this failure.
+
+The trace supports an unseparated Escape publication transition that can satisfy the next selection's frame/scene floors. The scalar scene notification is coalesced and does not identify a control's layout generation. Presentation timing corroborates the boundary but does not expose the actual native hit-test target, capture owner, button Click event or callback. This evidence does not prove a particular application bug or the complete event-consumption path.
+
+## Corrected matching test: focused validation passed
+
+Published checkpoint `f8e0471e` changes only `tests/matching-browser.mjs`. For a nonempty source selection, the test snapshots state before Escape, requires exact empty selection plus a newer native frame and scene, and checks the page/layer/action visibility before the existing canvas click. It omits a redundant Escape when selection is already empty. After one matching-opener click, the test explicitly requires a visible modal before the unchanged named-row readiness and input. It retains exact selection, dialog closure, authored-document, history, redo and revision assertions, with the same **10-second deadlines**, no action retry and no additional click or runtime change.
+
+A separate **both-mode matching-plus-common-gates** run **passed**, using the corrected published harness and the same recovered CI runtime. Its [terminal summary](../2026-10-22-f8e0471e/matching-focused-summary.json) records **25 Software2D / 22 WebGL2 checks**, all three matching cases in each mode, and **180.13 seconds** total duration. All **four** shared native captures passed on their first attempt. Both modes reported no page errors; Software2D retained one resource-404 console message and WebGL2 had no console errors. The run verified all **31 source files and 16 runtime files unchanged**. Its [raw evidence archive](../2026-10-22-f8e0471e/matching-focused-report.zip) belongs to the corrected harness and does not overwrite the original failed evidence here.
+
+This is `scope.full: false` and validates only its requested matching/common gates. The [corrected-source evidence index](../2026-10-22-f8e0471e/README.md) preserves this pass separately. The later attempt covering the 11 remaining WebGL2 feature scenarios was blocked before Chromium: its local HTTP server listen on `127.0.0.1` returned `EPERM`. The [launch summary](../2026-10-22-f8e0471e/remaining-webgl2-launch-summary.json) records zero checks, zero entered scenarios and no browser report, with all 31 source and 16 runtime files unchanged; the [launch evidence ZIP](../2026-10-22-f8e0471e/remaining-webgl2-launch-block.zip) preserves its raw records. No escalation or further attempt followed that denial. The eleven scenarios remain outstanding; this environment block is not an application-test failure. Neither the focused pass nor a combination of separately executed subsets constitutes a complete two-mode suite pass.
+
+## Source-delivery audit
+
+[source-delivery-audit.json](source-delivery-audit.json) records a read-only inspection at source `b83deee6`. All **31 manifests and 151 path-dependency edges** in its conservative all-target/optional/development closure were tracked and inside the repository. Required XAML, font/theme assets, browser bridge/loader inputs and lockfiles were present; no gitlinks, LFS pointers or archive-exclusion rules were found, and all 96 symlinks resolved. This inventory is separate from the active renderer-graph audit.
+
+The full repository layout is required; a sample-only archive is insufficient. Inspected build scripts do not require FerroUI's `.git` directory, though setup needs Git for the external Emscripten clone and still downloads toolchains and third-party packages. The macOS native build falls back to the tracked native source directory if an extractor flattens its symlink. The pinned public ZIP URL returned HTTP 200, but no ZIP body, CRC, extraction or build from that archive was verified. Existing CI build results retain their own provenance.
 
 ## Captures and interpretation
 
