@@ -15,6 +15,7 @@ import { inspectorLifecycleRegressions } from "./inspector-lifecycle-browser.mjs
 import { floatingPanelRegressions } from "./panels-browser.mjs";
 import { layoutTransferRegressions } from "./layout-transfer-browser.mjs";
 import { selectionRegressions } from "./selection-browser.mjs";
+import { matchingRegressions } from "./matching-browser.mjs";
 import { geometryAuthoringRegressions } from "./geometry-authoring-browser.mjs";
 import { flattenRegressions } from "./flatten-browser.mjs";
 import { angularPaintRegressions } from "./angular-paints-browser.mjs";
@@ -23,6 +24,7 @@ import { gridStyleRegressions } from "./grid-styles-browser.mjs";
 import { regionPaintRegressions } from "./region-paints-browser.mjs";
 import { compactAutosaveRegressions } from "./serialization-browser.mjs";
 import { boundedHistoryRegressions } from "./history-browser.mjs";
+import { networkBucketRegressions } from "./network-bucket-browser.mjs";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { createServer } from "node:http";
@@ -1029,6 +1031,8 @@ try {
                 nativeHelpers, output, mode));
             await scenario("selection", () => selectionRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));
+            await scenario("matching", () => matchingRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
             await scenario("geometry-authoring", () => geometryAuthoringRegressions(page, svgDocument, check,
                 nativeHelpers, mode));
             await scenario("flatten", () => flattenRegressions(page, svgDocument, check,
@@ -1040,6 +1044,8 @@ try {
             await scenario("grid-styles", () => gridStyleRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));
             await scenario("region-paints", () => regionPaintRegressions(page, svgDocument, check,
+                nativeHelpers, output, mode));
+            await scenario("network-bucket", () => networkBucketRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));
             await scenario("compact-autosave", () => compactAutosaveRegressions(page, svgDocument, check,
                 { ...nativeHelpers, flushStorage }, output, mode));
@@ -1300,7 +1306,9 @@ try {
     await writeFile(resolve(output, "report.json"), JSON.stringify(report, null, 2));
     const escape = (text) => String(text).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
     const body = report.results.map((item) => "<section><h2>" + escape(item.requestedMode + ": " + item.status) + "</h2><p>Actual surface: " + escape(item.surface?.kind || "not initialized") + "</p><ul>" + item.checks.map((check) => "<li>" + escape(check) + "</li>").join("") + "</ul><img src='" + item.requestedMode + (item.status === "passed" ? "-edited.png" : "-failure.png") + "' alt='Actual browser screenshot'>" + (item.svgImport ? "<h3>Imported SVG in the application</h3><img src='" + item.requestedMode + "-svg.png' alt='SVG imported and rendered by FerroUI'>" : "") + (item.pngExport ? "<h3>Actual PNG download</h3><img class='export' src='" + item.requestedMode + "-export.png' alt='PNG exported by the application'>" : "") + "<pre>" + escape(item.error || JSON.stringify(item, null, 2)) + "</pre></section>").join("");
-    await writeFile(resolve(output, "index.html"), "<!doctype html><meta charset='utf-8'><title>FerroDesign browser validation</title><style>body{font:15px system-ui;margin:32px;background:#f6f6f6;color:#222}section{background:white;padding:24px;margin:24px 0;border-radius:12px}img{width:100%;border:1px solid #ddd}pre{overflow:auto;font-size:12px;white-space:pre-wrap}</style><h1>FerroDesign browser validation</h1><p>Chromium " + escape(report.browser) + ". Each explicit rendering mode must match its observed canvas context. This harness uses SwiftShader for WebGL2 and does not measure hardware-GPU throughput.</p>" + body);
+    const coverage = report.scope.full ? "Full suite · Software2D and WebGL2"
+        : "Selected coverage · modes: " + selectedModes.join(", ") + "; scenarios: " + (selectedScenarios ? [...selectedScenarios].join(", ") : "all");
+    await writeFile(resolve(output, "index.html"), "<!doctype html><meta charset='utf-8'><title>FerroDesign browser validation</title><style>body{font:15px system-ui;margin:32px;background:#f6f6f6;color:#222}section{background:white;padding:24px;margin:24px 0;border-radius:12px}img{width:100%;border:1px solid #ddd}pre{overflow:auto;font-size:12px;white-space:pre-wrap}</style><h1>FerroDesign browser validation</h1><p><strong>" + escape(coverage) + "</strong></p><p>Chromium " + escape(report.browser) + ". Each explicit rendering mode must match its observed canvas context. This harness uses SwiftShader for WebGL2 and does not measure hardware-GPU throughput.</p>" + body);
     console.log(JSON.stringify({ passed: report.passed, scope: report.scope, browser: report.browser, results: report.results.map(({requestedMode,status,surface,checks}) => ({requestedMode,status,surface,checks})) }, null, 2));
 }
 if (failed) process.exitCode = 1;

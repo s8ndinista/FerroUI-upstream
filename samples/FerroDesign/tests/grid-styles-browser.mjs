@@ -7,7 +7,7 @@ import { PNG } from "pngjs";
 // Screenshots verify the editor overlay; the real PNG export must exclude it.
 export async function gridStyleRegressions(page, reference, check, helpers, output, mode) {
     const { fixtureNode, isolatedDocument, importFixture, documentState, state,
-        clickWorld, clickNative, frames, waitForNativeFrame, captureNativeScreenshot } = helpers;
+        clickWorld, clickNative, chooseNative, frames, waitForNativeFrame, captureNativeScreenshot } = helpers;
     const white = { paint: { type: "solid", r: 255, g: 255, b: 255, a: 255 }, opacity: 1, visible: true };
     await importFixture(page, isolatedDocument(reference, [
         fixtureNode(reference, 2, { kind: "frame", name: "Local visibility frame", x: 40, y: 40,
@@ -203,7 +203,25 @@ export async function gridStyleRegressions(page, reference, check, helpers, outp
     await field("LayoutGridCount1", "3");
     await field("LayoutGridGutter1", "8");
     await field("LayoutGridOffset1", "12");
+    await field("LayoutGridSize1", "18.5");
     await field("LayoutGridColor1", "22C55E80");
+    const beforeOrientation = await documentState(page), orientationDepth = (await state(page)).historyLength;
+    await chooseNative(page, "LayoutGridPattern1", { index: 2, scrollContainer: "ModalViewport" });
+    const asRows = await documentState(page), expectedRows = structuredClone(beforeOrientation);
+    for (const node of [2, 3]) expectedRows.nodes[node].layout_grid_overlays[0].pattern.type = "rows";
+    assert.deepEqual(asRows, expectedRows,
+        "Switching columns to rows retains every latest numeric, color and visibility edit in the still-open modal");
+    await closeGrid();
+    await history(beforeOrientation, asRows, orientationDepth, "Switch edited columns to rows");
+    await openGrid();
+    const restoreOrientationDepth = (await state(page)).historyLength;
+    await chooseNative(page, "LayoutGridPattern1", { index: 1, scrollContainer: "ModalViewport" });
+    const restoredColumns = await documentState(page);
+    assert.deepEqual(restoredColumns, beforeOrientation, "Switching back restores only the guide orientation");
+    await closeGrid();
+    await history(asRows, restoredColumns, restoreOrientationDepth, "Restore edited column orientation");
+    await openGrid();
+    check("Native column/row orientation changes preserve the latest count, gutter, margin, size, color and visibility edits from the same dialog, with one exact undo/redo transaction per switch");
     const beforeRows = await documentState(page), rowDepth = (await state(page)).historyLength;
     await clickNative(page, "LayoutGridAddRows", "ModalViewport");
     const rows = await documentState(page);
