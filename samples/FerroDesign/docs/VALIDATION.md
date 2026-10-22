@@ -6,22 +6,24 @@ This file distinguishes implemented paths, completed checks and measurements. Ea
 
 The continuation adds native [stacked layout guides](LAYOUT_GUIDES.md), [matching and inverse selection](SELECTION.md), and [vector-face bucket painting](VECTOR_FACES.md). Guide stacks retain legacy square-grid JSON, support row/column geometry and shared styles, preserve local per-index visibility, and render through public FerroUI drawing and clipping APIs. Each guide has one RGBA hex field including alpha. Matching queries respect effective visibility and locks without changing document history. Bucket gestures preserve original vector geometry, preview faces, query between pointer samples, and commit or cancel as one transaction. The implementation guides describe exact semantics, validation limits and remaining feature gaps; these features do not establish complete Figma compatibility or pixel parity.
 
-The browser harness checkpoint is [`f2bb1d618843bf777b76859d2e06bf361bef009b`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b). It changes five browser-test files relative to [`3a0bf1f13c6ede9abe5360bc3691085a3bc981f0`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0); application build inputs are unchanged. Its fresh, unfiltered Software2D/WebGL2 run is **in progress**, using the actual CI-built `3a0bf1f1` distribution. No complete current browser pass is recorded here.
+The browser harness checkpoint is [`f2bb1d618843bf777b76859d2e06bf361bef009b`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b). It changes five browser-test files relative to [`3a0bf1f13c6ede9abe5360bc3691085a3bc981f0`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0); application build inputs are unchanged. A fresh native CI job at this exact checkout succeeded. The first complete browser attempt with the recovered `3a0bf1f1` distribution failed after Software2D passed 141 checks and WebGL2 passed 21. A focused instrumented-copy diagnostic then passed. The second unchanged full attempt also **failed**: Software2D passed 141 checks and all 28 scenarios, while WebGL2 passed 27 checks before a component-control readiness failure. No complete current two-mode browser pass is recorded here.
+
+The [current evidence index](evidence/2026-10-22-f2bb1d61/README.md) records these outcomes separately. Its input-equivalence manifest also identifies documentation-only checkpoint `177f92cd` and verifies that the frozen harness/package files are unchanged by that documentation commit.
 
 ### Completed native, build and framework gates
 
 | Gate | Source-specific completed observation |
 | --- | --- |
-| Document core | **394** tests passed at both `f36dabf7` and `3a0bf1f1`; no failed or ignored tests |
-| Native application | **155** tests passed at both checkpoints, including actual Vello pixels, public-API rendering, guide clipping, gesture ownership and parser regressions |
-| Persistence host | All **19** tests passed in the successful native CI job at `3a0bf1f1` |
+| Document core | **394** tests passed at exact source `f2bb1d61`; no failed or ignored tests. The earlier `f36dabf7` and `3a0bf1f1` jobs passed the same count |
+| Native application | **155** tests passed at `f2bb1d61`, including actual Vello pixels, public-API rendering, guide clipping, gesture ownership and parser regressions; the two earlier jobs also passed all 155 |
+| Persistence host | All **19** tests passed in the successful native jobs at `f2bb1d61` and `3a0bf1f1` |
 | Actual Chromium IndexedDB | All **5** checks passed at `3a0bf1f1`, including migration/rollback/conflict handling and reload of **12,000,042** document characters |
 | Framework browser bridge | Type checking, all **10** input/composition cases and bundling passed during the `3a0bf1f1` WASM build |
 | Actual Vello WebAssembly application | The CI browser builds completed at both checkpoints; completing the build did not make their later editor browser suites pass |
-| Resolved application dependencies | Locked normal/build graphs contain Vello and no active Skia packages for Emscripten, Linux x64, Windows x64, macOS ARM64 and macOS x64 |
+| Resolved application dependencies | The exact `f2bb1d61` native job verified locked normal/build graphs containing Vello and no active Skia packages for Emscripten, Linux x64, Windows x64, macOS ARM64 and macOS x64 |
 | Repository framework CI | All **14** jobs passed at `f36dabf7` in [run 39765413203](https://github.com/wieslawsoltes/FerroUI/actions/runs/39765413203), and all **14** passed at `3a0bf1f1` in [run 39771211233](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771211233) |
 
-The [continuation evidence index](evidence/2026-10-22-f36dabf7/README.md) links the recovered native logs, source-tagged framework summaries, resolved dependency graphs and CI extraction provenance. Its directory name identifies the first checkpoint; each record identifies its actual source. Dependency checks establish backend selection, and the standard framework workflow establishes its own platform coverage. Neither substitutes for executing the FerroDesign native GUI on every supported desktop platform. The IndexedDB test exercises a real browser but is separate from the actual FerroUI editor interaction suite.
+The fresh [native job 119894677519 in run 39799180117](https://github.com/wieslawsoltes/FerroUI/actions/runs/39799180117/job/119894677519) completed successfully at 15:05:07 UTC, with **549 combined core/application tests** and the separate 19 host tests. Its [source-tagged summary](evidence/2026-10-22-f2bb1d61/native-ci-summary.json) and decoded-log archive are linked in the current evidence index. The [earlier continuation index](evidence/2026-10-22-f36dabf7/README.md) retains the previous native logs, framework summaries, dependency graphs and extraction provenance under their actual source identities. Dependency checks establish backend selection, and the standard framework workflow establishes its own platform coverage. Neither substitutes for executing the FerroDesign native GUI on every supported desktop platform. The IndexedDB test exercises a real browser but is separate from the actual FerroUI editor interaction suite.
 
 ### Browser failures retained with their actual scope
 
@@ -32,16 +34,27 @@ The [continuation evidence index](evidence/2026-10-22-f36dabf7/README.md) links 
 | Second local full attempt, harness `3a0bf1f1` | 141 checks passed | 118 checks passed, then entering vector editing in the regional-image fixture failed | Failed |
 | [FerroDesign CI 39765407889](https://github.com/wieslawsoltes/FerroUI/actions/runs/39765407889), `f36dabf7` | 88 checks passed, then the parent-resize constraint assertion failed | 95 checks passed, then a native local-style PNG capture exceeded its deadline and retry | Failed; native job succeeded |
 | [FerroDesign CI 39771204240](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771204240), `3a0bf1f1` | 88 checks passed, then the same parent-resize assertion failed | 118 checks passed, then the regional-image fixture failed to enter vector editing | Failed; native job succeeded |
+| First full recovered-runtime attempt, original `f2bb1d61` harness / `3a0bf1f1` runtime | 141 checks passed | 21 checks passed, then the alias-deletion document predicate timed out | Failed; `full: true` |
+| Focused native-authoring diagnostic, instrumented copy of `f2bb1d61` / same runtime | Not requested | 21 checks passed, including both native-authoring cases and common gates | Passed only its requested scope; `full: false` |
+| Second full recovered-runtime attempt, original `f2bb1d61` harness / same runtime | 141 checks and all 28 scenarios passed | 27 checks passed, including native-authoring and typography, then `ComponentValue2` readiness failed in component authoring | Failed; `full: true` |
 
-Both CI runs completed as failures; neither is treated as cancelled by a later push. The [preserved reports, traces, failure documents and decoded CI logs](evidence/2026-10-22-f36dabf7/README.md#preserved-browser-outcomes) retain those failures. A completed mode inside an overall failed run is not a passing complete run. Earlier focused counts also do not cover scenarios they skipped.
+Both earlier CI runs at `f36dabf7` and `3a0bf1f1` completed as failures; neither is treated as cancelled by a later push. The [preserved reports, traces, failure documents and decoded CI logs](evidence/2026-10-22-f36dabf7/README.md#preserved-browser-outcomes) retain those failures. A completed mode inside an overall failed run is not a passing complete run. Earlier focused counts also do not cover scenarios they skipped.
 
 The first local failure exposed native palette publication timing. The `3a0bf1f1` tests wait after filtering/recentering and require the actual outcome of one native action click. The later geometry and vector-entry failures exposed keyboard-selection transitions where the new selection model preceded the published native input scene. In the CI geometry failure, the child rectangle became `[20, 10, 40, 160]` instead of the asserted `[20, 40, 140, 30]`. The `f2bb1d61` tests now wait for both a new native frame and input scene after selecting the exact parent or network root, then assert actual parent dimensions and unchanged child-constraint expectations. Vector tests require entry into vector editing and canvas focus before proceeding. The document, history, error-outcome and pixel assertions remain enforced; these changes do not add action retries or change application behavior.
 
 The `f36dabf7` screenshot failed its original 30-second attempt and existing 15-second guarded retry; the failure capture also timed out. The retained trace showed loaded fonts, responsive native state, unchanged document/view state, an intact rendering context and continuing frame delivery. Some trace frames arrived 27–32 seconds after their recorded swap times. This supports the bounded `f2bb1d61` change to a **30-second first attempt and one 60-second guarded retry**, but does not identify the exact queue responsible or establish that the longer retry recovers that failure. The retry retains state and context-health checks and actual PNG pixel validation. No screenshot timeout occurred in the later `3a0bf1f1` CI run, which instead failed vector entry.
 
-Two subsequent focused local runs passed before the workspace was lost, but their latest raw reports were not recovered. Their counts are recorded as contextual observations in the evidence index and are not linked as available raw proof. The fresh full run is intended to supply the primary current browser evidence.
+Two subsequent focused local runs passed before the workspace was lost, but their latest raw reports were not recovered. Their counts are recorded as contextual observations in the evidence index and are not linked as available raw proof. The current recovered-runtime attempts are recorded separately below.
 
-### Fresh run identity and remaining browser gate
+The later recovered-runtime failure is separately preserved in the [new evidence directory](evidence/2026-10-22-f2bb1d61/README.md#original-full-browser-attempt). Its alias-deletion wait had a 10-second deadline but returned its timeout after 34.294 seconds; the subsequent failure-state evaluation took 118.002 seconds. A trace image received about 391 ms after the wait began already showed the intended deletion, and the eventual exported document confirmed it with one history entry. The original trace does not record predicate invocation times or identify the cause of the scheduling/protocol delay. Cleanup-time cgroup observations include new OOM events, but do not identify the killed process or attribute the earlier stall.
+
+The [focused diagnostic](evidence/2026-10-22-f2bb1d61/README.md#focused-diagnostic-with-read-only-instrumentation) added read-only timestamps only in a separate copy. It retained the original one-click path, 10-second deadline, default animation-frame polling and all document/history/pixel assertions. All nine predicates returned true on their first evaluation; the final alias-deletion wait took 6 ms. Its 21-check pass and three successful first-attempt captures do not replace the full gate or prove the earlier stall's cause. The diagnostic logging itself can affect scheduling. No application or published harness change was made for this failure; the second full attempt used the original uninstrumented files.
+
+The [second full attempt](evidence/2026-10-22-f2bb1d61/README.md#second-full-browser-attempt) completed at **15:39:17 UTC** with a failed result. Software2D passed all 28 scenarios and 141 checks. WebGL2 passed vector-network, native-authoring and typography, then stopped at `ComponentValue2` readiness in `components-browser.mjs`. All **53** shared native captures—46 Software2D and 7 WebGL2—passed on their first attempt. There were no page errors; Software2D retained one resource-404 console message, and WebGL2 reported no console errors. Post-run integrity checks found all **31 source files and 16 runtime files unchanged**. The cause remains under investigation; no application or test correction is attributed to this result.
+
+The second attempt's resource samples reached the shared cgroup memory limit of **8,589,934,592 bytes**. `memory.events.max` increased by **1,631,582**, while `oom` and `oom_kill` did not increase. The peak sum of owned-process RSS was **2,373,701,632 bytes**. Cgroup totals can include other work and cache; summed RSS can count shared pages more than once. These observations do not identify the cause of the readiness failure.
+
+### Recovered runtime identity and terminal browser result
 
 | Input | Exact identity |
 | --- | --- |
@@ -51,15 +64,40 @@ Two subsequent focused local runs passed before the workspace was lost, but thei
 | Actual WASM payload | **51,205,801 bytes** |
 | WASM SHA-256 | `7880a628e7117ab88f896f69baa9c9ccedcdc33792302a01f653b4465e1499b9` |
 | Requested modes and scope | Software2D and WebGL2; unfiltered complete suite |
-| Result | **Pending** |
+| Latest local attempt | Unchanged full rerun from **15:27:24 to 15:39:17 UTC**, after the original failure and focused diagnostic above |
+| Result | **Failed**: Software2D 141 checks / all 28 scenarios passed; WebGL2 stopped after 27 checks at component-control readiness |
 
 This recovered CI runtime is a different binary from the earlier local runtime; their digests are not interchangeable. Its application source is compatible with the test-only `f2bb1d61` change, and the run records the build and harness identities separately. WebGL2 uses Chromium's ANGLE/Vulkan/SwiftShader path in these runs, so the results cannot establish physical-GPU throughput. No matched Figma document/reference screenshot was available for a numerical visual-parity comparison.
+
+The independent exact-`f2bb1d61` CI browser job in run 39799180117 was still running at **15:40 UTC**. Its completed native job is recorded above; no complete browser or overall workflow pass is inferred from that native success.
 
 ### Local history and restored documents
 
 The production editor defaults to **100 committed undo entries**. Starting from an autosaved document constructs `Editor::new` from the restored document, with empty undo/redo history; startup does not create an undoable import from the demo. Undo history belongs to the editor session and is not part of portable JSON or durable document storage.
 
-The [browser history regression](../tests/history-browser.mjs) crosses the production cap, makes one additional edit and checks exact one-step undo/redo with the expected history lengths. It does **not** traverse to or verify the oldest reachable undo state. The harness also starts each feature scenario from a durable restored document with fresh session history. These are local-session contracts, not remote collaborative or cloud version-history coverage. Their current complete browser gate remains pending as stated above.
+The [browser history regression](../tests/history-browser.mjs) crosses the production cap, makes one additional edit and checks exact one-step undo/redo with the expected history lengths. It does **not** traverse to or verify the oldest reachable undo state. The harness also starts each feature scenario from a durable restored document with fresh session history. These are local-session contracts, not remote collaborative or cloud version-history coverage. The latest full attempt passed the bounded-history case in Software2D; WebGL2 failed earlier before reaching it. The complete two-mode gate is not passing.
+
+### Paired release measurements at `f2bb1d61`
+
+The fresh native job ran `cargo run --locked --release -p ferrodesign-core --example performance -- 10000` at exact source `f2bb1d618843bf777b76859d2e06bf361bef009b`. Its [schema-5 JSON](evidence/2026-10-22-f2bb1d61/native-performance/performance-extracted-log.json), [timestamped step](evidence/2026-10-22-f2bb1d61/native-performance/performance-step.log), [provenance](evidence/2026-10-22-f2bb1d61/native-performance/provenance.json) and [complete measurement summary](evidence/2026-10-22-f2bb1d61/native-performance/SUMMARY.md) come from the successful job's decoded log. The 7,561-byte JSON payload has SHA-256 `758f544841855f50008f394f57e7b905618bb2b2387ec125be856b17fb2afe61`; it is a timestamp-stripped log extraction, not a byte-identity claim for a separately downloaded artifact.
+
+The release executable measured 10,000 flat filled rectangles with one selected node. Scoped commands and the explicit full-document transaction reference ran **in the same process**. Release mode, document/history equivalence, serialization round trips and component ID/history checks passed.
+
+| Operation | Samples per path | Full-document reference p50 | Scoped p50 | Scoped p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Nudge | 48 | 17.284794 ms | 0.019659 ms | 0.023785 ms |
+| Undo | 48 | 5.563399 ms | 0.012579 ms | 0.016715 ms |
+| Redo | 48 | 5.515978 ms | 0.012298 ms | 0.015704 ms |
+| Gesture begin | 12 | 4.617348 ms | 0.012539 ms | 0.013300 ms |
+| Each gesture update | 288 | 5.920511 ms | 0.000751 ms | 0.001162 ms |
+| Gesture commit | 12 | 14.630404 ms | 0.007411 ms | 0.009635 ms |
+| Complete 24-update gesture | 12 | 161.505031 ms | 0.048162 ms | 0.054552 ms |
+
+The update distribution contains all 288 individually timed updates across 12 gestures; phase medians need not sum to the complete-gesture median. These are native document-engine and transaction costs. They exclude browser events/bridge work, native control layout, scene drawing, GPU execution, display frame rate and durable-storage completion. They do not measure guide drawing, matching queries or bucket geometry. The small samples and single runner describe this observation; comparison with the older CI timings below is not evidence of an implementation speed change.
+
+Five serialization samples measured pretty JSON at **29.115533 ms p50 / 20,152,206 bytes** and compact autosave at **13.962979 ms p50 / 12,802,055 bytes**, about **36.5% smaller** with exact round-trip equivalence. Parse/validate/index measured **44.227866 ms p50** across three samples. The separate dense-layout fixture with 9,999 mixed fixed/fill text children measured **7.344085 ms p50** across five samples.
+
+Component authoring retains **whole-document Editor history snapshots**. With eight samples per operation in its separate 10,000-node fixture, actual variant switches measured **22.029776 ms p50 / 24.553801 ms p95**; text properties **22.909969 / 28.683793 ms**; visibility properties **27.464443 / 54.469802 ms**. The fixture includes **5,592,566 bytes of unrelated image URI data**. All component operations undid and redid exactly with stable materialized IDs. The faster no-history document-operation figures are not substituted for these production Editor costs.
 
 ### Paired release measurements at `f36dabf7`
 
