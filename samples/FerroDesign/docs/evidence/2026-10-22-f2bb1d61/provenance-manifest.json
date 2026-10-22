@@ -5,14 +5,14 @@
   "buildSourceCommit": "3a0bf1f13c6ede9abe5360bc3691085a3bc981f0",
   "documentationCheckpoint": "177f92cdb743d1897aa65a8c8c92e5b4b844e521",
   "selfExcluded": true,
-  "completeBrowserGate": "No current unfiltered two-mode pass. Two original full local runs failed overall; original WebGL2-only all-scenario run failed at matching after16 completed scenarios. Corrected f8e matching passed25 Software2D/22 WebGL2 focused checks. Remaining11 WebGL2 launch was blocked before Chromium with zero checks. Independent CI is recorded separately with observation timestamps.",
+  "completeBrowserGate": "Exact-f2bb CI completed successfully with full=true, 141 Software2D / 138 WebGL2 checks and all28 scenario starts per mode. Committed production inputs are unchanged through e0d3cee. The later f8 matching harness has a separate focused both-mode pass; no exact-f8/current-head complete-suite pass is inferred. Earlier local failures and the zero-check launch block remain unchanged. Successful official artifact ZIP bytes were not retrieved; decoded-log proof and its derived ZIP are preserved separately.",
   "source": "validation-source.json",
   "inputEquivalence": "input-equivalence.json",
   "originalReportsPreservedByteForByte": true,
   "files": {
     "README.md": {
-      "bytes": 22471,
-      "sha256": "31455c2c0c1ea65562e72477b0f137f4e88fc5dd981256a35a43945144a391eb"
+      "bytes": 27763,
+      "sha256": "2589e714e52407eedb82ab0da506d543fc8ed7b78cf224e2507a079f858d71e5"
     },
     "Software2D-bucket-hover-face.png": {
       "bytes": 83606,
@@ -122,11 +122,61 @@
       "bytes": 2603,
       "sha256": "9b833fd056e199a6d854c99dada32158a03215d2d058e41f189aa0e77b0b8ef7"
     },
+    "successful-ci-artifact-metadata.json": {
+      "bytes": 36736,
+      "sha256": "4a216db921500f84aee369d3a46277c751be76cc18ae974ad43460cb03be9fb5"
+    },
+    "successful-ci-browser-log.zip": {
+      "bytes": 44151,
+      "sha256": "3cc10ba49280556138c39995c93c4d3812a93938a8864f8a7411ed500ed8f9d8"
+    },
+    "successful-ci-browser-summary.json": {
+      "bytes": 6843,
+      "sha256": "f7201f185bf7ec0bfe9321da9598a3d69e33096f29de321105a28a22bf62416e"
+    },
+    "successful-ci-build-download-status.json": {
+      "bytes": 1092,
+      "sha256": "1bdad1e6d6657a00c71c4f80b0acba50b9d6c7c459e0a65ce0fa8a541b12e3b0"
+    },
+    "successful-ci-input-equivalence.json": {
+      "bytes": 21748,
+      "sha256": "2c1de9a41c80e230cd14261728b1d718a4322420842a693c0782bde7acd45585"
+    },
+    "successful-ci-persistence-summary.json": {
+      "bytes": 4138,
+      "sha256": "4407e7820ad1eac1f143c7e771c1bd374041d2a4deb01ffb5b18b0b9d5231f81"
+    },
+    "successful-ci-text-pan-summary.json": {
+      "bytes": 6068,
+      "sha256": "6bfd23d164bea7e6605a1655f5364ddad71d503532f7e1d7637ced2f007da875"
+    },
     "validation-source.json": {
       "bytes": 12011,
       "sha256": "f8007efd456247c2caa18106fb0cae9eb60fd5392bc136635b53111d56dfd72b"
     }
   },
-  "updatedAtUtc": "2026-10-22T16:29:38.089351+00:00",
-  "documentationBaseCommit": "f8e0471eb4301a9b893e8185810550ebba5ddafc"
+  "updatedAtUtc": "2026-10-22T17:04:00Z",
+  "documentationBaseCommit": "e0d3cee368f991fb8a0f4bd411b00e102bc4447b",
+  "subsequentCompleteCi": {
+    "sourceCommit": "f2bb1d618843bf777b76859d2e06bf361bef009b",
+    "runId": 39799180117,
+    "browserJobId": 119894677332,
+    "browserJobCompletedAtUtc": "2026-10-22T16:43:12Z",
+    "observedAtUtc": "2026-10-22T16:50:41Z",
+    "scope": {
+      "full": true,
+      "modes": [
+        "Software2D",
+        "WebGL2"
+      ],
+      "scenarios": "all"
+    },
+    "passedChecks": {
+      "Software2D": 141,
+      "WebGL2": 138
+    },
+    "scenarioStartsPerMode": 28,
+    "nativeCaptureRetryWarnings": 2,
+    "proof": "Connector-decoded job log, exact extracted printed JSON and canonical API metadata; official artifact ZIP bytes and detailed sidecars were not retrieved."
+  }
 }

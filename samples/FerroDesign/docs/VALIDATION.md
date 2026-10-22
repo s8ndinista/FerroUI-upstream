@@ -2,13 +2,31 @@
 
 This file distinguishes implemented paths, completed checks and measurements. Each observation belongs to its stated source, runtime and run; older successful runs do not validate later changes. The branch incorporates FerroUI `ab7a15b8` / `0.4.0-preview.1` and uses Vello for every application target through public FerroUI APIs. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the complete source and current review status. Current continuation evidence is recorded first; earlier checkpoints remain below with their original scope.
 
-## Current continuation: `f8e0471e` matching correction / `3a0bf1f1` build (2026-10-22)
+## Current continuation: complete `f2bb1d61` CI and later `f8e0471e` matching correction (2026-10-22)
 
 The continuation adds native [stacked layout guides](LAYOUT_GUIDES.md), [matching and inverse selection](SELECTION.md), and [vector-face bucket painting](VECTOR_FACES.md). Guide stacks retain legacy square-grid JSON, support row/column geometry and shared styles, preserve local per-index visibility, and render through public FerroUI drawing and clipping APIs. Each guide has one RGBA hex field including alpha. Matching queries respect effective visibility and locks without changing document history. Bucket gestures preserve original vector geometry, preview faces, query between pointer samples, and commit or cancel as one transaction. The implementation guides describe exact semantics, validation limits and remaining feature gaps; these features do not establish complete Figma compatibility or pixel parity.
 
-The original browser harness checkpoint is [`f2bb1d618843bf777b76859d2e06bf361bef009b`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b). It changes five browser-test files relative to [`3a0bf1f13c6ede9abe5360bc3691085a3bc981f0`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0); application build inputs are unchanged. A native CI job at exact source `f2bb1d61` succeeded. Its recovered-runtime full attempts failed after Software2D passed 141 checks and WebGL2 passed 21, then 27 checks. A separate fresh WebGL2-only attempt requested all 28 scenarios and failed after 82 checks and 16 completed scenarios at the matching-dialog opener. The subsequent test-only [`f8e0471e` checkpoint](https://github.com/wieslawsoltes/FerroUI/commit/f8e0471eb4301a9b893e8185810550ebba5ddafc) adds an Escape publication boundary and explicit dialog-open outcome to that regression; focused validation passed **25 Software2D / 22 WebGL2** checks. The separate attempt to cover the remaining 11 WebGL2 feature scenarios was blocked before Chromium started, so those scenarios remain outstanding. No complete current two-mode browser pass is recorded here.
+The original browser harness checkpoint is [`f2bb1d618843bf777b76859d2e06bf361bef009b`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b). Its independent CI workflow completed successfully, including the full browser suite: **141 Software2D / 138 WebGL2 checks and all 28 scenarios in each mode**. The [comparison through `e0d3cee3`](evidence/2026-10-22-f2bb1d61/successful-ci-input-equivalence.json) confirms unchanged application, framework, XAML, assets, Cargo and build inputs. The only later non-documentation change is the test-only [`f8e0471e` matching correction](https://github.com/wieslawsoltes/FerroUI/commit/f8e0471eb4301a9b893e8185810550ebba5ddafc), whose focused run passed **25 Software2D / 22 WebGL2** checks. A complete run with that later harness is not yet recorded.
+
+The earlier local attempts used a recovered [`3a0bf1f1`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0) runtime. Both full attempts failed after Software2D passed 141 checks and WebGL2 passed 21, then 27 checks. A fresh WebGL2-only attempt failed after 82 checks and 16 completed scenarios at the matching-dialog opener. The subsequent 11-scenario attempt with the corrected matching harness was blocked before Chromium started. Those outcomes are preserved below and are not combined to infer the independent successful CI result.
 
 The [current evidence index](evidence/2026-10-22-f2bb1d61/README.md) records these outcomes separately. Its input-equivalence manifest also identifies documentation-only checkpoint `177f92cd` and verifies that the frozen harness/package files are unchanged by that documentation commit.
+
+### Complete browser CI at `f2bb1d61`
+
+[FerroDesign run 39799180117](https://github.com/wieslawsoltes/FerroUI/actions/runs/39799180117) was observed **completed/success at 16:50:41 UTC on 22 October 2026**. The [browser job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39799180117/job/119894677332) completed successfully at **16:43:12 UTC**. Its decoded log records the exact checkout, the real Vello WASM build and a printed editor summary with `passed: true`, `scope.full: true`, both modes and `scenarios: "all"`.
+
+| CI browser result | Software2D | WebGL2 |
+| --- | --- | --- |
+| Passed checks | **141** | **138** |
+| Feature scenarios | All **28** | All **28** |
+| Reported native surface | Software2D | WebGL2, ANGLE/Vulkan/SwiftShader |
+
+The [source-tagged summary](evidence/2026-10-22-f2bb1d61/successful-ci-browser-summary.json) and [decoded-log archive](evidence/2026-10-22-f2bb1d61/successful-ci-browser-log.zip) preserve the evidence. The printed JSON was extracted from log lines 1243–1554 by removing only the timestamp prefix; all 28 ordered scenario starts per mode also appear in the log. The complete run includes the matching, stacked-guide, regional paint, bucket, prototype and bounded-history checks. Two WebGL2 capture warnings identify the existing guarded retry for **native local styles** and **native grid style**; the suite subsequently passed. This is not an all-first-attempt capture claim.
+
+The archive is a locally packaged copy of the connector-decoded log and exact printed JSON with checked member hashes, not the official GitHub validation artifact. [Artifact/API metadata](evidence/2026-10-22-f2bb1d61/successful-ci-artifact-metadata.json) and the [build-download record](evidence/2026-10-22-f2bb1d61/successful-ci-build-download-status.json) identify the published artifacts and retrieval limits. Their bytes, CRCs, raw `report.json`, capture sidecars, detailed page/console error arrays and runtime-member hashes were not independently retrieved. The successful build and complete gate are established by the exact-source log and API status; binary equality with the recovered local runtime is not asserted.
+
+The [source-input comparison](evidence/2026-10-22-f2bb1d61/successful-ci-input-equivalence.json) finds 84 changed paths across four commits from tested `f2bb1d61` through `e0d3cee3`: README/evidence documentation and one matching-test module. No production/build input changed. The complete pass therefore covers the current production inputs using the earlier harness. At the same **16:50:41 UTC** observation, [current-head run 39814628155](https://github.com/wieslawsoltes/FerroUI/actions/runs/39814628155) was in progress; no exact-latest-harness pass is inferred. SwiftShader is not physical-GPU performance evidence, and neither result establishes full Figma feature or visual parity.
 
 ### Completed native, build and framework gates
 
@@ -17,9 +35,9 @@ The [current evidence index](evidence/2026-10-22-f2bb1d61/README.md) records the
 | Document core | **394** tests passed at exact source `f2bb1d61`; no failed or ignored tests. The earlier `f36dabf7` and `3a0bf1f1` jobs passed the same count |
 | Native application | **155** tests passed at `f2bb1d61`, including actual Vello pixels, public-API rendering, guide clipping, gesture ownership and parser regressions; the two earlier jobs also passed all 155 |
 | Persistence host | All **19** tests passed in the successful native jobs at `f2bb1d61` and `3a0bf1f1` |
-| Actual Chromium IndexedDB | All **5** checks passed at `3a0bf1f1`, including migration/rollback/conflict handling and reload of **12,000,042** document characters |
+| Actual Chromium IndexedDB | All **5** checks passed at `f2bb1d61` ([exact log extraction](evidence/2026-10-22-f2bb1d61/successful-ci-persistence-summary.json)) and previously at `3a0bf1f1`, including migration/rollback/conflict handling and reload of **12,000,042** document characters |
 | Framework browser bridge | Type checking, all **10** input/composition cases and bundling passed during the `3a0bf1f1` WASM build |
-| Actual Vello WebAssembly application | CI browser builds completed at `f36dabf7` and `3a0bf1f1`; completing the build did not make their later editor browser suites pass |
+| Actual Vello WebAssembly application | The exact `f2bb1d61` CI build and complete two-mode suite passed. Earlier builds completed at `f36dabf7` and `3a0bf1f1`, whose later editor suites failed |
 | Resolved application dependencies | The exact `f2bb1d61` native job verified locked normal/build graphs containing Vello and no active Skia packages for Emscripten, Linux x64, Windows x64, macOS ARM64 and macOS x64 |
 | Repository framework CI | All **14** jobs passed at `f36dabf7` in [run 39765413203](https://github.com/wieslawsoltes/FerroUI/actions/runs/39765413203), and all **14** passed at `3a0bf1f1` in [run 39771211233](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771211233) |
 
@@ -71,7 +89,7 @@ The corrected [focused matching run](evidence/2026-10-22-f8e0471e/matching-focus
 
 The separate attempt to cover the **11 WebGL2 feature scenarios after matching** was **blocked before Chromium startup**: the local HTTP server could not listen on `127.0.0.1` (`EPERM`). The [launch summary](evidence/2026-10-22-f8e0471e/remaining-webgl2-launch-summary.json) records **zero checks, zero entered scenarios and no browser `report.json`**, with all **31 source files and 16 runtime files unchanged**. The [launch evidence archive](evidence/2026-10-22-f8e0471e/remaining-webgl2-launch-block.zip) preserves the error, runner, manifests and resource/terminal records. No escalation, alternative execution path or further attempt followed the denial. This is an environment block, not a failed application assertion. Geometry authoring, Flatten, local styles, angular paints, grid styles, region paints, network bucket, compact autosave, prototype input, prototype motion and bounded history remain outstanding for that coverage attempt. The focused 25/22 pass stands separately; different invocations and harness versions are not combined into a complete-suite pass.
 
-### Recovered runtime identity and terminal browser result
+### Local recovered-runtime identity and terminal browser results
 
 | Input | Exact identity |
 | --- | --- |
@@ -81,14 +99,14 @@ The separate attempt to cover the **11 WebGL2 feature scenarios after matching**
 | Recovered build artifact | GitHub artifact `12427798904` |
 | Actual WASM payload | **51,205,801 bytes** |
 | WASM SHA-256 | `7880a628e7117ab88f896f69baa9c9ccedcdc33792302a01f653b4465e1499b9` |
-| Latest completed full attempt | Both modes, all scenarios; **failed** with Software2D 141 checks / all 28 scenarios passed and WebGL2 27 checks before component-control readiness failed |
-| Latest completed single-mode attempt | WebGL2, all 28 scenarios requested; **failed** with 82 checks / 16 scenarios passed before the matching failure; `full: false` |
+| Latest completed full recovered-runtime attempt | Both modes, all scenarios; **failed** with Software2D 141 checks / all 28 scenarios passed and WebGL2 27 checks before component-control readiness failed |
+| Latest completed local single-mode attempt | WebGL2, all 28 scenarios requested; **failed** with 82 checks / 16 scenarios passed before the matching failure; `full: false` |
 | Corrected focused matching attempt | `f8e0471e`, both modes, matching plus common gates; **passed 25/22 checks**, `full: false` |
 | Additional remaining-scenario coverage | `f8e0471e`, WebGL2 only, 11 feature scenarios; **blocked before Chromium**, zero checks/scenarios |
 
 This recovered CI runtime is a different binary from the earlier local runtime; their digests are not interchangeable. Its application source is compatible with the test-only `f2bb1d61` change, and the run records the build and harness identities separately. WebGL2 uses Chromium's ANGLE/Vulkan/SwiftShader path in these runs, so the results cannot establish physical-GPU throughput. No matched Figma document/reference screenshot was available for a numerical visual-parity comparison.
 
-The independent exact-`f2bb1d61` CI browser job in run 39799180117 was still running at **16:19 UTC**. Its completed native job is recorded above; no complete browser or overall workflow pass is inferred from that native success. At the same observation, the new `f8e0471e` [framework run 39812425327](https://github.com/wieslawsoltes/FerroUI/actions/runs/39812425327) was active and [FerroDesign run 39812414651](https://github.com/wieslawsoltes/FerroUI/actions/runs/39812414651) was pending without returned jobs. Neither workflow has a completed result recorded here.
+The independent exact-`f2bb1d61` CI job later completed successfully with its own freshly built runtime, as recorded in [the complete CI result above](#complete-browser-ci-at-f2bb1d61). That result does not replace the local failures or imply binary identity with this recovered distribution. The later matching harness retains its separate focused result; the `e0d3cee3` workflow was still in progress at the **16:50:41 UTC** observation.
 
 ### Source-delivery audit
 
@@ -100,7 +118,7 @@ The inspected build logic does not require FerroUI's `.git` metadata, but it doe
 
 The production editor defaults to **100 committed undo entries**. Starting from an autosaved document constructs `Editor::new` from the restored document, with empty undo/redo history; startup does not create an undoable import from the demo. Undo history belongs to the editor session and is not part of portable JSON or durable document storage.
 
-The [browser history regression](../tests/history-browser.mjs) crosses the production cap, makes one additional edit and checks exact one-step undo/redo with the expected history lengths. It does **not** traverse to or verify the oldest reachable undo state. The harness also starts each feature scenario from a durable restored document with fresh session history. These are local-session contracts, not remote collaborative or cloud version-history coverage. The latest full attempt passed the bounded-history case in Software2D; WebGL2 failed earlier before reaching it. The complete two-mode gate is not passing.
+The [browser history regression](../tests/history-browser.mjs) crosses the production cap, makes one additional edit and checks exact one-step undo/redo with the expected history lengths. It does **not** traverse to or verify the oldest reachable undo state. The harness also starts each feature scenario from a durable restored document with fresh session history. These are local-session contracts, not remote collaborative or cloud version-history coverage. The second full recovered-runtime attempt passed the bounded-history case in Software2D and failed earlier in WebGL2. The separate exact-`f2bb1d61` CI suite subsequently passed that case in both modes. This establishes the stated newest-transaction checks, not traversal to the oldest reachable history state; the later `f8e0471e` harness has only its separately recorded focused pass.
 
 ### Browser workload from the second recovered full attempt
 
@@ -120,6 +138,17 @@ The [second full-run terminal summary](evidence/2026-10-22-f2bb1d61/failed-secon
 | Portable JSON export | 20,712,219 bytes |
 
 The browser timing boundaries include automation/protocol work and the waits in [the actual fixture](../tests/browser.mjs). The nudge measurement includes keyboard dispatch and the native preparation/frame verification; it is not the engine-only command cost measured below. The summary also records a 4 ms explicit persistence flush wait at that point in the workload; background serialization or saving may already have progressed before that wait begins, so it is not a complete end-to-end save measurement. The reloaded export digest matches the authored document exactly. This browser fixture differs from the native release benchmark's document and process.
+
+### CI text-panning observations at `f2bb1d61`
+
+After the complete editor suite, the same successful browser job ran the separate [text-panning benchmark](../tests/text-render-benchmark.mjs). It imports a seeded scene of **150 visible Inter text labels**, performs **12 warmup motions** and measures **36 pan observations per mode**. Each timed interval begins before host pointer dispatch and ends after the expected camera position and a newer native `renderedFrames` value are observed. Two subsequent animation-frame callbacks are recorded separately as settling observations.
+
+| Mode | Observations | Median, rounded log value | p95, rounded log value |
+| --- | ---: | ---: | ---: |
+| Software2D | 36 | **14.28 ms** | **20.62 ms** |
+| WebGL2, SwiftShader requested | 36 | **20.30 ms** | **1,366.94 ms** |
+
+These values and the verified measurement method are preserved in the [derived text-panning summary](evidence/2026-10-22-f2bb1d61/successful-ci-text-pan-summary.json) and decoded job log at lines 1567–1568. The source requests ANGLE/SwiftShader, but the benchmark's original device fingerprint was not retrieved. Only the two-decimal printed aggregates were retrieved; the official artifact's individual samples and richer benchmark JSON were not. They include automation, input dispatch, scheduling and frame observation; the additional post-observation settling callbacks are excluded from these reported values. They are not FPS, isolated drawing/GPU costs or a physical-GPU measurement. The high WebGL2 p95 remains part of the observation; the native model benchmark below must not be substituted for this browser tail latency.
 
 ### Paired release measurements at `f2bb1d61`
 

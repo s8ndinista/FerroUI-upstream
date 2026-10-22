@@ -1,8 +1,44 @@
 # 2026-10-22 `f2bb1d61` browser and native evidence
 
-This directory records two failed full browser attempts, the intervening successful focused authoring diagnostic, a later failed WebGL2-only attempt requesting all 28 scenarios, and the completed native CI gate for the original `f2bb1d61` test checkpoint. The two full attempts completed Software2D with **141 checks**; their WebGL2 portions failed after **21** and **27** checks. The fresh WebGL2-only attempt completed **82 checks and 16 scenarios** before its matching-dialog failure. The corrected `f8e0471e` matching test subsequently passed **25 Software2D / 22 WebGL2** focused checks, preserved separately. The additional filtered WebGL2 attempt was blocked before browser startup, with zero checks or scenarios; no current complete two-mode browser pass is recorded. [Validation and measurements](../../VALIDATION.md) contains the wider history and implementation limits.
+This directory preserves the **successful complete CI workflow at exact source `f2bb1d61`**, verified from GitHub API status and the decoded browser job log: **141 Software2D / 138 WebGL2 checks**, with all **28 scenarios in each mode**, plus the successful native gate. It also retains two failed local full attempts, the intervening focused authoring diagnostic and a failed WebGL2-only attempt against the recovered `3a0bf1f1` distribution. Those failures are not erased by the independent CI pass. The later `f8e0471e` matching correction passed its **25 Software2D / 22 WebGL2** focused checks; its additional 11-scenario attempt was blocked before startup. [Validation and measurements](../../VALIDATION.md) separates the tested sources, runtimes, outcomes and limits.
+
+## Exact-source complete browser CI
+
+[FerroDesign workflow 39799180117](https://github.com/wieslawsoltes/FerroUI/actions/runs/39799180117) was observed **completed/success at 16:50:41 UTC on 22 October 2026**. Its [browser job 119894677332](https://github.com/wieslawsoltes/FerroUI/actions/runs/39799180117/job/119894677332) completed successfully at **16:43:12 UTC**. The decoded log verifies checkout `f2bb1d618843bf777b76859d2e06bf361bef009b`, the successful Vello WASM build and the complete editor result. This run built its own runtime; it did not use the recovered `3a0bf1f1` distribution described below.
+
+| Verified browser observation | Software2D | WebGL2 |
+| --- | --- | --- |
+| Status | **Passed** | **Passed** |
+| Passed checks | **141** | **138** |
+| Feature scenarios | All **28** | All **28** |
+| Actual reported surface | Software2D | WebGL2, ANGLE/Vulkan/SwiftShader |
+
+The printed JSON reports `passed: true`, `scope.full: true`, both modes and `scenarios: "all"`, using Chromium **156.0.8078.4**. The log independently names all 28 scenario starts per mode. It also records **two** guarded screenshot retries, for `WebGL2-native-local-styles` and `WebGL2-native-grid-style`, before the complete suite passed. No all-first-attempt capture claim is made.
+
+The [successful CI summary](successful-ci-browser-summary.json) records the source, exact checkout/build evidence, counts, retry messages and limitations. [successful-ci-browser-log.zip](successful-ci-browser-log.zip) is a locally created, CRC-checked archive containing the full connector-decoded job log, the exact printed JSON from log lines 1243–1554 and member checksums. The extraction removes only the timestamp prefix and preserves the payload's indentation, content and final newline. The 44,244-byte JSON has SHA-256 `f1a6260b96c3b50b69e58d5954715842fe2a911be0cb371811e9a3f9849b6c40`.
+
+This derived evidence ZIP is **not** the official validation artifact. [Canonical API/artifact metadata](successful-ci-artifact-metadata.json) records validation artifact `12441488836` and build artifact `12441488818`, including their API-reported sizes and digests. Ordinary retrieval did not succeed; the [build-download status](successful-ci-build-download-status.json) records the runtime attempt. No network workaround or escalation was used. The official ZIP bytes/CRCs, raw `report.json`, capture sidecars, total capture counts, detailed page/console error arrays and runtime-member hashes were not independently read or verified. Accordingly, no zero-console/page-error claim or binary equality with the recovered local runtime is asserted for this successful run.
+
+The same job separately passed all [**five actual Chromium IndexedDB checks**](successful-ci-persistence-summary.json), including the **12,000,042-character** document reload. This is distinct from the **19 native persistence-host tests** and from the full FerroUI editor suite. The native job's **394 core + 155 application tests** and five active renderer-graph audits remain recorded in [the native section](#exact-source-native-ci).
+
+### Production inputs and later harness
+
+[successful-ci-input-equivalence.json](successful-ci-input-equivalence.json) records the GitHub comparison from tested `f2bb1d61` through source-delivery checkpoint `e0d3cee3`: four commits and 84 changed paths, consisting of README/evidence documentation and one matching browser-test module. No application, framework, XAML, Cargo manifest/lockfile, asset, browser-host or build-script input changed. Thus the complete CI result covers the current production inputs with the earlier `f2bb1d61` harness. It does not validate the later matching helper as part of a complete suite or establish matching runtime bytes. The later helper has its separately preserved focused pass. At **16:50:41 UTC**, [exact-`e0d3cee3` workflow 39814628155](https://github.com/wieslawsoltes/FerroUI/actions/runs/39814628155) was in progress.
+
+### Browser text-panning measurements
+
+The job subsequently ran [the 150-label text-panning fixture](../../../tests/text-render-benchmark.mjs), with **12 warmup motions** and **36 measured observations per mode**. The timer covers host pointer dispatch until the expected camera position and a newer native frame are observed; two later animation callbacks form a separate settling observation.
+
+| Mode | Printed median | Printed p95 |
+| --- | ---: | ---: |
+| Software2D | **14.28 ms** | **20.62 ms** |
+| WebGL2, SwiftShader requested | **20.30 ms** | **1,366.94 ms** |
+
+The [derived text-panning summary](successful-ci-text-pan-summary.json) preserves log lines 1567–1568 and the exact-source method. The source requests ANGLE/SwiftShader, but the benchmark's original device fingerprint was not retrieved. These are rounded printed aggregates; the official artifact's per-sample data was not retrieved. They include automation and scheduling, are separate from the native engine benchmark, and establish neither FPS nor isolated GPU time. The high WebGL2 tail remains visible. SwiftShader is a software Vulkan device, so no physical-GPU performance claim follows.
 
 ## Source and runtime identity
+
+The following identity table applies to the preserved **local recovered-runtime attempts**, not the successful CI build above.
 
 | Input | Exact identity |
 | --- | --- |
@@ -97,7 +133,7 @@ The unchanged unfiltered rerun ran from **15:27:24 to 15:39:17 UTC**, using the 
 
 Resource sampling was separate from the original test inputs. Across 143 samples at five-second intervals, the shared cgroup reached its **8,589,934,592-byte** memory limit. `memory.events.max` increased by **1,631,582**, while `oom` and `oom_kill` had zero delta. Peak summed RSS for PID/path-matched processes was **2,373,701,632 bytes**. These shared-cgroup and summed-RSS observations have the attribution limits described above and do not establish the cause of the readiness failure.
 
-The independent exact-`f2bb1d61` CI browser job in run 39799180117 was still running at **16:19 UTC**. The native job's successful result remains separate. At that observation the later `f8e0471e` framework workflow was active and its FerroDesign workflow was pending; no completed workflow result is attributed to that source yet.
+The independent exact-`f2bb1d61` CI browser job later completed successfully with its own build, as recorded in [the complete CI section](#exact-source-complete-browser-ci). This local failure remains preserved under its recovered-runtime identity. The complete later-harness result is still separate; the exact-`e0d3cee3` workflow was in progress at **16:50:41 UTC**.
 
 ## WebGL2-only attempt with all scenarios
 
@@ -126,7 +162,7 @@ Published checkpoint `f8e0471e` changes only `tests/matching-browser.mjs`. For a
 
 A separate **both-mode matching-plus-common-gates** run **passed**, using the corrected published harness and the same recovered CI runtime. Its [terminal summary](../2026-10-22-f8e0471e/matching-focused-summary.json) records **25 Software2D / 22 WebGL2 checks**, all three matching cases in each mode, and **180.13 seconds** total duration. All **four** shared native captures passed on their first attempt. Both modes reported no page errors; Software2D retained one resource-404 console message and WebGL2 had no console errors. The run verified all **31 source files and 16 runtime files unchanged**. Its [raw evidence archive](../2026-10-22-f8e0471e/matching-focused-report.zip) belongs to the corrected harness and does not overwrite the original failed evidence here.
 
-This is `scope.full: false` and validates only its requested matching/common gates. The [corrected-source evidence index](../2026-10-22-f8e0471e/README.md) preserves this pass separately. The later attempt covering the 11 remaining WebGL2 feature scenarios was blocked before Chromium: its local HTTP server listen on `127.0.0.1` returned `EPERM`. The [launch summary](../2026-10-22-f8e0471e/remaining-webgl2-launch-summary.json) records zero checks, zero entered scenarios and no browser report, with all 31 source and 16 runtime files unchanged; the [launch evidence ZIP](../2026-10-22-f8e0471e/remaining-webgl2-launch-block.zip) preserves its raw records. No escalation or further attempt followed that denial. The eleven scenarios remain outstanding; this environment block is not an application-test failure. Neither the focused pass nor a combination of separately executed subsets constitutes a complete two-mode suite pass.
+This is `scope.full: false` and validates only its requested matching/common gates. The [corrected-source evidence index](../2026-10-22-f8e0471e/README.md) preserves this pass separately. The later attempt covering the 11 remaining WebGL2 feature scenarios was blocked before Chromium: its local HTTP server listen on `127.0.0.1` returned `EPERM`. The [launch summary](../2026-10-22-f8e0471e/remaining-webgl2-launch-summary.json) records zero checks, zero entered scenarios and no browser report, with all 31 source and 16 runtime files unchanged; the [launch evidence ZIP](../2026-10-22-f8e0471e/remaining-webgl2-launch-block.zip) preserves its raw records. No escalation or further attempt followed that denial. The eleven scenarios remain outstanding for that `f8e0471e` local attempt; the independent complete `f2bb1d61` CI run passed them with the earlier harness. This environment block is not an application-test failure. Neither the focused pass nor a combination of separately executed subsets constitutes a complete two-mode suite pass.
 
 ## Source-delivery audit
 

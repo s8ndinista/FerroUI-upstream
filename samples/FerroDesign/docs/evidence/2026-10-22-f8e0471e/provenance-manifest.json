@@ -1,16 +1,16 @@
 {
-  "updatedAtUtc": "2026-10-22T16:29:38.101685+00:00",
+  "updatedAtUtc": "2026-10-22T17:04:00Z",
   "repository": "wieslawsoltes/FerroUI",
   "harnessSourceCommit": "f8e0471eb4301a9b893e8185810550ebba5ddafc",
   "buildSourceCommit": "3a0bf1f13c6ede9abe5360bc3691085a3bc981f0",
-  "documentationBaseCommit": "f8e0471eb4301a9b893e8185810550ebba5ddafc",
+  "documentationBaseCommit": "e0d3cee368f991fb8a0f4bd411b00e102bc4447b",
   "selfExcluded": true,
-  "completeBrowserGate": "No current unfiltered two-mode pass. Two original full local runs failed overall; original WebGL2-only all-scenario run failed at matching after16 completed scenarios. Corrected f8e matching passed25 Software2D/22 WebGL2 focused checks. Remaining11 WebGL2 launch was blocked before Chromium with zero checks. Independent CI is recorded separately with observation timestamps.",
+  "completeBrowserGate": "Exact-f2bb CI completed successfully with full=true, 141 Software2D / 138 WebGL2 checks and all28 scenario starts per mode. Committed production inputs are unchanged through e0d3cee. The later f8 matching harness has a separate focused both-mode pass; no exact-f8/current-head complete-suite pass is inferred. Earlier local failures and the zero-check launch block remain unchanged. Successful official artifact ZIP bytes were not retrieved; decoded-log proof and its derived ZIP are preserved separately.",
   "originalReportsPreservedByteForByte": true,
   "files": {
     "README.md": {
-      "bytes": 9518,
-      "sha256": "7525ca46b5847cf4c480b9fa797fed8f9615d23d32745c47159ef2e3a18c005c"
+      "bytes": 11489,
+      "sha256": "0c832cb1728c80fcdceb7ae4d52f08ce5e07d66f11800d1f0491d0cbfd63f322"
     },
     "Software2D-initial.png": {
       "bytes": 187960,
@@ -52,5 +52,27 @@
       "bytes": 14578,
       "sha256": "1bb33f3e6e9f5d6778c2f4f361711de1aad8d2ec3c269ec4dbe035e48bbdce41"
     }
+  },
+  "subsequentCompleteCi": {
+    "sourceCommit": "f2bb1d618843bf777b76859d2e06bf361bef009b",
+    "runId": 39799180117,
+    "browserJobId": 119894677332,
+    "browserJobCompletedAtUtc": "2026-10-22T16:43:12Z",
+    "observedAtUtc": "2026-10-22T16:50:41Z",
+    "scope": {
+      "full": true,
+      "modes": [
+        "Software2D",
+        "WebGL2"
+      ],
+      "scenarios": "all"
+    },
+    "passedChecks": {
+      "Software2D": 141,
+      "WebGL2": 138
+    },
+    "scenarioStartsPerMode": 28,
+    "nativeCaptureRetryWarnings": 2,
+    "proof": "Connector-decoded job log, exact extracted printed JSON and canonical API metadata; official artifact ZIP bytes and detailed sidecars were not retrieved."
   }
 }
