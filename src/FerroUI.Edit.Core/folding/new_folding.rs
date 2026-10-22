@@ -7,6 +7,14 @@ pub struct NewFolding {
     pub is_definition: bool,
 }
 impl NewFolding {
-    pub fn new(start_offset: usize, end_offset: usize) -> Self { Self { start_offset,end_offset,..Self::default() } }
-    pub fn length(&self) -> usize { self.end_offset.saturating_sub(self.start_offset) }
+    pub fn new(start_offset: usize, end_offset: usize) -> Self {
+        Self {
+            start_offset,
+            end_offset,
+            ..Self::default()
+        }
+    }
+    pub fn length(&self) -> usize {
+        self.end_offset.saturating_sub(self.start_offset)
+    }
 }

@@ -1,5 +1,5 @@
 use super::text_anchor_tree::TextAnchorTree;
-use super::undo_stack::UndoHistory;
+use super::undo_stack::{UndoHistory, UndoOperation};
 use super::{
     AnchorMovementType, DocumentChangeEventArgs, DocumentLine, DocumentSubscription,
     DocumentVersion, ITextSource, OffsetChangeMap, OffsetChangeMappingType, TextAnchor,
@@ -26,6 +26,7 @@ pub enum DocumentError {
         line_count: usize,
     },
     InvalidLocation,
+    InvalidNewLine,
     InvalidOffsetMap,
     DeletedAnchor,
     DifferentDocument,
@@ -63,6 +64,7 @@ impl fmt::Display for DocumentError {
             Self::InvalidLocation => {
                 f.write_str("expected a line and column separated by a comma or semicolon")
             }
+            Self::InvalidNewLine => f.write_str("expected CR, LF, or CRLF newline sequence"),
             Self::InvalidOffsetMap => f.write_str("the offset map does not describe this edit"),
             Self::DeletedAnchor => f.write_str("the anchor was deleted"),
             Self::DifferentDocument => f.write_str("the versions belong to different documents"),
@@ -326,22 +328,77 @@ impl TextDocument {
         self.0.state.borrow_mut().history.original_state = None;
     }
     pub fn set_undo_size_limit(&self, limit: usize) {
-        let mut state = self.0.state.borrow_mut();
-        state.history.size_limit = limit;
-        if state.update_depth == 0 {
-            state.history.enforce_limit();
+        {
+            let mut state = self.0.state.borrow_mut();
+            state.history.size_limit = limit;
+            if state.update_depth == 0 {
+                state.history.enforce_limit();
+            }
         }
+        self.flush_retired_operations();
     }
 
     pub fn clear_undo_history(&self) -> Result<(), DocumentError> {
-        let mut state = self.0.state.borrow_mut();
-        if state.update_depth != 0 || state.history.replaying {
-            return Err(DocumentError::UpdateInProgress);
+        {
+            let mut state = self.0.state.borrow_mut();
+            if state.update_depth != 0 || state.history.replaying {
+                return Err(DocumentError::UpdateInProgress);
+            }
+            state.history.clear_all();
         }
-        state.history.undo.clear();
-        state.history.redo.clear();
-        state.history.allow_continue = false;
+        self.flush_retired_operations();
         Ok(())
+    }
+
+    pub(crate) fn clear_redo_history(&self) -> Result<(), DocumentError> {
+        {
+            let mut state = self.0.state.borrow_mut();
+            if state.history.replaying {
+                return Err(DocumentError::UpdateInProgress);
+            }
+            state.history.clear_redo();
+        }
+        self.flush_retired_operations();
+        Ok(())
+    }
+
+    fn flush_retired_operations(&self) {
+        // Custom payload destructors may call back into the document. Transfer
+        // ownership out of the RefCell before releasing user-owned operations.
+        let retired = std::mem::take(&mut self.0.state.borrow_mut().history.retired);
+        drop(retired);
+    }
+
+    pub(crate) fn push_undo_operation(
+        &self,
+        operation: UndoOperation,
+        optional: bool,
+    ) -> Result<bool, DocumentError> {
+        let needs_group = {
+            let state = self.0.state.borrow();
+            if optional && state.update_depth == 0 {
+                return Err(DocumentError::NoUpdate);
+            }
+            if state.history.replaying || state.history.size_limit == 0 {
+                return Ok(false);
+            }
+            state.update_depth == 0
+        };
+        let group = if needs_group {
+            Some(self.begin_update()?)
+        } else {
+            None
+        };
+        self.0
+            .state
+            .borrow_mut()
+            .history
+            .record_operation(operation, optional);
+        self.flush_retired_operations();
+        if let Some(group) = group {
+            group.finish()?;
+        }
+        Ok(true)
     }
 
     pub fn changing(
@@ -475,6 +532,7 @@ impl TextDocument {
             state.update_depth = 0;
         }
         drop(finishing);
+        self.flush_retired_operations();
         self.0.update_finished.raise(&());
         Ok(())
     }
@@ -652,6 +710,7 @@ impl TextDocument {
                 state.anchors.handle_text_change(entry, &mut deleted);
             }
         }
+        self.flush_retired_operations();
         // All anchor deletion flags are set before any deletion handler runs.
         for anchor in deleted {
             anchor.deleted_event.raise(&());
@@ -732,6 +791,15 @@ impl TextDocument {
                 return Ok(false);
             };
             state.history.replaying = true;
+            state.history.current_state = if redo { group.after } else { group.before };
+            state.history.allow_continue = false;
+            // Like ordinary replay, a panicking client operation is a caller
+            // error. Preserve the group on the opposite stack even in that case.
+            if redo {
+                state.history.undo.push(group.clone());
+            } else {
+                state.history.redo.push(group.clone());
+            }
             group
         };
         struct ResetReplay(TextDocument);
@@ -743,30 +811,41 @@ impl TextDocument {
         let _reset = ResetReplay(self.clone());
         let update = self.begin_update()?;
         if redo {
-            for change in &history_group.changes {
-                self.apply_change(change.clone())?;
+            for operation in &history_group.changes {
+                self.replay_operation(operation, true)?;
             }
         } else {
-            for change in history_group.changes.iter().rev() {
-                self.apply_change(change.invert())?;
+            for operation in history_group.changes.iter().rev() {
+                self.replay_operation(operation, false)?;
             }
-        }
-        {
-            let mut state = self.0.state.borrow_mut();
-            state.history.current_state = if redo {
-                history_group.after
-            } else {
-                history_group.before
-            };
-            if redo {
-                state.history.undo.push(history_group);
-            } else {
-                state.history.redo.push(history_group);
-            }
-            state.history.allow_continue = false;
         }
         update.finish()?;
         Ok(true)
+    }
+
+    fn replay_operation(&self, operation: &UndoOperation, redo: bool) -> Result<(), DocumentError> {
+        match operation {
+            UndoOperation::Document(change) => self.apply_change(if redo {
+                change.clone()
+            } else {
+                change.invert()
+            })?,
+            UndoOperation::Custom(operation) => {
+                if redo {
+                    operation.redo();
+                } else {
+                    operation.undo();
+                }
+            }
+            UndoOperation::WithContext(operation) => {
+                if redo {
+                    operation.redo(&self.undo_stack());
+                } else {
+                    operation.undo(&self.undo_stack());
+                }
+            }
+        }
+        Ok(())
     }
 }
 

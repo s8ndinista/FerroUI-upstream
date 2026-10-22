@@ -11,7 +11,69 @@ pub struct DocumentChangeEventArgs {
     pub offset_change_map: OffsetChangeMap,
 }
 
-pub type TextChangeEventArgs = DocumentChangeEventArgs;
+/// Generic source change. Its boundary affinity differs from a normal document
+/// replacement: both replacement endpoints obey the supplied movement type.
+#[derive(Clone, Debug)]
+pub struct TextChangeEventArgs {
+    pub offset: usize,
+    pub removed_text: TextSnapshot,
+    pub inserted_text: TextSnapshot,
+}
+
+impl TextChangeEventArgs {
+    pub fn new(offset: usize, removed_text: &str, inserted_text: &str) -> Self {
+        Self {
+            offset,
+            removed_text: TextSnapshot::from_text(removed_text),
+            inserted_text: TextSnapshot::from_text(inserted_text),
+        }
+    }
+    pub fn removal_length(&self) -> usize {
+        self.removed_text.text_length()
+    }
+    pub fn insertion_length(&self) -> usize {
+        self.inserted_text.text_length()
+    }
+    pub fn get_new_offset(&self, offset: usize, movement: AnchorMovementType) -> usize {
+        if offset >= self.offset && offset <= self.offset.saturating_add(self.removal_length()) {
+            if movement == AnchorMovementType::BeforeInsertion {
+                self.offset
+            } else {
+                self.offset.saturating_add(self.insertion_length())
+            }
+        } else if offset > self.offset {
+            offset
+                .saturating_sub(self.removal_length())
+                .saturating_add(self.insertion_length())
+        } else {
+            offset
+        }
+    }
+    pub fn invert(&self) -> Self {
+        Self {
+            offset: self.offset,
+            removed_text: self.inserted_text.clone(),
+            inserted_text: self.removed_text.clone(),
+        }
+    }
+}
+
+impl From<TextChangeEventArgs> for DocumentChangeEventArgs {
+    fn from(change: TextChangeEventArgs) -> Self {
+        let map = OffsetChangeMap::for_change(
+            change.offset,
+            change.removal_length(),
+            change.insertion_length(),
+            OffsetChangeMappingType::RemoveAndInsert,
+        );
+        Self {
+            offset: change.offset,
+            removed_text: change.removed_text,
+            inserted_text: change.inserted_text,
+            offset_change_map: map,
+        }
+    }
+}
 
 impl DocumentChangeEventArgs {
     pub fn new(offset: usize, removed_text: &str, inserted_text: &str) -> Self {

@@ -70,6 +70,12 @@ impl DocumentVersion {
     }
 
     pub(crate) fn append(&self, change: DocumentChangeEventArgs) -> Result<Self, DocumentError> {
+        let change = DocumentChangeEventArgs::with_map(
+            change.offset,
+            change.removed_text,
+            change.inserted_text,
+            change.offset_change_map,
+        )?;
         let revision = self
             .revision()
             .checked_add(1)
@@ -147,8 +153,11 @@ impl TextSourceVersionProvider {
     pub fn current_version(&self) -> DocumentVersion {
         self.current.clone()
     }
-    pub fn append_change(&mut self, change: DocumentChangeEventArgs) -> Result<(), DocumentError> {
-        self.current = self.current.append(change)?;
+    pub fn append_change(
+        &mut self,
+        change: impl Into<DocumentChangeEventArgs>,
+    ) -> Result<(), DocumentError> {
+        self.current = self.current.append(change.into())?;
         Ok(())
     }
 }

@@ -551,3 +551,28 @@ fn overflowing_invalid_mapping_input_returns_error() {
         .is_err());
     assert_eq!(document.text(), "");
 }
+
+#[test]
+fn generic_source_changes_and_document_changes_have_distinct_boundary_affinity() {
+    let generic = TextChangeEventArgs::new(1, "ab", "xyz");
+    let document = DocumentChangeEventArgs::new(1, "ab", "xyz");
+    assert_eq!(generic.get_new_offset(1, AnchorMovementType::Default), 4);
+    assert_eq!(document.get_new_offset(1, AnchorMovementType::Default), 1);
+    assert_eq!(
+        generic.get_new_offset(3, AnchorMovementType::BeforeInsertion),
+        1
+    );
+    assert_eq!(
+        document.get_new_offset(3, AnchorMovementType::BeforeInsertion),
+        4
+    );
+    let mut provider = TextSourceVersionProvider::new();
+    let first = provider.current_version();
+    provider.append_change(generic).unwrap();
+    assert_eq!(
+        first
+            .move_offset_to(&provider.current_version(), 1, AnchorMovementType::Default)
+            .unwrap(),
+        4
+    );
+}
