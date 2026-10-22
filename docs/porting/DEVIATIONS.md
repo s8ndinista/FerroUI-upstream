@@ -1393,3 +1393,41 @@ Places where the port did work that upstream does not do, or did it differently,
 | `TextBoxTextInputMethodClient.TextViewVisual` is null while the text box has no presenter. | Reported the last presenter the client had (the contract of the base crate had no "none" value), and panicked when it never had one. | `textbox-contract-and-loader` (2026-10-15) |
 | `WindowImplBase.FrameSize` (Avalonia.Native) starts the result of `GetFrameSize` at (-1, -1); the native side leaves it so while the window is not shown, and the property is then null, so `Window.SetWindowStartupLocation` centres the client size. | `frame_size` called the generated `get_frame_size`, which starts the result at zero: a window not shown had a frame of no size, and a centred window was placed half its size away from the centre (`WindowTests.StartupLocation` on macOS: 450 for 225, 900 for 700). Now `IFrnWindowBase::get_frame_size_from` with (-1, -1); checked by `tests/accessibility_tree.rs`. | integration-tests-fixes (2026-10-16) |
 | `ScrollGestureRecognizer.PointerReleased` starts a `Stopwatch` when the inertia starts, and each frame of the inertia (`OnAnimationRequested`) scrolls by the speed times the time since the previous frame, the first frame by the time since the release. | Timed the inertia with the frame times of the media context and started its clock with the first frame, which therefore scrolled by nothing. A scroll content presenter that chains scrolling (`IsScrollChainingEnabled`, true by default) leaves a scroll event that changes no offset unhandled, and an unhandled inertia event ends the gesture: a touch flick never coasted, on every touch platform, and on a phone in the browser a swipe moved the content only as far as the finger. Not recorded as a deviation. Tests: `the_first_frame_of_scroll_inertia_scrolls` (`input_tests.rs`), `touch_flick_scrolls_on_with_inertia` (`scroll_content_presenter_tests.rs`) and the touch swipe of `scripts/browser/tests/control_catalog.test.mjs`. | `browser-touch-scroll` (2026-10-17) |
+
+## Microsoft.Extensions.DependencyInjection (issue #251)
+
+`ferroui-dependency-injection` follows dotnet/runtime v10.0.13. See
+[dependency-injection.md](dependency-injection.md) for the API, ownership contract and reference.
+
+- One UI-independent crate holds both upstream packages. Providers are per-thread `Rc` handles;
+  there is no `Send + Sync`/Arc provider, reflection, emitted IL, JIT switching or EventSource.
+- `TypeId` identifies service types, including trait objects. Typed fallible factories and the
+  `service_factory!` macro replace constructor reflection, constructor-selection attributes,
+  keyed-parameter attributes and activation with untyped arguments. The macro emits dependencies
+  for validation. Opaque closures have no statically discoverable dependencies, as upstream
+  delegates do not. Open generic registrations are replaced by concrete Rust instantiations;
+  enumeration is explicit `Vec<Rc<S>>` resolution. Key inheritance is supported.
+- Disposal is explicit and opt-in on factory descriptors because Rust cannot discover unrelated
+  disposable traits on arbitrary services. Instances remain externally owned. A sync disposal
+  attempt with async-only services returns an error before changing state, so async disposal can
+  still run. Async cleanup uses FerroUI tasks, never a blocking wait. The rare service returned
+  after its factory disposes its scope has async-only cleanup started locally, not synchronously
+  waited. Existing Rc handles remain valid Rust values after logical disposal.
+- Scoped/provider handles are cloneable; dropping them does not invoke disposal. Call disposal to
+  release resources and cached service/provider cycles. Root disposal invalidates child resolution,
+  but each child still owns its cleanup. Scopes are flat, as upstream.
+- Collection extensions are inherent methods; descriptor factories take an explicit lifetime.
+  `TryAddEnumerable` uses explicit implementation type metadata. Keyed and unkeyed descriptor
+  metadata share accessors; CLR argument-null/type-assignability checks become Rust type checks.
+- The optional Splat adapter preserves mutable collection rebuilds and immutable provider mode.
+  Contracts become keys; null and empty differ. Splat null factories return None and are filtered
+  from enumerations. Its upstream registration callbacks remain unsupported. Explicit Splat
+  constant disposal callbacks are honored at adapter disposal, even for unresolved constants.
+- CLR engine/compiler/reflection and diagnostics tests are not runnable equivalents. Existing
+  exclusions remain explicit in the generated inventories; no applicable test gaps remain.
+  Internal call-site tests assert metadata and cache identities, generic constraints use closed
+  instantiations, and invalid abstract/null constructor inputs are rejected in compile tests.
+- `AsyncServiceScope` wraps a custom scope. Optional async-disposal and required-service capabilities
+  use explicit trait methods rather than CLR interface casts. `typed_key(T)` checks the key type at
+  activation. Explicit enumerables use `ServiceDescriptor::enumerable_instance` so both erased and
+  typed enumeration can find their element type without reflection.
