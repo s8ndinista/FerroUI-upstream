@@ -83,31 +83,74 @@ counts, commands, exact results and limitations.
 The pinned source inventory contains **1,545 public-source types, 7,466 public-source
 members and 198 separately counted private-source types**. The Gallery has **126 catalog
 pages, 350 exported examples and 355 actual ControlExample instances**. All 126 pages are
-searchable and navigable. The port records **67 partial pages** (66 markup adaptations plus
-the live ScratchPad editor) and **59 pending pages**. No complete page is claimed as ported
-or behaviorally verified. The generated [report](data/REPORT.md) is the current ledger.
+searchable and navigable. The port records **71 partial pages**, including the live
+ScratchPad editor, and **55 pending pages**. There are **35 explicit partial mappings to
+original exported examples**. No complete page is claimed as ported or behaviorally
+verified. The generated [report](data/REPORT.md) and [summary](data/summary.json) are the
+current ledger.
 
-Execution-backed API evidence currently covers **1 verified type, 26 partial types,
-202 verified members and 111 partial members**. The verified type is the complete `Symbol`
+Source comparison identifies **297 type candidates and 1,413 member candidates**.
+These are lexical declarations connected through explicit namespace/member maps;
+they do not establish signature, default, behavioral or WinMD ABI equivalence.
+
+Execution-backed API evidence currently covers **1 verified type, 36 partial types,
+202 verified members and 172 partial members**. The verified type is the complete `Symbol`
 enum. Its 197 numeric values account for 197 of the verified members; the remaining five
 are narrowly tested icon members. These figures do not imply that 202 independently
 implemented control operations or any complete Gallery page have been verified.
 
+The current increment adds native `InfoBadge`, `ProgressRing` and `RatingControl`, their
+supporting settings/item descriptors and the two applicable automation peers. The Gallery
+adapts both original ProgressRing examples, both RatingControl examples and three of the
+four InfoBadge examples. It also preserves the CompactSizing example's navigation between
+distinct standard/compact pages, all four text/password fields and its nullable date. The
+compact resource dictionary belongs to the compact page; application density stays under
+the application's control.
+
+These remain bounded native adaptations. InfoBadge's NavigationView composition is pending;
+ProgressRing's custom animated-visual sources are absent; RatingControl's Windows number
+formatting, text-scale/template-resource details and raw platform gamepad mapping remain
+unsupported or unverified. RatingControl rejects NaN for `Value` and `PlaceholderValue` as
+an explicit native validation exception. CompactSizing retains explicit TextBox/composition
+adapters for PasswordBox and Header. Installed fonts, exact pixels and Windows accessibility
+acceptance remain separate from the passing native tests.
+
+The separate [theme resource/style ledger](../winui-theme/TRACKING.md) records
+**6,912 ported, 1,991 waived and 70 pending entries**. The pending entries belong to
+InfoBadge (27), ProgressRing (8) and RatingControl (35). These counts concern scoped
+source definitions, with the theme's own reference revision; resource lookup support
+does not supply a missing source dictionary or establish visual parity. The current
+theme suite passes after the reference-fixture storage update, with both compiler
+outputs still compared against the complete reference bytes.
+
 | Validation | Current evidence | Boundary |
 | --- | --- | --- |
-| Existing FerroUI API | 3,170 namespaced types, 28,435 declared member names and 458 source registrations preserved against the starting commit | Source declarations; signature/default/behavior compatibility still needs review and runtime tests |
-| Native WinUI controls | 77 tests pass across navigation, NumberBox, RadioButtons, icons, reusable icon sources, AutoSuggestBox and InfoBar | Explicit tested subsets; the control types remain partial |
-| WinUI binding lifecycle | 13 tests pass | Root/named-element and typed-template property paths with explicit host initialization; unsupported expressions remain diagnosed |
-| XAML migration and runtime | 38 integration tests pass; three deferred-resource error-isolation tests pass | Opt-in policy; existing loading and binding defaults remain unchanged |
+| Existing FerroUI API | 3,170 namespaced types, 28,435 declared member names and 458 source registrations preserved against the starting commit; 82 additive types | Current source-declaration gate passes; full signature/default/behavior compatibility is a separate requirement |
+| Native WinUI controls | 127 tests pass: 77 existing tests plus 13 InfoBadge, 16 ProgressRing and 21 RatingControl tests | Native properties, templates, input, clock lifetime and automation; every new control type remains partial |
+| Base property/framework regression | 4,383 tests pass on the current source | Includes the additive local-value query; existing clearing and priority semantics are preserved |
+| WinUI binding lifecycle | 13 tests pass on the current source | Root/named-element and typed-template property paths with explicit host initialization; unsupported expressions remain diagnosed |
+| XAML migration and runtime | 41 integration tests and three deferred-resource error-isolation tests pass on the current source | Includes native feedback-control construction, audited InfoBadge style mapping, nested error scopes and unchanged ordinary panic behavior |
 | Compiled and interpreted XAML | Five focused tests pass, with one explicitly ignored regeneration task | Real emitted Rust compiles and agrees with interpreted root and typed-template property bindings; standalone DataTemplate document roots are outside the emitter contract |
-| Native Gallery | 33 tests pass | Catalog, native adaptations, source interactions, assets and mocked host-service contracts |
-| Native rendering and desktop | All 126 light-theme pages and five dark-theme pages render; the desktop application compiles | Real Skia/HarfBuzz rendering and original bitmap decoding; no upstream pixel, OS-input or screen-reader equivalence claim |
-| Source comparison | 44 scanner, glyph, namespace-builder and baseline regression tests pass | A source candidate is never automatically promoted to behavioral parity |
+| Native view builders | `cargo check -p ferroui-view` passes | Generated typed builders compile; this does not establish every builder's runtime behavior |
+| Native Gallery | 42 tests pass | Catalog, original-example interactions, local compact resources, assets, lifetime and mocked host-service contracts |
+| WinUI theme | 294 tests pass, with two explicitly ignored regeneration/timing tasks | Includes exact joined-reference comparisons and four reference-storage tests; source-resource and visual gaps remain explicit |
+| Native rendering and desktop | Current checkpoint: all 126 light-theme pages and nine dark-theme pages render; desktop compilation passes | Every frame decodes as nonblank 1280 × 900 PNG; 126/9 distinct sweep hashes. Eight new retained frames were reviewed. Missing Segoe glyphs remain visible; interactive desktop, upstream pixels and Windows accessibility are unverified |
+| Source comparison | 44 scanner/comparison regressions and two theme path-case tests pass; API, event, symbol, builder, theme, catalog and asset freshness gates pass | A source candidate is never automatically promoted to behavioral parity; the strict completeness gate remains closed |
 
 The [Gallery validation ledger](../../../samples/WinUIGallery/VALIDATION.md) records exact
 commands, source hashes, assets, rendering evidence and platform limits. Durable native
-control executions are stored in [the execution records](data/executions/); any supplied
-execution record is checked for freshness even when its API entry is only partial.
+control executions are stored in [the execution records](data/executions/). The current
+[third record](data/executions/native-controls-003.json) contains the 50 new focused test
+names and source hashes from the passing 127-test run. Any supplied execution record is
+checked for freshness even when its API entry is only partial.
+
+Current rendered evidence uses native source checkpoint
+`3c7ceb81dcc4948f374c05c4757c6cb72ed5de5d`. The
+[capture manifest](captures/capture-manifest.json) keeps the four dedicated light
+captures separate from the 126-page light sweep and nine-page dark sweep. The eight
+new reviewed frames show InfoBadge, ProgressRing, RatingControl and CompactSizing in
+both themes; CompactSizing is captured in its initial Standard state. Five retained
+`d008845` frames remain explicitly historical.
 
 ## Review and run
 
@@ -119,13 +162,20 @@ execution record is checked for freshness even when its API entry is only partia
 
 ```sh
 cargo run -p winui-gallery --features desktop -- --page=NumberBox
-cargo test -p winui-gallery --lib
+cargo test --locked --offline -p winui-gallery --lib
+cargo test --locked --offline -p ferroui-base \
+  --features testing,compiler-metadata,markup-functions --lib
 cargo test -p ferroui-markup-xaml --test winui_bindings
-cargo test -p ferroui-markup-xaml-loader --test winui_migration
-cargo test -p ferroui-markup-xaml-loader --features emitter --test winui_compiled
-cargo test -p ferroui-controls --features testing \
+cargo check -p ferroui-view
+cargo test --locked --offline -p ferroui-markup-xaml-loader \
+  --features emitter,ferroui-base/markup-functions --test winui_migration --test winui_compiled
+cargo test --locked --offline -p ferroui-themes-winui --lib
+cargo check --locked --offline -p winui-gallery --features desktop
+cargo test --locked --offline -p ferroui-controls \
+  --features testing,ferroui-base/compiler-metadata,ferroui-base/markup-functions \
   --test winui_navigation --test winui_number_box --test winui_icons --test winui_radio_buttons \
-  --test winui_auto_suggest_box --test winui_icon_sources --test winui_info_bar
+  --test winui_auto_suggest_box --test winui_icon_sources --test winui_info_bar \
+  --test winui_info_badge --test winui_progress_ring --test winui_rating_control --no-fail-fast
 python3 -m unittest discover -s scripts/winui-gallery -p 'test_*.py'
 python3 scripts/winui-gallery/scan.py --check
 python3 scripts/winui-gallery/existing_api.py --check
@@ -138,3 +188,6 @@ compiled-binding and full-catalog rendering checks. Its
 separate `require_complete` workflow-dispatch option runs
 `python3 scripts/winui-gallery/scan.py --check --require-complete`; this gate intentionally
 fails while API contracts or complete Gallery pages lack current behavioral execution evidence.
+The current strict run reports 1,544 types, 7,264 members and all 126 Gallery pages
+without complete behavioral execution evidence; partial contract tests do not satisfy
+that full-completion requirement.

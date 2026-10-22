@@ -13,15 +13,17 @@ and live theme selection use real FerroUI controls.
 
 **This is not a completed port of every Gallery behavior.** `port-status.json`
 separates source coverage from executable page coverage. The initial native subset
-contains 66 explicit markup adaptations and a working ScratchPad editor, for 67 partial
+contains 70 explicit markup adaptations and a working ScratchPad editor, for 71 partial
 pages. Each remains `partial`; it does not imply that
 all examples, events, binding expressions, platform capabilities or exact pixels of
 the original page have been reproduced. The generated framework parity reports are
 under `docs/porting/winui-gallery/data/`.
 
 The upstream exported catalog is not the entire executable Gallery: the scanner also
-inventories **355 actual `ControlExample` instances and 521 snippet files**, including
-legacy/unreferenced files. Five example instances are absent from the exported catalog.
+inventories **355 actual `ControlExample` instances**. Its source manifest contains
+**521 tracked text files, including 355 catalog-page snippets**; the remaining text
+files include supporting and legacy/unreferenced inputs. Five example instances are
+absent from the exported catalog.
 Those differences stay in the parity ledger and completeness gate; embedding the
 catalog does not mark the remaining examples as ported.
 
@@ -58,7 +60,8 @@ include button click output and disabled options, original two/three-state and
 select-all check-box handlers, password validation/reveal, text character counts,
 sliders, selection, layout, dates, menus, flyouts,
 scrolling, resources and element-name binding. The opt-in WinUI NumberBox, RadioButtons,
-FontIcon, SymbolIcon, AutoSuggestBox, InfoBar and Frame/Page contracts are exercised directly by examples
+FontIcon, SymbolIcon, AutoSuggestBox, InfoBar, InfoBadge, ProgressRing, RatingControl
+and Frame/Page contracts are exercised directly by examples
 adapted from upstream. They use the framework's property, input, layout, drawing,
 popup and automation infrastructure.
 
@@ -69,6 +72,19 @@ original title, subtitle and 108 embedded control PNGs through native resource U
 aliases. Unicode lowercase comparison is an explicit approximation to the source's
 CurrentCulture search. Mock-renderer tests verify asset paths/bytes and application
 selection behavior; the capture host performs actual bitmap decoding.
+
+`feedback_samples.rs` ports both ProgressRing examples, both RatingControl examples
+and three of the four InfoBadge examples. Activation/background options, cleared
+numeric input, rating captions, fractional placeholders, source badge styles and
+integer badge-value guards run through the new native controls. The InfoBadge
+NavigationView example remains pending. Named badge themes retain the upstream
+resource keys and use the explicit Style-to-ControlTheme migration policy.
+
+`sizing_sample.rs` preserves the CompactSizing page's standard/compact navigation
+and all four text/password values plus its nullable selected date. Compact resources
+are local to each compact page. PasswordBox and Header remain explicit native
+TextBox/composition adaptations; changing the example does not change application
+density.
 
 `platform_samples.rs` ports the Popup open/close handlers, asynchronous clipboard
 text/format/clear operations and the RefreshContainer request/deferral example.
@@ -120,12 +136,33 @@ preview behavior and actual native event/property interactions. Tests that const
 controls do not claim an interactive desktop run, pixel equality, keyboard traversal,
 screen-reader interoperability or verification on every host.
 
-The current checkpoint passed **33 library tests** and the desktop compilation check.
-Real Skia/HarfBuzz captures rendered **all 126 pages in light** and five representative
-pages in dark. [Five reviewed frames](../../docs/porting/winui-gallery/captures/README.md)
-show actual native content and a pending page's source browser. The Linux host's
-missing Segoe icon fonts remain visible in AutoSuggestBox/InfoBar glyphs and are
-documented separately from the tested behavior.
+The current checkpoint passed **42 Gallery library tests**, **127 native control
+tests**, **4,383 Base tests**, **41 XAML migration/runtime tests**, **13 binding-lifecycle
+tests** and **three deferred-resource error-isolation tests**. Five compiled/interpreted
+XAML tests passed, with one explicitly ignored fixture-regeneration task. The WinUI
+theme passed **294 tests**, with two explicitly ignored regeneration/timing tasks;
+its split reference preserves the exact bytes used by both compiler comparisons.
+The view-builder and desktop checks passed. The source gates passed with **44
+scanner/comparison regressions** and **two theme path-case tests**.
+[VALIDATION.md](VALIDATION.md) records the scopes, commands and source hashes.
+
+The separate
+[theme resource/style ledger](../../docs/porting/winui-theme/TRACKING.md) records
+6,912 ported, 1,991 waived and 70 pending entries: InfoBadge 27, ProgressRing 8 and
+RatingControl 35 remain pending in the strict source-definition inventory.
+
+At native source checkpoint `3c7ceb81dcc4948f374c05c4757c6cb72ed5de5d`, real
+Skia/HarfBuzz captures rendered **all 126 pages in light** and **nine pages in dark**.
+Every sweep output decoded as a nonblank 1280 × 900 PNG, with 126/9 distinct hashes.
+The [eight reviewed current frames](../../docs/porting/winui-gallery/captures/README.md)
+show InfoBadge, ProgressRing, RatingControl and CompactSizing in both themes. Their
+light frames come from a separate four-page run recorded in the
+[capture manifest](../../docs/porting/winui-gallery/captures/capture-manifest.json).
+CompactSizing shows the initial Standard form; its compact-mode navigation and field
+retention are tested separately. Rating stars and some icons visibly lack Segoe
+glyphs on the recorded Linux host. These are native construction/rendering evidence;
+complete visuals, real platform input and accessibility remain pending. Five unchanged
+`d008845` frames are retained separately as historical evidence.
 
 ### Capture real rendered frames
 
@@ -136,7 +173,7 @@ shell:
 
 ```sh
 cargo run -p winui-gallery --features capture --bin winui-gallery-capture -- \
-  --pages=NumberBox,AutoSuggestBox,RadioButton,WebView2 --query=Button \
+  --pages=InfoBadge,ProgressRing,RatingControl,CompactSizing \
   --output-dir=gallery-captures
 ```
 
