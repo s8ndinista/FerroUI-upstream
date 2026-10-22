@@ -84,6 +84,7 @@ jobs:
           --test winui_radio_buttons --test winui_auto_suggest_box
           --test winui_icon_sources --test winui_info_bar
           --test winui_info_badge --test winui_progress_ring --test winui_rating_control
+          --test winui_navigation_view --test winui_navigation_items
       - name: Local values and animation precedence
         run: >-
           cargo test --locked -p ferroui-base --features testing
@@ -133,8 +134,21 @@ jobs:
       - name: Render representative controls in the dark theme
         run: >-
           cargo run --locked -p winui-gallery --features capture
-          --bin winui-gallery-capture -- --pages=NumberBox,RadioButton,AutoSuggestBox,InfoBar,InfoBadge,ProgressRing,RatingControl,CompactSizing
+          --bin winui-gallery-capture -- --pages=NumberBox,RadioButton,AutoSuggestBox,InfoBar,InfoBadge,ProgressRing,RatingControl,CompactSizing,NavigationView
           --dark --query=Button --output-dir=gallery-captures/dark
+      - name: Render all eight NavigationView compositions in both themes
+        run: |
+          for theme in light dark; do
+            theme_args=()
+            if [ "$theme" = dark ]; then
+              theme_args=(--dark)
+            fi
+            for control in nvSample5 nvSample6 nvSample2 nvSample7 nvSample4 nvSample9 nvSample8 nvSample; do
+              cargo run --locked -p winui-gallery --features capture --bin winui-gallery-capture -- \
+                --pages=NavigationView --control="$control" "${theme_args[@]}" \
+                --output-dir="gallery-captures/$theme"
+            done
+          done
       - name: Upload native rendering artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
