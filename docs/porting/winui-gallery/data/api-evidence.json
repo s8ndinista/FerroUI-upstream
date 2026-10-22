@@ -32,6 +32,47 @@
         }
       ]
     },
+    "Microsoft.UI.Xaml.Automation.Peers.ProgressRingAutomationPeer::constructor:ProgressRingAutomationPeer(MU_XC_NAMESPACE.ProgressRing owner)": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring_automation_peer.rs",
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "The native automation service and direct owner constructor create the correct peer, expose its native range pattern when determinate and compute active/indeterminate names. This is a native owner/handle adaptation, not WinRT constructor ABI parity.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "range_automation_is_available_only_when_determinate",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "accessible_name_reports_busy_only_for_active_indeterminate_progress",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.RatingControlAutomationPeer::constructor:RatingControlAutomationPeer(MU_XC_NAMESPACE.RatingControl owner)": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The native automation service constructs the owner peer, exposes both native patterns and publishes typed effective-value notifications. This does not certify WinRT owner handles, localized descriptions or Windows UIA event sequences.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "automation_exposes_value_and_range_patterns_with_unset_zero_projection",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "automation_notifications_report_coerced_values_and_current_text_with_correct_types",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
     "Microsoft.UI.Xaml.Controls.AutoSuggestBox::event:public event Microsoft.UI.Xaml.Controls.AutoSuggestBoxQuerySubmittedEventHandler QuerySubmitted": {
       "execution": {
         "record": "docs/porting/winui-gallery/data/executions/native-controls-002.json"
@@ -698,6 +739,246 @@
         {
           "name": "unset_foreground_inherits_until_the_source_supplies_an_explicit_value",
           "path": "src/FerroUI.Controls/tests/winui_icon_sources.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadge::constructor:InfoBadge()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "Native construction establishes the unset dot presentation and independent read-only TemplateSettings. Framework/WinRT inheritance and exact Windows theme appearance are outside this constructor evidence.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "default_badge_is_a_nonfocusable_dot_with_instance_owned_settings",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadge::property:IconSource IconSource": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "Native icon sources create independent parented elements, retain their type-specific margins and propagate source updates. WinRT source handles and installed-font/pixel behavior are adaptations or unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "icon_source_types_keep_their_native_elements_margins_and_live_updates",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "reusable_icon_sources_never_share_parented_elements_between_badges",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadge::property:InfoBadgeTemplateSettings TemplateSettings { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "Each badge owns a stable settings object exposed through a native read-only direct property. Writable setting members update the actual current template parts; this does not certify WinRT object projection.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "default_badge_is_a_nonfocusable_dot_with_instance_owned_settings",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "settings_properties_update_actual_template_parts_and_remain_independent",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadge::property:Int32 Value": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "The -1 sentinel restores icon/dot mode; nonnegative values render in full and values below -1 are rejected before changing effective state. Rust assignment uses set_numeric_value; culture-specific numeric formatting remains unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "numeric_values_take_priority_over_icons_and_minus_one_restores_the_icon_or_dot",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "values_below_minus_one_are_rejected_before_the_effective_value_changes",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadge::property:static Microsoft.UI.Xaml.DependencyProperty IconSourceProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "Native icon sources create independent parented elements, retain their type-specific margins and propagate source updates. WinRT source handles and installed-font/pixel behavior are adaptations or unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "icon_source_types_keep_their_native_elements_margins_and_live_updates",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "reusable_icon_sources_never_share_parented_elements_between_badges",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadge::property:static Microsoft.UI.Xaml.DependencyProperty TemplateSettingsProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "Each badge owns a stable settings object exposed through a native read-only direct property. Writable setting members update the actual current template parts; this does not certify WinRT object projection. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "default_badge_is_a_nonfocusable_dot_with_instance_owned_settings",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "settings_properties_update_actual_template_parts_and_remain_independent",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadge::property:static Microsoft.UI.Xaml.DependencyProperty ValueProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "The -1 sentinel restores icon/dot mode; nonnegative values render in full and values below -1 are rejected before changing effective state. Rust assignment uses set_numeric_value; culture-specific numeric formatting remains unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "numeric_values_take_priority_over_icons_and_minus_one_restores_the_icon_or_dot",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "values_below_minus_one_are_rejected_before_the_effective_value_changes",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadgeTemplateSettings::constructor:InfoBadgeTemplateSettings()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "A standalone native settings object starts with no icon and default corner radius; separate badge settings retain independent state.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "settings_properties_update_actual_template_parts_and_remain_independent",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadgeTemplateSettings::property:Microsoft.UI.Xaml.Controls.IconElement IconElement": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "The setting exposes the actual current native icon and accepts an explicit replacement that reaches the live ContentPresenter. Native IconElement handles replace WinRT projected elements.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "settings_properties_update_actual_template_parts_and_remain_independent",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "icon_source_types_keep_their_native_elements_margins_and_live_updates",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadgeTemplateSettings::property:Microsoft.UI.Xaml.CornerRadius InfoBadgeCornerRadius": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "The native radius tracks arranged height unless a local control radius exists. Animation and ClearValue retain native property semantics, including deferred local clearing while animated. Setting writes update the current Border; WinUI precedence equivalence and pixel-equivalent rendering remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "automatic_radius_tracks_height_while_local_radius_overrides_and_clear_restores_it",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "local_corner_radius_beneath_animation_preserves_native_clear_value_semantics",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "settings_properties_update_actual_template_parts_and_remain_independent",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadgeTemplateSettings::property:static Microsoft.UI.Xaml.DependencyProperty IconElementProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "The setting exposes the actual current native icon and accepts an explicit replacement that reaches the live ContentPresenter. Native IconElement handles replace WinRT projected elements. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "settings_properties_update_actual_template_parts_and_remain_independent",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "icon_source_types_keep_their_native_elements_margins_and_live_updates",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadgeTemplateSettings::property:static Microsoft.UI.Xaml.DependencyProperty InfoBadgeCornerRadiusProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "The native radius tracks arranged height unless a local control radius exists. Animation and ClearValue retain native property semantics, including deferred local clearing while animated. Setting writes update the current Border; WinUI precedence equivalence and pixel-equivalent rendering remain unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "automatic_radius_tracks_height_while_local_radius_overrides_and_clear_restores_it",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "local_corner_radius_beneath_animation_preserves_native_clear_value_semantics",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "settings_properties_update_actual_template_parts_and_remain_independent",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
         }
       ]
     },
@@ -1831,6 +2112,336 @@
         }
       ]
     },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::constructor:ProgressRing()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Native construction uses WinUI-specific active/indeterminate defaults while retaining the existing ProgressBar contract and type identity. Full inherited WinUI behavior is not implied.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_are_winui_specific_and_leave_existing_progress_bar_unchanged",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:Boolean IsActive { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Effective activation changes native visual opacity/accessibility and starts or stops clock work without removing layout space. Hidden local writes under animation do not restart motion. Exact Windows animation and accessibility event sequences remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "inactive_ring_retains_layout_while_removing_its_automation_content",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "indeterminate_clock_subscription_follows_activation_and_effective_visibility",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "hidden_local_activation_changes_do_not_restart_motion_and_apply_after_animation",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:Boolean IsIndeterminate { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs",
+        "src/FerroUI.Controls/winui/progress_ring_automation_peer.rs"
+      ],
+      "notes": "Native determinate/indeterminate selection changes arc presentation, animation scheduling and RangeValue-provider availability. No custom animated-visual source contract is claimed.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "markup_property_writes_follow_the_same_range_coercion",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "range_automation_is_available_only_when_determinate",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "indeterminate_clock_subscription_follows_activation_and_effective_visibility",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:Double Maximum": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Direct and registered-property assignments honor the last changed bound and coerce Value to the effective range. Collapsed/infinite ranges produce finite native geometry; WinRT property identity and exact animation behavior remain adaptations.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "range_coercion_gives_the_last_set_bound_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "markup_property_writes_follow_the_same_range_coercion",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "nan_and_collapsed_ranges_preserve_public_values_but_emit_finite_geometry",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:Double Minimum": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Direct and registered-property assignments honor the last changed bound and coerce Value to the effective range. Collapsed/infinite ranges produce finite native geometry; WinRT property identity and exact animation behavior remain adaptations.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "range_coercion_gives_the_last_set_bound_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "markup_property_writes_follow_the_same_range_coercion",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "nan_and_collapsed_ranges_preserve_public_values_but_emit_finite_geometry",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:Double Value": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Native Value clamps to bounds; NaN remains public while normalized rendering is finite. Increasing determinate values animate and decreasing values apply immediately. Rust assignment uses set_range_value; custom source animation and exact Windows motion are not certified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "range_coercion_gives_the_last_set_bound_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "markup_property_writes_follow_the_same_range_coercion",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "nan_and_collapsed_ranges_preserve_public_values_but_emit_finite_geometry",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "determinate_increases_animate_then_unsubscribe_and_decreases_are_immediate",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:ProgressRingTemplateSettings TemplateSettings { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "A stable per-instance native settings object changes with arranged width and preserves the pinned forty-pixel formula boundary. Upstream declares only TemplateSettings, so no extra upstream property member is inferred.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "legacy_template_settings_use_actual_width_and_the_forty_pixel_boundary",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:static Microsoft.UI.Xaml.DependencyProperty IsActiveProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Effective activation changes native visual opacity/accessibility and starts or stops clock work without removing layout space. Hidden local writes under animation do not restart motion. Exact Windows animation and accessibility event sequences remain unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "inactive_ring_retains_layout_while_removing_its_automation_content",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "indeterminate_clock_subscription_follows_activation_and_effective_visibility",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "hidden_local_activation_changes_do_not_restart_motion_and_apply_after_animation",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:static Microsoft.UI.Xaml.DependencyProperty IsIndeterminateProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs",
+        "src/FerroUI.Controls/winui/progress_ring_automation_peer.rs"
+      ],
+      "notes": "Native determinate/indeterminate selection changes arc presentation, animation scheduling and RangeValue-provider availability. No custom animated-visual source contract is claimed. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "markup_property_writes_follow_the_same_range_coercion",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "range_automation_is_available_only_when_determinate",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "indeterminate_clock_subscription_follows_activation_and_effective_visibility",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:static Microsoft.UI.Xaml.DependencyProperty MaximumProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Direct and registered-property assignments honor the last changed bound and coerce Value to the effective range. Collapsed/infinite ranges produce finite native geometry; WinRT property identity and exact animation behavior remain adaptations. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "range_coercion_gives_the_last_set_bound_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "markup_property_writes_follow_the_same_range_coercion",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "nan_and_collapsed_ranges_preserve_public_values_but_emit_finite_geometry",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:static Microsoft.UI.Xaml.DependencyProperty MinimumProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Direct and registered-property assignments honor the last changed bound and coerce Value to the effective range. Collapsed/infinite ranges produce finite native geometry; WinRT property identity and exact animation behavior remain adaptations. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "range_coercion_gives_the_last_set_bound_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "markup_property_writes_follow_the_same_range_coercion",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "nan_and_collapsed_ranges_preserve_public_values_but_emit_finite_geometry",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRing::property:static Microsoft.UI.Xaml.DependencyProperty ValueProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Native Value clamps to bounds; NaN remains public while normalized rendering is finite. Increasing determinate values animate and decreasing values apply immediately. Rust assignment uses set_range_value; custom source animation and exact Windows motion are not certified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "range_coercion_gives_the_last_set_bound_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "markup_property_writes_follow_the_same_range_coercion",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "nan_and_collapsed_ranges_preserve_public_values_but_emit_finite_geometry",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "determinate_increases_animate_then_unsubscribe_and_decreases_are_immediate",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings::property:Double EllipseDiameter { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Focused layout assertions cover width 32/40/60, the diameter boundary, ellipse offset and maximum side length while a second instance remains unchanged. Broader Windows template/pixel behavior is unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "legacy_template_settings_use_actual_width_and_the_forty_pixel_boundary",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings::property:Double MaxSideLength { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Focused layout assertions cover width 32/40/60, the diameter boundary, ellipse offset and maximum side length while a second instance remains unchanged. Broader Windows template/pixel behavior is unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "legacy_template_settings_use_actual_width_and_the_forty_pixel_boundary",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings::property:Microsoft.UI.Xaml.Thickness EllipseOffset { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Focused layout assertions cover width 32/40/60, the diameter boundary, ellipse offset and maximum side length while a second instance remains unchanged. Broader Windows template/pixel behavior is unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "legacy_template_settings_use_actual_width_and_the_forty_pixel_boundary",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
     "Microsoft.UI.Xaml.Controls.RadioButtons::constructor:RadioButtons()": {
       "execution": {
         "record": "docs/porting/winui-gallery/data/executions/native-controls-001.json"
@@ -2740,6 +3351,663 @@
         {
           "name": "group_exposes_native_selection_automation_and_preserves_other_control_defaults",
           "path": "src/FerroUI.Controls/tests/winui_radio_buttons.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::constructor:RatingControl()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs",
+        "src/FerroUI.Controls/winui/rating_item_info.rs"
+      ],
+      "notes": "Native construction establishes WinUI-specific defaults and a separate default glyph descriptor per control. Inherited framework/WinRT contracts and installed-font rendering remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "rating_defaults_have_distinct_unset_and_placeholder_domains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "default_glyph_descriptors_and_value_handlers_do_not_retain_controls",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::event:event Windows.Foundation.TypedEventHandler<RatingControl, Object> ValueChanged": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The native handler list notifies user changes, permits reentrant edits and subscription disposal, and leaves programmatic/read-only updates silent. Typed Rust subscriptions and metadata delegates adapt WinRT event tokens; full projected delegate ABI is not claimed.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "programmatic_updates_are_silent_and_user_notifications_allow_reentrant_edits",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "read_only_and_disabled_block_user_edits_but_preserve_programmatic_assignment",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "default_glyph_descriptors_and_value_handlers_do_not_retain_controls",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:Boolean IsClearEnabled { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Repeat pointer selection and movement before the first item can clear; disabling clearing retains the minimum non-sentinel value. Keyboard Home and range edges follow the same policy; platform-specific input paths remain separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "keyboard_honors_initial_value_fractional_steps_and_clear_policy",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "repeated_pointer_selection_clears_including_maximum_and_respects_clear_disabled",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "native_pointer_capture_selects_clears_and_supports_drag_before_the_first_item",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:Boolean IsReadOnly { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Read-only blocks user edits and cancels active capture while preserving programmatic and provider assignment. Native automation reports the flag; Windows UIA interaction/event parity remains unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "read_only_and_disabled_block_user_edits_but_preserve_programmatic_assignment",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "changing_read_only_during_capture_cancels_without_committing_a_preview",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "automation_exposes_value_and_range_patterns_with_unset_zero_projection",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:Double PlaceholderValue { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The native placeholder preserves zero/sub-one fractions, uses -1 for negative inputs and clamps to the effective maximum; native clips display fractional hints. NaN rejection is an explicit native validation exception and is not certified by these finite/coercion tests. Exact pixel/text-scale behavior remains unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "rating_defaults_have_distinct_unset_and_placeholder_domains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "maximum_coercion_commits_valid_bound_before_values_and_does_not_restore_clamped_values",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "template_clips_fractional_values_and_retains_native_item_identity_during_edits",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:Double Value { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Native Value uses -1 for negatives, a minimum selected value of one and maximum clamping; programmatic writes are silent and user edits use the event path. Rust assignment uses set_rating_value. NaN rejection is an explicit native validation exception and is not certified by these finite/coercion tests.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "rating_defaults_have_distinct_unset_and_placeholder_domains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "maximum_coercion_commits_valid_bound_before_values_and_does_not_restore_clamped_values",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "programmatic_updates_are_silent_and_user_notifications_allow_reentrant_edits",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "native_pointer_capture_selects_clears_and_supports_drag_before_the_first_item",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:Int32 InitialSetValue { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Keyboard movement from unset and normalized gamepad engagement apply InitialSetValue before subsequent edits. Raw platform gamepad A/B mappings and all out-of-domain InitialSetValue combinations remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "keyboard_honors_initial_value_fractional_steps_and_clear_policy",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "normalized_gamepad_engagement_commits_or_restores_the_pre_engagement_value",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:Int32 MaxRating { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "MaxRating coerces to at least one, clamps both numeric values and changes the native item count. Expanding the maximum does not restore previously clamped values; exact Windows visual behavior remains unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "maximum_coercion_commits_valid_bound_before_values_and_does_not_restore_clamped_values",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "template_clips_fractional_values_and_retains_native_item_identity_during_edits",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:RatingItemInfo ItemInfo { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs",
+        "src/FerroUI.Controls/winui/rating_item_info.rs"
+      ],
+      "notes": "Native descriptor replacement changes real glyph/image children and live updates use weak subscriptions; discarded descriptors and controls can be released. The listed tests cover specific default/placeholder/disabled states, not every pointer-over or image fallback branch.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "image_info_uses_native_images_and_releases_replaced_descriptors",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "default_glyph_descriptors_and_value_handlers_do_not_retain_controls",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:String Caption { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Native TextBlock content updates with Caption; empty captions hide and remove reserved spacing. Exact WinUI text metrics/global text scaling remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "caption_is_native_text_and_empty_caption_does_not_reserve_spacing",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:static Microsoft.UI.Xaml.DependencyProperty CaptionProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Native TextBlock content updates with Caption; empty captions hide and remove reserved spacing. Exact WinUI text metrics/global text scaling remain unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "caption_is_native_text_and_empty_caption_does_not_reserve_spacing",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:static Microsoft.UI.Xaml.DependencyProperty InitialSetValueProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Keyboard movement from unset and normalized gamepad engagement apply InitialSetValue before subsequent edits. Raw platform gamepad A/B mappings and all out-of-domain InitialSetValue combinations remain unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "keyboard_honors_initial_value_fractional_steps_and_clear_policy",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "normalized_gamepad_engagement_commits_or_restores_the_pre_engagement_value",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:static Microsoft.UI.Xaml.DependencyProperty IsClearEnabledProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Repeat pointer selection and movement before the first item can clear; disabling clearing retains the minimum non-sentinel value. Keyboard Home and range edges follow the same policy; platform-specific input paths remain separate. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "keyboard_honors_initial_value_fractional_steps_and_clear_policy",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "repeated_pointer_selection_clears_including_maximum_and_respects_clear_disabled",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "native_pointer_capture_selects_clears_and_supports_drag_before_the_first_item",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:static Microsoft.UI.Xaml.DependencyProperty IsReadOnlyProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Read-only blocks user edits and cancels active capture while preserving programmatic and provider assignment. Native automation reports the flag; Windows UIA interaction/event parity remains unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "read_only_and_disabled_block_user_edits_but_preserve_programmatic_assignment",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "changing_read_only_during_capture_cancels_without_committing_a_preview",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "automation_exposes_value_and_range_patterns_with_unset_zero_projection",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:static Microsoft.UI.Xaml.DependencyProperty ItemInfoProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs",
+        "src/FerroUI.Controls/winui/rating_item_info.rs"
+      ],
+      "notes": "Native descriptor replacement changes real glyph/image children and live updates use weak subscriptions; discarded descriptors and controls can be released. The listed tests cover specific default/placeholder/disabled states, not every pointer-over or image fallback branch. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "image_info_uses_native_images_and_releases_replaced_descriptors",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "default_glyph_descriptors_and_value_handlers_do_not_retain_controls",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:static Microsoft.UI.Xaml.DependencyProperty MaxRatingProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "MaxRating coerces to at least one, clamps both numeric values and changes the native item count. Expanding the maximum does not restore previously clamped values; exact Windows visual behavior remains unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "maximum_coercion_commits_valid_bound_before_values_and_does_not_restore_clamped_values",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "template_clips_fractional_values_and_retains_native_item_identity_during_edits",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:static Microsoft.UI.Xaml.DependencyProperty PlaceholderValueProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The native placeholder preserves zero/sub-one fractions, uses -1 for negative inputs and clamps to the effective maximum; native clips display fractional hints. NaN rejection is an explicit native validation exception and is not certified by these finite/coercion tests. Exact pixel/text-scale behavior remains unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "rating_defaults_have_distinct_unset_and_placeholder_domains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "maximum_coercion_commits_valid_bound_before_values_and_does_not_restore_clamped_values",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "template_clips_fractional_values_and_retains_native_item_identity_during_edits",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl::property:static Microsoft.UI.Xaml.DependencyProperty ValueProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Native Value uses -1 for negatives, a minimum selected value of one and maximum clamping; programmatic writes are silent and user edits use the event path. Rust assignment uses set_rating_value. NaN rejection is an explicit native validation exception and is not certified by these finite/coercion tests. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "rating_defaults_have_distinct_unset_and_placeholder_domains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "maximum_coercion_commits_valid_bound_before_values_and_does_not_restore_clamped_values",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "programmatic_updates_are_silent_and_user_notifications_allow_reentrant_edits",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "native_pointer_capture_selects_clears_and_supports_drag_before_the_first_item",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo::constructor:RatingItemFontInfo()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Native descriptor construction supports separate per-control instances and assignment through the RatingItemInfo base. Full WinRT/dependency-object inheritance is outside this constructor scope.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "default_glyph_descriptors_and_value_handlers_do_not_retain_controls",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo::property:String DisabledGlyph { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "With the control disabled, changing DisabledGlyph updates the actual foreground text; clearing it falls back to Glyph. Windows disabled-state brushes and exact pixels remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo::property:String Glyph { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The native base glyph supplies placeholder/disabled fallback text when the corresponding override is empty, and descriptor changes remain instance-specific. Installed-font rendering and all pointer states are outside this evidence.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "default_glyph_descriptors_and_value_handlers_do_not_retain_controls",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo::property:String PlaceholderGlyph { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "A placeholder hint uses the native PlaceholderGlyph override and falls back to Glyph when the override becomes empty. Pointer-over-placeholder behavior and Windows text metrics remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo::property:String UnsetGlyph { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The native background item uses the configured UnsetGlyph. This focused assertion does not certify every empty-value or pointer-over fallback branch, installed fonts or exact pixels.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo::property:static Microsoft.UI.Xaml.DependencyProperty DisabledGlyphProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "With the control disabled, changing DisabledGlyph updates the actual foreground text; clearing it falls back to Glyph. Windows disabled-state brushes and exact pixels remain unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo::property:static Microsoft.UI.Xaml.DependencyProperty GlyphProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The native base glyph supplies placeholder/disabled fallback text when the corresponding override is empty, and descriptor changes remain instance-specific. Installed-font rendering and all pointer states are outside this evidence. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "default_glyph_descriptors_and_value_handlers_do_not_retain_controls",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo::property:static Microsoft.UI.Xaml.DependencyProperty PlaceholderGlyphProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "A placeholder hint uses the native PlaceholderGlyph override and falls back to Glyph when the override becomes empty. Pointer-over-placeholder behavior and Windows text metrics remain unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo::property:static Microsoft.UI.Xaml.DependencyProperty UnsetGlyphProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The native background item uses the configured UnsetGlyph. This focused assertion does not certify every empty-value or pointer-over fallback branch, installed fonts or exact pixels. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemImageInfo::constructor:RatingItemImageInfo()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Native descriptor construction supplies image objects through the RatingItemInfo base and replacement releases the old descriptor. WinRT ImageSource projection/activation is an explicit native adaptation.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "image_info_uses_native_images_and_releases_replaced_descriptors",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemImageInfo::property:Microsoft.UI.Xaml.Media.ImageSource Image { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The actual native Image child receives the same IImage instance when PlaceholderImage is absent. Other image-state fallbacks, platform decoding and exact pixels remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "image_info_uses_native_images_and_releases_replaced_descriptors",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemImageInfo::property:Microsoft.UI.Xaml.Media.ImageSource PlaceholderImage { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "A native placeholder image overrides the base image by identity; clearing it immediately restores Image. This scopes evidence to the native IImage adapter and this fallback, not Windows image activation or every pointer/disabled state.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "image_info_uses_native_images_and_releases_replaced_descriptors",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemImageInfo::property:static Microsoft.UI.Xaml.DependencyProperty ImageProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "The actual native Image child receives the same IImage instance when PlaceholderImage is absent. Other image-state fallbacks, platform decoding and exact pixels remain unverified. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "image_info_uses_native_images_and_releases_replaced_descriptors",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemImageInfo::property:static Microsoft.UI.Xaml.DependencyProperty PlaceholderImageProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "A native placeholder image overrides the base image by identity; clearing it immediately restores Image. This scopes evidence to the native IImage adapter and this fallback, not Windows image activation or every pointer/disabled state. This scopes evidence to the native registered property path; WinRT dependency-property identity is adapted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "image_info_uses_native_images_and_releases_replaced_descriptors",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
         }
       ]
     },
@@ -7212,6 +8480,27 @@
         }
       ]
     },
+    "Microsoft.UI.Xaml.Automation.Peers.ProgressRingAutomationPeer": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring_automation_peer.rs",
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Native ProgressBar role, class name, busy-state naming and determinate-only RangeValue-provider contract. Provider handles and resource strings use FerroUI services; Windows UIA event sequences and translated-resource integration remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "range_automation_is_available_only_when_determinate",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "accessible_name_reports_busy_only_for_active_indeterminate_progress",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
     "Microsoft.UI.Xaml.Automation.Peers.RadioButtonsAutomationPeer": {
       "execution": {
         "record": "docs/porting/winui-gallery/data/executions/native-controls-001.json"
@@ -7225,6 +8514,26 @@
         {
           "name": "group_exposes_native_selection_automation_and_preserves_other_control_defaults",
           "path": "src/FerroUI.Controls/tests/winui_radio_buttons.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.RatingControlAutomationPeer": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Native Slider identity and Value/RangeValue providers expose unset-as-zero range projection, placeholder descriptions and typed effective-value notifications. English descriptions and invariant parsing are explicit adaptations; Windows globalization, translated UIA resources and platform notification sequences remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "automation_exposes_value_and_range_patterns_with_unset_zero_projection",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "automation_notifications_report_coerced_values_and_current_text_with_correct_types",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
         }
       ]
     },
@@ -7563,6 +8872,70 @@
         {
           "name": "path_source_shares_native_geometry_and_updates_surviving_elements",
           "path": "src/FerroUI.Controls/tests/winui_icon_sources.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadge": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "Native dot/icon/numeric presentation, value validation, live icon updates, instance-owned settings, sizing and radius behavior. Focused tests target native template parts; Windows numeric localization, arbitrary WinUI Style/VSM, installed fonts and pixel/theme equivalence remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "default_badge_is_a_nonfocusable_dot_with_instance_owned_settings",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "numeric_values_take_priority_over_icons_and_minus_one_restores_the_icon_or_dot",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "values_below_minus_one_are_rejected_before_the_effective_value_changes",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "icon_source_types_keep_their_native_elements_margins_and_live_updates",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "measurement_keeps_narrow_content_square_without_clamping_wider_numeric_content",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "automatic_radius_tracks_height_while_local_radius_overrides_and_clear_restores_it",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "replacing_the_template_releases_old_content_and_only_updates_current_parts",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadgeTemplateSettings": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/info_badge.rs"
+      ],
+      "notes": "Native settings hold the current IconElement and computed corner radius, support explicit property writes and use weak owner subscriptions. Native object/property identity replaces WinRT projection; full WinUI template and visual guarantees remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "settings_properties_update_actual_template_parts_and_remain_independent",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "automatic_radius_tracks_height_while_local_radius_overrides_and_clear_restores_it",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
+        },
+        {
+          "name": "settings_and_resource_subscriptions_do_not_keep_a_detached_badge_alive",
+          "path": "src/FerroUI.Controls/tests/winui_info_badge.rs"
         }
       ]
     },
@@ -7919,6 +9292,67 @@
         }
       ]
     },
+    "Microsoft.UI.Xaml.Controls.ProgressRing": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs",
+        "src/FerroUI.Controls/winui/progress_ring_automation_peer.rs"
+      ],
+      "notes": "Native active/indeterminate state, range coercion, finite arc geometry, clock-driven motion/lifetime and determinate-only range automation. DeterminateSource/IndeterminateSource and their dependency properties remain absent and unverified; custom IAnimatedVisualSource/Lottie, exact WinUI motion/pixels, localization and platform UIA sequences are outside this subset.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_are_winui_specific_and_leave_existing_progress_bar_unchanged",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "range_coercion_gives_the_last_set_bound_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "nan_and_collapsed_ranges_preserve_public_values_but_emit_finite_geometry",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "native_arc_template_uses_live_brushes_and_normalized_progress",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "indeterminate_clock_subscription_follows_activation_and_effective_visibility",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "determinate_increases_animate_then_unsubscribe_and_decreases_are_immediate",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "retemplating_and_detaching_release_the_animation_without_retaining_the_owner",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        },
+        {
+          "name": "range_automation_is_available_only_when_determinate",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/progress_ring.rs"
+      ],
+      "notes": "Read-only native layout settings retain instance identity and the pinned width-based formulas. These legacy settings do not implement the absent custom animated-visual source API or certify pixel-equivalent templates.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "legacy_template_settings_use_actual_width_and_the_forty_pixel_boundary",
+          "path": "src/FerroUI.Controls/tests/winui_progress_ring.rs"
+        }
+      ]
+    },
     "Microsoft.UI.Xaml.Controls.RadioButtons": {
       "execution": {
         "record": "docs/porting/winui-gallery/data/executions/native-controls-001.json"
@@ -7964,6 +9398,118 @@
         {
           "name": "group_exposes_native_selection_automation_and_preserves_other_control_defaults",
           "path": "src/FerroUI.Controls/tests/winui_radio_buttons.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_control.rs",
+        "src/FerroUI.Controls/winui/rating_item_info.rs"
+      ],
+      "notes": "Native rating/placeholder coercion, user-only ValueChanged, clearing/read-only state, keyboard/RTL input, pointer capture, normalized gamepad engagement, fractional visuals and native automation. Value and PlaceholderValue reject NaN as an explicit native validation exception; the listed finite/coercion tests do not certify upstream NaN semantics. Raw platform gamepad mapping, sounds, globalization/text scaling, exact visuals and Windows UIA sequences remain unsupported/unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "rating_defaults_have_distinct_unset_and_placeholder_domains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "maximum_coercion_commits_valid_bound_before_values_and_does_not_restore_clamped_values",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "programmatic_updates_are_silent_and_user_notifications_allow_reentrant_edits",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "keyboard_honors_initial_value_fractional_steps_and_clear_policy",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "keyboard_horizontal_direction_reverses_in_rtl_but_vertical_does_not",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "normalized_gamepad_engagement_commits_or_restores_the_pre_engagement_value",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "native_pointer_capture_selects_clears_and_supports_drag_before_the_first_item",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "changing_read_only_during_capture_cancels_without_committing_a_preview",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "template_clips_fractional_values_and_retains_native_item_identity_during_edits",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "automation_notifications_report_coerced_values_and_current_text_with_correct_types",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Native font descriptors supply live glyph, placeholder, disabled and unset states to real TextBlock children without retaining discarded controls. PointerOverGlyph/PointerOverPlaceholderGlyph are implemented source candidates but lack direct state assertions in these tests and remain behavior-unverified. Font availability, Windows text metrics and exact visuals remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "default_glyph_descriptors_and_value_handlers_do_not_retain_controls",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemImageInfo": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Native Option<Rc<dyn IImage>> descriptors adapt WinUI ImageSource; the focused test covers real image identity, placeholder override/fallback and descriptor disposal. DisabledImage, UnsetImage and pointer-over image states lack direct state assertions and remain behavior-unverified. Windows image activation/decoding, full fallback coverage and pixel parity are not certified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "image_info_uses_native_images_and_releases_replaced_descriptors",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemInfo": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/rating_item_info.rs",
+        "src/FerroUI.Controls/winui/rating_control.rs"
+      ],
+      "notes": "Focused tests exercise the native descriptor base through concrete font/image subclasses and live ItemInfo replacement. The standalone RatingItemInfo constructor has no direct test anchor here and remains behavior-unverified; inherited WinRT/dependency-object guarantees are not inferred.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "glyph_fallbacks_and_live_item_info_updates_use_the_original_chains",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
+        },
+        {
+          "name": "image_info_uses_native_images_and_releases_replaced_descriptors",
+          "path": "src/FerroUI.Controls/tests/winui_rating_control.rs"
         }
       ]
     },

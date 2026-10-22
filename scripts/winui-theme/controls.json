@@ -9,6 +9,32 @@
     "B5": "Navigation, pages, tabs and command bar",
     "B6": "Window decorations, notifications, tables and dialogs"
   },
+  "native_additions": [
+    {
+      "control": "FerroUI.Controls.WinUI.InfoBadge",
+      "source_commit": "a71c42bd3e352060e5f5ecf3b5e1a98f8a745809",
+      "implementation": "src/FerroUI.Controls/winui/info_badge.rs",
+      "theme_documents": ["Controls/WinUIInfoBadge.xaml"],
+      "coverage": "The additive WinUI namespace selects the native InfoBadge. WinUIControls.xaml merges its dictionary, which supplies the implicit theme, DefaultInfoBadgeStyle, and all five severity families with dot/value/icon themes. Migration changes Style to Theme. The native replaceable template handles value, icon and dot presentation; colors use Default, Light and HighContrast dictionaries.",
+      "remaining": "The scanner counts resource declarations in their original theme scope. Shared dimensions and margins are supplied at dictionary root, so their upstream variant-scoped entries remain pending in this strict inventory. Matching resource keys does not establish complete upstream VisualState, icon-source, NavigationView integration, platform accessibility or pixel parity. The native implementation is pinned separately from this theme reference."
+    },
+    {
+      "control": "FerroUI.Controls.WinUI.ProgressRing",
+      "source_commit": "a71c42bd3e352060e5f5ecf3b5e1a98f8a745809",
+      "implementation": "src/FerroUI.Controls/winui/progress_ring.rs",
+      "theme_documents": [],
+      "coverage": "The additive WinUI namespace selects a native ProgressRing with a replaceable Arc template and framework-clock animation. Explicit Foreground/Background values take precedence; the control resolves ProgressRingForegroundThemeBrush and ProgressRingBackgroundThemeBrush from the active theme, with accent and native color fallbacks. These lookups support application-provided resources; they do not define the missing source dictionaries.",
+      "remaining": "The original implicit style and seven source resource entries remain pending. The default Arc template computes stroke width and does not consume ProgressRingStrokeThickness. Exact Lottie geometry, determinate endpoint trim keyframes, AnimatedVisualPlayer and custom DeterminateSource/IndeterminateSource remain unported; native shape motion is an adaptation, not pixel parity. HighContrast source brush declarations are not supplied by this addition."
+    },
+    {
+      "control": "FerroUI.Controls.WinUI.RatingControl",
+      "source_commit": "a71c42bd3e352060e5f5ecf3b5e1a98f8a745809",
+      "implementation": "src/FerroUI.Controls/winui/rating_control.rs",
+      "theme_documents": [],
+      "coverage": "The additive WinUI namespace selects a native RatingControl with replaceable foreground/background item panels and a caption. Independent glyph/image visuals, fractional clips and native transforms render the rating, placeholder and pointer preview. The control resolves RatingControl state-brush keys, RatingControlFontSizeForRendering and RatingControlItemSpacing, including zero spacing, with native fallbacks.",
+      "remaining": "The original implicit style and 34 source resource entries remain pending. Resource lookup does not supply the scoped source dictionaries, four WinUI item DataTemplates or MUX_RatingControlDefaultFontInfo. RatingControlCaptionTopMargin and text-scale-dependent glyph sizing are not projected. Composition-expression animation timing, installed glyph fonts, HighContrast appearance, custom WinUI templates, platform accessibility and pixel parity require separate implementation or acceptance."
+    }
+  ],
   "document_batches": {
     "comment": "The batch of the styles of a source document (a prefix of its path, or path#key for one style), before the batch of their target type: the keyed styles of the documents of a control belong to the batch of that control.",
     "controls/dev/NavigationView/": "B5",
@@ -147,6 +173,7 @@
     "FlipViewItem": {"ferroui": "Carousel", "batch": "B5", "note": "the items of a Carousel are its content presenters"},
     "FlyoutPresenter": {"ferroui": "FlyoutPresenter", "batch": "B3"},
     "HyperlinkButton": {"ferroui": "HyperlinkButton", "batch": "F"},
+    "InfoBadge": {"ferroui": "InfoBadge", "batch": "B6", "note": "Additive FerroUI.Controls.WinUI.InfoBadge; native opt-in API and WinUIInfoBadge.xaml ControlThemes. Resource key coverage is separate from exact visual parity."},
     "InfoBar": {"ferroui": "NotificationCard", "batch": "B6"},
     "ListBox": {"ferroui": "ListBox", "batch": "B3"},
     "ListBoxItem": {"ferroui": "ListBoxItem", "batch": "B3"},
@@ -168,8 +195,10 @@
     "PasswordBox": {"ferroui": "TextBox", "batch": "B3", "note": "FerroUI's TextBox with a PasswordChar; ported as the keyed DefaultPasswordBoxStyle"},
     "PipsPager": {"ferroui": "PipsPager", "batch": "B2"},
     "ProgressBar": {"ferroui": "ProgressBar", "batch": "B1"},
+    "ProgressRing": {"ferroui": "ProgressRing", "batch": "B1", "note": "Additive FerroUI.Controls.WinUI.ProgressRing; native Arc template and brush lookup. Source style/resource declarations and exact Lottie/stroke visuals remain pending."},
     "RadioButton": {"ferroui": "RadioButton", "batch": "F"},
     "RadioMenuFlyoutItem": {"ferroui": "MenuItem", "batch": "B3"},
+    "RatingControl": {"ferroui": "RatingControl", "batch": "B2", "note": "Additive FerroUI.Controls.WinUI.RatingControl; native glyph/image template, clipping and resource lookup. Original styles, item DataTemplates and exact source visuals remain pending."},
     "Rectangle": {"ferroui": null, "batch": "B3", "note": "keyed styles of template parts (ComboBoxItemPill, SelectorBarItemPill)"},
     "RefreshContainer": {"ferroui": "RefreshContainer", "batch": "B2"},
     "RefreshVisualizer": {"ferroui": "RefreshVisualizer", "batch": "B2"},

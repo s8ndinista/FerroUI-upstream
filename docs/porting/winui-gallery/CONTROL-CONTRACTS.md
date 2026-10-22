@@ -231,6 +231,261 @@ scope. The strict XAML migration layer retains diagnostics for unsupported
 syntax. Native templates remain replaceable; replacement templates must supply
 the documented parts or bind their own native properties.
 
+## InfoBadge
+
+The contract follows the pinned
+[InfoBadge IDL](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/InfoBadge/InfoBadge.idl),
+[native implementation](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/InfoBadge/InfoBadge.cpp)
+and [theme dictionary](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/InfoBadge/InfoBadge.xaml).
+The [native implementation](../../../src/FerroUI.Controls/winui/info_badge.rs)
+derives from `TemplatedControl` and uses native properties, templates and icon
+sources. It does not alter another control's defaults.
+
+| WinUI member or behavior | Native implementation and boundary |
+|---|---|
+| `Value` | `i32`, default -1; values below -1 are rejected; `set_numeric_value` preserves the inherited generic `set_value(property, value)` method |
+| Display priority | Any nonnegative value displays its full decimal integer; otherwise a non-null source displays an icon; otherwise a dot is displayed |
+| `IconSource` | Default null; current FontIconSource, SymbolIconSource and PathIconSource create separate, live native elements |
+| `TemplateSettings` | Read-only property returning the same per-owner `InfoBadgeTemplateSettings` instance |
+| `InfoBadgeTemplateSettings.IconElement` | Mutable native icon reference; settings changes update the current content presenter |
+| `InfoBadgeTemplateSettings.InfoBadgeCornerRadius` | Mutable native corner radius; updates the template border |
+| Measurement | Desired width is at least desired height; default min width/height 4 and max height 16 |
+| `CornerRadius` | A local value opts out of automatic half-height radius; style-only values do not; the local base remains detectable beneath animation |
+| Named severity styles | Audited native `ControlTheme`s; a migration explicitly changes `Style` to `Theme` for these keys |
+
+The default template has a Border named `RootGrid`, a native Grid, TextBlock
+`ValueTextBlock`, Viewbox `IconPresenter` and ContentPresenter
+`IconContentPresenter`. The border adapts the source grid's radius and padding
+to native rendering. Font icons use margin `4,0,4,2`, other icons use `4`, and
+numeric text uses `4,0,4,2` at size 11. `:value`, `:dot`, `:icon` and `:fonticon`
+identify the presentation. Switching to value or dot preserves the last icon
+in the settings object, matching the source; visibility determines what is
+displayed. Retemplating releases the old presenter's content and binds the new
+parts. Reentrant property callbacks finish with the current effective state.
+
+The hand-maintained
+[WinUIInfoBadge.xaml](../../../src/FerroUI.Themes.WinUI/Controls/WinUIInfoBadge.xaml)
+dictionary retains `DefaultInfoBadgeStyle` and Attention, Informational, Success,
+Caution and Critical Dot/Value/Icon style keys. Its implicit theme targets only
+`FerroUI.Controls.WinUI.InfoBadge`. Default, Light and native HighContrast scopes
+provide the source brush aliases; common dimensions and margins are shared
+native resources. The additive native `InfoBadge.HighContrastThemeVariant`
+field (`high_contrast_theme_variant()` in Rust) supplies a typed `x:Static` key
+with Dark inheritance. It equals the WinUI theme's high-contrast variant without
+a theme-crate dependency and is not an upstream InfoBadge member. The dictionary
+depends on the surrounding WinUI theme's
+general brushes, including `TextOnAccentFillColorPrimaryBrush`,
+`AccentFillColorDefaultBrush`, `SystemControlHighlightAltChromeWhiteBrush` and
+`SystemControlHighlightAccentBrush`. Named severity themes use the corresponding
+`SystemFillColor` brushes. Resource scope equivalence and pixel equivalence are
+separate from matching a resource key. The control observes resource/theme
+changes, and explicit foreground/background values retain native precedence.
+
+**Boundaries:** BitmapIconSource, ImageIconSource and AnimatedIconSource are not
+implemented. This control alone does not add `NavigationViewItem.InfoBadge`.
+Arbitrary WinUI Style/VisualStateManager templates require a separate projection.
+There is no InfoBadge-specific automation peer or Windows accessibility/pixel
+comparison claim. Private numeric text is excluded from accessibility content;
+applications can provide native automation metadata. Icon rendering retains the
+font availability and platform limitations described above.
+
+The dedicated `winui_info_badge` target contains assertions for priority and
+validation, supported source types and ownership, sizing, local/style/animated
+radius precedence, settings-driven parts, resources, retemplating and reentrant
+updates. These assertions are distinct from a successful execution record and
+from full upstream control or Gallery-page parity.
+
+## ProgressRing
+
+The source contract is the pinned
+[ProgressRing IDL](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/ProgressRing/ProgressRing.idl),
+[control implementation](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/ProgressRing/ProgressRing.cpp)
+and [automation peer](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/ProgressRing/ProgressRingAutomationPeer.cpp).
+The [native control](../../../src/FerroUI.Controls/winui/progress_ring.rs)
+derives from `TemplatedControl`; it does not reuse or change `ProgressBar`'s
+different default state.
+
+| WinUI member or behavior | Native implementation and boundary |
+|---|---|
+| `IsActive`, `IsIndeterminate` | Both default true; native pseudo classes track active and determinate/indeterminate modes |
+| `Minimum`, `Maximum`, `Value` | `f64`, defaults 0, 100 and 0; the most recently set bound moves the other bound if needed, then clamps Value |
+| Value assignment | `set_range_value` is the convenience setter; generic property assignment follows the same native coercion |
+| NaN/degenerate ranges | NaN can remain public Value; `normalized_value()` returns zero for a nonfinite or collapsed range, keeping native arc geometry finite |
+| `TemplateSettings` | Stable per-owner, read-only `ProgressRingTemplateSettings` |
+| `EllipseDiameter`, `EllipseOffset`, `MaxSideLength` | Read-only legacy settings derived from arranged width, including the pinned 40-unit diameter threshold |
+| Inactive state | Template root opacity becomes zero; outer visibility and layout remain; accessibility content view becomes Raw |
+| Default size | Width/height 32, minimum width/height 16, centered, nonfocusable and not hit-testable |
+
+The replaceable template contains native Grid `LayoutRoot` and rounded Arc
+parts `PART_Track` and `PART_Indicator`. Explicit owner brushes, WinUI resources
+and light/dark fallbacks feed these parts. The native inherited clock drives the
+default motion. Indeterminate rotation and sweep follow the default source's
+two-second sequence; increasing determinate progress traverses its interval at
+that sequence's rate, while decreases apply immediately. Numeric changes do
+not restart indeterminate motion. Resource lookup is outside the per-frame
+geometry update.
+
+The control disposes clock subscriptions on inactivity, effective hiding,
+detachment, retemplating and determinate completion. A changed inherited clock
+replaces the old subscription. Callbacks hold the owner weakly, and a
+synchronously emitting clock cannot leave an obsolete subscription retained.
+
+The [native automation peer](../../../src/FerroUI.Controls/winui/progress_ring_automation_peer.rs)
+uses the ProgressBar role and exposes RangeValue only while determinate.
+The range provider reports read-only with NaN small/large changes, but its
+setter forwards to Value, as the pinned peer does. Active indeterminate progress
+prefixes the accessible name with the `ProgressRingIndeterminateStatus` resource
+or the English fallback `Busy`; the localized role uses `ProgressRingName` or
+`progress ring`. Effective range changes notify native automation clients.
+
+**Boundaries:** The arcs are a native adaptation of the default visual. Preview
+`DeterminateSource` and `IndeterminateSource` are absent; the control does not
+provide AnimatedVisualPlayer, arbitrary Lottie/composition sources or exact
+WinUI template-part compatibility. Legacy template settings do not imply that
+the old dot template is rendered. OS localization, Windows UIA delivery, installed
+theme/high-contrast appearance and pixel equality need their own host and visual
+evidence. A custom template must supply the native parts or implement its own
+presentation of the public properties.
+
+The `winui_progress_ring` target contains assertions for defaults, range
+coercion, finite geometry, legacy settings, real arc parts, live resources and
+animation precedence, clock lifecycle and accessibility. Test presence and
+successful execution are tracked separately.
+
+## RatingControl and RatingItemInfo
+
+The contract follows the pinned
+[RatingControl IDL](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/RatingControl/RatingControl.idl),
+[control implementation](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/RatingControl/RatingControl.cpp)
+and [automation peer](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/RatingControl/RatingControlAutomationPeer.cpp).
+The [native control](../../../src/FerroUI.Controls/winui/rating_control.rs)
+derives from `TemplatedControl` and uses native input, text/image rendering,
+property resources and automation.
+
+| WinUI member | Native implementation and boundary |
+|---|---|
+| `Value` | Default -1; negative values become -1, nonnegative values at or below 1 become 1, larger values clamp to MaxRating; fractions above 1 remain valid |
+| `PlaceholderValue` | Default -1; negatives become -1, but zero and fractions below 1 are preserved; upper bound is MaxRating |
+| `MaxRating` | Integer, default 5, coerced to at least 1 before dependent values; raising it later does not restore a previously clamped value |
+| NaN assignments | Rejected by native Value/PlaceholderValue validation; this is an explicit native validity boundary |
+| `InitialSetValue` | Default 1, used when keyboard/gamepad interaction starts from unset |
+| `IsClearEnabled` | Default true; repeated pointer selection clears, including the maximum; keyboard increments at the maximum remain set |
+| `IsReadOnly` | Default false; blocks interactive edits while preserving programmatic assignment |
+| `Caption` | Default empty; real native text with no reserved caption spacing when empty |
+| `ItemInfo` | Registered default null; construction supplies an independent default RatingItemFontInfo with set/unset star glyphs |
+| `ValueChanged` | User-selection notification with null event arguments; property assignment and bound coercion do not raise it |
+
+`set_rating_value` preserves the inherited generic property setter. The public
+`select_rating` and `change_rating_by` methods route through the same interactive
+policy as native input. As in the source, a handled selection can raise
+`ValueChanged` even when the effective value remains unchanged, such as a capped
+keyboard increment. Handlers use snapshots, so disposal and reentrant value
+changes do not hold the handler collection borrowed.
+
+Pointer interaction previews the corresponding item, captures the active
+pointer on primary-button press and commits on that pointer's primary release.
+Dragging before the first item can clear a rating. Capture cancellation,
+read-only changes and unrelated pointer releases do not commit a preview.
+Coordinates already transformed by native RTL layout are not reversed again.
+Left/Right keys reverse direction in RTL; Up/Down retain their numeric direction.
+Home clears when allowed and End selects the maximum. Fractional values step
+to adjacent integers, and an unset value begins at InitialSetValue.
+
+Normalized `KeyDeviceType::Gamepad` input uses Enter to engage/commit, Escape to
+cancel, and Left/Right to edit while engaged. Cancel and focus loss restore the
+pre-engagement value. This provides a native engagement state machine, not the
+Windows `IsFocusEngagementEnabled` API or raw controller discovery/mapping.
+
+### Rating item descriptions and rendering
+
+[RatingItemInfo and its subclasses](../../../src/FerroUI.Controls/winui/rating_item_info.rs)
+are native FerroObject property objects in the same opt-in namespace.
+
+| Type | Source properties | Native value type and fallback |
+|---|---|---|
+| `RatingItemInfo` | Public constructor | Extensible description base; the default renderer recognizes the font and image subclasses |
+| `RatingItemFontInfo` | Glyph, DisabledGlyph, PointerOverGlyph, PointerOverPlaceholderGlyph, PlaceholderGlyph, UnsetGlyph | Strings, initially empty; a missing state uses Glyph, except PointerOverPlaceholder first tries PlaceholderGlyph |
+| `RatingItemImageInfo` | Image, DisabledImage, PointerOverImage, PointerOverPlaceholderImage, PlaceholderImage, UnsetImage | Optional native `Rc<dyn IImage>`, initially null; the same fallback chain uses Image/PlaceholderImage |
+
+Each item owns separate background and foreground TextBlock/Image visuals.
+Foreground rectangles clip fractional values and placeholders; native scale
+transforms apply the source's pointer-distance scaling function. Ordinary value
+edits update existing items; changing their number, description kind or sizing
+resources rebuilds the appropriate visuals. Item-description property changes
+update live content without sharing a visual between parents. Replacing a
+description disposes its old subscription, and callbacks hold the owner weakly.
+Native `RatingControl` brush/spacing/rendering-size resources control the parts;
+zero item spacing is a valid override.
+
+A replacement native template exposes StackPanels `RatingBackgroundStackPanel`
+and `RatingForegroundStackPanel`, plus TextBlock `Caption`. WinUI
+`BackgroundGlyphDefaultTemplate`, `ForegroundGlyphDefaultTemplate`,
+`BackgroundImageDefaultTemplate` and `ForegroundImageDefaultTemplate`
+DataTemplates and arbitrary custom RatingItemInfo subclasses are not
+automatically projected.
+The default font is Segoe Fluent Icons; applications must supply an appropriate
+font or use image descriptions. Native `IImage` keeps FerroUI image ownership
+and rendering; it is not a WinRT ImageSource ABI adapter.
+
+### Rating automation and remaining boundaries
+
+The native peer reports the Slider role and supplies Value and RangeValue
+patterns. Range minimum is zero, maximum is MaxRating, both step sizes are one,
+and unset Value projects to zero without substituting PlaceholderValue. Text
+descriptions distinguish a user rating, community placeholder and unset state.
+An explicit accessible name precedes the caption fallback. Both provider setters
+perform programmatic assignment, including when interactive input is read-only,
+matching the source's assignment behavior. Numeric and text property-change
+notifications use their corresponding native value types.
+
+Descriptions and the localized role currently use English, with Rust formatting
+and invariant string parsing. They do not implement Windows DecimalFormatter's
+locale-sensitive parsing, rounding or resource lookup. The native transforms
+apply the scaling function but do not implement Windows composition-expression
+animation timing. The source's text-scale-dependent glyph measurement and
+`RatingControlCaptionTopMargin` resource are not projected. Windows
+focus-engagement/access-key behavior, raw controller mapping, exact UIA event
+sequences, screen-reader output, custom WinUI templates and visual/pixel equality
+remain separate obligations.
+
+The `winui_rating_control` target contains assertions for numeric domains,
+coercion ordering, user-event behavior, keyboard/gamepad policy, real pointer
+capture and RTL, fractional clips, glyph/image fallback and lifetime, caption
+layout and native automation. Successful runs are recorded independently of
+this description of the implementation.
+
+## Local values beneath animation
+
+The additive native
+[`FerroObject::has_local_value`](../../../src/FerroUI.Base/ferro_object.rs)
+query reports whether a styled property's current non-animation base has
+`BindingPriority::LocalValue`. It remains true when an animation hides that
+base. An explicit local assignment equal to the default counts; a style,
+template, inherited/default value or an animation without a local base does not.
+Attaching a binding before it supplies a value does not count. If a native
+binding supplies a local fallback, that effective fallback does count, including
+the existing observable-Unset fallback behavior.
+
+This query is not a WinUI `ReadLocalValue` implementation and does not expose
+stored binding expressions. It adds no property priority and changes no ordinary
+binding mode or Avalonia-compatible control default. The three controls above
+use distinct convenience setter names, preserving the inherited
+`set_value(property, value)` API for applications and bindings.
+
+The existing [property store](../../../src/FerroUI.Base/property_store/value_store.rs)
+and its Avalonia-compatible clearing behavior are unchanged. Clearing an ordinary
+local value while an animation is effective retains the hidden local base, as
+specified by the existing
+[reentrancy regression](../../../src/FerroUI.Base/tests/ferro_object_tests_reentrancy.rs).
+Once the animation ends, clearing that local value restores the ordinary
+lower-priority value. InfoBadge therefore preserves the animated radius while
+the local base exists, restores the local radius after animation disposal, and
+returns to half-height radius when the local value is subsequently cleared.
+Focused assertions in `ferro_object_tests_get_value` cover default/style/inherited
+values, explicit local defaults, binding attachment/fallback and animation-hidden
+locals; InfoBadge has a corresponding radius/resize/clear regression. Execution
+and upstream acceptance remain evidence ledger concerns.
+
 ## Evidence and completion
 
 `data/api-mappings.json` records explicit namespace/member mappings and their
@@ -251,16 +506,32 @@ layout and automation tests use the framework's test services.
 The next recorded execution is
 [`data/executions/native-controls-002.json`](data/executions/native-controls-002.json):
 **30 integration tests passed** (`winui_auto_suggest_box`: 13,
-`winui_icon_sources`: 7, `winui_info_bar`: 10). The two records therefore cover
-**77 passing native control integration tests**. The second record covers native
+`winui_icon_sources`: 7, `winui_info_bar`: 10). The first two records cover
+**77 native control integration tests**. The second record covers native
 suggestion text coalescing and event identity, icon-source ownership and reentrant
 updates, and InfoBar lifecycle, commands, resources, layout and automation. Its
 hash scope lists the actual implementation/test files; a later shared registration
 helper relocation is outside that execution record and is validated separately.
 
-The new controls and their 87 recorded member subsets remain **partial**.
+The third recorded execution is
+[`data/executions/native-controls-003.json`](data/executions/native-controls-003.json):
+**50 new focused integration tests passed** (`winui_info_badge`: 13,
+`winui_progress_ring`: 16, `winui_rating_control`: 21). This run also reran all
+77 earlier native-control tests, for **127 passed and 0 failed** in the combined
+suite. The record supports **61 new partial member contracts and 10 partial
+types**, using actual native properties, templates, input, layout, clock and
+automation objects with mock host services. Its source hashes include the additive
+Base local-value query dependency; the separate full Base run passed 4,383 tests
+with existing clearing and priority semantics preserved.
+
+The second record's 87 member entries and the third record's 61 member entries
+remain **partial**, with focused test anchors for each recorded contract.
 For example, AutoSuggestBox's `QueryIcon` entry records its tested initial null
 value without claiming that this test run verified arbitrary live icon content.
+The third record leaves ProgressRing's four absent animated-source members and
+RatingItem state branches without direct test assertions behavior-unverified.
+RatingControl's NaN rejection is documented as a native validation exception;
+these tests do not certify upstream NaN, localization or Windows UIA semantics.
 Unsupported members have no successful evidence entry, and broader inherited,
 host-service and visual obligations remain visible in the comparison.
 

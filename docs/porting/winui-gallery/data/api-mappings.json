@@ -19,11 +19,29 @@
       "notes": "Native automation-provider composition. Platform-specific Windows notification sequences remain separate validation.",
       "target": "FerroUI.Controls.WinUI.NumberBoxAutomationPeer"
     },
+    "Microsoft.UI.Xaml.Automation.Peers.ProgressRingAutomationPeer": {
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native owner constructor, ProgressBar role, busy-state naming and determinate-only RangeValue provider. The provider uses native automation interfaces; Windows UIA notification sequences and localization integration remain unverified.",
+      "overloads": {
+        "ProgressRingAutomationPeer(MU_XC_NAMESPACE.ProgressRing owner)": "new"
+      },
+      "target": "FerroUI.Controls.WinUI.ProgressRingAutomationPeer"
+    },
     "Microsoft.UI.Xaml.Automation.Peers.RadioButtonsAutomationPeer": {
       "kind": "implemented-subset",
       "members": {},
       "notes": "Native automation-provider composition. Platform-specific Windows notification sequences remain separate validation.",
       "target": "FerroUI.Controls.WinUI.RadioButtonsAutomationPeer"
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.RatingControlAutomationPeer": {
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native owner constructor, Slider role and Value/RangeValue providers with effective-value notifications. English rating descriptions and invariant numeric parsing are native adaptations; Windows globalization, translated automation resources and platform UIA event sequences remain unsupported/unverified.",
+      "overloads": {
+        "RatingControlAutomationPeer(MU_XC_NAMESPACE.RatingControl owner)": "new"
+      },
+      "target": "FerroUI.Controls.WinUI.RatingControlAutomationPeer"
     },
     "Microsoft.UI.Xaml.Controls.AutoSuggestBox": {
       "kind": "implemented-subset",
@@ -84,6 +102,30 @@
       "members": {},
       "notes": "Abstract native source contract; each CreateIconElement call creates an independent element. Live property propagation uses weak element references and does not retain discarded elements. Initial unset Foreground preserves native inheritance; later explicit source changes override mapped element properties.",
       "target": "FerroUI.Controls.WinUI.IconSource"
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadge": {
+      "kind": "implemented-subset",
+      "members": {
+        "IconSource": "icon_source",
+        "IconSourceProperty": "icon_source_property",
+        "TemplateSettings": "template_settings",
+        "TemplateSettingsProperty": "template_settings_property",
+        "Value": "value",
+        "ValueProperty": "value_property"
+      },
+      "notes": "Opt-in native dot, icon and numeric presentation with the -1/nonnegative value domain, live IconSource, stable TemplateSettings and content-driven square sizing/corner-radius calculation. Rust numeric assignment uses set_numeric_value to preserve inherited set_value(property, value); markup and builders use ValueProperty. WinUI style/VSM execution, localized numeric formatting and pixel/theme equivalence remain unverified.",
+      "target": "FerroUI.Controls.WinUI.InfoBadge"
+    },
+    "Microsoft.UI.Xaml.Controls.InfoBadgeTemplateSettings": {
+      "kind": "implemented-subset",
+      "members": {
+        "IconElement": "icon_element",
+        "IconElementProperty": "icon_element_property",
+        "InfoBadgeCornerRadius": "info_badge_corner_radius",
+        "InfoBadgeCornerRadiusProperty": "info_badge_corner_radius_property"
+      },
+      "notes": "Stable per-control native property object with the current IconElement and computed InfoBadgeCornerRadius. Both settings remain writable through native properties; WinRT object identity and dependency-property implementation are adapted to FerroUI.",
+      "target": "FerroUI.Controls.WinUI.InfoBadgeTemplateSettings"
     },
     "Microsoft.UI.Xaml.Controls.InfoBar": {
       "kind": "implemented-subset",
@@ -181,11 +223,107 @@
       "notes": "Pinned responsive measure/arrange algorithm expressed through native Panel, styled paddings and attached child margins. Width, child count, parent minimum height and measured text decide orientation. Existing theme panel identity remains unchanged.",
       "target": "FerroUI.Controls.WinUI.InfoBarPanel"
     },
+    "Microsoft.UI.Xaml.Controls.ProgressRing": {
+      "kind": "implemented-subset",
+      "members": {
+        "IsActive": "is_active",
+        "IsActiveProperty": "is_active_property",
+        "IsIndeterminate": "is_indeterminate",
+        "IsIndeterminateProperty": "is_indeterminate_property",
+        "Maximum": "maximum",
+        "MaximumProperty": "maximum_property",
+        "Minimum": "minimum",
+        "MinimumProperty": "minimum_property",
+        "TemplateSettings": "template_settings",
+        "Value": "value",
+        "ValueProperty": "value_property"
+      },
+      "notes": "Opt-in native range, active/indeterminate state, arc rendering, frame-clock animation and live template settings. Rust numeric assignment uses set_range_value to preserve inherited set_value(property, value); markup and builders use ValueProperty. DeterminateSource and IndeterminateSource, their dependency properties and the custom IAnimatedVisualSource/Lottie model remain deliberately unmapped. Exact WinUI animation, theme and pixel equivalence are unverified.",
+      "target": "FerroUI.Controls.WinUI.ProgressRing"
+    },
+    "Microsoft.UI.Xaml.Controls.ProgressRingTemplateSettings": {
+      "kind": "implemented-subset",
+      "members": {
+        "EllipseDiameter": "ellipse_diameter",
+        "EllipseOffset": "ellipse_offset",
+        "MaxSideLength": "max_side_length"
+      },
+      "notes": "Stable per-control native read-only layout settings using the pinned width-dependent diameter, offset and maximum-side formulas. Native direct properties expose live changes; no upstream constructor or additional dependency-property members are inferred.",
+      "target": "FerroUI.Controls.WinUI.ProgressRingTemplateSettings"
+    },
     "Microsoft.UI.Xaml.Controls.RadioButtons": {
       "kind": "implemented-subset",
       "members": {},
       "notes": "Native RadioButton containers and HeaderedSelectingItemsControl support item/header templates, selection, keyboard focus and constrained column-major MaxColumns layout. Native ItemsSource/inline collection rules and invalid-index normalization differ; element factories, template selectors, gamepad escape and exact Windows UIA/theme behavior are not certified.",
       "target": "FerroUI.Controls.WinUI.RadioButtons"
+    },
+    "Microsoft.UI.Xaml.Controls.RatingControl": {
+      "kind": "implemented-subset",
+      "members": {
+        "Caption": "caption",
+        "CaptionProperty": "caption_property",
+        "InitialSetValue": "initial_set_value",
+        "InitialSetValueProperty": "initial_set_value_property",
+        "IsClearEnabled": "is_clear_enabled",
+        "IsClearEnabledProperty": "is_clear_enabled_property",
+        "IsReadOnly": "is_read_only",
+        "IsReadOnlyProperty": "is_read_only_property",
+        "ItemInfo": "item_info",
+        "ItemInfoProperty": "item_info_property",
+        "MaxRating": "max_rating",
+        "MaxRatingProperty": "max_rating_property",
+        "PlaceholderValue": "placeholder_value",
+        "PlaceholderValueProperty": "placeholder_value_property",
+        "Value": "value",
+        "ValueChanged": "value_changed",
+        "ValueProperty": "value_property"
+      },
+      "notes": "Opt-in native rating domain/coercion, placeholder fractions, caption, item descriptors, clearing, read-only state, pointer capture, RTL keyboard input and normalized gamepad focus engagement. Native layered glyph/image visuals provide fractional clipping and pointer scaling; ValueChanged is reserved for user interaction. Rust numeric assignment uses set_rating_value to preserve inherited set_value(property, value); markup and builders use ValueProperty. Platform gamepad button mapping, sounds, Windows globalization/text-scale integration, exact visuals and platform UIA sequences remain unsupported/unverified.",
+      "target": "FerroUI.Controls.WinUI.RatingControl"
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemFontInfo": {
+      "kind": "implemented-subset",
+      "members": {
+        "DisabledGlyph": "disabled_glyph",
+        "DisabledGlyphProperty": "disabled_glyph_property",
+        "Glyph": "glyph",
+        "GlyphProperty": "glyph_property",
+        "PlaceholderGlyph": "placeholder_glyph",
+        "PlaceholderGlyphProperty": "placeholder_glyph_property",
+        "PointerOverGlyph": "pointer_over_glyph",
+        "PointerOverGlyphProperty": "pointer_over_glyph_property",
+        "PointerOverPlaceholderGlyph": "pointer_over_placeholder_glyph",
+        "PointerOverPlaceholderGlyphProperty": "pointer_over_placeholder_glyph_property",
+        "UnsetGlyph": "unset_glyph",
+        "UnsetGlyphProperty": "unset_glyph_property"
+      },
+      "notes": "Six native string properties supply RatingControl glyph states with live updates and the pinned empty-value fallback chain. Rendering uses native TextBlock and the control font family; the host must supply the requested font, and Windows text metrics are unverified.",
+      "target": "FerroUI.Controls.WinUI.RatingItemFontInfo"
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemImageInfo": {
+      "kind": "implemented-subset",
+      "members": {
+        "DisabledImage": "disabled_image",
+        "DisabledImageProperty": "disabled_image_property",
+        "Image": "image",
+        "ImageProperty": "image_property",
+        "PlaceholderImage": "placeholder_image",
+        "PlaceholderImageProperty": "placeholder_image_property",
+        "PointerOverImage": "pointer_over_image",
+        "PointerOverImageProperty": "pointer_over_image_property",
+        "PointerOverPlaceholderImage": "pointer_over_placeholder_image",
+        "PointerOverPlaceholderImageProperty": "pointer_over_placeholder_image_property",
+        "UnsetImage": "unset_image",
+        "UnsetImageProperty": "unset_image_property"
+      },
+      "notes": "Six live image-state properties use native Option<Rc<dyn IImage>> values in place of WinUI ImageSource. Native Image rendering applies the pinned absent-value fallback chain and per-item fractional clipping; Windows image-source activation, decoding and pixel equivalence remain separate concerns.",
+      "target": "FerroUI.Controls.WinUI.RatingItemImageInfo"
+    },
+    "Microsoft.UI.Xaml.Controls.RatingItemInfo": {
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native constructible FerroObject base for RatingItemFontInfo and RatingItemImageInfo. This supplies the ItemInfo descriptor hierarchy; inherited WinRT/dependency-object guarantees are not inferred from the constructor mapping.",
+      "target": "FerroUI.Controls.WinUI.RatingItemInfo"
     },
     "Microsoft.UI.Xaml.Controls.Symbol": {
       "kind": "implemented-subset",

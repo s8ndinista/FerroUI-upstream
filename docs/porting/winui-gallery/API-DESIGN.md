@@ -171,6 +171,128 @@ does not make arbitrary WinUI Style objects interchangeable. Accessibility uses
 native peer/property notifications and live-region metadata. OS screen-reader
 announcements and upstream pixel equivalence need separate host evidence.
 
+### InfoBadge
+
+The opt-in `InfoBadge` derives from native `TemplatedControl`. `Value` defaults
+to -1; a nonnegative value displays the whole integer, otherwise an `IconSource`
+displays an icon, otherwise the control displays a dot. Values below -1 are
+rejected. A source creates a separate native icon for each badge and keeps its
+live-property behavior. The current font, symbol and path sources work through
+the existing source contract; this does not supply the missing bitmap, image or
+animated source types.
+
+Each badge owns a stable `InfoBadgeTemplateSettings` object. Its mutable
+`IconElement` and `InfoBadgeCornerRadius` properties drive actual template
+parts. Measurement keeps the desired width at least the desired height. Without
+a local `CornerRadius`, the default radius is half the arranged height; a local
+radius retains priority even while an animation supplies the effective value.
+Styles alone do not opt out of the automatic-radius policy.
+
+`Controls/WinUIInfoBadge.xaml` supplies native `ControlTheme`s with the original
+default and Attention, Informational, Success, Caution and Critical style keys
+for dot/value/icon usage. An audited migration maps their `Style` use to native
+`Theme`. Light, dark and high-contrast dictionaries use the native resource
+system and require the surrounding WinUI theme's general brushes. The native
+template can also run with its resource fallbacks. The dictionaries do not
+implement arbitrary WinUI visual states or the missing
+`NavigationViewItem.InfoBadge` integration.
+
+The additive native `HighContrastThemeVariant` static field
+(`high_contrast_theme_variant()` in Rust) supplies a typed high-contrast key
+with Dark inheritance for resource dictionaries. It matches the WinUI theme's
+variant without requiring that optional crate; it is an integration API, not a
+WinUI InfoBadge member.
+
+### ProgressRing
+
+The opt-in `ProgressRing` preserves `IsActive = true`, `IsIndeterminate = true`,
+`Minimum = 0`, `Maximum = 100` and `Value = 0` without changing the existing
+`ProgressBar` defaults. Setting either range bound gives that bound precedence,
+then clamps the value. NaN can remain the public value; a nonfinite or collapsed
+range produces safe zero progress in native geometry. Read-only legacy
+`ProgressRingTemplateSettings` properties update from actual width.
+
+The replaceable native template uses two `Arc` shapes, native brushes and the
+inherited framework clock. The pinned default motion is expressed through native
+arc angles on a two-second timeline. Determinate increases animate over their
+fraction of that timeline; decreases apply immediately. The subscription stops
+when inactive, effectively hidden, detached, retemplated or finished. Inactive
+presentation retains layout while hiding the template content and removing it
+from the accessibility content view. Resource/theme changes and explicit brushes
+update the same parts.
+
+The native peer reports the ProgressBar role, active-indeterminate busy text and
+the RangeValue pattern only in determinate mode. The peer advertises read-only
+progress but forwards its provider setter, as the pinned implementation does.
+The native arcs are an explicit rendering adaptation. Preview
+`DeterminateSource`/`IndeterminateSource`, `AnimatedVisualPlayer`, arbitrary
+composition sources and Windows/pixel-comparison evidence remain separate
+requirements.
+
+### RatingControl and item descriptions
+
+The opt-in `RatingControl` implements the source's distinct numeric domains:
+`Value = -1` is unset and a nonnegative assignment is coerced into
+`[1, MaxRating]`; `PlaceholderValue` also defaults to -1 but retains fractions
+and zero in `[0, MaxRating]`. `MaxRating` defaults to 5 and is at least 1. Bounds
+are corrected before dependent values. Native validation rejects NaN rather
+than putting an invalid value into the rendering path.
+
+The control supplies native pointer capture and hover preview, keyboard editing,
+RTL direction handling, clear-on-repeat selection and read-only/disabled input
+gates. `InitialSetValue` defaults to 1. Programmatic assignments do not raise
+`ValueChanged`; user selection paths do. Normalized gamepad Enter/Escape and
+horizontal keys support engagement, commit and rollback through native input.
+Device discovery, raw controller mapping and Windows focus-engagement events
+remain host/framework requirements.
+
+`RatingItemInfo`, `RatingItemFontInfo` and `RatingItemImageInfo` are native property
+objects. Font and image descriptions expose the six source states and their
+fallback chains. Every control has its own default star description, and every
+item has its own native visual. The image contract accepts native `IImage`
+objects. Foreground clipping displays fractional ratings; native transforms
+apply the pointer-distance scale. A caption uses a real TextBlock, and an empty
+caption reserves no caption spacing.
+
+The native automation peer supplies Value and RangeValue patterns with the
+unset numeric value projected to zero. Its descriptions currently use English
+and Rust number formatting/parsing. Windows DecimalFormatter/localization,
+text-scale-derived glyph geometry, the source caption-top-margin resource,
+composition-driven animation timing, custom WinUI item templates, device and
+screen-reader comparisons, and pixel equivalence are not established by the
+native implementation.
+
+### Native property API and compatibility
+
+These controls and their helper types stay in the opt-in namespace. Their
+metadata overrides apply only to their own types. Existing Avalonia-compatible
+types, ordinary binding defaults, property priorities and generic assignment
+APIs remain available. In particular, convenience setters have distinct names
+so they do not hide `FerroObject::set_value(property, value)`:
+
+| Native control | Convenience assignment | Generic assignment remains available |
+|---|---|---|
+| `InfoBadge` | `set_numeric_value(i32)` | `set_value(InfoBadge::value_property(), value)` |
+| `ProgressRing` | `set_range_value(f64)` | `set_value(ProgressRing::value_property(), value)` |
+| `RatingControl` | `set_rating_value(f64)` | `set_value(RatingControl::value_property(), value)` |
+
+The additive `FerroObject::has_local_value(&StyledProperty<T>)` query inspects
+the current non-animation base priority. It distinguishes a local value,
+including an explicit assignment equal to the default, from styles, templates,
+inheritance and defaults. It sees a local base under animation, but does not
+report a binding attachment before it supplies a local value or fallback. This
+is an effective-local-value query, not a complete `ReadLocalValue` projection
+that returns WinUI binding expressions.
+
+Existing Avalonia-compatible `clear_value` semantics remain unchanged: an
+ordinary local value hidden by an active animation is retained when cleared.
+The animation must finish or be disposed before clearing that local value.
+InfoBadge consequently keeps its animated local radius until the animation
+ends, then uses the local radius; clearing it afterward restores the automatic
+half-height radius. The query supplies the distinction the badge needs without
+changing base property-store behavior. Detailed source links, member contracts
+and test boundaries are in [CONTROL-CONTRACTS.md](CONTROL-CONTRACTS.md).
+
 ## XAML API
 
 `migrate_winui_xaml(source, options)` returns a reviewable document, exact
@@ -274,6 +396,9 @@ features. A supported subset must retain diagnostics for the rest.
 | NavigationView | Hierarchical item containers, selection/invocation distinctions, adaptive left/top modes, overflow, pane lifecycle, settings/footer items, back request, focus and automation. Existing drawer composition alone does not provide this API. |
 | AutoSuggestBox | Extend the implemented text/query/selection contract to input-pane maximization, overlay/IME coordination, styles, gamepad input and platform-specific popup behavior. |
 | InfoBar and icon sources | Complete the remaining source variants, style projection and native accessibility/visual comparisons beyond the implemented close lifecycle and live projections. |
+| InfoBadge | Complete missing icon sources, NavigationView item integration, arbitrary custom visual states and Windows visual/accessibility comparisons. |
+| ProgressRing | Project the preview custom animated-source APIs through real native composition services, then validate source/template behavior and Windows visuals. |
+| RatingControl | Complete WinUI custom item-template projection, localized number/automation services, platform gamepad integration and composition/visual comparisons. |
 | ListView, GridView and TabView | Item-click semantics, selection, container lifecycle, drag/drop, tab closing/adding/tear-out, incremental loading and virtualization. Same-shaped basic lists/tabs remain partial adapters. |
 | Menus and command bars | Text/icon/accelerator mapping, command execution, radio/toggle state, submenus, flyout ownership, placement, overflow and accessible input. |
 | Rich text, ink, charts and specialized controls | Actual merged implementations and their platform/rendering contracts; another unmerged PR is a dependency rather than parity evidence. |

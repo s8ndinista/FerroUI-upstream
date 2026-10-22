@@ -2,8 +2,8 @@
   "meaning": "XAML member spellings joined through WinUI and FerroUI inheritance; candidates are not semantic compatibility.",
   "member_statuses": {
     "gallery-owned-contract": 102,
-    "missing-source-candidate": 568,
-    "source-candidate": 516,
+    "missing-source-candidate": 545,
+    "source-candidate": 539,
     "unresolved-upstream-member": 208
   },
   "members": [
@@ -13107,9 +13107,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.Control",
       "rust_member": "background",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBadge",
+      "target_declared_by": "FerroUI.Controls.Primitives.TemplatedControl",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBadge.Background",
       "uses": [
         {
@@ -13122,9 +13122,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "horizontal_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBadge",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBadge.HorizontalAlignment",
       "uses": [
         {
@@ -13137,9 +13137,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBadge",
       "rust_member": "icon_source",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBadge",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBadge",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBadge.IconSource",
       "uses": [
         {
@@ -13152,9 +13152,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.UIElement",
       "rust_member": "opacity",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBadge",
+      "target_declared_by": "FerroUI.Visual",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBadge.Opacity",
       "uses": [
         {
@@ -13168,7 +13168,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "style",
       "status": "missing-source-candidate",
-      "target": null,
+      "target": "FerroUI.Controls.WinUI.InfoBadge",
       "target_declared_by": null,
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBadge.Style",
       "uses": [
@@ -13182,9 +13182,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.InfoBadge",
       "rust_member": "value",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBadge",
+      "target_declared_by": "FerroUI.Controls.WinUI.InfoBadge",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBadge.Value",
       "uses": [
         {
@@ -13197,9 +13197,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "vertical_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.InfoBadge",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.InfoBadge.VerticalAlignment",
       "uses": [
         {
@@ -18316,9 +18316,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "height",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.ProgressRing",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.ProgressRing.Height",
       "uses": [
         {
@@ -18331,9 +18331,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "horizontal_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.ProgressRing",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.ProgressRing.HorizontalAlignment",
       "uses": [
         {
@@ -18346,9 +18346,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.ProgressRing",
       "rust_member": "is_active",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.ProgressRing",
+      "target_declared_by": "FerroUI.Controls.WinUI.ProgressRing",
       "upstream": "Microsoft.UI.Xaml.Controls.ProgressRing.IsActive",
       "uses": [
         {
@@ -18369,9 +18369,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.ProgressRing",
       "rust_member": "is_indeterminate",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.ProgressRing",
+      "target_declared_by": "FerroUI.Controls.WinUI.ProgressRing",
       "upstream": "Microsoft.UI.Xaml.Controls.ProgressRing.IsIndeterminate",
       "uses": [
         {
@@ -18384,9 +18384,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "margin",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.ProgressRing",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.ProgressRing.Margin",
       "uses": [
         {
@@ -18399,9 +18399,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "vertical_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.ProgressRing",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.ProgressRing.VerticalAlignment",
       "uses": [
         {
@@ -18414,9 +18414,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "width",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.ProgressRing",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.ProgressRing.Width",
       "uses": [
         {
@@ -19069,9 +19069,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RatingControl",
       "rust_member": "caption",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Controls.WinUI.RatingControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.Caption",
       "uses": [
         {
@@ -19084,9 +19084,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "horizontal_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.HorizontalAlignment",
       "uses": [
         {
@@ -19099,9 +19099,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RatingControl",
       "rust_member": "is_clear_enabled",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Controls.WinUI.RatingControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.IsClearEnabled",
       "uses": [
         {
@@ -19114,9 +19114,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RatingControl",
       "rust_member": "is_read_only",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Controls.WinUI.RatingControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.IsReadOnly",
       "uses": [
         {
@@ -19134,8 +19134,8 @@
       "declared_by": null,
       "rust_member": "is_tab_stop",
       "status": "unresolved-upstream-member",
-      "target": null,
-      "target_declared_by": null,
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Input.InputElement",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.IsTabStop",
       "uses": [
         {
@@ -19148,9 +19148,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "margin",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.Margin",
       "uses": [
         {
@@ -19163,9 +19163,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RatingControl",
       "rust_member": "max_rating",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Controls.WinUI.RatingControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.MaxRating",
       "uses": [
         {
@@ -19178,9 +19178,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RatingControl",
       "rust_member": "placeholder_value",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Controls.WinUI.RatingControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.PlaceholderValue",
       "uses": [
         {
@@ -19193,9 +19193,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RatingControl",
       "rust_member": "value",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Controls.WinUI.RatingControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.Value",
       "uses": [
         {
@@ -19208,9 +19208,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.RatingControl",
       "rust_member": "value_changed",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Controls.WinUI.RatingControl",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.ValueChanged",
       "uses": [
         {
@@ -19223,9 +19223,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "vertical_alignment",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.RatingControl",
+      "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.RatingControl.VerticalAlignment",
       "uses": [
         {

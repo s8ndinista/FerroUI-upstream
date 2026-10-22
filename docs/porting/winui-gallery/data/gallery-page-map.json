@@ -2140,8 +2140,14 @@
       "examples_total": 1,
       "examples_verified": 0,
       "id": "CompactSizing",
-      "implementation": [],
-      "notes": null,
+      "implementation": [
+        "samples/WinUIGallery/Pages/CompactSizing.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/sizing_sample.rs",
+        "samples/WinUIGallery/Pages/SizingForm.xaml",
+        "src/FerroUI.Themes.WinUI/DensityStyles/Compact.xaml"
+      ],
+      "notes": "The original standard/compact navigation uses distinct native Page types and Frame factories. All four text/password fields and nullable date values copy between forms. The existing native compact dictionary stays local to the compact page. PasswordBox and Header are explicit native TextBox/composition adaptations; Date maps to SelectedDate. Complete original control contracts and visual/input acceptance remain pending.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -2188,8 +2194,21 @@
           "type": "WinUIGallery.Controls.ControlExample"
         }
       ],
-      "status": "pending",
-      "tests": [],
+      "status": "partial",
+      "tests": [
+        {
+          "name": "all_reviewed_native_adaptations_load_real_controls",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "compact_sizing_copies_every_field_across_distinct_page_types",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        },
+        {
+          "name": "compact_sizing_resources_remain_page_scoped_and_release_with_the_gallery_page",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        }
+      ],
       "title": "Compact Sizing"
     },
     {
@@ -3412,8 +3431,14 @@
       "examples_total": 4,
       "examples_verified": 0,
       "id": "InfoBadge",
-      "implementation": [],
-      "notes": null,
+      "implementation": [
+        "samples/WinUIGallery/Pages/InfoBadge.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/feedback_samples.rs",
+        "samples/WinUIGallery/assets.rs",
+        "src/FerroUI.Themes.WinUI/Controls/WinUIInfoBadge.xaml"
+      ],
+      "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -3436,7 +3461,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Grid"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.InfoBadge"
         },
         {
@@ -3484,8 +3509,25 @@
           "type": "{http://schemas.microsoft.com/winfx/2006/xaml}String"
         }
       ],
-      "status": "pending",
-      "tests": [],
+      "status": "partial",
+      "tests": [
+        {
+          "name": "all_reviewed_native_adaptations_load_real_controls",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "info_badge_page_switches_actual_source_themes_and_keeps_original_icon",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        },
+        {
+          "name": "info_badge_page_preserves_source_integer_guard_for_dynamic_values",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        },
+        {
+          "name": "feedback_pages_and_callbacks_release_their_native_controls",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        }
+      ],
       "title": "InfoBadge"
     },
     {
@@ -5102,8 +5144,12 @@
       "examples_total": 2,
       "examples_verified": 0,
       "id": "ProgressRing",
-      "implementation": [],
-      "notes": null,
+      "implementation": [
+        "samples/WinUIGallery/Pages/ProgressRing.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/feedback_samples.rs"
+      ],
+      "notes": "Both original examples use the opt-in native ProgressRing, activation and background options, and finite/empty NumberBox handling. The source IsOn option is adapted to the existing native ToggleSwitch.IsChecked. Native arc motion is an explicit adaptation; custom animated visual sources, exact Lottie rendering and complete input/accessibility/visual acceptance remain pending.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -5118,7 +5164,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Page"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.ProgressRing"
         },
         {
@@ -5142,8 +5188,25 @@
           "type": "{http://schemas.microsoft.com/winfx/2006/xaml}String"
         }
       ],
-      "status": "pending",
-      "tests": [],
+      "status": "partial",
+      "tests": [
+        {
+          "name": "all_reviewed_native_adaptations_load_real_controls",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "progress_ring_page_preserves_both_source_modes_and_active_option",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        },
+        {
+          "name": "progress_ring_page_restores_empty_numeric_input_and_updates_the_native_range",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        },
+        {
+          "name": "feedback_pages_and_callbacks_release_their_native_controls",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        }
+      ],
       "title": "ProgressRing"
     },
     {
@@ -5339,8 +5402,12 @@
       "examples_total": 2,
       "examples_verified": 0,
       "id": "RatingControl",
-      "implementation": [],
-      "notes": null,
+      "implementation": [
+        "samples/WinUIGallery/Pages/RatingControl.xaml",
+        "samples/WinUIGallery/examples.rs",
+        "samples/WinUIGallery/feedback_samples.rs"
+      ],
+      "notes": "Both source examples use native RatingControl: user changes update the caption, clear/read-only options remain live, and the fractional placeholder is bound in both directions. Native event handlers and ordinary Binding explicitly replace source C# handlers and x:Bind. Segoe glyph availability, exact visual/input/OS accessibility acceptance and locale formatting remain pending.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -5351,7 +5418,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Page"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.RatingControl"
         },
         {
@@ -5375,8 +5442,25 @@
           "type": "WinUIGallery.Controls.ControlExampleSubstitution"
         }
       ],
-      "status": "pending",
-      "tests": [],
+      "status": "partial",
+      "tests": [
+        {
+          "name": "all_reviewed_native_adaptations_load_real_controls",
+          "path": "samples/WinUIGallery/tests.rs"
+        },
+        {
+          "name": "rating_page_changes_caption_only_for_user_changes_and_obeys_clear_and_readonly",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        },
+        {
+          "name": "rating_page_tracks_fractional_placeholder_in_both_directions",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        },
+        {
+          "name": "feedback_pages_and_callbacks_release_their_native_controls",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        }
+      ],
       "title": "RatingControl"
     },
     {
@@ -6993,7 +7077,7 @@
           "type": "Microsoft.UI.Xaml.Controls.ProgressBar"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.RatingControl"
         },
         {
@@ -7707,7 +7791,7 @@
           "type": "Microsoft.UI.Xaml.Controls.Page"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.ProgressRing"
         },
         {
