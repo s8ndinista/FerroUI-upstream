@@ -1,6 +1,92 @@
 # Validation and measurements
 
-This file distinguishes implemented paths, completed checks and measurements. Each observation belongs to its stated source and run; older successful runs do not validate later changes. The branch now incorporates FerroUI `ab7a15b8` / `0.4.0-preview.1`, restores Vello for every application target, and adds local style definition editing and public-API flattening. Those changes require their own validation. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the complete source and current review status.
+This file distinguishes implemented paths, completed checks and measurements. Each observation belongs to its stated source, runtime and run; older successful runs do not validate later changes. The branch incorporates FerroUI `ab7a15b8` / `0.4.0-preview.1` and uses Vello for every application target through public FerroUI APIs. [PR #254](https://github.com/wieslawsoltes/FerroUI/pull/254) collects the complete source and current review status. Current continuation evidence is recorded first; earlier checkpoints remain below with their original scope.
+
+## Current continuation: `f2bb1d61` harness / `3a0bf1f1` build (2026-10-22)
+
+The continuation adds native [stacked layout guides](LAYOUT_GUIDES.md), [matching and inverse selection](SELECTION.md), and [vector-face bucket painting](VECTOR_FACES.md). Guide stacks retain legacy square-grid JSON, support row/column geometry and shared styles, preserve local per-index visibility, and render through public FerroUI drawing and clipping APIs. Each guide has one RGBA hex field including alpha. Matching queries respect effective visibility and locks without changing document history. Bucket gestures preserve original vector geometry, preview faces, query between pointer samples, and commit or cancel as one transaction. The implementation guides describe exact semantics, validation limits and remaining feature gaps; these features do not establish complete Figma compatibility or pixel parity.
+
+The browser harness checkpoint is [`f2bb1d618843bf777b76859d2e06bf361bef009b`](https://github.com/wieslawsoltes/FerroUI/commit/f2bb1d618843bf777b76859d2e06bf361bef009b). It changes five browser-test files relative to [`3a0bf1f13c6ede9abe5360bc3691085a3bc981f0`](https://github.com/wieslawsoltes/FerroUI/commit/3a0bf1f13c6ede9abe5360bc3691085a3bc981f0); application build inputs are unchanged. Its fresh, unfiltered Software2D/WebGL2 run is **in progress**, using the actual CI-built `3a0bf1f1` distribution. No complete current browser pass is recorded here.
+
+### Completed native, build and framework gates
+
+| Gate | Source-specific completed observation |
+| --- | --- |
+| Document core | **394** tests passed at both `f36dabf7` and `3a0bf1f1`; no failed or ignored tests |
+| Native application | **155** tests passed at both checkpoints, including actual Vello pixels, public-API rendering, guide clipping, gesture ownership and parser regressions |
+| Persistence host | All **19** tests passed in the successful native CI job at `3a0bf1f1` |
+| Actual Chromium IndexedDB | All **5** checks passed at `3a0bf1f1`, including migration/rollback/conflict handling and reload of **12,000,042** document characters |
+| Framework browser bridge | Type checking, all **10** input/composition cases and bundling passed during the `3a0bf1f1` WASM build |
+| Actual Vello WebAssembly application | The CI browser builds completed at both checkpoints; completing the build did not make their later editor browser suites pass |
+| Resolved application dependencies | Locked normal/build graphs contain Vello and no active Skia packages for Emscripten, Linux x64, Windows x64, macOS ARM64 and macOS x64 |
+| Repository framework CI | All **14** jobs passed at `f36dabf7` in [run 39765413203](https://github.com/wieslawsoltes/FerroUI/actions/runs/39765413203), and all **14** passed at `3a0bf1f1` in [run 39771211233](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771211233) |
+
+The [continuation evidence index](evidence/2026-10-22-f36dabf7/README.md) links the recovered native logs, source-tagged framework summaries, resolved dependency graphs and CI extraction provenance. Its directory name identifies the first checkpoint; each record identifies its actual source. Dependency checks establish backend selection, and the standard framework workflow establishes its own platform coverage. Neither substitutes for executing the FerroDesign native GUI on every supported desktop platform. The IndexedDB test exercises a real browser but is separate from the actual FerroUI editor interaction suite.
+
+### Browser failures retained with their actual scope
+
+| Run | Software2D | WebGL2 | Overall result |
+| --- | --- | --- | --- |
+| First local full attempt, harness `f36dabf7` | 141 checks passed | 74 checks passed, then the explicit layer-selection menu assertion failed | Failed |
+| Palette diagnostic, harness `3a0bf1f1` | 38 checks passed | 35 checks passed | Passed only selection, matching and Flatten plus common gates; `full: false` |
+| Second local full attempt, harness `3a0bf1f1` | 141 checks passed | 118 checks passed, then entering vector editing in the regional-image fixture failed | Failed |
+| [FerroDesign CI 39765407889](https://github.com/wieslawsoltes/FerroUI/actions/runs/39765407889), `f36dabf7` | 88 checks passed, then the parent-resize constraint assertion failed | 95 checks passed, then a native local-style PNG capture exceeded its deadline and retry | Failed; native job succeeded |
+| [FerroDesign CI 39771204240](https://github.com/wieslawsoltes/FerroUI/actions/runs/39771204240), `3a0bf1f1` | 88 checks passed, then the same parent-resize assertion failed | 118 checks passed, then the regional-image fixture failed to enter vector editing | Failed; native job succeeded |
+
+Both CI runs completed as failures; neither is treated as cancelled by a later push. The [preserved reports, traces, failure documents and decoded CI logs](evidence/2026-10-22-f36dabf7/README.md#preserved-browser-outcomes) retain those failures. A completed mode inside an overall failed run is not a passing complete run. Earlier focused counts also do not cover scenarios they skipped.
+
+The first local failure exposed native palette publication timing. The `3a0bf1f1` tests wait after filtering/recentering and require the actual outcome of one native action click. The later geometry and vector-entry failures exposed keyboard-selection transitions where the new selection model preceded the published native input scene. In the CI geometry failure, the child rectangle became `[20, 10, 40, 160]` instead of the asserted `[20, 40, 140, 30]`. The `f2bb1d61` tests now wait for both a new native frame and input scene after selecting the exact parent or network root, then assert actual parent dimensions and unchanged child-constraint expectations. Vector tests require entry into vector editing and canvas focus before proceeding. The document, history, error-outcome and pixel assertions remain enforced; these changes do not add action retries or change application behavior.
+
+The `f36dabf7` screenshot failed its original 30-second attempt and existing 15-second guarded retry; the failure capture also timed out. The retained trace showed loaded fonts, responsive native state, unchanged document/view state, an intact rendering context and continuing frame delivery. Some trace frames arrived 27–32 seconds after their recorded swap times. This supports the bounded `f2bb1d61` change to a **30-second first attempt and one 60-second guarded retry**, but does not identify the exact queue responsible or establish that the longer retry recovers that failure. The retry retains state and context-health checks and actual PNG pixel validation. No screenshot timeout occurred in the later `3a0bf1f1` CI run, which instead failed vector entry.
+
+Two subsequent focused local runs passed before the workspace was lost, but their latest raw reports were not recovered. Their counts are recorded as contextual observations in the evidence index and are not linked as available raw proof. The fresh full run is intended to supply the primary current browser evidence.
+
+### Fresh run identity and remaining browser gate
+
+| Input | Exact identity |
+| --- | --- |
+| Browser test harness | `f2bb1d618843bf777b76859d2e06bf361bef009b` |
+| CI distribution build source | `3a0bf1f13c6ede9abe5360bc3691085a3bc981f0` |
+| Recovered build artifact | GitHub artifact `12427798904` |
+| Actual WASM payload | **51,205,801 bytes** |
+| WASM SHA-256 | `7880a628e7117ab88f896f69baa9c9ccedcdc33792302a01f653b4465e1499b9` |
+| Requested modes and scope | Software2D and WebGL2; unfiltered complete suite |
+| Result | **Pending** |
+
+This recovered CI runtime is a different binary from the earlier local runtime; their digests are not interchangeable. Its application source is compatible with the test-only `f2bb1d61` change, and the run records the build and harness identities separately. WebGL2 uses Chromium's ANGLE/Vulkan/SwiftShader path in these runs, so the results cannot establish physical-GPU throughput. No matched Figma document/reference screenshot was available for a numerical visual-parity comparison.
+
+### Local history and restored documents
+
+The production editor defaults to **100 committed undo entries**. Starting from an autosaved document constructs `Editor::new` from the restored document, with empty undo/redo history; startup does not create an undoable import from the demo. Undo history belongs to the editor session and is not part of portable JSON or durable document storage.
+
+The [browser history regression](../tests/history-browser.mjs) crosses the production cap, makes one additional edit and checks exact one-step undo/redo with the expected history lengths. It does **not** traverse to or verify the oldest reachable undo state. The harness also starts each feature scenario from a durable restored document with fresh session history. These are local-session contracts, not remote collaborative or cloud version-history coverage. Their current complete browser gate remains pending as stated above.
+
+### Paired release measurements at `f36dabf7`
+
+The [schema-5 performance JSON](evidence/2026-10-22-f36dabf7/native-performance/performance-extracted-log.json) was extracted from the completed native job's decoded log in [run 39765407889 / job 119783951316](https://github.com/wieslawsoltes/FerroUI/actions/runs/39765407889/job/119783951316), source `f36dabf795f9e7b42ada46e34878b3ae5fd50697`. The workflow ran `cargo run --locked --release -p ferrodesign-core --example performance -- 10000` and printed its JSON in **Compare scoped editing, history and serialization costs**. The [raw supporting step](evidence/2026-10-22-f36dabf7/native-performance/performance-step.log) and [extraction provenance](evidence/2026-10-22-f36dabf7/native-performance/provenance.json) are preserved. This is job-log extraction, not a claim of byte identity with a separately downloaded benchmark artifact. The 7,493-byte JSON extract has SHA-256 `21c34a563a17f290ae3ab9eb2aa0f8e911c03d524dfcba411bed4f82fa87f578`.
+
+The release executable compares scoped commands with an explicit generic full-document transaction reference **in the same process**, using 10,000 flat filled rectangles and one selected node. `releaseBuild`, document/history equivalence and serialization round-trip checks all passed. The reference is a workload in this executable, not a previous application version or a measurement from another runner.
+
+| Operation, 48 samples each | Full-document reference p50 | Scoped p50 | Scoped p95 |
+| --- | ---: | ---: | ---: |
+| Nudge | 16.479897 ms | 0.027372 ms | 0.044975 ms |
+| Undo | 3.731835 ms | 0.016031 ms | 0.024235 ms |
+| Redo | 3.527510 ms | 0.014918 ms | 0.029846 ms |
+
+The gesture fixture records 12 gestures with 24 updates per gesture. Each phase is measured separately; the per-update row contains all 288 updates rather than dividing a total by the update count.
+
+| Gesture phase | Samples | Full-document reference p50 | Scoped p50 | Scoped p95 |
+| --- | ---: | ---: | ---: | ---: |
+| Begin | 12 | 4.186642 ms | 0.014748 ms | 0.018134 ms |
+| Each update | 288 | 3.730643 ms | 0.001012 ms | 0.001543 ms |
+| Commit | 12 | 12.151327 ms | 0.012353 ms | 0.013626 ms |
+| Complete 24-update gesture | 12 | 106.014222 ms | 0.063640 ms | 0.068860 ms |
+
+These are native model/transaction costs. They exclude browser event dispatch, native control layout, scene drawing, GPU execution, display frame rate and durable-storage completion. They do not benchmark the new guide drawing, matching query or bucket geometry paths, and the per-update measurement is not end-to-end pointer latency. Phase medians need not sum to the median of complete gestures.
+
+Size-dependent work remains measurable. Across five samples, portable pretty serialization produced **20,152,206 bytes** at **47.802605 ms p50**; compact autosave produced **12,802,055 bytes** at **21.233539 ms p50**, about **36.5% smaller**, with exact round-trip equivalence. Parse/validate/index took **59.822304 ms p50** across three samples. A separate dense-layout fixture with 9,999 mixed fixed/fill text children took **10.432199 ms p50** across five samples. These native fixtures are distinct from the historical browser workload below.
+
+Component authoring still uses **whole-document Editor history**. Its 10,000-node fixture includes **5,592,566 bytes** of unrelated embedded-image URI data and eight operations of each kind. Actual Editor variant switching measured **21.314896 ms p50 / 21.771297 ms p95**; text properties **20.904493 / 21.967517 ms**; visibility properties **28.715560 / 29.467406 ms**. Exact history restoration and stable materialized IDs passed. The isolated no-history figures in the raw JSON are not substituted for these production Editor costs.
 
 ## Continuation checkpoint: `2004673e` (2026-10-20)
 
@@ -22,20 +108,20 @@ The resumed source `f1e29bfc` had a completed [framework CI run](https://github.
 
 [Checkpoint `bf57095f`](https://github.com/wieslawsoltes/FerroUI/commit/bf57095f7256a3444482beea64f77cd41c4bb685) preserves those assertions and failure status, adds opt-in raw pixel diagnostics, and permits the independent browser build after successful native compilation even if a subsequent native pixel assertion fails. Its [CI run](https://github.com/wieslawsoltes/FerroUI/actions/runs/39488148455) is tracked separately. A completed older run is never substituted for validation of the current source.
 
-## Current validation checkpoint: `f83ad955` (in progress)
+## Earlier validation checkpoint: `f83ad955`
 
 [Source `f83ad955`](https://github.com/wieslawsoltes/FerroUI/commit/f83ad9558c24117673e29077275f4176676a7acd) includes the complete local-style lifecycle, public geometry and shaped-text outlines, conservative flattening, current-color paint conversion and rejected-draft menu protection. The final core test artifact contains all three shadow-composition guards in this source.
 
 | Gate | Completed observation |
 | --- | --- |
-| Current document core | All 316 unit tests passed; the focused flatten filter separately passed all 13 selected cases |
+| Document core | All 316 unit tests passed; the focused flatten filter separately passed all 13 selected cases |
 | Style comparison allocations | Linked and unlinked cohorts have identical allocation counts and requested bytes for both tested edit paths; see scope below |
 | Resolved application dependencies | Vello present and no active `ferroui-skia`, `skia-safe` or `skia-bindings` for Emscripten, Linux x64, Windows x64 and both macOS architectures |
 | Persistence host | All 17 JavaScript cases passed |
 | Actual Chromium IndexedDB | All 5 migration, rollback, conflict and large-document reload checks passed, including 12,000,042 document characters |
 | Framework browser bridge | Type checking, all 10 input/composition tests and bundling passed |
 
-The host, bridge, dependency and allocation checks preceded the final editor fixes; their exercised source inputs are unchanged by those fixes. The dependency checks establish backend selection, not native GUI execution. The current application WebAssembly build, full browser interactions, native pixel suite and public geometry API pixel gates are still in progress. The added assertions and older successful screenshots are not substitutes for those results.
+The host, bridge, dependency and allocation checks preceded the final editor fixes; their exercised source inputs were unchanged by those fixes. The dependency checks establish backend selection, not native GUI execution. At this checkpoint, the application WebAssembly build, full browser interactions, native pixel suite and public geometry API pixel gates were still in progress. The added assertions and older successful screenshots were not substitutes for those results. Later results are recorded separately above.
 
 The allocation fixture performs 16 identical edits with a 262,144-byte synthetic image URI in each cohort. `update_node` requests 678 allocations and 21,659,936 bytes in both cohorts; `update_nodes_with_layout` requests 806 allocations and 25,875,872 bytes in both. These are cumulative allocator requests, not peak memory. The comparison establishes no additional binding-comparison allocation overhead for this fixture; history, cache and metadata copies still exist. It does not measure editing latency, rendering or FPS.
 

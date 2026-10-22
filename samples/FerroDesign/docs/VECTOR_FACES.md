@@ -1,103 +1,249 @@
-# Automatic vector-network faces
+# Vector-network faces and paint bucket
 
-In vector editing mode, **Fill all closed regions** discovers the bounded faces
-of the layer's planar network and fills each face with the existing layer paint
-stack. If the layer has no fills, the native action adds one neutral solid fill.
-The complete operation is one undoable edit. Open branches remain editable and
-stroked; they do not become artificial fill boundaries.
+FerroDesign discovers bounded faces in a checked planar vector network, supports
+independent region paint stacks, and provides a native paint bucket with hover
+preview and captured drag painting. The authoritative geometry remains the
+network's vertices, edges and oriented region contours. Face authoring preserves
+the original line and cubic Bézier commands, layer identity and world transform.
+The controls are defined in XAML; face adorners and artwork use public FerroUI
+geometry, brush, clipping and `DrawingContext` APIs.
 
-This builds on explicit network regions. It does not introduce a second vector
-representation, change layer identity, or replace curves with polylines.
-`VectorNetwork::detect_faces` returns regions containing stable, oriented edge
-references; `VectorNetwork::face_at` selects a bounded face by a node-local
-point. Clients can inspect those read-only results before choosing regions.
-`VectorNetwork::fill_all_faces` replaces the current region selection with every
-discovered bounded face, and `Editor::fill_network_faces` supplies scoped history.
+## Native authoring workflow
 
-## Topology and geometry
+Select an unlocked vector and enter vector editing. Choose **Paint bucket**, or
+use **Shift+B**, then move over a closed face to preview its coverage. Press and
+drag to paint the faces crossed by the pointer. The stroke copies the complete
+layer fill stack at press time, including paint values, opacity and visibility.
+If that stack is empty, the bucket uses a neutral `#D9D9D9` solid for the painted
+regions without adding a fill to the layer.
 
-Discovery first validates the authoritative network and checks its embedding.
-The supported geometry is straight edges and cubic Bézier edges, including
-parallel curves, simple self-loop curves, shared junctions, implicit unstroked
-closing edges, disconnected components and nested components.
+Hold **Shift before pressing** to clear faces instead. Paint versus clear is
+fixed for the current stroke; changing Shift after the press does not repaint
+previously visited faces with a different operation. Release commits one undo
+step for all changed faces. **Escape** cancels the stroke and keeps vector
+editing open. An unchanged stroke adds no history entry.
 
-The geometric check uses normalized coordinates and Bézier convex-hull
+The related native actions have distinct purposes:
+
+| Action | Result |
+| --- | --- |
+| **Fill all closed regions** | Discovers every bounded elementary face and fills the inherited topology. Existing matching regions and explicit paint overrides are retained. If inherited regions need a layer fill and the layer has none, this action adds the neutral fill in the same edit. |
+| **Paint bucket** | Copies the layer's current stack into explicit replacements for the faces visited by a click or drag. Shift-drag creates explicit empty replacements. |
+| **Region paints** | Opens the existing paint-stack editor for the active region. Edits target that region's stack, with the front paint first. |
+| **Use layer fills** | Removes the active region's explicit paint override when its coverage can safely return to inheritance. The coverage rules below determine whether the region itself is retained. |
+
+Open branches remain editable and stroked. They do not become artificial fill
+boundaries, and pointing outside all bounded faces does not allocate a region.
+
+## Paint ownership and inheritance
+
+`NetworkRegion::fills` is an optional complete paint stack. Existing documents
+whose regions omit this field retain their previous compound-fill behavior.
+
+| Stored value | Meaning |
+| --- | --- |
+| `None` / omitted `fills` | The region participates in the layer's combined inherited fill geometry and uses the current layer fill stack. |
+| `Some(fills)` / a nonempty `fills` array | The region replaces earlier fill coverage with its own stack. Solid, linear, radial, angular and image paints use the shared `Fill` representation and validation. |
+| `Some(Vec::new())` / `"fills": []` | The region is an explicit transparent replacement. It removes earlier fill coverage inside its footprint; it does not fall back to the layer paints or delete its contours. |
+
+Inherited contours are evaluated together under the network's nonzero or
+even-odd fill rule. Rendering them independently would change holes and overlap
+behavior. Explicit regions replace that inherited coverage. Where explicit
+regions overlap, the later stable region ID owns the footprint, even when its
+stack is empty, hidden or fully transparent. This prevents inherited paint from
+showing through a clear and prevents applying inherited alpha beneath an
+explicit translucent replacement. Paint rows are drawn with the first row
+topmost; the layer's opacity still applies to the resulting artwork once.
+
+The region renderer retains original geometry for brush coordinates and applies
+replacement coverage through geometry clips. A neighboring override therefore
+does not redefine another region's gradient or image coordinate system. The
+renderer has its own bounds index for pruning disjoint replacement footprints
+and uses balanced geometry unions. This renderer index is separate from the
+face-picking map described below.
+
+**Use layer fills** uses integer winding propagation across the elementary-face
+dual graph to examine earlier coverage. If earlier inherited or explicit
+geometry covers the complete region, reset removes the redundant override. If
+none of its footprint is covered, reset retains the region and changes its
+stack to `None`. A composite region with both covered and uncovered portions is
+rejected with `AmbiguousRegionReset`; the implementation does not change an
+even-odd hole or duplicate coverage to guess at the intended reset. Clearing a
+region, in contrast, retains its ID and contours.
+
+Region paint edits leave the layer's fill-style and variable links intact.
+Editing a component instance's authoritative network records the existing
+`path` override so reconciliation preserves the region edit. The copied
+explicit stack is a value snapshot; it does not keep inheriting later layer
+paint changes. Regional image paints use the paint editor's controls; the
+direct canvas image-crop tool remains a layer-fill operation.
+
+## Checked topology and original curves
+
+`VectorNetwork::detect_faces` validates the authoritative network and its planar
+embedding before returning read-only faces. Supported geometry includes
+straight and cubic edges, parallel curves, simple self-loop curves, shared
+junctions, implicit unstroked closing edges, disconnected components and nested
+components.
+
+The geometric check normalizes coordinates and uses Bézier convex-hull
 separation. A monotone coordinate certifies an individual curve piece as simple;
 other curves are subdivided for certification. Pairs of control hulls must be
 separable or meet only at an explicitly shared vertex. Subdivision is temporary
-analysis data. The returned fill contours retain the original edge and control
-point values exactly. A sweep over control-hull bounds reduces ordinary pair
-comparisons.
+analysis data: returned contours retain the original edge references and control
+point values. A sweep over control-hull bounds reduces ordinary pair comparisons.
 
-After geometric validation, iterative bridge discovery removes open branches
-from face traversal without removing them from the document. Outgoing directed
-edges are ordered by their endpoint tangents. Walking the predecessor of the
-reverse edge at each junction keeps one face consistently on the same side of
-the walk. Signed area is integrated from the original Bézier polynomial rather
-than from sampled points. Positive walks describe bounded faces; a negative
-walk belonging to a nested component becomes a hole in the smallest containing
-face. Contour orientation supports both nonzero and even-odd fill rules.
+Iterative bridge discovery excludes open branches from face traversal without
+removing them from the document. Outgoing directed edges are ordered by endpoint
+tangents. Walking the predecessor of the reverse edge at each junction keeps a
+face on the same side of the walk. Signed area is integrated from the original
+Bézier polynomial. Positive walks describe bounded faces; a negative walk from
+a nested component becomes a hole in the smallest containing face. The resulting
+oriented contours support both fill rules.
 
-Hole ownership and `face_at` use curve-polynomial winding directly. Derivative
+Hole ownership and point containment use curve-polynomial winding. Derivative
 roots partition each curve into monotone intervals; bracketed ray intersections
 use half-open endpoint rules to count shared vertices once and cancel tangencies.
-Query-relative normalization preserves micro-scale curves and narrow curved
-annuli. These operations do not use the document's approximate flattened hit-test
-path or an absolute flattening tolerance.
+Query-relative normalization supports the tested micro-scale curves and narrow
+curved annuli without consulting the document's flattened hit-test path or an
+absolute flattening tolerance. Calculations use floating-point arithmetic;
+unresolved separation or orientation is an error, not a claim of arbitrary
+precision.
 
-For example, two nested squares produce an annular face and an inner square
-face. Filling all faces fills both. A client that selects only the annular face
-through `face_at` retains the actual hole. A square divided by a diagonal
-produces two faces whose shared edge has opposite orientations.
+For example, nested squares produce an annular face and a separate inner face.
+Filling both covers both areas, while painting only the annular face keeps its
+hole. A square divided by a diagonal produces two faces that reference the shared
+edge with opposite orientations.
 
-## Identity, history and failure behavior
+## Cached hover and pointer-segment queries
 
-Vertex and edge IDs, control points, stroke visibility, layer bounds and world
-transforms never change during face authoring. Existing matching regions keep
-their IDs and serialized contour order; matching also recognizes a global
-reversal of every contour in one region. Newly discovered faces allocate IDs
-from the existing monotonic network allocator. A second invocation over the
-same filled topology is a no-op.
+`NetworkFaceMap::new` runs checked discovery once and retains elementary faces,
+their exact paths, and a balanced median-partitioned bounding-volume hierarchy
+(BVH). Its bounds come from the original curves' control hulls, so a narrow curved
+face cannot be discarded because an approximate flattened bound missed it. The
+map keeps a geometry snapshot of vertices, edges and the fill rule; it does not
+copy existing regions' potentially large paint or embedded-image payloads.
+Preparing or querying the map allocates no stable region IDs.
 
-Geometry discovery and all ID reservations happen before mutation. Invalid
-network data, exhausted IDs, unresolved geometry and no-op calls preserve the
-document, selection, revision and redo state. The native command displays the
-diagnostic before opening an edit scope, so it cannot leave a pending
-transaction attached to subsequent input. Creating a default fill also uses
-the normal property-edit boundary to detach a conflicting empty fill style.
+`NetworkFaceMap::face_at` prunes that BVH and evaluates original-curve winding for
+candidate faces. `path` exposes the retained contour path for the hover adorner.
+The native canvas caches a prepared map or its discovery error with the selected
+node and editor render token. On a changed token it can retain a successful map
+when `matches_geometry` confirms that the graph and fill rule are unchanged.
+Continuing bucket hover/painting after a paint-only edit therefore does not
+repeat planar-embedding certification. Geometry changes require a new map;
+stale mapped paint calls are rejected with `StaleFaceMap`.
 
-## Explicit limits
+Hover converts the pointer through the current inverse world transform, selects
+one face and retains its FerroUI `Geometry`. Public `DrawingContext` transforms,
+brushes and a screen-scaled outline draw the preview, including holes, in the
+editor overlay. Moving within the same face and paint/clear mode reuses that
+geometry. Hover changes neither the document nor its allocator, revision or
+history, and the adorner is excluded from artwork export. Invalid topology
+produces no repeated hover notices; a paint attempt reports its diagnostic once.
 
-Every crossing must already be represented by shared vertices. Automatic
-curve-intersection splitting and welding are not part of this operation.
-Crossing edges, coincident or overlapping segments, unwelded contacts and
-coincident outgoing tangents are declined. Very close contacts, singular curves
-or nearly zero-area boundaries can also be declined when geometric separation
-or orientation cannot be established reliably. Their authored geometry is
-preserved for further editing.
+`NetworkFaceMap::faces_along_segment` traces the straight segment between
+delivered pointer positions. It gathers candidate boundary edges through the
+BVH, solves intersections between the pointer line and each original curve
+polynomial, sorts the segment parameters, and queries interior samples between
+consecutive crossings. Endpoint queries are included. This finds narrow faces
+between pointer events without fixed pixel-step sampling. The method returns
+one sample per distinct face in traversal order; the gesture also keeps a
+visited-face set so revisiting a face does not repaint it.
 
-Discovery accepts at most 32,768 edges, spends at most one million geometric
-work units, and subdivides a certification pair at most 40 times. Reaching a
-limit returns a diagnostic before any document change. The broad phase does
-not make adversarial overlapping control hulls linear-time. Face discovery is
-an explicit authoring action, not work repeated on each render or pointer move.
+## Identity, transactions and persistence
 
-All regions continue to use their layer's fill stack. Separate region paints,
-automatic intersection topology, and a dedicated point-and-click paint-bucket
-tool remain additional work. These limits are separate from the implemented
-read-only face-at-point query.
+Vertex and edge IDs, controls, stroke visibility, layer bounds and world
+transforms do not change during these paint-only operations. Matching regions
+keep their IDs and serialized contour order, including matches recognized after
+a global reversal of the contours. New explicit faces use the existing monotonic
+network allocator. **Fill all closed regions** also retains explicit composite
+overrides and their priority rather than discarding them when filling the
+underlying elementary topology.
 
-## Regression coverage
+The core API exposes `fill_network_faces`, `paint_network_face`,
+`set_network_region_fills`, and the cached-map variants
+`paint_mapped_network_face` / `paint_mapped_network_faces`. Editor paint updates
+operate on a cloned node and publish only after successful preflight. The batch
+method validates once and makes one retained node update for all newly visited
+faces in a pointer segment. An allocator failure partway through that batch
+publishes none of it. Failed core preflight and direct no-op edits preserve the
+document, allocator, history and redo state.
 
-The core tests in `vector_faces_tests.rs` cover adjacent cells, exact shared
-edge orientation, disconnected and nested holes, opposite source winding,
-bridges and dangling trees, articulation vertices, cubic lenses and self-loops,
-unstroked closing edges, crossings and contacts, invalid/degenerate/exhausted
-networks, stable existing region IDs, affine reflection/shear/translation,
-idempotent 16-by-16 cells, locks and exact undo/redo.
+The native bucket opens a scoped node transaction before painting the pressed
+face. Each subsequent segment updates that same transaction. Release commits
+all changed faces as one undo step; an unchanged gesture preserves redo and adds
+no history entry. Normal transaction finalization can still refresh internal
+render revisions even when it creates no authored history entry.
 
-`tests/network-browser.mjs` exercises the actual compiled XAML button and native
-canvas, verifies pixels in two discovered faces, checks that an open branch
-stays outside all fill boundaries, and checks that an unsplit crossing leaves
-the preceding redo transaction available. Added tests are test coverage; their
-execution status belongs in the source-specific validation report.
+Escape and native pointer-capture loss roll back the owned stroke. Undo or Redo
+during a stroke cancels that preview before touching earlier history. The canvas
+checks the editor transaction identity and render token, selected node, page,
+tool, visibility, lock state and affine transform before continuing. Reconciliation
+cancels a no-longer-current owned gesture while preserving a newly chosen
+selection/page. A stale gesture cannot resume writing or commit/cancel a newer
+unrelated transaction. Ordinary shell commands finish the stroke before applying
+their separate operation; direct canvas mode changes also reconcile or cancel
+the pending gesture.
+
+Pointer hover is read-only; a held paint stroke is a cancellable document preview.
+`CanvasEvent::Draft` marks the active stroke in the browser host's existing draft
+state, combined with inline-text and inspector drafts. Background autosave
+serialization defers while the stroke is active. Release or cancellation resumes
+any previous pending save, including when the bucket itself was a no-op. This
+matters when the earlier edit's one-shot 220 ms save timer expired during capture.
+
+At an explicit lifecycle boundary, the host's draft committer invokes the native
+`commit-edit` command. That command finishes the stroke before inspector commits
+and document serialization. The pagehide path can therefore commit a stroke
+started from an already saved document, and a later mouse release cannot add a
+second history entry. IndexedDB durability is completed by the host's existing
+save transaction; no document JSON is serialized for each pointer movement.
+
+## Limits and failure behavior
+
+Every network crossing must already be represented by shared vertices. These
+operations do not automatically split intersections or weld contacts. Crossing
+edges, coincident or overlapping segments, unwelded contacts and coincident
+outgoing tangents are declined. Very close contacts, singular curves and nearly
+zero-area boundaries can also be declined when certification cannot establish
+reliable separation or orientation. Authored geometry remains available for
+editing after the error.
+
+| Guard | Current limit or behavior |
+| --- | --- |
+| Discovery size | At most 32,768 edges. |
+| Geometric discovery work | At most 1,000,000 counted work units per discovery. |
+| Certification subdivision | At most 40 levels for curve/pair certification. |
+| Pointer-segment tracing | A separate 1,000,000-unit budget includes candidate traversal and checked face containment. |
+| Cached batch painting | At most 32,768 supplied sample points, with a separate 1,000,000-unit checked-query budget. |
+| Ambiguous inheritance reset | Returns `AmbiguousRegionReset` and preserves the region instead of partially changing its coverage. |
+| Gesture error | Rolls back the current owned stroke and reports the failure once. |
+
+The bounds trees reduce work for spatially separated candidates. They do not
+make heavily overlapping bounds or adversarial geometry constant-time, and
+paint updates still clone the edited node for atomic publication. The budgets
+are operation limits, not frame-time guarantees. Segment tracing follows the
+straight path between input events; it cannot reconstruct motion the platform
+did not deliver. The current bucket paints the selected editable network rather
+than searching across arbitrary layers.
+
+## Regression coverage and source map
+
+| Source | Covered behavior |
+| --- | --- |
+| [`vector_faces_tests.rs`](../crates/ferrodesign-core/src/vector_faces_tests.rs) | Adjacent cells, nested/disconnected holes, original cubic geometry, micro annuli, bridge exclusion, rejected crossings, stable IDs, affine transforms, idempotent 16-by-16 cells, immutable cached maps, subpixel intermediate faces, stale maps and atomic batch allocator exhaustion. |
+| [`vector_region_paints_tests.rs`](../crates/ferrodesign-core/src/vector_region_paints_tests.rs) | Legacy JSON, explicit empty stacks, replacement priority, inheritance reset, composite-reset rejection, paint validation, locks, exact history, styles, component overrides and preserved explicit paints during fill-all. |
+| [`network_bucket_tests.rs`](../crates/ferrodesign-app/src/canvas/network_bucket_tests.rs) | Reused hover preparation and actual native bitmap pixels, affine fast drags, one-step history/no-ops, clear, Escape, capture loss, selection changes, transaction ownership, tool changes and cached topology failures. |
+| [`region_tests.rs`](../crates/ferrodesign-app/src/renderer/region_tests.rs), [`region_scaling_tests.rs`](../crates/ferrodesign-app/src/renderer/region_scaling_tests.rs), [`svg_regions_tests.rs`](../crates/ferrodesign-app/src/renderer/svg_regions_tests.rs) | Native alpha replacement, transparent cutouts, paint order, layer opacity, masks, incremental/fresh pixel equivalence, disjoint-region pruning and balanced geometry depth, and regional SVG round-trip pixels. |
+| [`network-browser.mjs`](../tests/network-browser.mjs) | Compiled XAML actions and native canvas input, visible discovered faces, open branches, stable topology, exact undo/redo and atomic rejection of an unsplit crossing. |
+| [`region-paints-browser.mjs`](../tests/region-paints-browser.mjs) | Native region paint controls, stack editing, reset/clear behavior, exported artwork, exact history and regional image-target isolation. |
+| [`network-bucket-browser.mjs`](../tests/network-bucket-browser.mjs) | Native hover and a three-face drag with an intermediate face between events; exact undo/redo and no-op history; Shift clear and Escape; clean-baseline pagehide commit and late release; unchanged-stroke autosave resumption after the debounce deadline; exact PNG dimensions/color without hover adorners. |
+
+Implementation entry points are
+[`vector_faces.rs`](../crates/ferrodesign-core/src/vector_faces.rs),
+[`canvas/network_bucket.rs`](../crates/ferrodesign-app/src/canvas/network_bucket.rs),
+[`renderer/regions.rs`](../crates/ferrodesign-app/src/renderer/regions.rs), and the
+native shell's draft/save handling. Execution status, renderer modes and
+source-specific evidence belong in [VALIDATION.md](VALIDATION.md); the coverage
+listed here is not a hardware throughput benchmark.
