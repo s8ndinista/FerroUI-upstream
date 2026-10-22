@@ -3,6 +3,7 @@
 //! invoking native setters, which can synchronously replace the input client.
 use crate::interop::CoreTextInputScope;
 use ferroui_base::input::text_input::{TextInputContentType, TextInputOptions};
+use ferroui_base::input::InputScopeNameValue;
 use std::cell::{Cell, RefCell};
 
 #[derive(Default)]
@@ -38,17 +39,7 @@ impl CoreTextInputOptions {
         let _guard = ApplyingGuard(&self.applying);
         loop {
             let revision = self.revision.get();
-            let scope = match self.options.borrow().content_type {
-                TextInputContentType::Email => CoreTextInputScope::EmailAddress,
-                TextInputContentType::Number => CoreTextInputScope::Number,
-                TextInputContentType::Password => CoreTextInputScope::Password,
-                TextInputContentType::Digits => CoreTextInputScope::Digits,
-                TextInputContentType::Pin => CoreTextInputScope::PinNumeric,
-                TextInputContentType::Name => CoreTextInputScope::PersonalFullName,
-                TextInputContentType::Url => CoreTextInputScope::Url,
-                TextInputContentType::Search => CoreTextInputScope::Search,
-                _ => CoreTextInputScope::Text,
-            };
+            let scope = native_scope(&self.options.borrow());
             set_scope(scope)?;
             if revision == self.revision.get() {
                 return Ok(());
@@ -59,15 +50,146 @@ impl CoreTextInputOptions {
     }
 }
 
+/// WinUI's XAML scope names and CoreText's scope names have several aliases.
+/// Keep the conversion explicit: the public enums do not have identical names
+/// or sets of variants even though their shared native values match.
+fn native_scope(options: &TextInputOptions) -> CoreTextInputScope {
+    use CoreTextInputScope as Native;
+    use InputScopeNameValue as Scope;
+    if let Some(scope) = options.effective_input_scope() {
+        return match scope {
+            Scope::Default => Native::Default,
+            Scope::Url => Native::Url,
+            Scope::EmailSmtpAddress => Native::EmailAddress,
+            Scope::PersonalFullName => Native::PersonalFullName,
+            Scope::CurrencyAmountAndSymbol => Native::CurrencyAmountAndSymbol,
+            Scope::CurrencyAmount => Native::CurrencyAmount,
+            Scope::DateMonthNumber => Native::DateMonth,
+            Scope::DateDayNumber => Native::DateDay,
+            Scope::DateYear => Native::DateYear,
+            Scope::Digits => Native::Digits,
+            Scope::Number => Native::Number,
+            Scope::Password => Native::Password,
+            Scope::TelephoneNumber => Native::TelephoneNumber,
+            Scope::TelephoneCountryCode => Native::TelephoneCountryCode,
+            Scope::TelephoneAreaCode => Native::TelephoneAreaCode,
+            Scope::TelephoneLocalNumber => Native::TelephoneLocalNumber,
+            Scope::TimeHour => Native::TimeHour,
+            Scope::TimeMinutesOrSeconds => Native::TimeMinuteOrSecond,
+            Scope::NumberFullWidth => Native::NumberFullWidth,
+            Scope::AlphanumericHalfWidth => Native::AlphanumericHalfWidth,
+            Scope::AlphanumericFullWidth => Native::AlphanumericFullWidth,
+            Scope::Hiragana => Native::Hiragana,
+            Scope::KatakanaHalfWidth => Native::KatakanaHalfWidth,
+            Scope::KatakanaFullWidth => Native::KatakanaFullWidth,
+            Scope::Hanja => Native::Hanja,
+            Scope::HangulHalfWidth => Native::HangulHalfWidth,
+            Scope::HangulFullWidth => Native::HangulFullWidth,
+            Scope::Search => Native::Search,
+            Scope::Formula => Native::Formula,
+            Scope::SearchIncremental => Native::SearchIncremental,
+            Scope::ChineseHalfWidth => Native::ChineseHalfWidth,
+            Scope::ChineseFullWidth => Native::ChineseFullWidth,
+            Scope::NativeScript => Native::NativeScript,
+            Scope::Text => Native::Text,
+            Scope::Chat => Native::Chat,
+            Scope::NameOrPhoneNumber => Native::NameOrPhoneNumber,
+            Scope::EmailNameOrAddress => Native::EmailUserNameOrAddress,
+            Scope::Maps => Native::Maps,
+            Scope::NumericPassword => Native::PasswordNumeric,
+            Scope::NumericPin => Native::PinNumeric,
+            Scope::AlphanumericPin => Native::PinAlphanumeric,
+            Scope::FormulaNumber => Native::FormulaNumber,
+            Scope::ChatWithoutEmoji => Native::ChatWithoutEmoji,
+        };
+    }
+
+    // Empty or absent Names preserve the established FerroUI content hints.
+    match options.content_type {
+        TextInputContentType::Email => Native::EmailAddress,
+        TextInputContentType::Number => Native::Number,
+        TextInputContentType::Password => Native::Password,
+        TextInputContentType::Digits => Native::Digits,
+        TextInputContentType::Pin => Native::PinNumeric,
+        TextInputContentType::Name => Native::PersonalFullName,
+        TextInputContentType::Url => Native::Url,
+        TextInputContentType::Search => Native::Search,
+        _ => Native::Text,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::rc::Rc;
 
     fn options(content_type: TextInputContentType) -> TextInputOptions {
         TextInputOptions {
             content_type,
             ..TextInputOptions::default()
         }
+    }
+
+    #[test]
+    fn core_text_input_scope_preserves_all_43_native_values() {
+        for scope in InputScopeNameValue::ALL {
+            let pending = CoreTextInputOptions::default();
+            pending.update(&TextInputOptions {
+                content_type: TextInputContentType::Search,
+                input_scope_names: Some(Rc::from([scope])),
+                ..Default::default()
+            });
+            pending
+                .apply(|native| {
+                    assert_eq!(native.0, scope as i32, "{scope:?}");
+                    Ok::<_, ()>(())
+                })
+                .unwrap();
+        }
+    }
+
+    #[test]
+    fn core_text_input_scope_distinguishes_empty_names_from_explicit_default() {
+        let mut options = options(TextInputContentType::Email);
+        options.input_scope_names = Some(Rc::from([]));
+        assert_eq!(native_scope(&options), CoreTextInputScope::EmailAddress);
+        options.input_scope_names = Some(Rc::from([
+            InputScopeNameValue::Default,
+            InputScopeNameValue::Hiragana,
+        ]));
+        assert_eq!(native_scope(&options), CoreTextInputScope::Default);
+        options.input_scope_names = Some(Rc::from([
+            InputScopeNameValue::Hiragana,
+            InputScopeNameValue::Default,
+        ]));
+        assert_eq!(native_scope(&options), CoreTextInputScope::Hiragana);
+    }
+
+    #[test]
+    fn core_text_input_scope_reentry_applies_updated_names_with_the_same_content_type() {
+        let pending = CoreTextInputOptions::default();
+        let mut options = options(TextInputContentType::Normal);
+        options.input_scope_names = Some(Rc::from([InputScopeNameValue::Hiragana]));
+        pending.update(&options);
+        let calls = RefCell::new(Vec::new());
+        pending
+            .apply(|scope| {
+                calls.borrow_mut().push(scope);
+                if scope == CoreTextInputScope::Hiragana {
+                    options.input_scope_names =
+                        Some(Rc::from([InputScopeNameValue::KatakanaFullWidth]));
+                    pending.update(&options);
+                }
+                Ok::<_, ()>(())
+            })
+            .unwrap();
+        assert_eq!(
+            *calls.borrow(),
+            [
+                CoreTextInputScope::Hiragana,
+                CoreTextInputScope::KatakanaFullWidth
+            ]
+        );
     }
 
     #[test]

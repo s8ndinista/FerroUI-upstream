@@ -915,6 +915,7 @@ mod tests {
     struct SilentTextInputPage;
 
     impl ITextInputPage for SilentTextInputPage {
+        fn set_input_options(&self, _: &crate::browser_text_input_options::BrowserTextInputOptions) {}
         fn hide_input_element(&self) {}
         fn show_input_element(&self) {}
         fn focus_input_element(&self) {}

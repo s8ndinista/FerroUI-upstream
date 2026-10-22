@@ -60,6 +60,18 @@ extern "C" {
     #[wasm_bindgen(js_namespace = InputHelper, js_name = setBounds)]
     pub fn set_bounds(html_element: &JsObject, x: i32, y: i32, width: i32, height: i32, caret: i32);
 
+    /// Updates keyboard/prediction hints without replacing the focused DOM input.
+    #[wasm_bindgen(js_namespace = InputHelper, js_name = setInputOptions)]
+    pub fn set_input_options(
+        html_element: &JsObject,
+        input_mode: &str,
+        enter_key_hint: &str,
+        capitalization: &str,
+        suggestions: bool,
+        sensitive: bool,
+        language: &str,
+    );
+
     /// Installs the handlers of the page that are not bound to a view.
     #[wasm_bindgen(js_namespace = InputHelper, js_name = initializeBackgroundHandlers)]
     pub fn initialize_background_handlers(global_this: &JsObject);

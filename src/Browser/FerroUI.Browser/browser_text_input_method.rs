@@ -1,4 +1,5 @@
 use crate::browser_input_handler::BrowserInputHandler;
+use crate::browser_text_input_options::BrowserTextInputOptions;
 use crate::interop::{JsObject, input_helper};
 use ferroui_base::Rect;
 use ferroui_base::input::text_input::{
@@ -20,6 +21,7 @@ pub(crate) trait ITextInputPage {
     fn clear_input_element(&self);
     fn set_surrounding_text(&self, text: &str, start: i32, end: i32);
     fn set_bounds(&self, x: i32, y: i32, width: i32, height: i32, caret: i32);
+    fn set_input_options(&self, options: &BrowserTextInputOptions);
     fn selection_start(&self) -> i32;
     fn selection_end(&self) -> i32;
 }
@@ -62,6 +64,18 @@ impl ITextInputPage for TextInputPage {
         input_helper::get_selection_start(&self.input_element)
     }
 
+    fn set_input_options(&self, options: &BrowserTextInputOptions) {
+        input_helper::set_input_options(
+            &self.input_element,
+            options.input_mode,
+            options.enter_key_hint,
+            options.capitalization,
+            options.suggestions,
+            options.sensitive,
+            &options.language,
+        );
+    }
+
     fn selection_end(&self) -> i32 {
         input_helper::get_selection_end(&self.input_element)
     }
@@ -83,6 +97,9 @@ pub struct BrowserTextInputMethod {
     generation: Cell<u64>,
     /// Set while the page reports that the keyboard focus left the view.
     focus_is_leaving_view: Cell<bool>,
+    options: RefCell<Option<BrowserTextInputOptions>>,
+    options_revision: Cell<u64>,
+    applying_options: Cell<bool>,
 }
 
 impl BrowserTextInputMethod {
@@ -127,6 +144,9 @@ impl BrowserTextInputMethod {
             is_composing: Cell::new(false),
             generation: Cell::new(0),
             focus_is_leaving_view: Cell::new(false),
+            options: RefCell::new(None),
+            options_revision: Cell::new(0),
+            applying_options: Cell::new(false),
         })
     }
 
@@ -386,7 +406,35 @@ impl ITextInputMethodImpl for BrowserTextInputMethod {
         self.focus_input_element();
     }
 
-    fn set_options(&self, _options: &TextInputOptions) {}
+    fn set_options(&self, options: &TextInputOptions) {
+        let options = BrowserTextInputOptions::from_options(options);
+        if self.options.borrow().as_ref() == Some(&options) {
+            return;
+        }
+        self.options.replace(Some(options));
+        self.options_revision
+            .set(self.options_revision.get().wrapping_add(1));
+        if self.applying_options.replace(true) {
+            return;
+        }
+        struct ApplyGuard<'a>(&'a Cell<bool>);
+        impl Drop for ApplyGuard<'_> {
+            fn drop(&mut self) {
+                self.0.set(false);
+            }
+        }
+        let _guard = ApplyGuard(&self.applying_options);
+        loop {
+            let revision = self.options_revision.get();
+            let options = self.options.borrow().as_ref().unwrap().clone();
+            // Attributes only: do not clear text, replace the DOM node, refocus,
+            // reset composition, or retain a borrow across a page callback.
+            self.page.set_input_options(&options);
+            if revision == self.options_revision.get() {
+                break;
+            }
+        }
+    }
 
     fn reset(&self) {
         let generation = self.generation.get().wrapping_add(1);
@@ -420,6 +468,7 @@ mod tests {
     struct RecordingPage {
         calls: Calls,
         selection: Rc<Cell<(i32, i32)>>,
+        before_options: RefCell<Option<Box<dyn FnOnce()>>>,
     }
 
     impl RecordingPage {
@@ -455,6 +504,17 @@ mod tests {
 
         fn set_bounds(&self, x: i32, y: i32, width: i32, height: i32, caret: i32) {
             self.log(format!("bounds {x} {y} {width} {height} caret {caret}"));
+        }
+
+        fn set_input_options(&self, options: &BrowserTextInputOptions) {
+            let callback = self.before_options.borrow_mut().take();
+            if let Some(callback) = callback {
+                callback();
+            }
+            self.log(format!(
+                "options {} {}",
+                options.input_mode, options.enter_key_hint
+            ));
         }
 
         fn selection_start(&self) -> i32 {
@@ -537,6 +597,7 @@ mod tests {
             let page = RecordingPage {
                 calls: calls.clone(),
                 selection: selection.clone(),
+                before_options: RefCell::new(None),
             };
             let method = BrowserTextInputMethod::with_page(Weak::new(), Box::new(page));
             Self {
@@ -554,6 +615,89 @@ mod tests {
             let client: Rc<dyn TextInputMethodClient> = client.clone();
             self.method.set_client(Some(client));
         }
+    }
+
+    #[test]
+    fn changing_input_options_preserves_active_composition_text_selection_and_focus() {
+        use ferroui_base::input::InputScopeNameValue;
+        let fixture = Fixture::new();
+        let client = TestClient::new("A😀e\u{301}Z", 1, 3);
+        fixture.set_client(&client);
+        fixture.method.on_composition_start();
+        fixture.method.on_composition_update(Some("かな"));
+        fixture.selection.set((1, 3));
+        fixture.take_calls();
+        let generation = fixture.method.generation.get();
+        let preedit = client.preedit.borrow().clone();
+
+        fixture.method.set_options(&TextInputOptions {
+            input_scope_names: Some(Rc::from([InputScopeNameValue::Digits])),
+            ..Default::default()
+        });
+
+        assert_eq!(fixture.take_calls(), ["options numeric done"]);
+        assert!(fixture.method.is_composing());
+        assert_eq!(fixture.method.generation.get(), generation);
+        assert_eq!(*client.text.borrow(), "A😀e\u{301}Z");
+        assert_eq!(client.selection.get(), TextSelection::new(1, 3));
+        assert_eq!(fixture.selection.get(), (1, 3));
+        assert_eq!(*client.preedit.borrow(), preedit);
+        fixture.method.on_composition_end(Some("かな"));
+        assert!(!fixture.method.is_composing());
+    }
+
+    #[test]
+    fn unchanged_input_hints_do_not_rewrite_page_attributes() {
+        use ferroui_base::input::InputScopeNameValue;
+        let fixture = Fixture::new();
+        let mut options = TextInputOptions {
+            input_scope_names: Some(Rc::from([InputScopeNameValue::TelephoneNumber])),
+            ..Default::default()
+        };
+        fixture.method.set_options(&options);
+        assert_eq!(fixture.take_calls(), ["options tel done"]);
+        fixture.method.set_options(&options);
+        options.input_scope_names = Some(Rc::from([InputScopeNameValue::TelephoneAreaCode]));
+        fixture.method.set_options(&options);
+        assert!(fixture.take_calls().is_empty());
+        options.input_scope_names = None;
+        fixture.method.set_options(&options);
+        assert_eq!(fixture.take_calls(), ["options text done"]);
+    }
+
+    #[test]
+    fn input_options_changed_during_page_callback_win_over_a_late_old_write() {
+        use ferroui_base::input::InputScopeNameValue;
+        let calls: Calls = Rc::new(RefCell::new(Vec::new()));
+        let current = Rc::new(RefCell::new(Weak::<BrowserTextInputMethod>::new()));
+        let callback_method = current.clone();
+        let method = BrowserTextInputMethod::with_page(
+            Weak::new(),
+            Box::new(RecordingPage {
+                calls: calls.clone(),
+                selection: Rc::new(Cell::new((0, 0))),
+                before_options: RefCell::new(Some(Box::new(move || {
+                    let method = callback_method.borrow().upgrade().unwrap();
+                    method.set_options(&TextInputOptions {
+                        input_scope_names: Some(Rc::from([InputScopeNameValue::Search])),
+                        ..Default::default()
+                    });
+                }))),
+            }),
+        );
+        *current.borrow_mut() = Rc::downgrade(&method);
+        method.set_options(&TextInputOptions {
+            input_scope_names: Some(Rc::from([InputScopeNameValue::Digits])),
+            ..Default::default()
+        });
+        assert_eq!(
+            *calls.borrow(),
+            ["options numeric done", "options search search"]
+        );
+        assert_eq!(
+            method.options.borrow().as_ref().unwrap().input_mode,
+            "search"
+        );
     }
 
     #[test]

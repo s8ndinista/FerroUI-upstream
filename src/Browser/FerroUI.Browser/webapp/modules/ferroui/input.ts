@@ -1,6 +1,7 @@
 import { CaretHelper } from "./caretHelper";
 import { FerroExports } from "./ferroExports";
 import { StorageItem } from "../storage/storageItem";
+import { applyTextInputOptions } from "./inputOptions";
 
 enum RawInputModifiers {
     None = 0,
@@ -84,6 +85,13 @@ type ReadableDataValue = {
 const eventAge = (args: Event): number => performance.now() - args.timeStamp;
 
 export class InputHelper {
+    public static setInputOptions(input: HTMLInputElement, inputMode: string,
+        enterKeyHint: string, capitalization: string, suggestions: boolean,
+        sensitive: boolean, language: string): void {
+        applyTextInputOptions(input, inputMode, enterKeyHint, capitalization,
+            suggestions, sensitive, language);
+    }
+
     static clipboardState: ClipboardState = ClipboardState.None;
     static resolveClipboard?: (value: ClipboardResult) => void;
     static rejectClipboard?: (reason?: any) => void;
