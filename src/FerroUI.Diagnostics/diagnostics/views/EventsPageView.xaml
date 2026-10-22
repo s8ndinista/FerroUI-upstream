@@ -35,6 +35,11 @@
 
     <Style Selector="ListBoxItem" >
       <Setter Property="BorderThickness" Value="1" />
+      <!-- Deviation (DEVIATIONS.md, Developer tools): the items of WinUI 3 align their content
+           left and are at least 40 high; the rows of the tools are stretched and compact. -->
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Padding" Value="8,2" />
     </Style>
 
     <Style Selector="ListBoxItem:selected /template/ ContentPresenter" >
