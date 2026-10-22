@@ -4,6 +4,9 @@
         xmlns:diag="using:FerroUI.Diagnostics"
         xmlns:viewModels="using:FerroUI.Diagnostics.ViewModels"
         Title="FerroUI DevTools"
+        Background="{DynamicResource ApplicationPageBackgroundThemeBrush}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="48"
         x:Class="FerroUI.Diagnostics.Views.MainWindow"
         x:DataType="viewModels:MainViewModel">
   <Window.DataTemplates>
@@ -21,6 +24,7 @@
     <StyleInclude Source="ferres://FerroUI.Diagnostics/diagnostics/controls/FilterTextBox.xaml" />
     <StyleInclude Source="ferres://FerroUI.Diagnostics/diagnostics/controls/BrushEditor.xaml" />
     <StyleInclude Source="ferres://FerroUI.Controls.ColorPicker/Themes/Fluent/Fluent.xaml" />
+    <StyleInclude Source="ferres://FerroUI.Diagnostics/diagnostics/controls/DevToolsStyles.xaml" />
 
     <!-- Deviation (DEVIATIONS.md, Developer tools): compact rows in the TreeDataGrids of the tools
          (the logical and visual trees, the routed events and the property grid): 24 px, the height

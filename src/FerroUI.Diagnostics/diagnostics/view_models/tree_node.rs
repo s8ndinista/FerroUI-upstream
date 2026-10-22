@@ -21,6 +21,9 @@ pub enum TreeNodeKind {
     Logical,
     /// A node of the visual tree (`VisualTreeNode`), with its `IsInTemplate`.
     Visual { is_in_template: bool },
+    /// A node of the combined tree (an addition of the port, `combined_tree_node.rs`): an element
+    /// of the logical tree, or a part of a template (`visual_only`), shown greyed out.
+    Combined { visual_only: bool },
 }
 
 /// A node of a tree of the developer tools: an object of the inspected
@@ -188,7 +191,13 @@ impl TreeNode {
     /// template (it has a templated parent). `false` for a node of the
     /// logical tree.
     pub fn is_in_template(&self) -> bool {
-        matches!(self.kind, TreeNodeKind::Visual { is_in_template: true })
+        matches!(self.kind, TreeNodeKind::Visual { is_in_template: true } | TreeNodeKind::Combined { visual_only: true })
+    }
+
+    /// Whether the node is a part of a template in the combined tree, which the tree shows
+    /// greyed out (an addition of the port).
+    pub fn is_visual_only(&self) -> bool {
+        matches!(self.kind, TreeNodeKind::Combined { visual_only: true })
     }
 
     /// States what the TreeDataGrid of a tree page observes of the nodes: their property change
@@ -229,6 +238,7 @@ ferro_markup_type!(class TreeNode {
         // is `VisualTreeNode.IsInTemplate`); the cells of the tree pages show the nodes of
         // template parts in their own style.
         IsInTemplate: bool { get: TreeNode::is_in_template },
+        IsVisualOnly: bool { get: TreeNode::is_visual_only },
     ],
     notify_property_changed: TreeNode,
 });

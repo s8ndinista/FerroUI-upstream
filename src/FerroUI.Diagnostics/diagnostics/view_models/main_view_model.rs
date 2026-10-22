@@ -3,10 +3,10 @@
 //! [`DevToolsPage`]).
 
 use super::{
-    EventsPageViewModel, HotKeyPageViewModel, LogicalTreeNode, TreePageViewModel, ViewModelBase, VisualTreeNode,
+    CombinedTreeNode, EventsPageViewModel, HotKeyPageViewModel, LogicalTreeNode, TreePageViewModel, ViewModelBase, VisualTreeNode,
 };
 use crate::diagnostics::controls::{Application, ControlHighlightAdorner};
-use crate::diagnostics::{DevTools, DevToolsOptions, IScreenshotHandler};
+use crate::diagnostics::{DevTools, DevToolsOptions, DevToolsViewKind, IScreenshotHandler};
 use ferroui_base::data::model::{Event, INotifyPropertyChanged};
 use ferroui_base::input::raw::RawPointerEventArgs;
 use ferroui_base::input::{IInputRoot, InputElement, InputManager, KeyboardDevice};
@@ -135,6 +135,7 @@ pub struct MainViewModel {
     base: ViewModelBase,
     this: Weak<MainViewModel>,
     root: Ref<FerroObject>,
+    combined_tree: OnceCell<Rc<TreePageViewModel>>,
     logical_tree: OnceCell<Rc<TreePageViewModel>>,
     visual_tree: OnceCell<Rc<TreePageViewModel>>,
     events: Rc<EventsPageViewModel>,
@@ -147,6 +148,9 @@ pub struct MainViewModel {
     pointer_over_element: RefCell<Option<Ref<InputElement>>>,
     should_visualize_margin_padding: Cell<bool>,
     freeze_popups: Cell<bool>,
+    /// Addition of the port: whether the left pane of the pages (the tree, the routed events) is
+    /// shown.
+    is_tree_pane_open: Cell<bool>,
     pointer_over_element_name: RefCell<Option<String>>,
     pointer_over_root: RefCell<Option<Rc<dyn IInputRoot>>>,
     screenshot_handler: RefCell<Option<Rc<dyn IScreenshotHandler>>>,
@@ -175,9 +179,19 @@ impl INotifyPropertyChanged for MainViewModel {
 }
 
 impl MainViewModel {
+    /// Addition of the port: the tab of the combined tree, the first one.
+    pub const COMBINED_TREE_TAB: i32 = 0;
+    /// The tab of the logical tree (upstream's first).
+    pub const LOGICAL_TREE_TAB: i32 = 1;
+    /// The tab of the visual tree.
+    pub const VISUAL_TREE_TAB: i32 = 2;
+    /// The tab of the routed events.
+    pub const EVENTS_TAB: i32 = 3;
+    /// The tab of the hot keys (hidden; the View menu selects it).
+    pub const HOT_KEYS_TAB: i32 = 4;
     /// Addition of the port: the index of the tab of the first extension
-    /// page ([`DevToolsPage`]), after the four tabs of the original.
-    pub const FIRST_EXTENSION_TAB: i32 = 4;
+    /// page ([`DevToolsPage`]), after the five tabs of the tools.
+    pub const FIRST_EXTENSION_TAB: i32 = 5;
 
     /// C# `new MainViewModel(FerroObject root)`: the developer tools of
     /// `root`, a top level or the application the tools are attached to.
@@ -191,6 +205,7 @@ impl MainViewModel {
             base: ViewModelBase::new(),
             this: this.clone(),
             root: root.clone(),
+            combined_tree: OnceCell::new(),
             logical_tree: OnceCell::new(),
             visual_tree: OnceCell::new(),
             events: EventsPageViewModel::new(this.clone()),
@@ -203,6 +218,7 @@ impl MainViewModel {
             pointer_over_element: RefCell::new(None),
             should_visualize_margin_padding: Cell::new(true),
             freeze_popups: Cell::new(false),
+            is_tree_pane_open: Cell::new(true),
             pointer_over_element_name: RefCell::new(None),
             pointer_over_root: RefCell::new(None),
             screenshot_handler: RefCell::new(None),
@@ -215,6 +231,9 @@ impl MainViewModel {
             extension_pages,
         });
 
+        let combined_tree =
+            TreePageViewModel::new(&this, CombinedTreeNode::create(root.clone()), this.pinned_properties.clone());
+        let _ = this.combined_tree.set(combined_tree);
         let logical_tree =
             TreePageViewModel::new(&this, LogicalTreeNode::create(root.clone()), this.pinned_properties.clone());
         let _ = this.logical_tree.set(logical_tree);
@@ -293,6 +312,11 @@ impl MainViewModel {
     }
 
     /// The page of the logical tree.
+    /// The page of the combined tree (an addition of the port).
+    pub fn combined_tree(&self) -> Rc<TreePageViewModel> {
+        self.combined_tree.get().expect("the trees are created with the view model").clone()
+    }
+
     pub fn logical_tree(&self) -> Rc<TreePageViewModel> {
         self.logical_tree.get().expect("the trees are created with the view model").clone()
     }
@@ -318,6 +342,22 @@ impl MainViewModel {
 
     pub fn set_freeze_popups(&self, value: bool) {
         self.base.raise_and_set_if_changed_cell(&self.freeze_popups, value, "FreezePopups");
+    }
+
+    /// Addition of the port: whether the left pane of the pages (the tree of a tree page, the
+    /// routed events of the events page) is shown; the button at the left of the header of the
+    /// tools toggles it.
+    pub fn is_tree_pane_open(&self) -> bool {
+        self.is_tree_pane_open.get()
+    }
+
+    pub fn set_is_tree_pane_open(&self, value: bool) {
+        self.base.raise_and_set_if_changed_cell(&self.is_tree_pane_open, value, "IsTreePaneOpen");
+    }
+
+    /// Shows or hides the left pane of the pages.
+    pub fn toggle_tree_pane(&self) {
+        self.set_is_tree_pane_open(!self.is_tree_pane_open());
     }
 
     pub fn should_visualize_margin_padding(&self) -> bool {
@@ -456,10 +496,11 @@ impl MainViewModel {
         self.base.raise_and_set_if_changed(&self.content, Some(value), "Content");
     }
 
-    /// The index of the selected tab: 0 the logical tree, 1 the visual
-    /// tree, 2 the events, 3 the hot keys; from
+    /// The index of the selected tab: 0 the combined tree (an addition of the
+    /// port), 1 the logical tree, 2 the visual tree, 3 the events, 4 the hot
+    /// keys (upstream: 0 to 3, from the logical tree); from
     /// [`FIRST_EXTENSION_TAB`](Self::FIRST_EXTENSION_TAB) on, the extension
-    /// pages (an addition of the port). Any other index selects the logical
+    /// pages (an addition of the port). Any other index selects the combined
     /// tree.
     pub fn selected_tab(&self) -> i32 {
         self.selected_tab.get()
@@ -469,12 +510,13 @@ impl MainViewModel {
         self.selected_tab.set(value);
 
         match value {
-            1 => self.set_content(MainContent::Tree(self.visual_tree())),
-            2 => self.set_content(MainContent::Events(self.events.clone())),
-            3 => self.set_content(MainContent::HotKeys(self.hot_keys.clone())),
+            Self::LOGICAL_TREE_TAB => self.set_content(MainContent::Tree(self.logical_tree())),
+            Self::VISUAL_TREE_TAB => self.set_content(MainContent::Tree(self.visual_tree())),
+            Self::EVENTS_TAB => self.set_content(MainContent::Events(self.events.clone())),
+            Self::HOT_KEYS_TAB => self.set_content(MainContent::HotKeys(self.hot_keys.clone())),
             _ => match self.extension_page_view(value) {
                 Some((index, view)) => self.set_content(MainContent::Page(index, view)),
-                None => self.set_content(MainContent::Tree(self.logical_tree())),
+                None => self.set_content(MainContent::Tree(self.combined_tree())),
             },
         }
 
@@ -524,7 +566,7 @@ impl MainViewModel {
 
     /// Selects the hot keys tab.
     pub fn show_hot_keys(&self) {
-        self.set_selected_tab(3);
+        self.set_selected_tab(Self::HOT_KEYS_TAB);
     }
 
     /// Selects `control` in the tree page that is the content.
@@ -557,6 +599,7 @@ impl MainViewModel {
         if let Some(pointer_over_subscription) = pointer_over_subscription {
             pointer_over_subscription.dispose();
         }
+        self.combined_tree().dispose();
         self.logical_tree().dispose();
         self.visual_tree().dispose();
         let current_focus_highlight_adorner = self.current_focus_highlight_adorner.borrow().clone();
@@ -597,7 +640,7 @@ impl MainViewModel {
         let node = tree.find_node(control);
 
         if node.is_some() {
-            self.set_selected_tab(if is_visual_tree { 1 } else { 0 });
+            self.set_selected_tab(if is_visual_tree { Self::VISUAL_TREE_TAB } else { Self::LOGICAL_TREE_TAB });
 
             tree.select_control(control);
         }
@@ -648,7 +691,12 @@ impl MainViewModel {
         self.startup_screen_index.set(options.startup_screen_index());
         self.set_show_implemented_interfaces(options.show_implemented_interfaces());
         self.set_focus_highlighter(options.focus_highlighter_brush());
-        self.set_selected_tab(options.launch_view() as i32);
+        self.set_selected_tab(match options.launch_view() {
+            DevToolsViewKind::CombinedTree => Self::COMBINED_TREE_TAB,
+            DevToolsViewKind::LogicalTree => Self::LOGICAL_TREE_TAB,
+            DevToolsViewKind::VisualTree => Self::VISUAL_TREE_TAB,
+            DevToolsViewKind::Events => Self::EVENTS_TAB,
+        });
 
         self.hot_keys.set_options(options);
     }
@@ -756,6 +804,7 @@ ferro_markup_type!(class MainViewModel {
     base: ViewModelBase,
     properties: [
         FreezePopups: bool { get: MainViewModel::freeze_popups, set: MainViewModel::set_freeze_popups },
+        IsTreePaneOpen: bool { get: MainViewModel::is_tree_pane_open, set: MainViewModel::set_is_tree_pane_open },
         ShouldVisualizeMarginPadding: bool {
             get: MainViewModel::should_visualize_margin_padding,
             set: MainViewModel::set_should_visualize_margin_padding
@@ -790,6 +839,7 @@ ferro_markup_type!(class MainViewModel {
         fn ToggleLayoutTimeGraphOverlay() => MainViewModel::toggle_layout_time_graph_overlay,
         fn ToggleRenderTimeGraphOverlay() => MainViewModel::toggle_render_time_graph_overlay,
         fn ShowHotKeys() => MainViewModel::show_hot_keys,
+        fn ToggleTreePane() => MainViewModel::toggle_tree_pane,
         fn SelectControl(Ref<Control>) =>
             (|this: &Rc<MainViewModel>, control: Ref<Control>| this.select_control(&control)),
         fn EnableSnapshotStyles(bool) => MainViewModel::enable_snapshot_styles,

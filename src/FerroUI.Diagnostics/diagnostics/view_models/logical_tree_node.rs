@@ -90,11 +90,26 @@ impl TreeNodeCollectionImpl for LogicalTreeNodeCollection {
 pub struct TopLevelGroupHostLogical {
     group: Ref<TopLevelGroup>,
     subscriptions: CompositeDisposable,
+    /// Makes the node of a top level: a node of the logical tree, or of the combined tree (an
+    /// addition of the port).
+    factory: fn(Ref<FerroObject>, Option<&Rc<TreeNode>>) -> Rc<TreeNode>,
 }
 
 impl TopLevelGroupHostLogical {
     pub fn new(owner: Weak<TreeNode>, host: Ref<TopLevelGroup>) -> Rc<TreeNodeCollection> {
-        TreeNodeCollection::new(owner, Box::new(Self { group: host, subscriptions: CompositeDisposable::with_capacity(1) }))
+        Self::new_with(owner, host, LogicalTreeNode::new)
+    }
+
+    /// The nodes of the top levels of a group, each made by `factory`.
+    pub fn new_with(
+        owner: Weak<TreeNode>,
+        host: Ref<TopLevelGroup>,
+        factory: fn(Ref<FerroObject>, Option<&Rc<TreeNode>>) -> Rc<TreeNode>,
+    ) -> Rc<TreeNodeCollection> {
+        TreeNodeCollection::new(
+            owner,
+            Box::new(Self { group: host, subscriptions: CompositeDisposable::with_capacity(1), factory }),
+        )
     }
 }
 
@@ -106,10 +121,11 @@ impl TreeNodeCollectionImpl for TopLevelGroupHostLogical {
             if window.is::<MainWindow>() {
                 continue;
             }
-            nodes.add(LogicalTreeNode::new(window.clone().upcast(), owner.as_ref()));
+            nodes.add((self.factory)(window.clone().upcast(), owner.as_ref()));
         }
 
         let owner = owner.as_ref().map(Rc::downgrade).unwrap_or_default();
+        let factory = self.factory;
 
         let group_on_added = {
             let nodes = nodes.clone();
@@ -119,7 +135,7 @@ impl TreeNodeCollectionImpl for TopLevelGroupHostLogical {
                     return;
                 }
 
-                nodes.add(LogicalTreeNode::new(e.clone().upcast(), owner.upgrade().as_ref()));
+                nodes.add(factory(e.clone().upcast(), owner.upgrade().as_ref()));
             }
         };
         let group_on_removed = {
@@ -130,7 +146,7 @@ impl TreeNodeCollectionImpl for TopLevelGroupHostLogical {
                 }
 
                 // As in the original, a removed top level adds a node.
-                nodes.add(LogicalTreeNode::new(e.clone().upcast(), owner.upgrade().as_ref()));
+                nodes.add(factory(e.clone().upcast(), owner.upgrade().as_ref()));
             }
         };
 

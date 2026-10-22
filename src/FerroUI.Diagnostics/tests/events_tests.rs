@@ -440,34 +440,37 @@ fn the_selected_tab_selects_the_content_of_the_main_view_model() {
     let root = StackPanel::new();
 
     let vm = MainViewModel::new(root.clone().upcast());
-    assert_eq!(0, vm.selected_tab());
-    assert!(content_is::<TreePageViewModel>(&vm, &vm.logical_tree()));
+    // The combined tree is the first tab and the default one (an addition of the port).
+    assert_eq!(MainViewModel::COMBINED_TREE_TAB, vm.selected_tab());
+    assert!(content_is::<TreePageViewModel>(&vm, &vm.combined_tree()));
     assert!(vm.root().ptr_eq(&root));
 
     let raised = record_property_changes(&*vm);
-    vm.set_selected_tab(1);
-    assert!(content_is::<TreePageViewModel>(&vm, &vm.visual_tree()));
+    vm.set_selected_tab(MainViewModel::LOGICAL_TREE_TAB);
+    assert!(content_is::<TreePageViewModel>(&vm, &vm.logical_tree()));
     assert_eq!(vec!["Content".to_string(), "SelectedTab".to_string()], *raised.borrow());
+    vm.set_selected_tab(MainViewModel::VISUAL_TREE_TAB);
+    assert!(content_is::<TreePageViewModel>(&vm, &vm.visual_tree()));
 
-    vm.set_selected_tab(2);
+    vm.set_selected_tab(MainViewModel::EVENTS_TAB);
     assert!(content_is::<EventsPageViewModel>(&vm, &vm.events()));
-    vm.set_selected_tab(3);
+    vm.set_selected_tab(MainViewModel::HOT_KEYS_TAB);
     assert!(content_is::<HotKeyPageViewModel>(&vm, &vm.hot_keys()));
     vm.set_selected_tab(0);
     vm.show_hot_keys();
-    assert_eq!(3, vm.selected_tab());
+    assert_eq!(MainViewModel::HOT_KEYS_TAB, vm.selected_tab());
     assert!(content_is::<HotKeyPageViewModel>(&vm, &vm.hot_keys()));
 
-    // Any other tab is the logical tree; without registered pages there are no extension tabs.
+    // Any other tab is the combined tree; without registered pages there are no extension tabs.
     vm.set_selected_tab(MainViewModel::FIRST_EXTENSION_TAB);
-    assert!(content_is::<TreePageViewModel>(&vm, &vm.logical_tree()));
+    assert!(content_is::<TreePageViewModel>(&vm, &vm.combined_tree()));
     vm.set_selected_tab(-1);
-    assert!(content_is::<TreePageViewModel>(&vm, &vm.logical_tree()));
+    assert!(content_is::<TreePageViewModel>(&vm, &vm.combined_tree()));
     assert!(vm.extension_pages().is_empty());
 
     // The options select the launch view and set the hot keys page.
     vm.set_options(&DevToolsOptions::new().with_launch_view(DevToolsViewKind::Events));
-    assert_eq!(2, vm.selected_tab());
+    assert_eq!(MainViewModel::EVENTS_TAB, vm.selected_tab());
     assert!(content_is::<EventsPageViewModel>(&vm, &vm.events()));
     assert!(vm.show_implemented_interfaces());
     assert_eq!(6, vm.hot_keys().hot_key_descriptions().expect("the hot keys").count());
@@ -521,9 +524,9 @@ fn registered_pages_are_tabs_after_the_tabs_of_the_main_view_model() {
     assert!(again.ptr_eq(&view));
     assert_eq!(1, created.get());
 
-    // A tab after the last page is the logical tree.
+    // A tab after the last page is the combined tree.
     vm.set_selected_tab(MainViewModel::FIRST_EXTENSION_TAB + 1);
-    assert!(content_is::<TreePageViewModel>(&vm, &vm.logical_tree()));
+    assert!(content_is::<TreePageViewModel>(&vm, &vm.combined_tree()));
 
     // Removing the registration leaves the windows that are open; the next ones have no page.
     registration.dispose();

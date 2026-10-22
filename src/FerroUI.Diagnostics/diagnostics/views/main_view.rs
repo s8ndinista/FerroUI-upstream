@@ -12,7 +12,9 @@ use ferroui_base::{
     ferro_class, ferro_class_info, ferro_impl_classes, instantiate, FerroObjectImpl, Ref,
     StyledElementImpl, StyledElementImplExt, VisualImpl,
 };
-use ferroui_controls::primitives::{TabStrip, TabStripItem, TemplatedControlImpl};
+use ferroui_markup::data::Binding;
+use ferroui_controls::primitives::TemplatedControlImpl;
+use ferroui_controls::{ContentControl, TabControl, TabItem};
 use ferroui_controls::{ContentControlImpl, Control, ControlImpl, UserControl};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -24,7 +26,7 @@ pub struct MainView {
     base: UserControl,
     /// Addition of the port: the tabs of the extension pages of the view
     /// model, after the tabs of the document.
-    extension_tabs: RefCell<Vec<Ref<TabStripItem>>>,
+    extension_tabs: RefCell<Vec<Ref<TabItem>>>,
 }
 
 ferro_class!(MainView: UserControl);
@@ -83,15 +85,15 @@ impl MainView {
     /// tabs of the document (the tab of the page at index `i` is the tab
     /// `MainViewModel::FIRST_EXTENSION_TAB + i`).
     fn update_extension_tabs(&self) {
-        let Some(tab_strip) =
-            NameScopeExtensions::find_name_scope(self).and_then(|name_scope| name_scope.find_as::<TabStrip>("tabStrip"))
+        let Some(tab_control) = NameScopeExtensions::find_name_scope(self)
+            .and_then(|name_scope| name_scope.find_as::<TabControl>("tabControl"))
         else {
             // The document is not populated yet.
             return;
         };
-        let items = tab_strip.items();
+        let items = tab_control.items();
 
-        let old_tabs: Vec<Ref<TabStripItem>> = self.extension_tabs.borrow_mut().drain(..).collect();
+        let old_tabs: Vec<Ref<TabItem>> = self.extension_tabs.borrow_mut().drain(..).collect();
         for tab in old_tabs {
             items.remove(&Some(Control::boxed(tab)));
         }
@@ -102,8 +104,10 @@ impl MainView {
 
         let mut tabs = Vec::new();
         for page in view_model.extension_pages() {
-            let tab = TabStripItem::new();
-            tab.set_content(into_markup_value(page.title().to_string()));
+            let tab = TabItem::new();
+            tab.set_header(into_markup_value(page.title().to_string()));
+            // The content of the view model, as the tabs of the document.
+            let _ = tab.bind_binding(ContentControl::content_property().as_property(), &*Binding::with_path("Content"));
             items.add(Some(Control::boxed(tab.clone())));
             tabs.push(tab);
         }
