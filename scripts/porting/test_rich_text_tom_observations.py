@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import importlib.util
+import copy
 import json
 from pathlib import Path
 import unittest
@@ -39,6 +40,32 @@ def options_row(row: dict) -> str:
         f'after={native_state(row["after"])} after_type={row["after"]["selection_type"]} '
         f'type_hresult={row["type_hresult"]} native_story_length_after={row["native_story_length_after"]} '
         f'story_text={debug_string(row["story_text"])} story_text_utf16_length={row["story_text_utf16_length"]}'
+    )
+
+
+def link_snapshot_row(snapshot: dict) -> str:
+    return (
+        'LinkSnapshot { range: RangeState { start: %s, end: %s }, '
+        'range_text: %s, range_text_utf16_length: %s, story_text: %s, '
+        'story_text_utf16_length: %s, story_length: %s, selection: %s }'
+    ) % (
+        snapshot["range"]["start"], snapshot["range"]["end"],
+        debug_string(snapshot["range_text"]), snapshot["range_text_utf16_length"],
+        debug_string(snapshot["story_text"]), snapshot["story_text_utf16_length"],
+        snapshot["story_length"], native_state(snapshot["selection"]),
+    )
+
+
+def link_row(row: dict) -> str:
+    return (
+        f'LINK fixture={row["fixture"]} step={row["step"]} role={row["role"]} '
+        f'operation={row["operation"]} initial_start={row["initial_range"]["start"]} '
+        f'initial_end={row["initial_range"]["end"]} '
+        f'argument_null={str(row["argument"]["is_null"]).lower()} '
+        f'argument={debug_string(row["argument"]["text"])} argument_utf16_length={row["argument"]["utf16_length"]} '
+        f'before={link_snapshot_row(row["before"])} after={link_snapshot_row(row["after"])} '
+        f'hresult={row["hresult"]} result_null={str(row["result"]["is_null"]).lower()} '
+        f'result={debug_string(row["result"]["text"])} result_utf16_length={row["result"]["utf16_length"]}'
     )
 
 
@@ -84,12 +111,16 @@ def record_log(record: dict) -> str:
                 )
     for row in record.get("options", []):
         lines.append(options_row(row))
-    for family in ("home_end", "vertical", "horizontal", "options"):
+    for row in record.get("link", []):
+        lines.append(link_row(row))
+    for family in ("home_end", "vertical", "horizontal", "options", "link"):
         count = record["counts"].get(family, 0)
         if not count:
             continue
         if family == "home_end":
             lines.append(f'PROBE_COMPLETE commands={count} repeated_noops={record["counts"]["home_end_repeats"]}')
+        elif family == "link":
+            lines.append(f'LINK_PROBE_COMPLETE commands={count} fixtures={record["counts"]["link_fixtures"]}')
         else:
             lines.append(f'{family.upper()}_PROBE_COMPLETE commands={count}')
     return "\n".join("SYSTEM_MSFTEDIT_" + line for line in lines)
@@ -106,6 +137,48 @@ SYNTHETIC_OPTIONS = (
     'type_hresult=0x00000000 native_story_length_after=6 story_text="a😀ef\\r" story_text_utf16_length=6\n'
     'SYSTEM_MSFTEDIT_OPTIONS_PROBE_COMPLETE commands=1'
 )
+
+
+def synthetic_link_record() -> dict:
+    """Invented parser cases; no return value or hidden-field layout is evidence."""
+    def snapshot(start: int, end: int, text: str, story: str) -> dict:
+        return {
+            "range": {"start": start, "end": end},
+            "range_text": text,
+            "range_text_utf16_length": len(text.encode("utf-16-le")) // 2,
+            "story_text": story,
+            "story_text_utf16_length": len(story.encode("utf-16-le")) // 2,
+            "story_length": len(story.encode("utf-16-le")) // 2,
+            "selection": {"start": 0, "end": 0, "flags": 17, "anchor": 0, "active": 0},
+        }
+
+    null_bstr = {"is_null": True, "text": "", "utf16_length": 0}
+    url = '"https://例子.example/😀"'
+    url_bstr = {"is_null": False, "text": url, "utf16_length": len(url.encode("utf-16-le")) // 2}
+    initial = snapshot(0, 1, "a", "ab\r")
+    hidden = snapshot(3, 4, "a", "\x13X\x14ab\r")
+    expanded = snapshot(0, 4, "\x13X\x14a", hidden["story_text"])
+    rows = [
+        {
+            "fixture": "example_link", "step": 0, "role": "Target", "operation": "Set",
+            "initial_range": {"start": 0, "end": 1}, "argument": url_bstr,
+            "result": null_bstr, "before": initial, "after": hidden, "hresult": "0x00000000",
+        },
+        {
+            "fixture": "example_link", "step": 1, "role": "Readback", "operation": "Get",
+            "initial_range": {"start": 0, "end": 1}, "argument": null_bstr,
+            "result": url_bstr, "before": hidden, "after": expanded, "hresult": "0x00000000",
+        },
+    ]
+    return {
+        "engine": {"windows_version": [10, 0, 26100], "dll_path": "Msftedit.dll", "dll_file_version": "1.2.3.4"},
+        "fixtures": [{
+            "family": "link", "name": "example_link", "text": "ab", "supplied_utf16_length": 2,
+            "native_story_length": 3, "window_ex_style": 0,
+        }],
+        "home_end": [], "vertical": [], "link": [copy.deepcopy(row) for row in rows],
+        "counts": {"home_end": 0, "home_end_repeats": 0, "vertical": 0, "link": 2, "link_fixtures": 1},
+    }
 
 
 class NativeObservationExtractionTests(unittest.TestCase):
@@ -183,6 +256,102 @@ class NativeObservationExtractionTests(unittest.TestCase):
         for invalid in ('"\\u{d800}"', '"\\u{110000}"', '"\\u{}"', '"\\x20"', '"\\u200d"', '"\n"'):
             with self.subTest(invalid=invalid), self.assertRaises(ValueError):
                 PARSER.rust_string(invalid)
+
+    def test_link_preserves_exact_bstr_utf16_hidden_story_and_getter_range_expansion(self) -> None:
+        expected = synthetic_link_record()
+        record = PARSER.extract(record_log(expected))
+        self.assertEqual(record, expected)
+        setter, getter = record["link"]
+        self.assertEqual(setter["before"]["story_length"], 3)
+        self.assertEqual(setter["after"]["story_length"], 6)
+        self.assertEqual(getter["before"]["range"], {"start": 3, "end": 4})
+        self.assertEqual(getter["after"]["range"], {"start": 0, "end": 4})
+        self.assertIn("😀", getter["result"]["text"])
+
+    def test_link_preserves_null_and_allocated_empty_bstr_separately(self) -> None:
+        for is_null in (False, True):
+            record = synthetic_link_record()
+            record["link"][1]["result"] = {"is_null": is_null, "text": "", "utf16_length": 0}
+            with self.subTest(is_null=is_null):
+                self.assertEqual(PARSER.extract(record_log(record)), record)
+
+    def test_link_retains_target_hresult_failures_and_observes_readback(self) -> None:
+        record = synthetic_link_record()
+        setter, getter = record["link"]
+        setter["hresult"] = "0x80070057"
+        setter["after"] = copy.deepcopy(setter["before"])
+        getter["before"] = copy.deepcopy(setter["after"])
+        getter["after"] = copy.deepcopy(getter["before"])
+        getter["hresult"] = "0x00000001"
+        getter["result"] = {"is_null": True, "text": "", "utf16_length": 0}
+        self.assertEqual(PARSER.extract(record_log(record)), record)
+
+    def test_link_setup_has_explicit_successful_history_and_one_target(self) -> None:
+        record = synthetic_link_record()
+        record["link"][0]["role"] = "Setup"
+        record["link"][1]["role"] = "Target"
+        self.assertEqual(PARSER.extract(record_log(record)), record)
+        record["link"][0]["hresult"] = "0x80070057"
+        with self.assertRaisesRegex(ValueError, "successful SetURL"):
+            PARSER.extract(record_log(record))
+
+    def test_link_rejects_incomplete_duplicate_reordered_and_mismatched_steps(self) -> None:
+        baseline = synthetic_link_record()
+        invalid = []
+        for steps in (
+            [baseline["link"][0]],
+            [baseline["link"][1], baseline["link"][0]],
+            [baseline["link"][0], baseline["link"][0]],
+        ):
+            record = copy.deepcopy(baseline)
+            record["link"] = steps
+            record["counts"]["link"] = len(steps)
+            invalid.append(record_log(record))
+        log = record_log(baseline)
+        invalid.extend((
+            log.rsplit("\n", 1)[0],
+            log.replace("commands=2 fixtures=1", "commands=3 fixtures=1"),
+            log.replace("commands=2 fixtures=1", "commands=2 fixtures=2"),
+            log + "\nSYSTEM_MSFTEDIT_LINK_PROBE_COMPLETE commands=2 fixtures=1",
+            log + "\nSYSTEM_MSFTEDIT_" + link_row(baseline["link"][0]),
+            log.replace("step=1 role=Readback", "step=2 role=Readback"),
+        ))
+        for value in invalid:
+            with self.subTest(log=value[-100:]), self.assertRaises(ValueError):
+                PARSER.extract(value)
+
+    def test_link_rejects_contradictory_range_story_bstr_and_phase_metadata(self) -> None:
+        baseline = synthetic_link_record()
+        for row_index, path, value in (
+            (0, ("initial_range", "end"), 4),
+            (0, ("before", "range", "start"), 1),
+            (0, ("after", "story_length"), 3),
+            (0, ("after", "range_text_utf16_length"), 2),
+            (0, ("after", "selection", "end"), 7),
+            (0, ("argument", "is_null"), True),
+            (0, ("argument", "utf16_length"), 1),
+            (0, ("result", "is_null"), False),
+            (1, ("argument", "is_null"), False),
+            (1, ("initial_range", "end"), 2),
+            (1, ("before", "range", "start"), 2),
+            (1, ("before", "story_text"), "\x13Y\x14ab\r"),
+        ):
+            record = copy.deepcopy(baseline)
+            target = record["link"][row_index]
+            for name in path[:-1]:
+                target = target[name]
+            target[path[-1]] = value
+            with self.subTest(row=row_index, path=path), self.assertRaises(ValueError):
+                PARSER.extract(record_log(record))
+
+    def test_link_rejects_undeclared_or_late_fixtures(self) -> None:
+        lines = record_log(synthetic_link_record()).splitlines()
+        for reordered in (
+            [lines[0], lines[2], lines[1], *lines[3:]],
+            [*lines, lines[1].replace("name=example_link", "name=late")],
+        ):
+            with self.assertRaises(ValueError):
+                PARSER.extract("\n".join(reordered))
 
 
 if __name__ == "__main__":

@@ -19,6 +19,8 @@
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-moveleft
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-moveright
 //! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextselection-gettype
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextrange2-geturl
+//! https://learn.microsoft.com/windows/win32/api/tom/nf-tom-itextrange2-seturl
 //! https://learn.microsoft.com/windows/win32/controls/em-geteditstyle
 
 use crate::automation::marshalling::{free_bstr, string_to_bstr};
@@ -29,15 +31,15 @@ use std::mem::{offset_of, size_of};
 use std::ptr::{null, null_mut};
 use windows_sys::Win32::Foundation::{FreeLibrary, GetLastError, HMODULE, HWND};
 use windows_sys::Win32::Storage::FileSystem::{
-    GetFileVersionInfoSizeW, GetFileVersionInfoW, VS_FIXEDFILEINFO, VerQueryValueW,
+    GetFileVersionInfoSizeW, GetFileVersionInfoW, VerQueryValueW, VS_FIXEDFILEINFO,
 };
 use windows_sys::Win32::System::LibraryLoader::{
-    GetModuleFileNameW, GetModuleHandleW, LOAD_LIBRARY_SEARCH_SYSTEM32, LoadLibraryExW,
+    GetModuleFileNameW, GetModuleHandleW, LoadLibraryExW, LOAD_LIBRARY_SEARCH_SYSTEM32,
 };
 use windows_sys::Win32::System::Ole::{OleInitialize, OleUninitialize};
 use windows_sys::Win32::UI::WindowsAndMessaging::{
-    CreateWindowExW, DestroyWindow, ES_AUTOHSCROLL, ES_AUTOVSCROLL, ES_MULTILINE, SendMessageW,
-    SetWindowTextW, WS_EX_RTLREADING, WS_POPUP,
+    CreateWindowExW, DestroyWindow, SendMessageW, SetWindowTextW, ES_AUTOHSCROLL, ES_AUTOVSCROLL,
+    ES_MULTILINE, WS_EX_RTLREADING, WS_POPUP,
 };
 
 type TestResult<T = ()> = Result<T, String>;
@@ -47,6 +49,7 @@ type MoveMethod = unsafe extern "system" fn(*mut c_void, i32, i32, i32, *mut i32
 
 const EM_GETOLEINTERFACE: u32 = 1084;
 const IID_TEXT_DOCUMENT: Guid = Guid::from_u128(0x8cc497c0_a1df_11ce_8098_00aa0047be5d);
+const IID_TEXT_RANGE2: Guid = Guid::from_u128(0xc241f5e2_7206_11d8_a2c7_00a0d1d6c6b3);
 const TOM_SEL_START_ACTIVE: i32 = 1;
 
 #[link(name = "oleaut32")]
@@ -63,6 +66,8 @@ struct TextDocumentVTable {
     _dispatch: [*const c_void; 4],
     _get_name: *const c_void,
     get_selection: unsafe extern "system" fn(*mut c_void, *mut *mut c_void) -> i32,
+    _get_story_count_through_redo: [*const c_void; 15],
+    range: unsafe extern "system" fn(*mut c_void, i32, i32, *mut *mut c_void) -> i32,
 }
 
 #[repr(C)]
@@ -92,9 +97,20 @@ struct TextSelectionVTable {
     type_text: unsafe extern "system" fn(*mut c_void, *mut u16) -> i32,
 }
 
+// The SDK ITextRange2 interface inherits ITextSelection, including its ten
+// selection slots, even when obtained from an independent document range.
+#[repr(C)]
+struct TextRange2VTable {
+    base: TextSelectionVTable,
+    _get_cch_through_get_table: [*const c_void; 16],
+    get_url: unsafe extern "system" fn(*mut c_void, *mut *mut u16) -> i32,
+    set_url: unsafe extern "system" fn(*mut c_void, *mut u16) -> i32,
+}
+
 const _: () = {
     let slot = size_of::<*const c_void>();
     assert!(offset_of!(TextDocumentVTable, get_selection) == 8 * slot);
+    assert!(offset_of!(TextDocumentVTable, range) == 24 * slot);
     assert!(offset_of!(TextSelectionVTable, get_text) == 7 * slot);
     assert!(offset_of!(TextSelectionVTable, get_start) == 14 * slot);
     assert!(offset_of!(TextSelectionVTable, get_end) == 16 * slot);
@@ -110,6 +126,9 @@ const _: () = {
     assert!(offset_of!(TextSelectionVTable, home_key) == 65 * slot);
     assert!(offset_of!(TextSelectionVTable, end_key) == 66 * slot);
     assert!(offset_of!(TextSelectionVTable, type_text) == 67 * slot);
+    assert!(size_of::<TextSelectionVTable>() == 68 * slot);
+    assert!(offset_of!(TextRange2VTable, get_url) == 84 * slot);
+    assert!(offset_of!(TextRange2VTable, set_url) == 85 * slot);
 };
 
 fn check_hresult(result: i32, operation: &str) -> TestResult {
@@ -289,7 +308,7 @@ impl HiddenRichEdit {
         }
     }
 
-    fn selection(&self) -> TestResult<NativeSelection> {
+    fn document(&self) -> TestResult<NativeDocument> {
         let mut ole = null_mut::<c_void>();
         // SAFETY: EM_GETOLEINTERFACE writes one owned interface reference to ole.
         if unsafe {
@@ -312,15 +331,30 @@ impl HiddenRichEdit {
         let result = unsafe { ole.query_interface_raw(&IID_TEXT_DOCUMENT, &mut document) };
         check_hresult(result as i32, "QueryInterface(ITextDocument)")?;
         // SAFETY: successful QueryInterface transfers one owned reference.
-        let document = unsafe { ComPtr::<IUnknown>::from_raw(document.cast()) }
-            .ok_or("QueryInterface(ITextDocument) returned null")?;
-        // SAFETY: QueryInterface established the SDK ITextDocument vtable prefix.
-        let table = unsafe { &**document.as_ptr().cast::<*const TextDocumentVTable>() };
+        unsafe { ComPtr::<IUnknown>::from_raw(document.cast()) }
+            .map(NativeDocument)
+            .ok_or_else(|| "QueryInterface(ITextDocument) returned null".into())
+    }
+
+    fn selection(&self) -> TestResult<NativeSelection> {
+        self.document()?.selection()
+    }
+}
+
+struct NativeDocument(ComPtr<IUnknown>);
+
+impl NativeDocument {
+    fn table(&self) -> &TextDocumentVTable {
+        // SAFETY: QueryInterface established this owned ITextDocument reference.
+        unsafe { &**self.0.as_ptr().cast::<*const TextDocumentVTable>() }
+    }
+
+    fn selection(&self) -> TestResult<NativeSelection> {
         let mut selection = null_mut();
         // SAFETY: GetSelection is slot 8 of ITextDocument and writes an owned
         // ITextSelection reference. The document stays alive through the call.
         check_hresult(
-            unsafe { (table.get_selection)(document.as_ptr().cast(), &mut selection) },
+            unsafe { (self.table().get_selection)(self.0.as_ptr().cast(), &mut selection) },
             "ITextDocument::GetSelection",
         )?;
         // SAFETY: successful GetSelection transfers one owned reference. The
@@ -328,6 +362,29 @@ impl HiddenRichEdit {
         unsafe { ComPtr::<IUnknown>::from_raw(selection.cast()) }
             .map(NativeSelection)
             .ok_or_else(|| "ITextDocument::GetSelection returned null".into())
+    }
+
+    fn range(&self, start: i32, end: i32) -> TestResult<NativeRange2> {
+        let mut range = null_mut::<c_void>();
+        // SAFETY: the SDK Range slot takes two signed UTF-16 positions and
+        // writes an owned ITextRange reference, independent of the selection.
+        check_hresult(
+            unsafe { (self.table().range)(self.0.as_ptr().cast(), start, end, &mut range) },
+            "ITextDocument::Range",
+        )?;
+        // SAFETY: successful Range transfers one owned interface reference.
+        let range = unsafe { ComPtr::<IUnknown>::from_raw(range.cast()) }
+            .ok_or("ITextDocument::Range returned null")?;
+        let mut range2 = null_mut();
+        // SAFETY: the exact SDK IID and writable interface-pointer output.
+        check_hresult(
+            unsafe { range.query_interface_raw(&IID_TEXT_RANGE2, &mut range2) } as i32,
+            "QueryInterface(ITextRange2)",
+        )?;
+        // SAFETY: successful QueryInterface transfers one owned reference.
+        unsafe { ComPtr::<IUnknown>::from_raw(range2.cast()) }
+            .map(NativeRange2)
+            .ok_or_else(|| "QueryInterface(ITextRange2) returned null".into())
     }
 }
 
@@ -342,8 +399,147 @@ struct Bstr(*mut u16);
 
 impl Drop for Bstr {
     fn drop(&mut self) {
-        // SAFETY: this owns the BSTR returned by GetText; null is also allowed.
+        // SAFETY: this owns an allocated or returned BSTR; null is also allowed.
         unsafe { free_bstr(self.0) };
+    }
+}
+
+impl Bstr {
+    fn text(&self) -> TestResult<String> {
+        if self.0.is_null() {
+            return Ok(String::new());
+        }
+        // SAFETY: this guard owns the live BSTR through explicit-length decoding.
+        // SysStringLen preserves embedded NULs, unlike a terminated-string read.
+        let units = unsafe { std::slice::from_raw_parts(self.0, SysStringLen(self.0) as usize) };
+        String::from_utf16(units).map_err(|_| "native TOM returned malformed UTF-16".into())
+    }
+}
+
+struct NativeRange2(ComPtr<IUnknown>);
+
+impl NativeRange2 {
+    fn table(&self) -> &TextRange2VTable {
+        // SAFETY: QueryInterface established this owned SDK ITextRange2.
+        unsafe { &**self.0.as_ptr().cast::<*const TextRange2VTable>() }
+    }
+
+    fn number(&self, getter: Getter, name: &str) -> TestResult<i32> {
+        let mut value = 0;
+        // SAFETY: callers use a typed integer getter from this interface.
+        check_hresult(unsafe { getter(self.0.as_ptr().cast(), &mut value) }, name)?;
+        Ok(value)
+    }
+
+    fn state(&self) -> TestResult<RangeState> {
+        Ok(RangeState {
+            start: self.number(self.table().base.get_start, "ITextRange2::GetStart")?,
+            end: self.number(self.table().base.get_end, "ITextRange2::GetEnd")?,
+        })
+    }
+
+    fn text(&self) -> TestResult<String> {
+        let mut text = Bstr(null_mut());
+        // SAFETY: GetText writes an owned BSTR, including on an empty range.
+        check_hresult(
+            unsafe { (self.table().base.get_text)(self.0.as_ptr().cast(), &mut text.0) },
+            "ITextRange2::GetText",
+        )?;
+        text.text()
+    }
+
+    fn get_url(&self) -> TestResult<(i32, Option<String>)> {
+        let mut url = Bstr(null_mut());
+        // SAFETY: the verified SDK slot writes an owned BSTR. Null versus empty
+        // and failing HRESULTs are observations, not assumptions of this probe.
+        let result = unsafe { (self.table().get_url)(self.0.as_ptr().cast(), &mut url.0) };
+        let value = if url.0.is_null() {
+            None
+        } else {
+            Some(url.text()?)
+        };
+        Ok((result, value))
+    }
+
+    fn set_url(&self, value: Option<&str>) -> TestResult<i32> {
+        let url = Bstr(value.map_or(null_mut(), string_to_bstr));
+        if value.is_some() && url.0.is_null() {
+            return Err("SysAllocStringLen for ITextRange2::SetURL failed".into());
+        }
+        // SAFETY: the SDK slot borrows this possibly-null BSTR synchronously.
+        // Invalid syntax/collapsed ranges may fail; retain the exact HRESULT.
+        Ok(unsafe { (self.table().set_url)(self.0.as_ptr().cast(), url.0) })
+    }
+
+    fn snapshot(
+        &self,
+        document: &NativeDocument,
+        selection: &NativeSelection,
+    ) -> TestResult<LinkSnapshot> {
+        let range = self.state()?;
+        let selection_before = selection.state()?;
+        let range_text = self.text()?;
+        let story_length = self.number(
+            self.table().base.get_story_length,
+            "ITextRange2::GetStoryLength",
+        )?;
+        let story_text = document.range(0, story_length)?.text()?;
+        // Reading story metadata through independent ranges must not hide a
+        // GetURL endpoint expansion or disturb the actual native selection.
+        assert_eq!(
+            self.state()?,
+            range,
+            "snapshot reads retain the observed range"
+        );
+        assert_eq!(
+            selection.state()?,
+            selection_before,
+            "snapshot reads retain the selection"
+        );
+        assert!(0 <= range.start && range.start <= range.end && range.end <= story_length);
+        let range_text_utf16_length = range_text.encode_utf16().count();
+        let story_text_utf16_length = story_text.encode_utf16().count();
+        assert!(story_text_utf16_length <= story_length as usize);
+        Ok(LinkSnapshot {
+            range,
+            range_text,
+            range_text_utf16_length,
+            story_text,
+            story_text_utf16_length,
+            story_length,
+            selection: selection_before,
+        })
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct RangeState {
+    start: i32,
+    end: i32,
+}
+
+struct LinkSnapshot {
+    range: RangeState,
+    range_text: String,
+    range_text_utf16_length: usize,
+    story_text: String,
+    story_text_utf16_length: usize,
+    story_length: i32,
+    selection: SelectionState,
+}
+
+impl std::fmt::Debug for LinkSnapshot {
+    fn fmt(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        formatter
+            .debug_struct("LinkSnapshot")
+            .field("range", &self.range)
+            .field("range_text", &self.range_text)
+            .field("range_text_utf16_length", &self.range_text_utf16_length)
+            .field("story_text", &self.story_text)
+            .field("story_text_utf16_length", &self.story_text_utf16_length)
+            .field("story_length", &self.story_length)
+            .field("selection", &self.selection)
+            .finish()
     }
 }
 
@@ -1285,4 +1481,330 @@ fn rich_text_tom_oracle_system_msftedit_options_characterization() {
         .join()
         .expect("the native options TOM probe thread panicked")
         .expect("the native options TOM probe failed");
+}
+
+#[derive(Clone, Copy)]
+enum LinkOperation<'a> {
+    Get,
+    Set(Option<&'a str>),
+}
+
+#[derive(Clone, Copy)]
+struct LinkSetup<'a> {
+    range: (i32, i32),
+    url: &'a str,
+}
+
+fn observe_link_step(
+    name: &str,
+    step: usize,
+    role: &str,
+    initial_range: (i32, i32),
+    operation: LinkOperation<'_>,
+    range: &NativeRange2,
+    document: &NativeDocument,
+    selection: &NativeSelection,
+) -> TestResult<i32> {
+    let before = range.snapshot(document, selection)?;
+    let (method, argument, result, value) = match operation {
+        LinkOperation::Get => {
+            let (result, value) = range.get_url()?;
+            ("Get", None, result, value)
+        }
+        LinkOperation::Set(argument) => ("Set", argument, range.set_url(argument)?, None),
+    };
+    let after = range.snapshot(document, selection)?;
+    let argument_null = argument.is_none();
+    let argument = argument.unwrap_or_default();
+    let argument_utf16_length = argument.encode_utf16().count();
+    let result_null = value.is_none();
+    let value = value.unwrap_or_default();
+    let result_utf16_length = value.encode_utf16().count();
+    println!(
+        "SYSTEM_MSFTEDIT_LINK fixture={name} step={step} role={role} operation={method} initial_start={} initial_end={} argument_null={argument_null} argument={argument:?} argument_utf16_length={argument_utf16_length} before={before:?} after={after:?} hresult=0x{:08X} result_null={result_null} result={value:?} result_utf16_length={result_utf16_length}",
+        initial_range.0, initial_range.1, result as u32,
+    );
+    Ok(result)
+}
+
+/// Every fixture owns a fresh HWND and independent ITextDocument::Range objects.
+/// All target/setup ranges are created before any SetURL, so native range
+/// tracking, including any hidden address positions, is preserved and observed.
+/// A getter runs on its own range; no preliminary GetURL changes its endpoints.
+fn characterize_link_fixture(
+    name: &str,
+    text: &str,
+    setup: &[LinkSetup<'_>],
+    initial_range: (i32, i32),
+    operation: LinkOperation<'_>,
+) -> TestResult<usize> {
+    let window = HiddenRichEdit::new()?;
+    window.set_text(text)?;
+    let document = window.document()?;
+    let selection = document.selection()?;
+    let length = text.encode_utf16().count() as i32;
+    let initial = document.range(0, length)?;
+    assert_eq!(initial.text()?, text, "{name}: exact Link fixture setup");
+    let story_length = initial.number(initial.table().base.get_story_length, "GetStoryLength")?;
+    println!(
+        "SYSTEM_MSFTEDIT_LINK_FIXTURE name={name} text={text:?} supplied_utf16_length={length} native_story_length={story_length} window_ex_style=0"
+    );
+    let mut setup_ranges = Vec::with_capacity(setup.len());
+    for item in setup {
+        let range = document.range(item.range.0, item.range.1)?;
+        assert_eq!(
+            range.state()?,
+            RangeState {
+                start: item.range.0,
+                end: item.range.1
+            }
+        );
+        setup_ranges.push(range);
+    }
+    let target = document.range(initial_range.0, initial_range.1)?;
+    assert_eq!(
+        target.state()?,
+        RangeState {
+            start: initial_range.0,
+            end: initial_range.1
+        }
+    );
+    let mut step = 0;
+    for (item, range) in setup.iter().zip(&setup_ranges) {
+        let result = observe_link_step(
+            name,
+            step,
+            "Setup",
+            item.range,
+            LinkOperation::Set(Some(item.url)),
+            range,
+            &document,
+            &selection,
+        )?;
+        // These are documented, nonempty, quoted setup links. The target call
+        // deliberately records failures for malformed/empty/collapsed inputs.
+        check_hresult(result, "ITextRange2::SetURL fixture setup")?;
+        step += 1;
+    }
+    observe_link_step(
+        name,
+        step,
+        "Target",
+        initial_range,
+        operation,
+        &target,
+        &document,
+        &selection,
+    )?;
+    step += 1;
+    if matches!(operation, LinkOperation::Set(_)) {
+        observe_link_step(
+            name,
+            step,
+            "Readback",
+            initial_range,
+            LinkOperation::Get,
+            &target,
+            &document,
+            &selection,
+        )?;
+        step += 1;
+    }
+    Ok(step)
+}
+
+fn characterize_links() -> TestResult {
+    let _apartment = OleApartment::new()?;
+    let library = SystemRichEditLibrary::load()?;
+    library.describe()?;
+    const A: &str = "\"https://a.example/path\"";
+    const B: &str = "\"https://b.example/other\"";
+    let mut commands = 0;
+    let mut fixtures = 0;
+    let mut observe = |name: &str, text: &str, setup: &[LinkSetup<'_>], range, operation| {
+        let observed = characterize_link_fixture(name, text, setup, range, operation)?;
+        fixtures += 1;
+        commands += observed;
+        Ok::<_, String>(())
+    };
+
+    for (name, range) in [
+        ("caret_start", (0, 0)),
+        ("character", (0, 1)),
+        ("word", (0, 5)),
+        ("whole", (0, 10)),
+        ("caret_inside", (2, 2)),
+        ("terminal_eop", (10, 11)),
+    ] {
+        observe(
+            &format!("link_plain_get_{name}"),
+            "alpha beta",
+            &[],
+            range,
+            LinkOperation::Get,
+        )?;
+    }
+    for (name, url) in [
+        ("quoted", Some(A)),
+        (
+            "sentinel_quoted",
+            Some("\u{fddf}\"https://a.example/path\""),
+        ),
+        ("unquoted", Some("https://a.example/path")),
+        ("quoted_non_uri", Some("\"not a URI\"")),
+        ("empty", Some("")),
+        ("quoted_empty", Some("\"\"")),
+        ("null", None),
+        ("interior_quote", Some("\"https://a.example/a\"b\"")),
+        ("embedded_nul", Some("\"https://a.example/a\0b\"")),
+    ] {
+        observe(
+            &format!("link_plain_set_{name}"),
+            "alpha beta",
+            &[],
+            (0, 5),
+            LinkOperation::Set(url),
+        )?;
+    }
+    observe(
+        "link_collapsed_set",
+        "alpha beta",
+        &[],
+        (2, 2),
+        LinkOperation::Set(Some(A)),
+    )?;
+    observe(
+        "link_empty_story_set",
+        "",
+        &[],
+        (0, 0),
+        LinkOperation::Set(Some(A)),
+    )?;
+    for (name, range) in [
+        ("emoji", (1, 3)),
+        ("combining", (3, 5)),
+        ("combining_tail", (4, 5)),
+    ] {
+        observe(
+            &format!("link_unicode_set_{name}"),
+            "A😀e\u{301}B",
+            &[],
+            range,
+            LinkOperation::Set(Some("\"https://例子.example/😀\"")),
+        )?;
+    }
+    for (name, range) in [("break", (2, 3)), ("crossing", (1, 4)), ("whole", (0, 5))] {
+        observe(
+            &format!("link_paragraph_set_{name}"),
+            "ab\rcd",
+            &[],
+            range,
+            LinkOperation::Set(Some(A)),
+        )?;
+    }
+    let regular_url = "https://a.example/path";
+    let regular_range = (0, regular_url.encode_utf16().count() as i32);
+    observe(
+        "link_regular_url_get",
+        regular_url,
+        &[],
+        regular_range,
+        LinkOperation::Get,
+    )?;
+    observe(
+        "link_regular_url_set",
+        regular_url,
+        &[],
+        regular_range,
+        LinkOperation::Set(Some(B)),
+    )?;
+
+    let first = [LinkSetup {
+        range: (0, 5),
+        url: A,
+    }];
+    for (name, range) in [
+        ("whole", (0, 5)),
+        ("partial", (1, 3)),
+        ("character", (1, 2)),
+        ("caret_start", (0, 0)),
+        ("caret_inside", (2, 2)),
+        ("caret_end", (5, 5)),
+        ("after", (6, 10)),
+        ("crossing", (3, 8)),
+        ("whole_story", (0, 10)),
+        ("caret_story_end", (10, 10)),
+    ] {
+        observe(
+            &format!("link_friendly_get_{name}"),
+            "alpha beta",
+            &first,
+            range,
+            LinkOperation::Get,
+        )?;
+    }
+    for (name, range, url) in [
+        ("partial_update", (1, 3), Some(B)),
+        ("whole_update", (0, 5), Some(B)),
+        ("caret_update", (2, 2), Some(B)),
+        ("empty_clear", (1, 3), Some("")),
+        ("quoted_empty", (1, 3), Some("\"\"")),
+        ("null_clear", (1, 3), None),
+        ("append_same", (5, 10), Some(A)),
+        ("append_different", (5, 10), Some(B)),
+        ("cross_same", (3, 8), Some(A)),
+        ("cross_different", (3, 8), Some(B)),
+    ] {
+        observe(
+            &format!("link_friendly_set_{name}"),
+            "alpha beta",
+            &first,
+            range,
+            LinkOperation::Set(url),
+        )?;
+    }
+    for (kind, url) in [("same", A), ("different", B)] {
+        let adjacent = [first[0], LinkSetup { range: (5, 9), url }];
+        for (name, range) in [
+            ("first", (0, 5)),
+            ("second", (5, 9)),
+            ("crossing", (2, 7)),
+            ("caret_boundary", (5, 5)),
+            ("both", (0, 9)),
+            ("after", (9, 10)),
+        ] {
+            observe(
+                &format!("link_adjacent_{kind}_get_{name}"),
+                "alphabeta!",
+                &adjacent,
+                range,
+                LinkOperation::Get,
+            )?;
+        }
+        observe(
+            &format!("link_adjacent_{kind}_set_crossing"),
+            "alphabeta!",
+            &adjacent,
+            (3, 7),
+            LinkOperation::Set(Some("\"https://c.example/replacement\"")),
+        )?;
+    }
+    assert_eq!(
+        (commands, fixtures),
+        (137, 59),
+        "keep the Link matrix complete"
+    );
+    println!("SYSTEM_MSFTEDIT_LINK_PROBE_COMPLETE commands={commands} fixtures={fixtures}");
+    Ok(())
+}
+
+#[test]
+fn rich_text_tom_oracle_system_msftedit_link_characterization() {
+    std::thread::Builder::new()
+        .name("system-msftedit-link".into())
+        .spawn(characterize_links)
+        .expect("start the native Link TOM probe thread")
+        .join()
+        .expect("the native Link TOM probe thread panicked")
+        .expect("the native Link TOM probe failed");
 }

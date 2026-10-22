@@ -15,13 +15,14 @@ from pathlib import Path
 
 
 PREFIX = "SYSTEM_MSFTEDIT_"
+DEBUG_STRING = r'"(?:\\.|[^"\\])*"'
 STATE = r"SelectionState \{ start: (-?\d+), end: (-?\d+), flags: (\d+) \}"
 ENGINE = re.compile(
     r'ENGINE windows=\((\d+), (\d+), (\d+)\) dll=("(?:\\.|[^"\\])*") '
     r"file_version=(\d+\.\d+\.\d+\.\d+)"
 )
 FIXTURE = re.compile(
-    r'(VERTICAL_|HORIZONTAL_|OPTIONS_)?FIXTURE name=(\S+) text=("(?:\\.|[^"\\])*") '
+    r'(VERTICAL_|HORIZONTAL_|OPTIONS_|LINK_)?FIXTURE name=(\S+) text=("(?:\\.|[^"\\])*") '
     r"(?:supplied_)?utf16_length=(\d+) native_story_length=(\d+)"
     r"(?: window_ex_style=(\d+))?"
 )
@@ -57,6 +58,32 @@ OPTIONS = re.compile(
     + r" after_type=(-?\d+) type_hresult=(0x[0-9A-F]{8}) "
     r"native_story_length_after=(\d+) "
     r'story_text=("(?:\\.|[^"\\])*") story_text_utf16_length=(\d+)'
+)
+
+
+def link_snapshot_pattern(prefix: str) -> str:
+    return (
+        rf"LinkSnapshot \{{ range: RangeState \{{ start: (?P<{prefix}_start>-?\d+), "
+        rf"end: (?P<{prefix}_end>-?\d+) \}}, "
+        rf"range_text: (?P<{prefix}_range_text>{DEBUG_STRING}), "
+        rf"range_text_utf16_length: (?P<{prefix}_range_text_utf16_length>\d+), "
+        rf"story_text: (?P<{prefix}_story_text>{DEBUG_STRING}), "
+        rf"story_text_utf16_length: (?P<{prefix}_story_text_utf16_length>\d+), "
+        rf"story_length: (?P<{prefix}_story_length>\d+), "
+        rf"selection: SelectionState \{{ start: (?P<{prefix}_selection_start>-?\d+), "
+        rf"end: (?P<{prefix}_selection_end>-?\d+), flags: (?P<{prefix}_flags>\d+) \}} \}}"
+    )
+
+
+LINK = re.compile(
+    r"LINK fixture=(?P<fixture>\S+) step=(?P<step>\d+) "
+    r"role=(?P<role>Setup|Target|Readback) operation=(?P<operation>Get|Set) "
+    r"initial_start=(?P<initial_start>-?\d+) initial_end=(?P<initial_end>-?\d+) "
+    r"argument_null=(?P<argument_null>true|false) "
+    rf"argument=(?P<argument>{DEBUG_STRING}) argument_utf16_length=(?P<argument_length>\d+) "
+    r"before=" + link_snapshot_pattern("before") + r" after=" + link_snapshot_pattern("after")
+    + r" hresult=(?P<hresult>0x[0-9A-F]{8}) result_null=(?P<result_null>true|false) "
+    rf"result=(?P<result>{DEBUG_STRING}) result_utf16_length=(?P<result_length>\d+)"
 )
 
 
@@ -132,6 +159,90 @@ def movement(values: tuple[str, ...], state_start: int) -> dict:
     }
 
 
+def link_snapshot(values: dict[str, str], prefix: str) -> dict:
+    def field(name: str) -> str:
+        return values[prefix + "_" + name]
+
+    start, end, story_length = (int(field(name)) for name in ("start", "end", "story_length"))
+    if not 0 <= start <= end <= story_length:
+        raise ValueError("Link range exceeds its native story")
+    selected = state(tuple(field(name) for name in ("selection_start", "selection_end", "flags")))
+    if selected["end"] > story_length:
+        raise ValueError("Link snapshot selection exceeds its native story")
+    result = {"range": {"start": start, "end": end}}
+    for name in ("range_text", "story_text"):
+        text = rust_string(field(name))
+        length = int(field(name + "_utf16_length"))
+        if len(text.encode("utf-16-le")) // 2 != length:
+            raise ValueError("Link text disagrees with its explicit UTF-16 length")
+        result[name] = text
+        result[name + "_utf16_length"] = length
+    if result["story_text_utf16_length"] > story_length:
+        raise ValueError("Link story text exceeds its native story length")
+    return {**result, "story_length": story_length, "selection": selected}
+
+
+def link_command(match: re.Match) -> dict:
+    values = match.groupdict()
+    result = {
+        "fixture": values["fixture"],
+        "step": int(values["step"]),
+        "role": values["role"],
+        "operation": values["operation"],
+        "initial_range": {"start": int(values["initial_start"]), "end": int(values["initial_end"])},
+    }
+    for name in ("argument", "result"):
+        text = rust_string(values[name])
+        length = int(values[name + "_length"])
+        is_null = values[name + "_null"] == "true"
+        if len(text.encode("utf-16-le")) // 2 != length or (is_null and text):
+            raise ValueError("Link BSTR disagrees with its null/UTF-16 metadata")
+        result[name] = {"is_null": is_null, "text": text, "utf16_length": length}
+    if result["operation"] == "Get" and not result["argument"]["is_null"]:
+        raise ValueError("GetURL has no input BSTR")
+    if result["operation"] == "Set" and not result["result"]["is_null"]:
+        raise ValueError("SetURL has no output BSTR")
+    result["before"] = link_snapshot(values, "before")
+    result["after"] = link_snapshot(values, "after")
+    result["hresult"] = values["hresult"]
+    return result
+
+
+def validate_link_steps(fixture: dict, rows: list[dict]) -> None:
+    if [row["step"] for row in rows] != list(range(len(rows))):
+        raise ValueError("Link steps must be unique and consecutive from zero")
+    roles = [row["role"] for row in rows]
+    if roles.count("Target") != 1:
+        raise ValueError("Link fixture needs exactly one target command")
+    target = roles.index("Target")
+    expected = ["Setup"] * target + ["Target"]
+    if rows[target]["operation"] == "Set":
+        expected.append("Readback")
+    if roles != expected:
+        raise ValueError("Link setup/target/readback order is incomplete")
+    for index, row in enumerate(rows):
+        initial = row["initial_range"]
+        if not 0 <= initial["start"] <= initial["end"] <= fixture["native_story_length"]:
+            raise ValueError("Link initial range exceeds its exact fixture")
+        if row["role"] == "Setup":
+            if row["operation"] != "Set" or row["argument"]["is_null"] or int(row["hresult"], 16) >= 0x80000000:
+                raise ValueError("Link setup must be a successful SetURL")
+        if index == 0:
+            if row["before"]["range"] != initial or row["before"]["story_length"] != fixture["native_story_length"]:
+                raise ValueError("first Link command disagrees with its initial fixture")
+            if not row["before"]["story_text"].startswith(fixture["text"]):
+                raise ValueError("initial Link story does not contain its exact fixture text")
+        else:
+            previous = rows[index - 1]
+            for key in ("story_text", "story_text_utf16_length", "story_length", "selection"):
+                if previous["after"][key] != row["before"][key]:
+                    raise ValueError("Link story/selection changed between consecutive commands")
+        if row["role"] == "Readback":
+            previous = rows[index - 1]
+            if row["operation"] != "Get" or initial != previous["initial_range"] or row["before"] != previous["after"]:
+                raise ValueError("Link readback must observe the same target range")
+
+
 def extract(log: str) -> dict:
     engine = None
     fixtures = []
@@ -139,6 +250,7 @@ def extract(log: str) -> dict:
     vertical = []
     horizontal = []
     options = []
+    link = []
     completed = {}
     for line_number, line in enumerate(log.splitlines(), 1):
         marker = line.find(PREFIX)
@@ -167,6 +279,7 @@ def extract(log: str) -> dict:
                     "VERTICAL_": "vertical",
                     "HORIZONTAL_": "horizontal",
                     "OPTIONS_": "options",
+                    "LINK_": "link",
                 }[match[1]],
                 "name": match[2],
                 "text": text,
@@ -175,12 +288,14 @@ def extract(log: str) -> dict:
             }
             if fixture["native_story_length"] < fixture["supplied_utf16_length"]:
                 raise ValueError("native story is shorter than its supplied text")
-            if fixture["family"] in ("horizontal", "options"):
+            if fixture["family"] in ("horizontal", "options", "link"):
                 if match[6] is None or int(match[6]) > 0xFFFFFFFF:
-                    raise ValueError("horizontal/options fixture needs its native u32 window style")
+                    raise ValueError("horizontal/options/Link fixture needs its native u32 window style")
                 fixture["window_ex_style"] = int(match[6])
             elif match[6] is not None:
-                raise ValueError("unexpected window style outside horizontal/options fixture")
+                raise ValueError("unexpected window style outside horizontal/options/Link fixture")
+            if fixture["family"] == "link" and "link" in completed:
+                raise ValueError("Link fixture follows its completion marker")
             fixtures.append(fixture)
             continue
         match = HOME_END.fullmatch(row)
@@ -273,6 +388,14 @@ def extract(log: str) -> dict:
                 "story_text_utf16_length": text_length,
             })
             continue
+        match = LINK.fullmatch(row)
+        if match:
+            if "link" in completed:
+                raise ValueError("Link command follows its completion marker")
+            if not any(fixture["family"] == "link" and fixture["name"] == match["fixture"] for fixture in fixtures):
+                raise ValueError("Link command precedes its exact fixture")
+            link.append(link_command(match))
+            continue
         match = re.fullmatch(r"PROBE_COMPLETE commands=(\d+) repeated_noops=(\d+)", row)
         if match:
             if "home_end" in completed:
@@ -297,6 +420,12 @@ def extract(log: str) -> dict:
                 raise ValueError("duplicate options completion")
             completed["options"] = int(match[1])
             continue
+        match = re.fullmatch(r"LINK_PROBE_COMPLETE commands=(\d+) fixtures=(\d+)", row)
+        if match:
+            if "link" in completed:
+                raise ValueError("duplicate Link completion")
+            completed["link"] = (int(match[1]), int(match[2]))
+            continue
         raise ValueError(f"unrecognized probe row on log line {line_number}: {row}")
 
     if engine is None or not completed:
@@ -314,6 +443,10 @@ def extract(log: str) -> dict:
     if options or "options" in completed:
         if len(options) != completed.get("options") or not options:
             raise ValueError("options observations do not match the completion count")
+    if link or "link" in completed:
+        counts = (len(link), sum(fixture["family"] == "link" for fixture in fixtures))
+        if counts != completed.get("link") or not link:
+            raise ValueError("Link observations do not match the completion counts")
     by_fixture = {}
     for fixture in fixtures:
         identity = (fixture["family"], fixture["name"])
@@ -340,6 +473,15 @@ def extract(log: str) -> dict:
                 states.append(row["repeat"]["after"])
             if any(value["end"] > fixture["native_story_length"] for value in states):
                 raise ValueError("command range exceeds its native story")
+    link_rows = {}
+    for row in link:
+        identity = ("link", row["fixture"])
+        if identity not in by_fixture:
+            raise ValueError("Link command has no exact text fixture")
+        used_fixtures.add(identity)
+        link_rows.setdefault(identity, []).append(row)
+    for identity, rows in link_rows.items():
+        validate_link_steps(by_fixture[identity], rows)
     if used_fixtures != by_fixture.keys():
         raise ValueError("declared fixture has no observed command")
     result = {
@@ -361,6 +503,10 @@ def extract(log: str) -> dict:
     if options:
         result["options"] = options
         result["counts"]["options"] = len(options)
+    if link:
+        result["link"] = link
+        result["counts"]["link"] = len(link)
+        result["counts"]["link_fixtures"] = len(link_rows)
     return result
 
 
