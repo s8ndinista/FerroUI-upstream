@@ -631,6 +631,12 @@ pub(crate) struct ComponentInstance {
     version: Signal<u64>,
     hooks: Rc<RefCell<Vec<Rc<dyn Any>>>>,
     instances: RefCell<Vec<Instance>>,
+    /// The nearest error boundary above, found when the component was
+    /// mounted: its runs are guarded and a panic is reported there.
+    boundary: Option<crate::error_boundary::Boundary>,
+    /// Whether a run panicked: the component renders nothing until its
+    /// boundary takes it out.
+    failed: Cell<bool>,
 }
 
 /// Elements in a list, with fragments taken apart and nothing left out.
@@ -994,6 +1000,7 @@ fn update_dynamic(
 }
 
 fn mount_component(element: ComponentElement, host: &Rc<Host>) -> Rc<ComponentInstance> {
+    let boundary = crate::error_boundary::nearest();
     let owner = Owner::new();
     let instance = owner.with(|| {
         Rc::new(ComponentInstance {
@@ -1011,11 +1018,14 @@ fn mount_component(element: ComponentElement, host: &Rc<Host>) -> Rc<ComponentIn
             version: signal(0),
             hooks: Rc::new(RefCell::new(Vec::new())),
             instances: RefCell::new(Vec::new()),
+            boundary,
+            failed: Cell::new(false),
         })
     });
     let state = instance.clone();
     owner.with(|| {
         effect(move || {
+            let _run = crate::error_boundary::RunGuard::enter();
             state.version.get();
             state.runs.set(state.runs.get() + 1);
             #[cfg(debug_assertions)]
@@ -1030,7 +1040,24 @@ fn mount_component(element: ComponentElement, host: &Rc<Host>) -> Rc<ComponentIn
             }
             let render = state.render.borrow().clone();
             let parent = state.host.control();
-            let (element, after) = crate::hooks::render_with(&state.hooks, state.owner, parent, || render());
+            let (element, after) = match &state.boundary {
+                None => crate::hooks::render_with(&state.hooks, state.owner, parent, || render()),
+                // A run that panicked before: nothing, until the boundary
+                // takes the component out.
+                Some(_) if state.failed.get() => (Element::Empty, Vec::new()),
+                Some(boundary) => match crate::hooks::render_catching(&state.hooks, state.owner, parent, || render()) {
+                    Ok(rendered) => rendered,
+                    Err(message) => {
+                        state.failed.set(true);
+                        crate::diagnostics::report(crate::diagnostics::Diagnostic::ErrorCaught {
+                            component: state.name,
+                            message: message.clone(),
+                        });
+                        boundary.report(message);
+                        (Element::Empty, Vec::new())
+                    }
+                },
+            };
             untrack(|| {
                 let old = std::mem::take(&mut *state.instances.borrow_mut());
                 let next = state.tree.with(|| reconcile_list(&state.host, &state.slot, old, vec![element]));
@@ -1095,7 +1122,11 @@ fn reconcile_list(host: &Rc<Host>, slot: &Rc<Slot>, old: Vec<Instance>, elements
 /// both back otherwise.
 fn patch(instance: Instance, element: Element) -> Result<Instance, (Instance, Element)> {
     match (instance, element) {
-        (Instance::Control(control), Element::Control(element)) if control.class == element.class => {
+        // A control keeps its `Name` once it is styled (the framework refuses a new one), so an
+        // element of another name is another control, as one of another key is.
+        (Instance::Control(control), Element::Control(element))
+            if control.class == element.class && control.state.borrow().name == element.name =>
+        {
             patch_control(&control, *element);
             Ok(Instance::Control(control))
         }
@@ -1142,10 +1173,8 @@ fn patch(instance: Instance, element: Element) -> Result<Instance, (Instance, El
 fn patch_control(instance: &ControlInstance, element: ControlElement) {
     let control = &instance.control;
     let mut state = instance.state.borrow_mut();
-    if state.name != element.name {
-        control.set_name(element.name.clone());
-        state.name = element.name;
-    }
+    // Equal names: `patch` replaces a control whose element names it otherwise.
+    debug_assert_eq!(state.name, element.name);
     if state.classes != element.classes {
         let classes = control.classes();
         for class in &state.classes {

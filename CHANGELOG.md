@@ -36,6 +36,11 @@ All notable changes to FerroUI are recorded in this file. The format follows [Ke
   - `view_stats()`, the counts of the mounting and the reconciler;
   - benchmarks of the declarative API in `ferroui-benchmarks` (`declarative`);
   - the README gains a section on the declarative API with its features and a comparison with React, and `examples/counter.rs` keeps its example building.
+- **Patterns of larger applications** in `ferroui-view` (phase 6, `docs/declarative-ui.md`, section 13):
+  - asynchronous data: `use_future(deps, make)`, a hook that runs a future on the executor of the thread and starts it again when its dependencies change, abandoning the one before; its state `AsyncState` (`Pending`, `Ready`, `Failed`); `suspense(state, pending, ready, failed)`; `sleep(duration)` on a timer of the dispatcher;
+  - error boundaries: `error_boundary(child, fallback)` shows a fallback when a run of a component below it panics, with `ErrorInfo` (`message`, `reset`), and reports `Diagnostic::ErrorCaught`;
+  - navigation modelled on the routing of ReactiveUI: `router(initial, routes)`, `route(pattern, view)` with `:name` parameters and `*`, `Router` (`navigate`, `navigate_back`, `navigate_and_reset`, `current`, `can_go_back`, `stack`), `use_router`, `try_use_router`, `RouteMatch`;
+  - the samples `samples/TodoMvc` (TodoMVC, its filters as routes) and `samples/ReactiveDemoComponents` (the crate browser of ReactiveDemo as components), in the WinUI 3 theme.
 - **Developer tools** (`ferroui-diagnostics`, a new published crate): the port of upstream's developer tools at their last open-source version, opened with F12 on a window or an application:
   - the logical and visual trees with a filter, the details of the selected control (its properties with their priorities and an editor for each, the value frames with their setters and resources, the pseudo-classes, the layout explorer), the routed events with their routes, the hot keys, and screenshots of a control;
   - the property grid is the TreeDataGrid of the port, grouped and sortable, in place of upstream's DataGrid;

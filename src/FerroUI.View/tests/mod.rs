@@ -10,3 +10,4 @@ mod template_tests;
 mod api_tests;
 mod tools_tests;
 mod performance_tests;
+mod patterns_tests;

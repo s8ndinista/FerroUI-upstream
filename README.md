@@ -367,7 +367,10 @@ fn main() {
 | Motion | Transitions and key-frame animations of the port | `transition(property, ms(200))`, `transitions([..])`, `animation(..)`, `use_animation` |
 | Popups | A popup's child and a context menu as elements | `Popup { .. }`, `context_menu: rsx! { ContextMenu { .. } }` |
 | Tools | Hot reload of the literals of `rsx!`, diagnostics (keys, runaway components), an inspector of components on Shift+F12 | feature `hot-reload`, `set_diagnostics_handler`, `open_inspector` |
-| Samples | The 7GUIs in builders, `rsx!` and hooks versions; XAML interoperation; the gallery | `samples/SevenGuis`, `samples/ViewInterop`, `samples/ViewGallery` |
+| Asynchronous data | A future run by a component on the executor of the thread, started again when its dependencies change; its state shown pending, ready or failed; a timer for debouncing | `use_future(deps, \|deps\| future)`, `suspense(..)`, `AsyncState`, `sleep` |
+| Error boundaries | A panic of a component below shows a fallback instead of ending the application; the child can be mounted again | `error_boundary(\|\| child, \|info\| fallback)`, `info.reset()` |
+| Navigation | A router of views modelled on the routing of ReactiveUI: a stack of paths, routes with parameters | `router("/", vec![route("/people/:id", \|m\| ..)])`, `use_router().navigate(..)`, `navigate_back`, `navigate_and_reset` |
+| Samples | The 7GUIs in builders, `rsx!` and hooks versions; XAML interoperation; the gallery; TodoMVC; ReactiveDemo as components | `samples/SevenGuis`, `samples/ViewInterop`, `samples/ViewGallery`, `samples/TodoMvc`, `samples/ReactiveDemoComponents` |
 
 For React developers, in short:
 
@@ -383,6 +386,7 @@ For React developers, in short:
 | portals | `Popup` with a child element |
 | react-window | a virtualized `ListBox` with `item_template: template(..)` |
 | Fast Refresh, React DevTools | feature `hot-reload` (literals), the inspector (Shift+F12) |
+| error boundaries, `Suspense` with data, React Router | `error_boundary`, `use_future` with `suspense`, `router` with `route` |
 | no counterpart | a property that follows a signal updates without running anything; typed setters checked at compile time; two-way values; XAML and components inside each other |
 
 The design is in [docs/declarative-ui.md](docs/declarative-ui.md), and the comparison with React in [docs/declarative-ui-react.md](docs/declarative-ui-react.md).

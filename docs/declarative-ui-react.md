@@ -5,7 +5,7 @@ This document is for developers who know React. It compares `ferroui-view`, the 
 - where the two behave alike and where they differ;
 - what React has that FerroUI does not have yet.
 
-It describes FerroUI after phases 1 to 5 of issue #237 (components that run again, hooks, the reconciler; XAML and data templates of components; styles, themes, transitions, popups; hot reload, diagnostics, an inspector; the fewest moves and memo by default) and React 18 and 19.
+It describes FerroUI after phases 1 to 6 of issue #237 (components that run again, hooks, the reconciler; XAML and data templates of components; styles, themes, transitions, popups; hot reload, diagnostics, an inspector; the fewest moves and memo by default; futures, error boundaries and a router) and React 18 and 19.
 
 ## 1. Summary
 
@@ -65,8 +65,10 @@ What sets FerroUI apart from React is where the elements end up. React DOM rende
 | a list virtualized with react-window or react-virtuoso | a virtualized `ListBox` with `item_template: template(|item: T| ..)` | The virtualizing panels of FerroUI realize the visible items. The template keeps a pool of hosts, so scrolling patches existing items instead of mounting new ones (as react-window reuses its rows). |
 | a React root inside a page of another framework (`createRoot(el).render(..)`) | `ComponentHost`, in XAML or any tree of controls | |
 | React inside a page of another framework, or that page inside React | `use_xaml(..)` puts XAML inside a component; `ComponentHost` puts a component inside XAML | |
-| error boundary | not yet (phase 6) | |
-| `Suspense`, `lazy`, `use(promise)` | not yet (phase 6: `use_resource`) | Futures run on the thread's executor, `ferroui_system::threading::tasks`. |
+| error boundary (`componentDidCatch`, `getDerivedStateFromError`) | `error_boundary(\|\| child, \|info\| fallback)` | A function, not a class. A panic of a component's run below it, on the first run or a later one, shows the fallback; `info.message()` is the panic's message and `info.reset()` mounts the child again. Handlers are not guarded, as in React; unlike React, effects (`use_effect`, `use_effect_with`) are not guarded either. A caught panic is reported as `Diagnostic::ErrorCaught`. |
+| `Suspense`, `use(promise)`, data fetching in `useEffect` | `use_future(deps, \|deps\| future)` and `suspense(state, pending, ready, failed)` | The future runs on the thread's executor (`ferroui_system::threading::tasks`) and its state is a signal of `AsyncState` (`Pending`, `Ready`, `Failed`). New dependencies abandon the future before, whose result is then ignored, as an effect's cleanup sets an `ignore` flag in React. `suspense` follows one state; it does not wait for the futures of the components below it as React's `Suspense` does. `sleep(duration)` debounces. |
+| `lazy` | none: the code of an application is linked in | |
+| React Router (`<Routes>`, `<Route path>`, `useNavigate`, `useParams`) | `router(initial, vec![route("/people/:id", \|m\| ..), ..])`, `use_router()`, `m.param("id")` | Modelled on the routing of ReactiveUI: a stack of paths with `navigate`, `navigate_back`, `navigate_and_reset`, `current` and `can_go_back`, all reactive. The first matching route is shown; `*` matches the rest of a path. There is no URL bar: the stack lives in the window. |
 | `useTransition`, `useDeferredValue` | none: rendering is synchronous | |
 | Fast Refresh | hot reload of the literals of `rsx!` (feature `hot-reload`) | Literals change while the application runs and components keep their state. A change of structure needs a rebuild; Fast Refresh also swaps code. |
 | React DevTools | `inspector()`, `open_inspector()` (Shift+F12 in debug builds) | Components with their runs and hooks, controls with their properties and where each value comes from. |
@@ -267,8 +269,7 @@ React runs `useLayoutEffect` after the DOM changes and before the browser paints
 
 | React | FerroUI plan |
 |---|---|
-| Error boundaries | phase 6 |
-| Suspense and data loading | phase 6: `use_resource` |
+| `Suspense` that waits for the data of the components below it, streaming | not planned: `suspense` follows the state of one future |
 | Concurrent rendering, transitions | not planned: rendering is synchronous by design |
 | Server components, server rendering | not planned |
 

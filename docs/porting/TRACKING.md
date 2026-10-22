@@ -323,6 +323,7 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `samples/MiniMvvm` | `samples/MiniMvvm` (not tracked) |
 | `samples/PlatformSanityChecks` | `samples/PlatformSanityChecks` (not tracked) |
 | `samples/ReactiveDemo` | none (FerroUI only) |
+| `samples/ReactiveDemoComponents` | none (FerroUI only) |
 | `samples/ReactiveUIExample` | none (FerroUI only) |
 | `samples/RenderDemo` | `samples/RenderDemo` (not tracked) |
 | `samples/SafeAreaDemo` | `samples/SafeAreaDemo` (not tracked) |
@@ -359,6 +360,7 @@ Upstream unit tests are ported next to the code (`#[cfg(test)] mod tests` or `<f
 | `samples/SevenGuis/Tests` | none (FerroUI only) |
 | `samples/SingleProjectSandbox` | `samples/SingleProjectSandbox` (not tracked) |
 | `samples/TextTestApp` | `samples/TextTestApp` (not tracked) |
+| `samples/TodoMvc` | none (FerroUI only) |
 | `samples/TreeDataGridDemo` | none (FerroUI only) |
 | `samples/ViewGallery` | none (FerroUI only) |
 | `samples/ViewInterop` | none (FerroUI only) |

@@ -1551,6 +1551,7 @@ dependencies = [
  "ferroui-markup-xaml-loader",
  "ferroui-reactiveui",
  "ferroui-reactiveui-controls",
+ "ferroui-system",
  "ferroui-themes-fluent",
  "ferroui-view-macros",
  "proc-macro2",
@@ -3117,6 +3118,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "reactive-demo-components"
+version = "0.4.0-preview.2"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-system",
+ "ferroui-themes-winui",
+ "ferroui-view",
+ "reactive-demo",
+]
+
+[[package]]
 name = "reactiveui-example"
 version = "0.4.0-preview.2"
 dependencies = [
@@ -4086,6 +4099,16 @@ name = "tinyvec"
 version = "1.13.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd3ca314f692efd6c868f8408f53fe444634a845f96c028b97d35f6a1f79f0ee"
+
+[[package]]
+name = "todo-mvc"
+version = "0.4.0-preview.2"
+dependencies = [
+ "ferroui-base",
+ "ferroui-controls",
+ "ferroui-themes-winui",
+ "ferroui-view",
+]
 
 [[package]]
 name = "tokio"
