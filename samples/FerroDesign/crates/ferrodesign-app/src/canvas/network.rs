@@ -101,29 +101,8 @@ impl DesignCanvas {
         let Some(network) = node.vector_network.as_ref() else { return false; };
         let Some(transform) = editor.document.world_transform(id) else { return false; };
         if self.vector_tool.get() == VectorTool::Bucket {
-            let Some(inverse) = transform.inverse() else { return true; };
-            let local = inverse.apply(world);
-            let fills = if additive { Vec::new() } else if node.fills.is_empty() {
-                vec![core::Fill::solid(core::Color::rgb(217, 217, 217))]
-            } else {
-                node.fills.clone()
-            };
             drop(editor);
-            let result = self.editor.borrow_mut().paint_network_face(id, local, Some(fills));
-            match result {
-                Ok(changed) => {
-                    let region = self.editor.borrow().document.nodes.get(&id)
-                        .and_then(|node| node.vector_network.as_ref())
-                        .and_then(|network| network.region_at(local));
-                    self.network_region.set(region);
-                    self.network_point.set(None);
-                    self.network_vertices.borrow_mut().clear();
-                    self.emit(if changed { CanvasEvent::Document } else { CanvasEvent::Selection });
-                }
-                Err(error) => self.emit(CanvasEvent::Notice(error.to_string())),
-            }
-            self.invalidate_visual();
-            return true;
+            return self.network_bucket_press(world, additive);
         }
         self.network_region.set(None);
         let active_vertex = self.network_point.get().and_then(|p| network.point_vertex(p));

@@ -89,11 +89,12 @@ impl EditorShell {
         let value = FerroXamlLoader::load(&uri, None).expect("compiled editor XAML");
         let root = from_markup_value::<Ref<UserControl>>(&Some(value))
             .expect("EditorRoot is a UserControl");
-        let mut editor = Editor::demo();
         let saved = platform::load_document();
-        if !saved.is_empty() {
-            let _ = editor.load_json(&saved);
-        }
+        // Restoring the previous session establishes the initial document; it
+        // must not create an undo entry that can replace it with the seed demo.
+        let editor = core::Document::from_json(&saved)
+            .map(Editor::new)
+            .unwrap_or_else(|_| Editor::demo());
         let expanded = editor
             .document
             .page(editor.active_page)
@@ -436,6 +437,7 @@ impl EditorShell {
             ("CollapseLayersButton", "collapse-layers"),
             ("VisibleButton", "toggle-visible"),
             ("LockedButton", "toggle-lock"),
+            ("SelectMatchingButton", "select-matching"),
             ("FlipButton", "flip"),
             ("AlignLeftButton", "align-left"),
             ("AlignCenterButton", "align-center"),
@@ -594,6 +596,14 @@ impl EditorShell {
     fn canvas_event(self: &Rc<Self>, event: CanvasEvent) {
         match event {
             CanvasEvent::Document => self.changed(),
+            CanvasEvent::Draft => {
+                self.sync_document_draft_dirty();
+                // A no-op stroke still needs to resume a previous edit's
+                // background save if its timer elapsed during pointer capture.
+                if !self.canvas.network_bucket_state().1 && self.pending_save.get() {
+                    self.schedule_pending_save();
+                }
+            }
             CanvasEvent::Selection => self.refresh_selection(),
             CanvasEvent::Camera => {
                 self.sync_zoom();
@@ -699,6 +709,7 @@ impl EditorShell {
             "InspectorViewport",
             "PageInspector", "DesignInspector", "PageBackgroundField", "PageBackgroundSwatch",
             "NameField", "WidthField", "HeightField", "FillField", "TextField",
+            "SelectMatchingButton",
             "XField", "YField", "RotationField", "AffineButton", "FramePresetsButton", "PageFramePresetsButton",
             "ConstraintLeft", "ConstraintRight", "ConstraintTop", "ConstraintBottom", "ConstraintCenterX", "ConstraintCenterY",
             "PageStylesButton", "PageVariablesButton", "PageComponentsButton",
@@ -745,7 +756,7 @@ impl EditorShell {
                 if let Some(control) = visual.cast::<Control>() {
                     if let Some(name) = control
                         .name()
-                        .filter(|name| ["Paint", "Effect", "Interaction", "RichText", "Variable", "Component", "Compositing", "Crop", "Layout", "Action", "SelectLayer", "Affine", "FramePreset", "Style"]
+                        .filter(|name| ["Paint", "Effect", "Interaction", "RichText", "Variable", "Component", "Compositing", "Crop", "Layout", "Action", "SelectLayer", "SelectSame", "Affine", "FramePreset", "Style"]
                             .iter().any(|prefix| name.starts_with(prefix)))
                     {
                         chrome.insert(name, native_bounds(&control));
@@ -768,6 +779,7 @@ impl EditorShell {
         // Keep each macro expansion small while preserving the flat bridge
         // schema. These groups are moved into the result without cloning values.
         let mut state = serde_json::Map::new();
+        let (bucket_face, bucket_active, bucket_visited) = self.canvas.network_bucket_state();
         for group in [json!({
             "revision":editor.revision,"documentRevision":editor.document.revision,"nodeCount":editor.document.nodes.len(),
             "selectionCount":editor.selection.len(),"selection":editor.selection,"selectionBounds":selection_bounds,
@@ -783,6 +795,7 @@ impl EditorShell {
             "vectorTool":format!("{:?}",self.canvas.vector_tool.get()),
             "networkPoint":self.canvas.network_point.get(),
             "networkVertices":*self.canvas.network_vertices.borrow(),
+            "networkBucket":{"face":bucket_face,"active":bucket_active,"visited":bucket_visited},
             "imageCrop":self.canvas.image_crop_state(),
             "layoutDrag":self.canvas.layout_drag_state(),
             "editingText":self.inline_text.get(),
@@ -923,6 +936,11 @@ impl EditorShell {
     fn changed(self: &Rc<Self>) {
         // Coalesce before serializing: a held arrow key should not clone a
         // multi-megabyte JSON string on the input/render thread for each event.
+        self.schedule_pending_save();
+        self.refresh();
+        self.canvas.invalidate_visual();
+    }
+    fn schedule_pending_save(self: &Rc<Self>) {
         self.pending_save.set(true);
         platform::set_document_serialization_pending(true);
         if let Some(timer) = self.pending_save_timer.borrow_mut().take() { timer.dispose(); }
@@ -931,12 +949,14 @@ impl EditorShell {
             move || { if let Some(shell) = weak.upgrade() { shell.flush_pending_save(); } },
             Duration::from_millis(220), DispatcherPriority::BACKGROUND));
         self.text("DocumentStatus", &platform::document_save_status());
-        self.refresh();
-        self.canvas.invalidate_visual();
     }
     /// Lifecycle/export boundaries synchronously capture confirmed authored
     /// state before the host awaits its durable IndexedDB transaction.
     fn flush_pending_save(&self) {
+        // A background timer may belong to the previous committed edit. The
+        // held bucket preview must remain cancelable; release/cancel schedules
+        // a fresh save, while explicit lifecycle boundaries finish it first.
+        if self.canvas.network_bucket_state().1 { return; }
         if let Some(timer) = self.pending_save_timer.borrow_mut().take() { timer.dispose(); }
         if !self.pending_save.get() { return; }
         let started = Instant::now();
@@ -1273,6 +1293,7 @@ impl EditorShell {
         self.visible("PageInspector", self.inspector_tab.get() == 0 && node.is_none());
         self.visible("VisibleButton", node.is_some());
         self.visible("LockedButton", node.is_some());
+        self.visible("SelectMatchingButton", !editor.selection.is_empty());
         self.visible("PrototypeInspector", self.inspector_tab.get() == 1);
         self.visible("InspectInspector", self.inspector_tab.get() == 2);
         let vector_edit = self.canvas.vector_node.get().is_some();
@@ -1595,6 +1616,7 @@ impl EditorShell {
         }
     }
     fn modify(self: &Rc<Self>, label: &str, mut operation: impl FnMut(&mut Node)) {
+        self.canvas.finish_network_bucket();
         self.canvas.finish_image_crop();
         let ids = self.editor.borrow().selection.clone();
         self.editor.borrow_mut().update_nodes_with_layout(&ids, label, |node| operation(node));
@@ -1605,6 +1627,7 @@ impl EditorShell {
         }
         let text = self.field(name).text().unwrap_or_default();
         let id = self.editor.borrow().selection.first().copied();
+        self.canvas.finish_network_bucket();
         self.canvas.finish_image_crop();
         if id.is_none() {
             if name == "NameField" || name == "FillField" || name == "PageBackgroundField" {
@@ -1771,6 +1794,7 @@ impl EditorShell {
 
     pub fn command(self: &Rc<Self>, command: &str) -> bool {
         if command == "commit-edit" {
+            self.canvas.finish_network_bucket();
             self.finish_inline_text(true);
             let fields_committed = self.flush_inspector_drafts();
             self.canvas.finish_image_crop();
@@ -1781,6 +1805,12 @@ impl EditorShell {
             self.text("DocumentStatus", &platform::document_save_status());
             return true;
         }
+        // Undo during a held stroke cancels that preview. Other explicit
+        // commands finish the stroke before they can join its transaction.
+        if matches!(command, "undo" | "redo") && self.canvas.cancel_network_bucket_gesture() {
+            return true;
+        }
+        self.canvas.finish_network_bucket();
         self.finish_inline_text(true);
         if matches!(command, "new" | "open" | "import-json" | "save" | "export-json" | "export-svg" | "export-png" | "export-xaml")
             && !self.flush_inspector_drafts() {
@@ -1827,6 +1857,15 @@ impl EditorShell {
             return true;
         }
         match command {
+            "select-matching" => { self.select_matching_dialog(); return true; }
+            "select-same-properties" => return self.select_same(core::SelectionMatch::Appearance),
+            "select-same-fill" => return self.select_same(core::SelectionMatch::Fill),
+            "select-same-stroke" => return self.select_same(core::SelectionMatch::Stroke),
+            "select-same-effect" => return self.select_same(core::SelectionMatch::Effect),
+            "select-same-text" => return self.select_same(core::SelectionMatch::TextProperties),
+            "select-same-font" => return self.select_same(core::SelectionMatch::Font),
+            "select-same-instance" => return self.select_same(core::SelectionMatch::Instance),
+            "select-inverse" => return self.select_inverse(),
             "select-layer" => { self.select_layer_dialog(); return true; }
             "affine-transform" => { self.affine_dialog(); return true; }
             "frame-presets" => { self.frame_presets_dialog(); return true; }
@@ -1854,6 +1893,9 @@ impl EditorShell {
                     Err(error) => { self.toast(&error.to_string()); return false; }
                 }
                 self.changed();
+                // The reset disables its own inspector button. Keep subsequent
+                // keyboard editing, including undo, on the document canvas.
+                self.canvas.focus();
                 return true;
             }
             "network-bucket" => {
@@ -3181,6 +3223,8 @@ const FILE_ACTIONS: &[(&str, &str)] = &[
 ];
 const LAYER_ACTIONS: &[(&str, &str)] = &[
     ("Select layer under pointer…", "select-layer"),
+    ("Select same properties…", "select-matching"),
+    ("Select inverse  Ctrl+Shift+A", "select-inverse"),
     ("Select groups · toggle", "toggle-select-groups"),
     ("Select parent", "select-parent"),
     ("Select children", "select-children"),
@@ -3232,6 +3276,15 @@ const ACTIONS: &[(&str, &str)] = &[
     ("Move / Select  V", "select"),
     ("Select groups · toggle", "toggle-select-groups"),
     ("Select layer under pointer…", "select-layer"),
+    ("Select same properties…", "select-matching"),
+    ("Select all with same appearance", "select-same-properties"),
+    ("Select all with same fill", "select-same-fill"),
+    ("Select all with same stroke", "select-same-stroke"),
+    ("Select all with same effect", "select-same-effect"),
+    ("Select all with same text properties", "select-same-text"),
+    ("Select all with same font", "select-same-font"),
+    ("Select all with same component instance", "select-same-instance"),
+    ("Select inverse  Ctrl+Shift+A", "select-inverse"),
     ("Select parent  Shift+Enter", "select-parent"),
     ("Select children  Enter", "select-children"),
     ("Select next sibling  Tab", "select-next-sibling"),

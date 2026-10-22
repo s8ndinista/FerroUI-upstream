@@ -1,5 +1,6 @@
 //! Interactive retained-mode surface. Artwork uses only FerroUI's public DrawingContext API.
 mod network;
+mod network_bucket;
 mod grids;
 mod image_crop;
 mod layout_drag;
@@ -91,6 +92,7 @@ pub enum VectorTool { #[default] Point, Bend, Erase, Connect, Bucket }
 pub enum CanvasEvent {
     Selection,
     Document,
+    Draft,
     Camera,
     Tool,
     EditText(NodeId),
@@ -186,6 +188,7 @@ pub struct DesignCanvas {
     pub network_point: Cell<Option<core::NetworkPointId>>,
     pub network_vertices: RefCell<Vec<core::VectorVertexId>>,
     pub network_region: Cell<Option<core::VectorRegionId>>,
+    network_bucket: RefCell<network_bucket::BucketState>,
     layout_grids: RefCell<grids::LayoutGridOverlay>,
     image_crop: Cell<Option<image_crop::ImageCropMode>>,
     image_crop_gesture: RefCell<Option<image_crop::ImageCropGesture>>,
@@ -229,6 +232,7 @@ impl DesignCanvas {
             network_point: Cell::new(None),
             network_vertices: RefCell::new(Vec::new()),
             network_region: Cell::new(None),
+            network_bucket: RefCell::new(network_bucket::BucketState::default()),
             layout_grids: RefCell::new(grids::LayoutGridOverlay::default()),
             image_crop: Cell::new(None),
             image_crop_gesture: RefCell::new(None),
@@ -278,6 +282,8 @@ impl DesignCanvas {
         self.space.set(false);
     }
     pub fn set_tool(&self, tool: Tool) {
+        self.cancel_network_bucket_gesture();
+        self.clear_bucket_hover();
         self.cancel_layout_drag();
         self.finish_image_crop();
         self.finish_pen();
@@ -397,6 +403,7 @@ impl DesignCanvas {
     /// Undo during a live pointer edit cancels that transaction and its gesture.
     /// Later pointer events must never continue writing after history restored it.
     pub fn cancel_active_edit(&self) -> bool {
+        if self.cancel_network_bucket_gesture() { return true; }
         if self.cancel_layout_drag() { return true; }
         if self.cancel_image_crop_gesture() { return true; }
         let active =
@@ -407,6 +414,7 @@ impl DesignCanvas {
         active
     }
     pub fn cancel(&self) {
+        if self.cancel_network_bucket_gesture() { return; }
         // This preview owns no transaction. In particular, Escape must not
         // cancel an unrelated edit opened after its immutable snapshot.
         if self.cancel_layout_drag() { return; }
@@ -422,6 +430,7 @@ impl DesignCanvas {
     }
     /// Enter direct path editing without replacing the retained document node.
     pub fn edit_vector(&self) -> bool {
+        self.cancel_network_bucket_gesture();
         self.cancel_layout_drag();
         self.finish_image_crop();
         self.finish_pen();
@@ -446,6 +455,8 @@ impl DesignCanvas {
         }
     }
     pub fn leave_vector_edit(&self) {
+        self.cancel_network_bucket_gesture();
+        self.clear_bucket_hover();
         self.vector_node.set(None);
         self.vector_point.set(None);
         self.network_region.set(None);
@@ -454,6 +465,7 @@ impl DesignCanvas {
         self.invalidate_visual();
     }
     pub fn reconcile_vector_edit(&self) {
+        self.reconcile_network_bucket();
         let editor = self.editor.borrow();
         let valid = self.vector_node.get().is_some_and(|id| {
             editor.selection.as_slice() == [id]
@@ -464,6 +476,7 @@ impl DesignCanvas {
                     .is_some_and(|n| n.kind == NodeKind::Vector && !n.locked && n.visible)
         });
         if !valid {
+            drop(editor);
             self.leave_vector_edit();
         } else if let Some(network) = self.vector_node.get().and_then(|id| editor.document.nodes.get(&id)).and_then(|n| n.vector_network.as_ref()) {
             if self.network_point.get().is_some_and(|point| network.point_position(point).is_none()) { self.network_point.set(None); }
@@ -688,6 +701,7 @@ impl DesignCanvas {
 impl InputElementImpl for DesignCanvas {
     fn on_pointer_pressed(this: &Self, e: &PointerPressedEventArgs) {
         Self::parent_on_pointer_pressed(this, e);
+        this.cancel_network_bucket_gesture();
         this.cancel_layout_drag();
         this.focus();
         e.set_handled(true);
@@ -940,6 +954,7 @@ impl InputElementImpl for DesignCanvas {
             return;
         }
         if this.image_crop_move(world) { return; }
+        if this.network_bucket_move(world, e.key_modifiers().contains(KeyModifiers::SHIFT)) { return; }
         let shift = e.key_modifiers().contains(KeyModifiers::SHIFT);
         if this.layout_drag_move_constrained(world, Point::new(screen.x, screen.y), shift) { return; }
         let mut camera_changed = false;
@@ -1248,6 +1263,14 @@ impl InputElementImpl for DesignCanvas {
             e.set_handled(true);
             return;
         }
+        if this.network_bucket_state().1 {
+            this.network_bucket_move(this.world(e.get_position(Some(this))), e.key_modifiers().contains(KeyModifiers::SHIFT));
+        }
+        if this.finish_network_bucket_gesture(true) {
+            e.pointer().capture(None);
+            e.set_handled(true);
+            return;
+        }
         let release_screen = e.get_position(Some(this));
         if this.layout_drag_release_constrained(this.world(release_screen), Point::new(release_screen.x, release_screen.y),
             e.key_modifiers().contains(KeyModifiers::SHIFT)) {
@@ -1299,6 +1322,7 @@ impl InputElementImpl for DesignCanvas {
     }
     fn on_pointer_capture_lost(this: &Self, e: &PointerCaptureLostEventArgs) {
         Self::parent_on_pointer_capture_lost(this, e);
+        if this.cancel_network_bucket_gesture() { return; }
         if this.cancel_layout_drag() { return; }
         if this.cancel_image_crop_gesture() { return; }
         if let Some((id, _, _)) = this.prototype_press.take() {
@@ -1312,6 +1336,7 @@ impl InputElementImpl for DesignCanvas {
     }
     fn on_pointer_exited(this: &Self, e: &PointerEventArgs) {
         Self::parent_on_pointer_exited(this, e);
+        this.clear_bucket_hover();
         if this.presentation.get().is_some() {
             this.emit(CanvasEvent::PrototypePointerExited);
             if let Some(id) = this.hover.take() {
@@ -1321,6 +1346,8 @@ impl InputElementImpl for DesignCanvas {
     }
     fn on_pointer_wheel_changed(this: &Self, e: &PointerWheelEventArgs) {
         Self::parent_on_pointer_wheel_changed(this, e);
+        this.cancel_network_bucket_gesture();
+        this.clear_bucket_hover();
         e.set_handled(true);
         if let Some(root) = this.presentation.get() {
             let world = this.world(e.get_position(Some(this)));
@@ -1354,7 +1381,13 @@ impl InputElementImpl for DesignCanvas {
             return;
         }
         if this.image_crop_key(e.key) { e.set_handled(true); return; }
+        if e.key == Key::Escape && this.cancel_network_bucket_gesture() {
+            e.set_handled(true);
+            return;
+        }
         if e.key == Key::Space {
+            this.cancel_network_bucket_gesture();
+            this.clear_bucket_hover();
             this.space.set(true);
             e.set_handled(true);
             return;
@@ -1390,6 +1423,9 @@ impl InputElementImpl for DesignCanvas {
             .intersects(KeyModifiers::CONTROL | KeyModifiers::META);
         let shift = e.key_modifiers.contains(KeyModifiers::SHIFT);
         let alt = e.key_modifiers.contains(KeyModifiers::ALT);
+        if matches!(e.key, Key::Left | Key::Right | Key::Up | Key::Down | Key::Enter | Key::Tab | Key::Delete | Key::Back) {
+            this.finish_network_bucket();
+        }
         if this.selection_key(e) {
             e.set_handled(true);
             return;
@@ -1417,7 +1453,7 @@ impl InputElementImpl for DesignCanvas {
                 Key::X => Some("cut"),
                 Key::V => Some("paste"),
                 Key::D => Some("duplicate"),
-                Key::A => Some("select-all"),
+                Key::A => Some(if shift { "select-inverse" } else { "select-all" }),
                 Key::G => Some(if alt {
                     "frame-selection"
                 } else if shift {
@@ -1908,6 +1944,7 @@ impl VisualImpl for DesignCanvas {
             if this.render_image_crop(ctx, n, t, v) { continue; }
             if this.vector_node.get() == Some(id) {
                 if let Some(graph) = &n.vector_network {
+                    this.render_bucket_hover(ctx, &editor, id, t, v);
                     network::render_network_editor(ctx, graph, t, v, this.network_point.get(), &this.network_vertices.borrow());
                 } else { render_vector_editor(ctx, &n.path, t, v, this.vector_point.get()); }
                 continue;
