@@ -25,6 +25,7 @@ pub enum NetworkFaceError {
     IndeterminateBoundary,
     ComplexityLimit,
     IdExhausted,
+    StaleFaceMap,
 }
 
 impl fmt::Display for NetworkFaceError {
@@ -41,11 +42,189 @@ impl fmt::Display for NetworkFaceError {
             Self::IndeterminateBoundary => f.write_str("A face has an indeterminate orientation or repeated boundary; simplify its geometry before finding faces."),
             Self::ComplexityLimit => f.write_str("Face discovery exceeded its geometry work limit; split this network into smaller layers."),
             Self::IdExhausted => f.write_str("The vector network has exhausted its stable ID space."),
+            Self::StaleFaceMap => f.write_str("The vector network changed during painting. Start a new paint gesture."),
         }
     }
 }
 
 impl std::error::Error for NetworkFaceError {}
+
+/// Immutable, certified elementary faces for interactive paint picking.
+///
+/// Intersection certification runs once at construction. Point queries prune
+/// a balanced bounds tree and evaluate the original Bézier winding, retaining
+/// narrow faces and holes without a screen-dependent flattening tolerance.
+/// Paint changes do not invalidate this map; vertex/edge changes do. No stable
+/// region IDs are allocated by preparation or hovering.
+pub struct NetworkFaceMap {
+    source: VectorNetwork,
+    faces: Vec<NetworkRegion>,
+    paths: Vec<VectorPath>,
+    bounds: Vec<Rect>,
+    tree: Vec<FaceBoundsNode>,
+    root: Option<usize>,
+}
+
+struct FaceBoundsNode {
+    bounds: Rect,
+    children: Option<(usize, usize)>,
+    face: usize,
+}
+
+impl NetworkFaceMap {
+    pub fn new(network: &VectorNetwork) -> Result<Self, NetworkFaceError> {
+        let faces = network.detect_faces()?;
+        let paths: Vec<_> = faces.iter().map(|face| {
+            let mut path = VectorPath { fill_rule: FillRule::NonZero, ..VectorPath::default() };
+            for contour in &face.contours { path.segments.extend(contour_path(network, contour).segments); }
+            path
+        }).collect();
+        let bounds = faces.iter().map(|face| face.contours.iter().flatten()
+            .filter_map(|reference| network.edge_curve(reference.edge).map(Curve::hull_bounds))
+            .reduce(Rect::union).ok_or(NetworkFaceError::IndeterminateBoundary))
+            .collect::<Result<Vec<_>, _>>()?;
+        // Authored regions are not part of the checked embedding. Avoid copying
+        // their potentially large independent paint/image stacks into the cache.
+        let source = VectorNetwork { vertices: network.vertices.clone(), edges: network.edges.clone(),
+            regions: BTreeMap::new(), fill_rule: network.fill_rule, next_id: network.next_id };
+        let mut result = Self { source, faces, paths, bounds, tree: Vec::new(), root: None };
+        let mut indices: Vec<_> = (0..result.faces.len()).collect();
+        if !indices.is_empty() { result.root = Some(result.build_tree(&mut indices)); }
+        Ok(result)
+    }
+
+    pub fn len(&self) -> usize { self.faces.len() }
+    pub fn is_empty(&self) -> bool { self.faces.is_empty() }
+    pub fn path(&self, face: usize) -> Option<&VectorPath> { self.paths.get(face) }
+
+    pub fn matches_geometry(&self, network: &VectorNetwork) -> bool {
+        self.source.vertices == network.vertices && self.source.edges == network.edges
+            && self.source.fill_rule == network.fill_rule
+    }
+
+    pub fn face_at(&self, point: Point) -> Option<usize> {
+        if !finite(point) { return None; }
+        self.root.and_then(|root| self.find_face(root, point))
+    }
+
+    /// Faces crossed by a straight pointer segment, including faces narrower
+    /// than the distance between delivered pointer events. Samples are taken
+    /// between polynomial curve/segment crossings, not at fixed pixel steps.
+    /// Returns one interior sample per face in traversal order.
+    pub fn faces_along_segment(&self, start: Point, end: Point) -> Result<Vec<(usize, Point)>, NetworkFaceError> {
+        if !finite(start) || !finite(end) { return Ok(Vec::new()); }
+        let mut hits = Vec::new();
+        let mut seen = BTreeSet::new();
+        let mut add = |point: Point, work: &mut Work| -> Result<(), NetworkFaceError> {
+            if let Some(face) = self.root.map(|root| self.find_face_checked(root, point, work)).transpose()?.flatten() {
+                if seen.insert(face) { hits.push((face, point)); }
+            }
+            Ok(())
+        };
+        let mut work = Work(MAX_GEOMETRY_WORK);
+        add(start, &mut work)?;
+        let delta = end - start;
+        let scale = delta.x.abs().max(delta.y.abs());
+        if scale == 0.0 { return Ok(hits); }
+        if !scale.is_finite() { return Err(NetworkFaceError::IndeterminateBoundary); }
+        let direction = delta * (1.0 / scale);
+        let length = direction.x * direction.x + direction.y * direction.y;
+        let mut candidates = BTreeSet::new();
+        if let Some(root) = self.root {
+            self.segment_edges(root, Rect::from_points(start, end), &mut candidates, &mut work)?;
+        }
+        let mut breaks = vec![0.0, 1.0];
+        for edge in candidates {
+            work.take()?;
+            let mut curve = self.source.edge_curve(edge).unwrap();
+            curve.points = curve.points.map(|point| (point - start) * (1.0 / scale));
+            if curve.points[..=curve.degree].iter().any(|point| !finite(*point)) { return Err(NetworkFaceError::IndeterminateBoundary); }
+            let coefficients = curve.power_coefficients();
+            let normal: Vec<_> = coefficients[..=curve.degree].iter()
+                .map(|point| point.x * direction.y - point.y * direction.x).collect();
+            for t in unit_polynomial_roots(&normal) {
+                let point = curve.evaluate(t);
+                let distance = (point.x * direction.x + point.y * direction.y) / length;
+                if distance > 0.0 && distance < 1.0 { breaks.push(distance); }
+            }
+        }
+        breaks.sort_by(f64::total_cmp);
+        breaks.dedup();
+        for interval in breaks.windows(2) {
+            work.take()?;
+            add(start.lerp(end, interval[0] + (interval[1] - interval[0]) / 2.0), &mut work)?;
+        }
+        add(end, &mut work)?;
+        Ok(hits)
+    }
+
+    fn segment_edges(&self, index: usize, bounds: Rect, result: &mut BTreeSet<VectorEdgeId>, work: &mut Work) -> Result<(), NetworkFaceError> {
+        work.take()?;
+        let node = &self.tree[index];
+        if !node.bounds.intersects(bounds) { return Ok(()); }
+        if let Some((left, right)) = node.children {
+            self.segment_edges(left, bounds, result, work)?;
+            self.segment_edges(right, bounds, result, work)?;
+        } else {
+            for reference in self.faces[node.face].contours.iter().flatten() {
+                work.take()?;
+                if self.source.edge_curve(reference.edge).unwrap().hull_bounds().intersects(bounds) {
+                    result.insert(reference.edge);
+                }
+            }
+        }
+        Ok(())
+    }
+
+    fn find_face(&self, index: usize, point: Point) -> Option<usize> {
+        let node = &self.tree[index];
+        if !node.bounds.contains(point) { return None; }
+        if let Some((left, right)) = node.children {
+            self.find_face(left, point).or_else(|| self.find_face(right, point))
+        } else {
+            (self.faces[node.face].contours.iter()
+                .map(|contour| contour_winding(&self.source, contour, point)).sum::<i32>() != 0)
+                .then_some(node.face)
+        }
+    }
+
+    fn find_face_checked(&self, index: usize, point: Point, work: &mut Work) -> Result<Option<usize>, NetworkFaceError> {
+        work.take()?;
+        let node = &self.tree[index];
+        if !node.bounds.contains(point) { return Ok(None); }
+        if let Some((left, right)) = node.children {
+            match self.find_face_checked(left, point, work)? {
+                Some(face) => Ok(Some(face)),
+                None => self.find_face_checked(right, point, work),
+            }
+        } else {
+            let mut winding = 0;
+            for contour in &self.faces[node.face].contours {
+                work.0 = work.0.checked_sub(contour.len()).ok_or(NetworkFaceError::ComplexityLimit)?;
+                winding += contour_winding(&self.source, contour, point);
+            }
+            Ok((winding != 0).then_some(node.face))
+        }
+    }
+
+    fn build_tree(&mut self, indices: &mut [usize]) -> usize {
+        let bounds = indices.iter().map(|&index| self.bounds[index]).reduce(Rect::union).unwrap();
+        let index = self.tree.len();
+        self.tree.push(FaceBoundsNode { bounds, children: None, face: indices[0] });
+        if indices.len() > 1 {
+            let horizontal = bounds.width >= bounds.height;
+            let middle = indices.len() / 2;
+            indices.select_nth_unstable_by(middle, |&a, &b| {
+                let center = |r: Rect| if horizontal { r.x + r.width / 2.0 } else { r.y + r.height / 2.0 };
+                center(self.bounds[a]).total_cmp(&center(self.bounds[b])).then(a.cmp(&b))
+            });
+            let (left, right) = indices.split_at_mut(middle);
+            let children = (self.build_tree(left), self.build_tree(right));
+            self.tree[index].children = Some(children);
+        }
+        index
+    }
+}
 
 struct Work(usize);
 
@@ -420,7 +599,28 @@ impl VectorNetwork {
         fills: Option<Vec<crate::Fill>>,
     ) -> Result<bool, NetworkFaceError> {
         if let Some(fills) = &fills { validate_region_fills(fills).map_err(NetworkFaceError::InvalidRegionFills)?; }
-        let Some(mut face) = self.face_at(point)? else { return Ok(false); };
+        let Some(face) = self.face_at(point)? else { return Ok(false); };
+        self.paint_detected_face_at(face, point, fills)
+    }
+
+    /// Paint a face from an already certified embedding. The geometry guard
+    /// makes a retained map safe even after undo, import or topology replacement.
+    pub fn paint_mapped_face_at(
+        &mut self,
+        map: &NetworkFaceMap,
+        point: Point,
+        fills: Vec<crate::Fill>,
+    ) -> Result<bool, NetworkFaceError> {
+        validate_region_fills(&fills).map_err(NetworkFaceError::InvalidRegionFills)?;
+        if !map.matches_geometry(self) { return Err(NetworkFaceError::StaleFaceMap); }
+        self.validate().map_err(NetworkFaceError::InvalidNetwork)?;
+        let Some(face) = map.face_at(point) else { return Ok(false); };
+        self.paint_detected_face_at(map.faces[face].clone(), point, Some(fills))
+    }
+
+    fn paint_detected_face_at(
+        &mut self, mut face: NetworkRegion, point: Point, fills: Option<Vec<crate::Fill>>,
+    ) -> Result<bool, NetworkFaceError> {
         let key = face_key(&face);
         let explicit = self.explicit_region_at(point);
         let existing = if let Some(id) = explicit {
@@ -428,7 +628,17 @@ impl VectorNetwork {
         } else {
             self.regions.iter().rev().find_map(|(&id, region)| (face_key(region) == key).then_some(id))
         };
-        if let Some(id) = existing { return self.set_region_fills(id, fills); }
+        if let Some(id) = existing {
+            // Both entry points have already validated these explicit paints
+            // and the graph. Only inheritance reset requires coverage analysis.
+            if fills.is_some() {
+                let previous = &mut self.regions.get_mut(&id).unwrap().fills;
+                if previous == &fills { return Ok(false); }
+                *previous = fills;
+                return Ok(true);
+            }
+            return self.set_region_fills(id, fills);
+        }
         // There is no elementary override to reset. Creating an inherited face
         // here could cancel an existing EvenOdd region or sit below an explicit
         // larger replacement; it would not reset that replacement.
@@ -512,6 +722,37 @@ impl Editor {
         fills: Option<Vec<crate::Fill>>,
     ) -> Result<bool, NetworkFaceError> {
         self.edit_network_region_paints(id, "Edit vector region paints", |network| network.set_region_fills(region, fills))
+    }
+
+    pub fn paint_mapped_network_face(
+        &mut self, id: NodeId, map: &NetworkFaceMap, point: Point, fills: Vec<crate::Fill>,
+    ) -> Result<bool, NetworkFaceError> {
+        self.paint_mapped_network_faces(id, map, &[point], &fills)
+    }
+
+    /// Batch a pointer segment's faces into one retained node update. Validation,
+    /// history capture and invalidation occur once; any failed face leaves the
+    /// entire segment unchanged, including its stable-ID allocator.
+    pub fn paint_mapped_network_faces(
+        &mut self, id: NodeId, map: &NetworkFaceMap, points: &[Point], fills: &[crate::Fill],
+    ) -> Result<bool, NetworkFaceError> {
+        validate_region_fills(fills).map_err(NetworkFaceError::InvalidRegionFills)?;
+        if points.len() > MAX_EDGES { return Err(NetworkFaceError::ComplexityLimit); }
+        self.edit_network_region_paints(id, "Paint vector regions", |network| {
+            if !map.matches_geometry(network) { return Err(NetworkFaceError::StaleFaceMap); }
+            network.validate().map_err(NetworkFaceError::InvalidNetwork)?;
+            let mut changed = false;
+            let mut seen = BTreeSet::new();
+            let mut work = Work(MAX_GEOMETRY_WORK);
+            for &point in points {
+                if !finite(point) { continue; }
+                let Some(face) = map.root.map(|root| map.find_face_checked(root, point, &mut work)).transpose()?.flatten() else { continue; };
+                if seen.insert(face) {
+                    changed |= network.paint_detected_face_at(map.faces[face].clone(), point, Some(fills.to_vec()))?;
+                }
+            }
+            Ok(changed)
+        })
     }
 
     fn edit_network_region_paints(

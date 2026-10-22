@@ -22,6 +22,110 @@ fn with_region(network: &VectorNetwork, region: NetworkRegion) -> VectorNetwork 
 }
 
 #[test]
+fn cached_network_faces_are_read_only_keep_holes_and_reject_changed_geometry() {
+    let mut network = VectorNetwork::default();
+    square(&mut network, 0.0, 0.0, 200.0);
+    square(&mut network, 25.0, 25.0, 150.0);
+    let before = network.clone();
+    let map = NetworkFaceMap::new(&network).unwrap();
+    assert_eq!(network, before);
+    assert_eq!(map.len(), 2);
+    let outer = map.face_at(p(10.0, 10.0)).unwrap();
+    let inner = map.face_at(p(100.0, 100.0)).unwrap();
+    assert_ne!(outer, inner);
+    assert!(!map.path(outer).unwrap().contains(p(100.0, 100.0)));
+    assert_eq!(map.face_at(p(220.0, 100.0)), None);
+    assert!(network.paint_mapped_face_at(&map, p(10.0, 10.0), vec![Fill::solid(crate::Color::WHITE)]).unwrap());
+    assert!(map.matches_geometry(&network));
+    let region = network.explicit_region_at(p(10.0, 10.0)).unwrap();
+    let next_id = network.next_id;
+    assert!(!network.paint_mapped_face_at(&map, p(10.0, 10.0), vec![Fill::solid(crate::Color::WHITE)]).unwrap());
+    assert!(network.paint_mapped_face_at(&map, p(10.0, 10.0), vec![]).unwrap());
+    assert_eq!(network.explicit_region_at(p(10.0, 10.0)), Some(region));
+    assert_eq!(network.next_id, next_id);
+    network.vertices.values_mut().next().unwrap().position.x -= 1.0;
+    let modified = network.clone();
+    assert_eq!(network.paint_mapped_face_at(&map, p(10.0, 10.0), vec![]), Err(NetworkFaceError::StaleFaceMap));
+    assert_eq!(network, modified);
+}
+
+#[test]
+fn cached_network_segments_visit_narrow_intermediate_faces_in_order() {
+    let mut network = VectorNetwork::default();
+    // Three adjacent cells, with a middle cell far narrower than a screen pixel.
+    let xs = [0.0, 40.0, 40.000_01, 100.0];
+    let top: Vec<_> = xs.iter().map(|&x| network.add_vertex(p(x, 0.0)).unwrap()).collect();
+    let bottom: Vec<_> = xs.iter().map(|&x| network.add_vertex(p(x, 100.0)).unwrap()).collect();
+    for index in 0..xs.len() {
+        network.connect(top[index], bottom[index]).unwrap();
+        if index > 0 {
+            network.connect(top[index - 1], top[index]).unwrap();
+            network.connect(bottom[index - 1], bottom[index]).unwrap();
+        }
+    }
+    let map = NetworkFaceMap::new(&network).unwrap();
+    let hits = map.faces_along_segment(p(-10.0, 50.0), p(110.0, 50.0)).unwrap();
+    assert_eq!(hits.len(), 3);
+    assert_eq!(hits.iter().map(|&(face, _)| face).collect::<Vec<_>>(),
+        [p(20.0, 50.0), p(40.000_005, 50.0), p(70.0, 50.0)].map(|point| map.face_at(point).unwrap()));
+    assert!(hits.windows(2).all(|pair| pair[0].1.x < pair[1].1.x));
+    let reverse = map.faces_along_segment(p(110.0, 50.0), p(-10.0, 50.0)).unwrap();
+    assert_eq!(reverse.iter().map(|&(face, _)| face).collect::<Vec<_>>(), hits.iter().rev().map(|&(face, _)| face).collect::<Vec<_>>());
+    assert_eq!(map.faces_along_segment(p(-10.0, -5.0), p(110.0, -5.0)).unwrap(), []);
+}
+
+#[test]
+fn cached_network_faces_keep_curved_micro_annuli_and_segment_crossings() {
+    for scale in [0.000_001, 1.0, 1000.0] {
+        let mut network = VectorNetwork::default();
+        for factor in [1.0, 0.999] {
+            let transform = |point: Point| (p(50.0, 0.0) + (point - p(50.0, 0.0)) * factor) * scale;
+            let a = network.add_vertex(transform(p(0.0, 0.0))).unwrap();
+            let b = network.add_vertex(transform(p(100.0, 0.0))).unwrap();
+            network.connect_curve(a, b, NetworkCurve::Cubic { control1: transform(p(15.0, -100.0)), control2: transform(p(85.0, -100.0)) }).unwrap();
+            network.connect_curve(b, a, NetworkCurve::Cubic { control1: transform(p(85.0, 100.0)), control2: transform(p(15.0, 100.0)) }).unwrap();
+        }
+        let map = NetworkFaceMap::new(&network).unwrap();
+        let annulus = map.face_at(p(50.0, -74.97) * scale).unwrap();
+        let inner = map.face_at(p(50.0, 0.0) * scale).unwrap();
+        assert_ne!(annulus, inner);
+        let hits = map.faces_along_segment(p(50.0, -100.0) * scale, p(50.0, 100.0) * scale).unwrap();
+        assert_eq!(hits.iter().map(|&(face, _)| face).collect::<Vec<_>>(), [annulus, inner]);
+        assert!(map.face_at(p(50.0, -75.01) * scale).is_none());
+    }
+}
+
+#[test]
+fn cached_network_batch_updates_once_and_rolls_back_allocator_exhaustion() {
+    let mut network = VectorNetwork::default();
+    let (vertices, _) = square(&mut network, 0.0, 0.0, 100.0);
+    network.connect(vertices[0], vertices[2]).unwrap();
+    let map = NetworkFaceMap::new(&network).unwrap();
+    let mut document = Document::new("Mapped batch");
+    let mut node = Node::new(NodeKind::Vector, "Faces", 0.0, 0.0, 100.0, 100.0);
+    node.vector_network = Some(network);
+    let id = document.insert_node(1, node).unwrap();
+    let mut editor = Editor::new(document);
+    let before = editor.document.to_json().unwrap();
+    let revision = editor.revision;
+    let fills = vec![Fill::solid(crate::Color::WHITE)];
+    assert!(editor.paint_mapped_network_faces(id, &map, &[p(75.0, 25.0), p(25.0, 75.0)], &fills).unwrap());
+    assert_eq!(editor.revision, revision + 1, "one node refresh per pointer segment");
+    assert_eq!(editor.history_len(), 1);
+    assert_eq!(editor.document.nodes[&id].vector_network.as_ref().unwrap().regions.len(), 2);
+    editor.undo();
+    assert_eq!(editor.document.to_json().unwrap(), before);
+    editor.document.nodes.get_mut(&id).unwrap().vector_network.as_mut().unwrap().next_id = u64::MAX - 1;
+    editor.refresh();
+    let before = editor.document.to_json().unwrap();
+    let revision = editor.revision;
+    assert_eq!(editor.paint_mapped_network_faces(id, &map, &[p(75.0, 25.0), p(25.0, 75.0)], &fills), Err(NetworkFaceError::IdExhausted));
+    assert_eq!(editor.document.to_json().unwrap(), before);
+    assert_eq!(editor.revision, revision);
+    assert!(editor.can_redo());
+}
+
+#[test]
 fn network_faces_extract_adjacent_cells_with_exact_opposite_shared_boundaries() {
     let mut network = VectorNetwork::default();
     let (vertices, boundary) = square(&mut network, 0.0, 0.0, 100.0);
