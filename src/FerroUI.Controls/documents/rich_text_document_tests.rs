@@ -133,6 +133,69 @@ fn semantic_snapshot_containers_keep_defaults_under_inherited_parent_formatting(
 }
 
 #[test]
+fn hyperlink_default_formatting_and_explicit_overrides_round_trip() {
+    use ferroui_base::media::{TextDecorationCollection, TextDecorationLocation, TextDecorations};
+
+    let _scope = test_scope();
+    let document = RichTextDocument::new();
+    let paragraph = Paragraph::new();
+    let parent = Span::new();
+    parent.set_text_decorations(Some(TextDecorations::strikethrough()));
+    let link = Hyperlink::with_text("link", Some("https://example.test"));
+    parent.inlines().add(link.clone());
+    paragraph.inlines().add(parent);
+    document.blocks().add(paragraph);
+
+    let assigned = CharacterFormat::from_element(&link);
+    assert_eq!(
+        assigned,
+        CharacterFormat {
+            text_decorations: Some(Some(TextDecorations::underline())),
+            ..Default::default()
+        },
+        "a live hyperlink has the same intrinsic format as a restored hyperlink"
+    );
+    let effective = document.character_format_at(0).unwrap();
+    let decorations = effective.text_decorations.unwrap().unwrap();
+    assert_eq!(decorations.len(), 1);
+    assert_eq!(
+        decorations.get(0).location(),
+        TextDecorationLocation::Underline
+    );
+    let before = document.snapshot();
+    document.restore(&before).unwrap();
+    assert_eq!(document.snapshot(), before);
+
+    // Explicit null, empty and custom local decorations override both the
+    // constructor value and the parent's inherited strikethrough.
+    for decorations in [
+        None,
+        Some(TextDecorationCollection::new()),
+        Some(TextDecorations::overline()),
+    ] {
+        link.set_text_decorations(decorations.clone());
+        let expected = CharacterFormat {
+            text_decorations: Some(decorations),
+            ..Default::default()
+        };
+        assert_eq!(CharacterFormat::from_element(&link), expected);
+        let before = document.snapshot();
+        document.restore(&before).unwrap();
+        assert_eq!(document.snapshot(), before);
+        assert_eq!(CharacterFormat::from_element(&link), expected);
+    }
+
+    link.set_underline_style(UnderlineStyle::None);
+    assert!(link.text_decorations().is_none());
+    let before = document.snapshot();
+    document.restore(&before).unwrap();
+    assert_eq!(document.snapshot(), before);
+    assert!(link.text_decorations().is_none());
+    link.set_underline_style(UnderlineStyle::Single);
+    assert_eq!(CharacterFormat::from_element(&link), assigned);
+}
+
+#[test]
 fn nested_edit_batches_raise_one_revision_and_one_event() {
     let _scope = test_scope();
     let document = RichTextDocument::from_text("abc");
