@@ -13,6 +13,18 @@
       "notes": "Native StatusBar role, class name, title/message fallback name, name-change notification and native live-region metadata. Windows notification announcements and platform UIA event sequences remain unsupported/unverified.",
       "target": "FerroUI.Controls.WinUI.InfoBarAutomationPeer"
     },
+    "Microsoft.UI.Xaml.Automation.Peers.NavigationViewAutomationPeer": {
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native single-selection provider exposes the currently selected item peer and weak owner lifetime. Windows UIA tree metadata, localization, screen-reader behavior and pixel comparisons remain unverified.",
+      "target": "FerroUI.Controls.WinUI.Automation.Peers.NavigationViewAutomationPeer"
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.NavigationViewItemAutomationPeer": {
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native SelectionItem and conditional ExpandCollapse providers, no Invoke pattern, with disabled/nonselecting restrictions. Group positions, hierarchy levels, localization and OS UIA event sequences remain unverified.",
+      "target": "FerroUI.Controls.WinUI.Automation.Peers.NavigationViewItemAutomationPeer"
+    },
     "Microsoft.UI.Xaml.Automation.Peers.NumberBoxAutomationPeer": {
       "kind": "implemented-subset",
       "members": {},
@@ -182,10 +194,234 @@
       "target": "FerroUI.Controls.ListBoxItem"
     },
     "Microsoft.UI.Xaml.Controls.NavigationView": {
-      "kind": "candidate-requiring-adapter",
+      "kind": "implemented-subset",
+      "members": {
+        "AlwaysShowHeader": "always_show_header",
+        "AlwaysShowHeaderProperty": "always_show_header_property",
+        "AutoSuggestBox": "auto_suggest_box",
+        "AutoSuggestBoxProperty": "auto_suggest_box_property",
+        "BackRequested": "back_requested",
+        "Collapse": "collapse",
+        "Collapsed": "collapsed",
+        "CompactModeThresholdWidth": "compact_mode_threshold_width",
+        "CompactModeThresholdWidthProperty": "compact_mode_threshold_width_property",
+        "CompactPaneLength": "compact_pane_length",
+        "CompactPaneLengthProperty": "compact_pane_length_property",
+        "ContainerFromMenuItem": "container_from_menu_item",
+        "ContentOverlay": "content_overlay",
+        "ContentOverlayProperty": "content_overlay_property",
+        "DisplayMode": "display_mode",
+        "DisplayModeChanged": "display_mode_changed",
+        "DisplayModeProperty": "display_mode_property",
+        "Expand": "expand",
+        "ExpandedModeThresholdWidth": "expanded_mode_threshold_width",
+        "ExpandedModeThresholdWidthProperty": "expanded_mode_threshold_width_property",
+        "Expanding": "expanding",
+        "FooterMenuItems": "footer_menu_items",
+        "FooterMenuItemsProperty": "footer_menu_items_property",
+        "FooterMenuItemsSource": "footer_menu_items_source",
+        "FooterMenuItemsSourceProperty": "footer_menu_items_source_property",
+        "Header": "header",
+        "HeaderProperty": "header_property",
+        "HeaderTemplate": "header_template",
+        "HeaderTemplateProperty": "header_template_property",
+        "IsBackButtonVisible": "is_back_button_visible",
+        "IsBackButtonVisibleProperty": "is_back_button_visible_property",
+        "IsBackEnabled": "is_back_enabled",
+        "IsBackEnabledProperty": "is_back_enabled_property",
+        "IsPaneOpen": "is_pane_open",
+        "IsPaneOpenProperty": "is_pane_open_property",
+        "IsPaneToggleButtonVisible": "is_pane_toggle_button_visible",
+        "IsPaneToggleButtonVisibleProperty": "is_pane_toggle_button_visible_property",
+        "IsPaneVisible": "is_pane_visible",
+        "IsPaneVisibleProperty": "is_pane_visible_property",
+        "IsSettingsVisible": "is_settings_visible",
+        "IsSettingsVisibleProperty": "is_settings_visible_property",
+        "ItemInvoked": "item_invoked",
+        "MenuItemContainerStyle": "menu_item_container_style",
+        "MenuItemContainerStyleProperty": "menu_item_container_style_property",
+        "MenuItemFromContainer": "menu_item_from_container",
+        "MenuItemTemplate": "menu_item_template",
+        "MenuItemTemplateProperty": "menu_item_template_property",
+        "MenuItems": "menu_items",
+        "MenuItemsProperty": "menu_items_property",
+        "MenuItemsSource": "menu_items_source",
+        "MenuItemsSourceProperty": "menu_items_source_property",
+        "OpenPaneLength": "open_pane_length",
+        "OpenPaneLengthProperty": "open_pane_length_property",
+        "PaneClosed": "pane_closed",
+        "PaneClosing": "pane_closing",
+        "PaneCustomContent": "pane_custom_content",
+        "PaneCustomContentProperty": "pane_custom_content_property",
+        "PaneDisplayMode": "pane_display_mode",
+        "PaneDisplayModeProperty": "pane_display_mode_property",
+        "PaneFooter": "pane_footer",
+        "PaneFooterProperty": "pane_footer_property",
+        "PaneHeader": "pane_header",
+        "PaneHeaderProperty": "pane_header_property",
+        "PaneOpened": "pane_opened",
+        "PaneOpening": "pane_opening",
+        "PaneTitle": "pane_title",
+        "PaneTitleProperty": "pane_title_property",
+        "PaneToggleButtonStyle": "pane_toggle_button_style",
+        "PaneToggleButtonStyleProperty": "pane_toggle_button_style_property",
+        "SelectedItem": "selected_item",
+        "SelectedItemProperty": "selected_item_property",
+        "SelectionChanged": "selection_changed",
+        "SelectionFollowsFocus": "selection_follows_focus",
+        "SelectionFollowsFocusProperty": "selection_follows_focus_property",
+        "SettingsItem": "settings_item",
+        "SettingsItemProperty": "settings_item_property"
+      },
+      "notes": "Opt-in native ContentControl using existing SplitView, panels, presenters, popup and input services. Live menu/footer sources and templates retain model identity; selection, invocation, settings, hierarchy, adaptive modes, pane lifetime and back requests are explicit contracts. Header/MenuItemTemplate use native IDataTemplate; style properties use audited ControlTheme values. Top uses a horizontal layout without overflow redistribution. TemplateSettings, public NavigationViewItemPresenter, template/style selectors, title-bar auto padding, overflow/shoulder properties, recommended transition arguments, WinUI VSM/acrylic/motion, raw gamepad and Windows visual/accessibility acceptance remain absent or unverified.",
+      "target": "FerroUI.Controls.WinUI.NavigationView"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewBackButtonVisible": {
+      "kind": "implemented-subset",
+      "members": {
+        "Auto": "Auto",
+        "Collapsed": "Collapsed",
+        "Visible": "Visible"
+      },
+      "notes": "Pinned Collapsed=0, Visible=1, Auto=2 values; source visibility is projected through native buttons and host-independent mode rules.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewBackButtonVisible"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewBackRequestedEventArgs": {
+      "kind": "implemented-subset",
       "members": {},
-      "notes": "DrawerPage provides an existing composition primitive; NavigationView selection, top mode, footer items and hierarchical containers require a new facade.",
-      "target": "FerroUI.Controls.DrawerPage"
+      "notes": "Native typed payload for an actual back request. Applications decide how to navigate a Frame; WinRT identity/event tokens are not projected.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewBackRequestedEventArgs"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewDisplayMode": {
+      "kind": "implemented-subset",
+      "members": {
+        "Compact": "Compact",
+        "Expanded": "Expanded",
+        "Minimal": "Minimal"
+      },
+      "notes": "Pinned Minimal=0, Compact=1, Expanded=2 values; actual width/mode produces the read-only native DisplayMode. Broader layout/host acceptance is separately partial.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewDisplayMode"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewDisplayModeChangedEventArgs": {
+      "kind": "implemented-subset",
+      "members": {
+        "DisplayMode": "display_mode"
+      },
+      "notes": "Read-only native DisplayMode payload raised from actual adaptive mode changes; no WinRT identity claim.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewDisplayModeChangedEventArgs"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem": {
+      "kind": "implemented-subset",
+      "members": {
+        "CompactPaneLength": "compact_pane_length",
+        "CompactPaneLengthProperty": "compact_pane_length_property",
+        "HasUnrealizedChildren": "has_unrealized_children",
+        "HasUnrealizedChildrenProperty": "has_unrealized_children_property",
+        "Icon": "icon",
+        "IconProperty": "icon_property",
+        "InfoBadge": "info_badge",
+        "InfoBadgeProperty": "info_badge_property",
+        "IsChildSelected": "is_child_selected",
+        "IsChildSelectedProperty": "is_child_selected_property",
+        "IsExpanded": "is_expanded",
+        "IsExpandedProperty": "is_expanded_property",
+        "MenuItems": "menu_items",
+        "MenuItemsProperty": "menu_items_property",
+        "MenuItemsSource": "menu_items_source",
+        "MenuItemsSourceProperty": "menu_items_source_property",
+        "SelectsOnInvoked": "selects_on_invoked",
+        "SelectsOnInvokedProperty": "selects_on_invoked_property"
+      },
+      "notes": "Native hierarchical content item with Icon/InfoBadge presenters, independent live child collections/sources, selected/child-selected state, lazy expansion, keyboard input and conditional selection/expansion automation. CompactPaneLength is read-only and owner-managed. Native inline/popup templates adapt the source without implementing public NavigationViewItemPresenter/TemplateSettings, original animations, sound, OS localization or full Windows UIA/pixel semantics.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItem"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemBase": {
+      "kind": "implemented-subset",
+      "members": {
+        "IsSelected": "is_selected",
+        "IsSelectedProperty": "is_selected_property"
+      },
+      "notes": "Native ContentControl base with IsSelected; no public zero-argument constructor is projected. Existing ContentControl behavior remains unchanged.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItemBase"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemCollapsedEventArgs": {
+      "kind": "implemented-subset",
+      "members": {
+        "CollapsedItem": "collapsed_item",
+        "CollapsedItemContainer": "collapsed_item_container"
+      },
+      "notes": "Original model and native collapsed container from the actual item collapse event.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItemCollapsedEventArgs"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemExpandingEventArgs": {
+      "kind": "implemented-subset",
+      "members": {
+        "ExpandingItem": "expanding_item",
+        "ExpandingItemContainer": "expanding_item_container"
+      },
+      "notes": "Original model and native expanding container from the actual item expansion event; supports application lazy population.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItemExpandingEventArgs"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemHeader": {
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native nonfocusable heading inheriting NavigationViewItemBase; live content and replaceable native template. Exact WinUI resource/state/visual equivalence is not claimed.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItemHeader"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs": {
+      "kind": "implemented-subset",
+      "members": {
+        "InvokedItem": "invoked_item",
+        "InvokedItemContainer": "invoked_item_container",
+        "IsSettingsInvoked": "is_settings_invoked"
+      },
+      "notes": "Invoked container content, native container and Settings flag, plus source constructor defaults; native event identity is retained across clones. RecommendedNavigationTransitionInfo is absent.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItemInvokedEventArgs"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemSeparator": {
+      "kind": "implemented-subset",
+      "members": {},
+      "notes": "Native nonfocusable separator inheriting NavigationViewItemBase; replaceable native template and owner-directed orientation. Exact WinUI resource/state/visual equivalence is not claimed.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItemSeparator"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneClosingEventArgs": {
+      "kind": "implemented-subset",
+      "members": {
+        "Cancel": "cancel"
+      },
+      "notes": "Shared native Cancel state used for light dismissal; explicit/adaptive property closure is a forced transition as in the pinned source. Typed disposable handlers replace WinRT event tokens.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewPaneClosingEventArgs"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneDisplayMode": {
+      "kind": "implemented-subset",
+      "members": {
+        "Auto": "Auto",
+        "Left": "Left",
+        "LeftCompact": "LeftCompact",
+        "LeftMinimal": "LeftMinimal",
+        "Top": "Top"
+      },
+      "notes": "Pinned Auto=0, Left=1, Top=2, LeftCompact=3, LeftMinimal=4 values mapped to real native layout. Top overflow remains absent.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewPaneDisplayMode"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewSelectionChangedEventArgs": {
+      "kind": "implemented-subset",
+      "members": {
+        "IsSettingsSelected": "is_settings_selected",
+        "SelectedItem": "selected_item",
+        "SelectedItemContainer": "selected_item_container"
+      },
+      "notes": "Original selected model, native realized item container and Settings flag; native event identity is retained across clones. RecommendedNavigationTransitionInfo is absent.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewSelectionChangedEventArgs"
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewSelectionFollowsFocus": {
+      "kind": "implemented-subset",
+      "members": {
+        "Disabled": "Disabled",
+        "Enabled": "Enabled"
+      },
+      "notes": "Pinned Disabled=0 and Enabled=1 values with native focus following; raw gamepad/shoulder input remains absent.",
+      "target": "FerroUI.Controls.WinUI.NavigationViewSelectionFollowsFocus"
     },
     "Microsoft.UI.Xaml.Controls.NumberBox": {
       "kind": "implemented-subset",

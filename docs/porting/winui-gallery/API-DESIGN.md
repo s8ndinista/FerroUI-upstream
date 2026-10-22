@@ -78,6 +78,89 @@ a cached page changes to Disabled. Existing `NavigationPage` behavior remains
 independent. Navigation transition effects and serialized journals are separate
 requirements, not successful empty methods.
 
+### NavigationView and hierarchical menu items
+
+The opt-in `NavigationView` derives from native `ContentControl` and composes
+the existing `SplitView`, panels, presenters, buttons and popup services.
+`NavigationViewItemBase` preserves the common content/selection inheritance;
+`NavigationViewItem`, `NavigationViewItemHeader` and
+`NavigationViewItemSeparator` provide selectable rows, headings and separators.
+Their fallback templates are property metadata defaults, so a native
+`ControlTheme` or application template can replace them. Existing `SplitView`,
+selection controls and their Avalonia-compatible defaults remain unchanged.
+The public shape follows the pinned
+[NavigationView IDL](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/NavigationView/NavigationView.idl).
+
+The native menu and footer collections are instance-owned, read-only properties
+whose contents remain writable. Assigning `MenuItemsSource` or
+`FooterMenuItemsSource` selects a live native `ItemsSource` without replacing or
+locking the corresponding inline collection. Clearing the source restores the
+inline items. Generated containers preserve their source `BoxedValue`s and
+survive unrelated collection edits; nested items use the same policy.
+`ContainerFromMenuItem` and `MenuItemFromContainer` expose that relationship.
+`MenuItemTemplate` accepts native `IDataTemplate` and can create a menu item,
+heading or separator. A general WinUI `DataTemplateSelector` is still separate
+work; the Gallery category example makes that adaptation explicit in Rust.
+If a template factory changes `MenuItemTemplate` while containers are being
+built, the replacement factory rebuilds the containers and preserves their model
+round trips. Ordinary native controls supplied as nested items retain the live
+inherited application `DataContext` through their generated wrappers, for both
+inline collections and active sources.
+
+Selection is shared across main items, footer items, descendants and Settings.
+`SelectedItem` retains the original model; `SelectionChanged` includes that
+model, its realized container and the Settings flag. `ItemInvoked` instead
+exposes the invoked container's content and can occur without a selection
+change. Invocation runs before selected-container flags and the selection
+notification; a reentrant application selection takes precedence. An action
+with `SelectsOnInvoked = false` can invoke or expand without replacing the
+current selection. Ancestors reflect a selected descendant through
+`IsChildSelected`. Lazy expansion uses `HasUnrealizedChildren` and real
+`Expanding`/`Collapsed` events. Every item can host a live native `Icon` and
+`InfoBadge`. The two automation peers use the runtime namespace
+`FerroUI.Controls.WinUI.Automation.Peers` and separate source modules; the
+native control namespace and its markup identities stay distinct.
+
+Selecting a model without a realized container schedules its selection
+notification on the native dispatcher. The callback completes only the current
+selection and can report a null container. Realizing the model first completes
+the notification with that container and consumes the queued work. A later
+selection or clear invalidates the old callback, and queued work holds the
+owner weakly.
+
+`Auto`, `Left`, `LeftCompact`, `LeftMinimal` and `Top` drive real layout. Auto
+uses the pinned thresholds, 641 and 1008, while the initial compact/open lengths
+are 48 and 320. Explicit user closure survives an expanded resize. Top mode
+reparents the same menu controls into a horizontal host; it currently has no
+overflow redistribution. Pane open/close events and cancelable light dismissal
+are distinct from an explicit property assignment. A back-button request does
+not perform Frame navigation by itself. Headers, search, pane custom content,
+footer and content overlay use native presenters. Style-valued additions accept
+audited native `ControlTheme`s; this does not convert arbitrary WinUI styles.
+Replacing or clearing a template removes the old header/content presenters'
+data templates before their content. Factories that accept null data therefore
+cannot recreate a detached visual during teardown, and replacement presenters
+can adopt the same native content safely.
+
+The [Gallery page](../../../samples/WinUIGallery/Pages/NavigationView.xaml)
+contains all eight original compositions and their named controls, menu data,
+destination pages and source option handlers. The
+[Rust handlers](../../../samples/WinUIGallery/navigation_view_samples.rs)
+explicitly adapt category template selection and the adaptive visual-state
+expression. The InfoBadge page now also contains its original NavigationView
+composition, with the Inbox count, automation name, opacity toggle and pane
+mode handlers. These are partial executable ports: exact templates/resources,
+complete XAML language behavior, native host interaction and visual comparisons
+remain separately tracked.
+
+The remaining NavigationView contracts include top overflow and
+`OverflowLabelMode`, both template-settings projections, the public
+`NavigationViewItemPresenter`, template/style selectors, title-bar auto padding,
+acrylic and composition transitions, recommended navigation-transition arguments,
+shoulder/gamepad input, OS localization and Windows accessibility comparisons.
+The declaration map retains these gaps. [CONTROL-CONTRACTS.md](CONTROL-CONTRACTS.md#navigationview)
+states the narrower evidence and the original Gallery behavior being preserved.
+
 ### NumberBox
 
 `NumberBox` derives from native `TemplatedControl`. Its `Value` is `f64` with
@@ -194,8 +277,9 @@ for dot/value/icon usage. An audited migration maps their `Style` use to native
 `Theme`. Light, dark and high-contrast dictionaries use the native resource
 system and require the surrounding WinUI theme's general brushes. The native
 template can also run with its resource fallbacks. The dictionaries do not
-implement arbitrary WinUI visual states or the missing
-`NavigationViewItem.InfoBadge` integration.
+implement arbitrary WinUI visual states. `NavigationViewItem.InfoBadge` now
+hosts and updates the same native badge through its item presenter; the original
+Gallery Inbox composition remains partial pending visual and host acceptance.
 
 The additive native `HighContrastThemeVariant` static field
 (`high_contrast_theme_variant()` in Rust) supplies a typed high-contrast key
@@ -313,10 +397,25 @@ does not prove the target implements the source contract.
 | Ordinary WinUI `Binding` | Make the OneWay default explicit; preserve explicitly selected modes and the existing binding engine. |
 | `ThemeResource` | Require explicit dynamic-resource policy and installed ported dictionaries/theme scopes. |
 | Named WinUI `Style` resource | Map to `ControlTheme` only for an audited key; arbitrary setter/state semantics require a real projection. |
+| `NavigationViewItem.Icon` and `AutoSuggestBox.QueryIcon` symbol literals | Expand plain WinUI literals into instance-owned native `SymbolIcon` property elements; record `WXAML2005` at the original value range. |
 | `ms-appx:///` | Convert resource-bearing URI attributes only when the host supplies an absolute asset base. |
 | Application `x:Class` | Apply explicit namespace identity mappings; require the application's actual Rust type and code-behind. |
 | `mc:Ignorable` | Respect namespace scopes; ignored designer trees do not create runtime compatibility claims. |
 | Unsupported directives or semantics | Preserve the source requirement and reject loading; never silently remove it. |
+
+The icon-literal adaptation is limited to those two members in recognized WinUI
+control namespaces. For example, `Icon="Mail"` becomes an `Icon` property
+element containing a native `SymbolIcon` with `Symbol="Mail"`. The native Symbol
+parser validates the value; migration does not invent an enum value or install a
+global string-to-icon converter. Each document instance receives its own visual.
+Resource and binding expressions keep their icon-object contract, explicit
+application type/member mappings take precedence, and existing native FerroUI
+markup retains its meaning. The
+[migration tests](../../../src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_migration.rs)
+and paired interpreted/compiled
+[NavigationView fixture](../../../src/Markup/FerroUI.Markup.Xaml.Loader/tests/fixtures/winui_navigation.xaml)
+provide separate assertions for lexical preservation and runtime ownership;
+execution evidence is recorded independently.
 
 Deferred resource construction may cross a framework interface that cannot
 return `Result`. Fresh-root WinUI loading has a narrow typed-error bridge for
@@ -393,10 +492,10 @@ features. A supported subset must retain diagnostics for the rest.
 | Deferred markup | `x:Load` and deferred strategies must manage construction, name scopes, subscriptions, focus and disposal; visibility alone is insufficient. |
 | Visual states | State groups, triggers, setters and transitions must own temporary property values and restore prior bindings/styles without overwriting local state. |
 | Template selection and virtualization | DataTemplateSelector, element factories, recycling, ownership, index changes and layout algorithms must use the native item generator/layout services. |
-| NavigationView | Hierarchical item containers, selection/invocation distinctions, adaptive left/top modes, overflow, pane lifecycle, settings/footer items, back request, focus and automation. Existing drawer composition alone does not provide this API. |
+| NavigationView | Extend the native hierarchy, pane lifecycle and selection/invocation contract with top overflow, template settings/presenter types, template/style selectors, title-bar padding, acrylic/transitions, raw gamepad input and full native-host/Windows visual and accessibility acceptance. |
 | AutoSuggestBox | Extend the implemented text/query/selection contract to input-pane maximization, overlay/IME coordination, styles, gamepad input and platform-specific popup behavior. |
 | InfoBar and icon sources | Complete the remaining source variants, style projection and native accessibility/visual comparisons beyond the implemented close lifecycle and live projections. |
-| InfoBadge | Complete missing icon sources, NavigationView item integration, arbitrary custom visual states and Windows visual/accessibility comparisons. |
+| InfoBadge | Complete missing icon sources, arbitrary custom visual states and Windows visual/accessibility comparisons beyond the implemented NavigationView item composition. |
 | ProgressRing | Project the preview custom animated-source APIs through real native composition services, then validate source/template behavior and Windows visuals. |
 | RatingControl | Complete WinUI custom item-template projection, localized number/automation services, platform gamepad integration and composition/visual comparisons. |
 | ListView, GridView and TabView | Item-click semantics, selection, container lifecycle, drag/drop, tab closing/adding/tear-out, incremental loading and virtualization. Same-shaped basic lists/tabs remain partial adapters. |

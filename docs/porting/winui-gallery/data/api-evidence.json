@@ -32,6 +32,60 @@
         }
       ]
     },
+    "Microsoft.UI.Xaml.Automation.Peers.NavigationViewAutomationPeer::constructor:NavigationViewAutomationPeer(MU_XC_NAMESPACE.NavigationView owner)": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_automation_peer.rs",
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item_automation_peer.rs"
+      ],
+      "notes": "Created through the real native ControlAutomationPeer service and exercised through its actual selection/expansion provider; Windows UIA projection identity and OS accessibility sequences are not certified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "selection_peer_reports_native_container_and_does_not_keep_control_alive",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.NavigationViewItemAutomationPeer::constructor:NavigationViewItemAutomationPeer(MU_XC_NAMESPACE.NavigationViewItem owner)": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item_automation_peer.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_automation_peer.rs"
+      ],
+      "notes": "Created through the real native ControlAutomationPeer service and exercised through its actual selection/expansion provider; Windows UIA projection identity and OS accessibility sequences are not certified. Native provider selection/invocation and container discovery are also asserted after child popup reparenting, including top TabItem versus nested ListItem roles. The actual created native provider delegates owned expansion to the parent child predicate and rechecks active-empty sources and live child removal/replacement.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "automation_has_selection_and_conditional_expansion_without_an_invoke_pattern",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "automation_respects_nonselecting_items_and_disabled_input",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "nested_automation_selection_invokes_and_finds_its_container_after_popup_reparenting",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "owned_automation_expansion_obeys_active_empty_source_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "retained_owned_expansion_provider_rechecks_children_after_removal",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
     "Microsoft.UI.Xaml.Automation.Peers.ProgressRingAutomationPeer::constructor:ProgressRingAutomationPeer(MU_XC_NAMESPACE.ProgressRing owner)": {
       "execution": {
         "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
@@ -1899,6 +1953,1932 @@
         {
           "name": "custom_icon_is_live_template_settings_are_real_and_visibility_is_independent",
           "path": "src/FerroUI.Controls/tests/winui_info_bar.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::constructor:NavigationView()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs"
+      ],
+      "notes": "Constructor creates instance-owned collections/settings and a native metadata template; defaults/read-only handles are asserted. This does not certify all inherited members or WinUI resources.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, NavigationViewBackRequestedEventArgs> BackRequested": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Enabled real template button dispatches one typed request; old buttons disconnect on retemplating and when an attached template is cleared. Reapplying the template restores the native content and one active back handler. Frame back navigation remains application-owned.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "replacing_template_disconnects_old_buttons_and_preserves_selected_containers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "clearing_an_attached_template_disconnects_retained_parts_and_restores_native_content",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, NavigationViewDisplayModeChangedEventArgs> DisplayModeChanged": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual explicit mode transitions report their exact read-only DisplayMode value.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, NavigationViewItemCollapsedEventArgs> Collapsed": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual collapse event ordering and original model/container values are asserted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "compact_context_restores_expansion_and_public_expand_ignores_leaf_items",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, NavigationViewItemExpandingEventArgs> Expanding": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual expansion exposes the original model/container and permits reentrant lazy child population.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, NavigationViewItemInvokedEventArgs> ItemInvoked": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Native keyboard invocation raises before selected-row flags/SelectionChanged, repeats without duplicate selection and preserves application redirection/nonselecting actions. Settings flags/container are asserted; recommended transition arguments are absent.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "invocation_precedes_selected_flags_and_selection_changed_and_repeat_is_not_a_change",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "invocation_redirected_by_application_commits_only_the_final_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "disabled_and_nonselecting_items_preserve_selection_and_programmatic_suppression_invokes",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_following_reaches_popup_hierarchy_without_invoking_ancestors",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_subscriptions_preserve_redirects_and_detach_after_retemplate_removal_and_drop",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, NavigationViewPaneClosingEventArgs> PaneClosing": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Escape/light-dismiss cancellation differs from explicit property closure, and reentrant transitions retain current state; WinRT tokens/animation timing remain separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "escape_close_is_cancellable_but_explicit_close_keeps_its_source_semantics",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pane_opening_reentrancy_does_not_raise_a_stale_opened_event",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, NavigationViewSelectionChangedEventArgs> SelectionChanged": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual model/container/Settings selection, nested cleanup and disposed-handler behavior are asserted. RecommendedNavigationTransitionInfo and WinRT tokens remain absent. An unresolved model receives one queued completion with a null container, or one realized-container completion if materialized first. Superseded/cleared selections and destroyed owners do not emit the old callback.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "invocation_precedes_selected_flags_and_selection_changed_and_repeat_is_not_a_change",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "invocation_redirected_by_application_commits_only_the_final_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "nested_selection_updates_ancestor_state_and_clears_after_child_removal",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "selected_item_state_is_stable_when_disposed_listeners_and_removed_items_are_retained",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_following_reaches_popup_hierarchy_without_invoking_ancestors",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_subscriptions_preserve_redirects_and_detach_after_retemplate_removal_and_drop",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pending_selection_completes_once_for_the_current_model_with_or_without_a_container",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "queued_selection_completion_does_not_keep_navigation_alive",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, Object> PaneClosed": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Terminal closed events correspond to real committed state, including explicit closure after canceled dismissal; animation timing is not projected.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "escape_close_is_cancellable_but_explicit_close_keeps_its_source_semantics",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pane_opening_reentrancy_does_not_raise_a_stale_opened_event",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, Object> PaneOpened": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Successful open terminal event follows opening; reentrant close prevents a stale opened event. Animation completion timing is not projected.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pane_opening_reentrancy_does_not_raise_a_stale_opened_event",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::event:event Windows.Foundation.TypedEventHandler<NavigationView, Object> PaneOpening": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual open transition raises opening before opened; a reentrant close suppresses stale opened notification.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pane_opening_reentrancy_does_not_raise_a_stale_opened_event",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::method:Microsoft.UI.Xaml.DependencyObject ContainerFromMenuItem(Object item)": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Realized main/nested model-to-container lookup preserves native identity through collection edits; no WinRT DependencyObject projection is claimed. Lookup returns the replacement container after a template factory changes MenuItemTemplate reentrantly.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "source_collections_remain_live_and_preserve_model_and_container_identities",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "nested_selection_updates_ancestor_state_and_clears_after_child_removal",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "data_templates_can_generate_headings_separators_and_items_with_original_models",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "reentrant_menu_template_changes_rebuild_generated_containers_with_the_new_factory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::method:Object MenuItemFromContainer(Microsoft.UI.Xaml.DependencyObject container)": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Generated native container round trips to its original BoxedValue source model; Windows object identity is not projected. The reentrantly rebuilt container still maps to the original model BoxedValue.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "source_collections_remain_live_and_preserve_model_and_container_identities",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "reentrant_menu_template_changes_rebuild_generated_containers_with_the_new_factory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::method:void Collapse(NavigationViewItem item)": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Collapses child items and raises the actual collapsed model/container event; Windows popup/composition acceptance remains separate. An active empty child source prevents a parent-requested collapse even when the item expansion property is true; owned automation uses the same predicate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "compact_context_restores_expansion_and_public_expand_ignores_leaf_items",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "owned_automation_expansion_obeys_active_empty_source_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::method:void Expand(NavigationViewItem item)": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Expands realized/unrealized child items, permits lazy population, ignores leaves and preserves compact expansion state. Windows popup/composition acceptance remains separate. An active empty child source overrides inline and unrealized children; owned automation uses the same predicate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "compact_context_restores_expansion_and_public_expand_ignores_leaf_items",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "owned_automation_expansion_obeys_active_empty_source_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Boolean AlwaysShowHeader { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned true default and actual header presenter visibility across Expanded/Minimal/Top modes are asserted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "live_header_content_search_overlay_and_pane_visibility_use_actual_presenters",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Boolean IsBackEnabled { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Initial false value and enabled native button dispatch are asserted, including stale-button disconnection after retemplating. OS/system back integration remains separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "replacing_template_disconnects_old_buttons_and_preserves_selected_containers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Boolean IsPaneOpen { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Adaptive and explicit pane changes, user forced closure, cancelable Escape dismissal and reentrant event state are asserted. No animation timing parity is claimed.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "auto_layout_preserves_exact_threshold_edges_and_user_forced_close",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "explicit_modes_drive_native_split_geometry_and_top_reparenting",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "escape_close_is_cancellable_but_explicit_close_keeps_its_source_semantics",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pane_opening_reentrancy_does_not_raise_a_stale_opened_event",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "closed_left_and_minimal_panes_propagate_native_item_context_and_expansion_memory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Boolean IsPaneToggleButtonVisible { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned true default and dynamic native toggle-button visibility are asserted. Exact original resource/template branches remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "toggle_force_close_mode_reset_and_pane_visibility_follow_source_transitions",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Boolean IsPaneVisible { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned true default and hiding the real top pane presenter are asserted; all host title-bar effects remain separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "live_header_content_search_overlay_and_pane_visibility_use_actual_presenters",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Boolean IsSettingsVisible { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned true default and dynamic native Settings visibility are asserted. Platform localization and exact resource/template variants remain separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "toggle_force_close_mode_reset_and_pane_visibility_follow_source_transitions",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Double CompactModeThresholdWidth { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned 641 default and threshold edge behavior are asserted; negative assignments coerce to zero.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "auto_layout_preserves_exact_threshold_edges_and_user_forced_close",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pane_lengths_coerce_negative_values_without_changing_existing_split_view_defaults",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Double CompactPaneLength { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned 48 default and negative-value coercion are asserted; broader native compact geometry is separate from exact WinUI pixels.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pane_lengths_coerce_negative_values_without_changing_existing_split_view_defaults",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Double ExpandedModeThresholdWidth { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned 1008 default and threshold edge behavior are asserted; negative assignments coerce to zero.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "auto_layout_preserves_exact_threshold_edges_and_user_forced_close",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pane_lengths_coerce_negative_values_without_changing_existing_split_view_defaults",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Double OpenPaneLength { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned 320 default, negative coercion and NaN-safe rendering geometry are asserted. Tests preserve existing SplitView defaults.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pane_lengths_coerce_negative_values_without_changing_existing_split_view_defaults",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Microsoft.UI.Xaml.Controls.AutoSuggestBox AutoSuggestBox { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Assigned native AutoSuggestBox is hosted by the real search presenter. Search/query behavior is covered separately by the control tests.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "live_header_content_search_overlay_and_pane_visibility_use_actual_presenters",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Microsoft.UI.Xaml.DataTemplate HeaderTemplate { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Native IDataTemplate renders the header model in an actual ContentPresenter; this is not an arbitrary WinUI template projection. Retemplating and clearing Template detach the old presenter by clearing ContentTemplate before Content, including factories that accept null data; the same native header visual can then be adopted by the replacement presenter.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "footer_source_switching_and_typed_header_template_update_native_parts",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "retemplating_custom_presenters_clears_null_data_factories_before_content",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Microsoft.UI.Xaml.DataTemplate MenuItemTemplate { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Native IDataTemplate can generate real item/header/separator containers and retain selected model identity. General WinUI DataTemplateSelector/XAML template semantics remain separate. A template change made reentrantly by the previous factory forces a rebuild with the replacement factory while preserving model/container round trips and selection.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "data_templates_can_generate_headings_separators_and_items_with_original_models",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "reentrant_menu_template_changes_rebuild_generated_containers_with_the_new_factory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Microsoft.UI.Xaml.Style MenuItemContainerStyle { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Audited native ControlTheme applies below local priority and clears only its own value; arbitrary WinUI Style/StyleSelector remains unsupported.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "native_style_adaptations_preserve_local_priority_and_clear_their_own_values",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Microsoft.UI.Xaml.Style PaneToggleButtonStyle { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Audited native ControlTheme updates the real toggle button and clears its owned value; arbitrary WinUI Style remains unsupported.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "native_style_adaptations_preserve_local_priority_and_clear_their_own_values",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Microsoft.UI.Xaml.UIElement ContentOverlay { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Assigned native visual is hosted by ContentOverlayPresenter; arbitrary WinUI z-order/input/animation scenarios remain separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "live_header_content_search_overlay_and_pane_visibility_use_actual_presenters",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Microsoft.UI.Xaml.UIElement PaneCustomContent { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Assigned native visual is hosted by PaneCustomContentPresenter; exact WinUI template/layout variants remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "live_header_content_search_overlay_and_pane_visibility_use_actual_presenters",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Microsoft.UI.Xaml.UIElement PaneFooter { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Assigned native visual is hosted by PaneFooterPresenter; exact WinUI template/layout variants remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "live_header_content_search_overlay_and_pane_visibility_use_actual_presenters",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Microsoft.UI.Xaml.UIElement PaneHeader { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Assigned native visual is hosted by PaneHeaderPresenter; exact WinUI template/layout variants remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "live_header_content_search_overlay_and_pane_visibility_use_actual_presenters",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:NavigationViewBackButtonVisible IsBackButtonVisible { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned Auto default and native back-button visibility settings are asserted. Complete device/platform-dependent Auto visibility rules remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "toggle_force_close_mode_reset_and_pane_visibility_follow_source_transitions",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:NavigationViewDisplayMode DisplayMode { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Read-only display mode follows actual native width and explicit pane mode, including exact 641/1008 threshold boundaries.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "auto_layout_preserves_exact_threshold_edges_and_user_forced_close",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "explicit_modes_drive_native_split_geometry_and_top_reparenting",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:NavigationViewPaneDisplayMode PaneDisplayMode { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "All five modes drive native SplitView geometry or horizontal Top reparenting; top overflow and original WinUI resources/motion remain absent.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "auto_layout_preserves_exact_threshold_edges_and_user_forced_close",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "explicit_modes_drive_native_split_geometry_and_top_reparenting",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "closed_left_and_minimal_panes_propagate_native_item_context_and_expansion_memory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:NavigationViewSelectionFollowsFocus SelectionFollowsFocus { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Disabled default and Enabled selection/invocation on native directional focus are asserted, including an actual Top child popup. Descendant focus does not invoke ancestors; nonselecting/disabled items, repeated focus, click-then-focus, application redirection, retemplating/source removal/readd and weak owner lifetime are covered. Raw gamepad/shoulder input and Windows host acceptance remain absent/unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_following_raises_invocation_once_and_keyboard_navigation_moves_native_focus",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_following_reaches_popup_hierarchy_without_invoking_ancestors",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_subscriptions_preserve_redirects_and_detach_after_retemplate_removal_and_drop",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "popup_directional_keys_follow_vertical_tree_and_top_roots_follow_flow_direction",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Object FooterMenuItemsSource { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Native source collection updates footer containers and selection; clearing restores inline footer items. This is a native ItemsSource adapter.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "footer_source_switching_and_typed_header_template_update_native_parts",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Object Header { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Initial null and live native typed header rendering are asserted; arbitrary WinUI XAML DataTemplate semantics remain separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "footer_source_switching_and_typed_header_template_update_native_parts",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Object MenuItemsSource { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Live native ItemsSource preserves original models and existing containers, disconnects replaced sources and clears removed selection. Arbitrary WinRT objects are not accepted as native sources.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "source_collections_remain_live_and_preserve_model_and_container_identities",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_following_reaches_popup_hierarchy_without_invoking_ancestors",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_subscriptions_preserve_redirects_and_detach_after_retemplate_removal_and_drop",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Object SelectedItem { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual model selection, invocation order, reentrant redirection, nonselecting suppression, descendant state and removed/disposed ownership are asserted. Full Windows automation and transition semantics remain partial. A model without a realized container queues one weak completion for the current selection; realization can consume it first, and a newer model, clear, or destroyed owner suppresses stale callbacks. Nonselecting action assignment preserves an earlier unresolved selection and its outstanding notification.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "invocation_precedes_selected_flags_and_selection_changed_and_repeat_is_not_a_change",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "invocation_redirected_by_application_commits_only_the_final_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "disabled_and_nonselecting_items_preserve_selection_and_programmatic_suppression_invokes",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "nested_selection_updates_ancestor_state_and_clears_after_child_removal",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "selected_item_state_is_stable_when_disposed_listeners_and_removed_items_are_retained",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_following_reaches_popup_hierarchy_without_invoking_ancestors",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_subscriptions_preserve_redirects_and_detach_after_retemplate_removal_and_drop",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pending_selection_completes_once_for_the_current_model_with_or_without_a_container",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "queued_selection_completion_does_not_keep_navigation_alive",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Object SettingsItem { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Stable per-owner native settings item participates in shared selection and invocation flags; platform-specific localization/visuals remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:String PaneTitle { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Live native pane-title TextBlock rendering is asserted; platform title-bar padding and localization remain separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "live_header_content_search_overlay_and_pane_visibility_use_actual_presenters",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Windows.Foundation.Collections.IVector<Object> FooterMenuItems { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Instance-owned writable native footer collection; inline fallback, source precedence and shared selection are asserted.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "footer_source_switching_and_typed_header_template_update_native_parts",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:Windows.Foundation.Collections.IVector<Object> MenuItems { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Instance-owned read-only property with writable inline contents; a live source overrides presentation without replacing or locking the inline collection.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "source_collections_remain_live_and_preserve_model_and_container_identities",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:static Microsoft.UI.Xaml.DependencyProperty DisplayModeProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs"
+      ],
+      "notes": "The native DirectProperty handle is asserted read-only; its native type/ownership adapts the source DependencyProperty contract without a WinRT ABI claim.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:static Microsoft.UI.Xaml.DependencyProperty FooterMenuItemsProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs"
+      ],
+      "notes": "The native DirectProperty handle is asserted read-only; its native type/ownership adapts the source DependencyProperty contract without a WinRT ABI claim.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:static Microsoft.UI.Xaml.DependencyProperty MenuItemsProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs"
+      ],
+      "notes": "The native DirectProperty handle is asserted read-only; its native type/ownership adapts the source DependencyProperty contract without a WinRT ABI claim.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView::property:static Microsoft.UI.Xaml.DependencyProperty SettingsItemProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs"
+      ],
+      "notes": "The native DirectProperty handle is asserted read-only; its native type/ownership adapts the source DependencyProperty contract without a WinRT ABI claim.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewBackButtonVisible::enum-value:Auto = 2": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewBackButtonVisible::enum-value:Collapsed = 0": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewBackButtonVisible::enum-value:Visible = 1": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewDisplayMode::enum-value:Compact = 1": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewDisplayMode::enum-value:Expanded = 2": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewDisplayMode::enum-value:Minimal = 0": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewDisplayModeChangedEventArgs::property:NavigationViewDisplayMode DisplayMode { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Exact enum payload is read from actual native mode-change events.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::constructor:NavigationViewItem()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Native constructor preserves source inheritance, defaults, per-owner collection identity and metadata template replacement policy.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:Boolean HasUnrealizedChildren { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "False default, visible lazy-child affordance and live child population are asserted; arbitrary virtualization/recycling is not implemented. For an owned item, an active empty source prevents parent/provider expansion despite this flag; pattern advertisement and the owner child predicate remain distinct.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "unrealized_children_expose_a_chevron_and_support_lazy_population",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "owned_automation_expansion_obeys_active_empty_source_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:Boolean IsChildSelected { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "False default and selected-descendant indicator when children are hidden are asserted through native visuals.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "selection_indicator_uses_own_selection_or_a_hidden_selected_child",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:Boolean IsExpanded { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view.rs"
+      ],
+      "notes": "Actual native children consume layout only while expanded; keyboard direction respects RTL and child events do not expand ancestors. Full popup/animation/host acceptance remains separate. Expansion-direction focus skips nonfocusable/hidden/disabled children and leaves the key unhandled when none qualifies. Owned automation rechecks child availability/source precedence, including a retained provider after child removal.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "collapsed_children_do_not_consume_layout_and_expanding_restores_them",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "keyboard_expansion_mirrors_rtl_and_does_not_expand_leaf_items",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "bubbling_child_keyboard_events_do_not_change_the_ancestors_expansion",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "closed_left_and_minimal_panes_propagate_native_item_context_and_expansion_memory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "expansion_direction_skips_nonfocusable_children_in_ltr_and_rtl",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "owned_automation_expansion_obeys_active_empty_source_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "retained_owned_expansion_provider_rechecks_children_after_removal",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:Boolean SelectsOnInvoked { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item_automation_peer.rs"
+      ],
+      "notes": "True default and nonselecting/disabled automation behavior are asserted; parent interaction semantics are also tested separately.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "automation_respects_nonselecting_items_and_disabled_input",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:Double CompactPaneLength { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Initial value 48 and externally read-only native property handle are asserted. Full owner propagation and exact compact geometry are separate from this test anchor.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:InfoBadge InfoBadge { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Initial null, live native InfoBadge numeric content, replacement and clearing are asserted through real presenters; old visual ownership is detached.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "icon_content_and_badge_are_real_live_native_children_and_can_be_replaced",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "clearing_a_badge_removes_its_visual_and_keeps_the_item_available",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:Microsoft.UI.Xaml.Controls.IconElement Icon { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Initial null and live native icon presentation/replacement are asserted; required installed glyph fonts and Windows pixels remain separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "icon_content_and_badge_are_real_live_native_children_and_can_be_replaced",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:Object MenuItemsSource { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Native ItemsSource updates children and disconnects replaced sources while preserving writable inline collection fallback. Arbitrary WinRT objects need explicit adapters. Control-valued source children preserve inherited application DataContext. An active empty source takes precedence over inline/unrealized children for owner-mediated expansion.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "menu_items_remain_writable_while_source_is_active_and_return_when_source_is_cleared",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "replacing_a_source_detaches_its_listener_and_observes_the_replacement",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "nested_control_items_preserve_live_inherited_application_data_context",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "owned_automation_expansion_obeys_active_empty_source_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:Windows.Foundation.Collections.IVector<Object> MenuItems { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Instance-owned native child collection is writable and live; unrelated edits preserve generated container identity and state. Ordinary Control-valued children inherit the live application DataContext; their generated wrappers do not install a local DataContext equal to the control itself.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "explicit_and_data_children_are_live_and_existing_data_containers_survive_edits",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "nested_control_items_preserve_live_inherited_application_data_context",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:static Microsoft.UI.Xaml.DependencyProperty CompactPaneLengthProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Native DirectProperty handle is asserted read-only with source default/per-instance ownership; WinRT DependencyProperty ABI is not projected.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem::property:static Microsoft.UI.Xaml.DependencyProperty MenuItemsProperty { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Native DirectProperty handle is asserted read-only with source default/per-instance ownership; WinRT DependencyProperty ABI is not projected.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemBase::property:Boolean IsSelected { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "False default and native selected/descendant selection indicator updates are asserted; no public ItemBase constructor is introduced.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "selection_indicator_uses_own_selection_or_a_hidden_selected_child",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemCollapsedEventArgs::property:NavigationViewItemBase CollapsedItemContainer { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual collapse values identify the native container and original BoxedValue.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "compact_context_restores_expansion_and_public_expand_ignores_leaf_items",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemCollapsedEventArgs::property:Object CollapsedItem { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual collapse values identify the native container and original BoxedValue.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "compact_context_restores_expansion_and_public_expand_ignores_leaf_items",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemExpandingEventArgs::property:NavigationViewItemBase ExpandingItemContainer { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual event values identify the native expanding container and its original BoxedValue; the handler lazily populates children.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemExpandingEventArgs::property:Object ExpandingItem { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual event values identify the native expanding container and its original BoxedValue; the handler lazily populates children.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemHeader::constructor:NavigationViewItemHeader()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Native constructor preserves common item inheritance, nonfocusability and replaceable visual templates; exact WinUI resources/visuals remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "header_and_separator_are_native_nonfocusable_items_with_replaceable_templates",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs::constructor:NavigationViewItemInvokedEventArgs()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The public native constructor has null invoked item/container and false Settings flag, matching the pinned defaults. RecommendedNavigationTransitionInfo is absent.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs::property:Boolean IsSettingsInvoked { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual Settings invocation reports its native container and true Settings flag; recommended transitions are absent.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs::property:NavigationViewItemBase InvokedItemContainer { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual Settings invocation reports its native container and true Settings flag; recommended transitions are absent.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs::property:Object InvokedItem { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Event reports the invoked container content before selected flags update; this is deliberately distinct from the source model.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "invocation_precedes_selected_flags_and_selection_changed_and_repeat_is_not_a_change",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemSeparator::constructor:NavigationViewItemSeparator()": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Native constructor preserves common item inheritance, nonfocusability and replaceable visual templates; exact WinUI resources/visuals remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "header_and_separator_are_native_nonfocusable_items_with_replaceable_templates",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneClosingEventArgs::property:Boolean Cancel { get; set }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Cancel=true retains the pane for Escape dismissal but does not undo explicit property closure, matching the source distinction; event token/animation timing projection remains separate.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "escape_close_is_cancellable_but_explicit_close_keeps_its_source_semantics",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneDisplayMode::enum-value:Auto = 0": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneDisplayMode::enum-value:Left = 1": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneDisplayMode::enum-value:LeftCompact = 3": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneDisplayMode::enum-value:LeftMinimal = 4": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneDisplayMode::enum-value:Top = 2": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewSelectionChangedEventArgs::property:Boolean IsSettingsSelected { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Actual Settings selection reports true and participates in the same native selection state; recommended transitions are absent.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewSelectionChangedEventArgs::property:NavigationViewItemBase SelectedItemContainer { get }": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Event reports the actual selected native item container after selection flags update; recommended transitions are absent. Missing-container completion reports None; realization before the queued callback reports the selected native container once.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "invocation_precedes_selected_flags_and_selection_changed_and_repeat_is_not_a_change",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pending_selection_completes_once_for_the_current_model_with_or_without_a_container",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewSelectionFollowsFocus::enum-value:Disabled = 0": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewSelectionFollowsFocus::enum-value:Enabled = 1": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "The pinned numeric discriminant is asserted directly. Native use is implemented, while broader input/layout/host semantics are separate partial contracts.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
         }
       ]
     },
@@ -8480,6 +10460,60 @@
         }
       ]
     },
+    "Microsoft.UI.Xaml.Automation.Peers.NavigationViewAutomationPeer": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_automation_peer.rs",
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item_automation_peer.rs"
+      ],
+      "notes": "Native single-selection provider exposes the currently selected item peer and weak owner lifetime. Windows UIA tree metadata, localization, screen-reader behavior and pixel comparisons remain unverified.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "selection_peer_reports_native_container_and_does_not_keep_control_alive",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Automation.Peers.NavigationViewItemAutomationPeer": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item_automation_peer.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_automation_peer.rs"
+      ],
+      "notes": "Native SelectionItem and conditional ExpandCollapse providers, no Invoke pattern, with disabled/nonselecting restrictions. Group positions, hierarchy levels, localization and OS UIA event sequences remain unverified. Native provider selection/invocation and container discovery are also asserted after child popup reparenting, including top TabItem versus nested ListItem roles. Owned expansion delegates to the parent child predicate: an active empty source overrides inline/unrealized children, and retained providers recheck removal and replacement before changing expansion.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "automation_has_selection_and_conditional_expansion_without_an_invoke_pattern",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "automation_respects_nonselecting_items_and_disabled_input",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "nested_automation_selection_invokes_and_finds_its_container_after_popup_reparenting",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "owned_automation_expansion_obeys_active_empty_source_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "retained_owned_expansion_provider_rechecks_children_after_removal",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
     "Microsoft.UI.Xaml.Automation.Peers.ProgressRingAutomationPeer": {
       "execution": {
         "record": "docs/porting/winui-gallery/data/executions/native-controls-003.json"
@@ -9104,6 +11138,429 @@
         {
           "name": "custom_icon_is_live_template_settings_are_real_and_visibility_is_independent",
           "path": "src/FerroUI.Controls/tests/winui_info_bar.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationView": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs",
+        "src/FerroUI.Controls/winui/navigation_view_automation_peer.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item_automation_peer.rs"
+      ],
+      "notes": "Opt-in native ContentControl using existing SplitView, panels, presenters, popup and input services. Live menu/footer sources and templates retain model identity; selection, invocation, settings, hierarchy, adaptive modes, pane lifetime and back requests are explicit contracts. Header/MenuItemTemplate use native IDataTemplate; style properties use audited ControlTheme values. Top uses a horizontal layout without overflow redistribution. TemplateSettings, public NavigationViewItemPresenter, template/style selectors, title-bar auto padding, overflow/shoulder properties, recommended transition arguments, WinUI VSM/acrylic/motion, raw gamepad and Windows visual/accessibility acceptance remain absent or unverified. Missing-container selection completes once through a weak queued dispatcher callback for the current model; earlier realization consumes the notification and stale assignments/clears suppress it. Reentrant menu-template changes rebuild with the new factory. Old custom header/content presenters clear their templates before content, so null-data factories cannot recreate a detached visual during teardown.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_defaults_and_read_only_collections_are_instance_owned",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "auto_layout_preserves_exact_threshold_edges_and_user_forced_close",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "invocation_precedes_selected_flags_and_selection_changed_and_repeat_is_not_a_change",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "source_collections_remain_live_and_preserve_model_and_container_identities",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "nested_selection_updates_ancestor_state_and_clears_after_child_removal",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "escape_close_is_cancellable_but_explicit_close_keeps_its_source_semantics",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "live_header_content_search_overlay_and_pane_visibility_use_actual_presenters",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_following_raises_invocation_once_and_keyboard_navigation_moves_native_focus",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "selection_peer_reports_native_container_and_does_not_keep_control_alive",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "closed_left_and_minimal_panes_propagate_native_item_context_and_expansion_memory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_following_reaches_popup_hierarchy_without_invoking_ancestors",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "focus_subscriptions_preserve_redirects_and_detach_after_retemplate_removal_and_drop",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "popup_directional_keys_follow_vertical_tree_and_top_roots_follow_flow_direction",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "clearing_an_attached_template_disconnects_retained_parts_and_restores_native_content",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pending_selection_completes_once_for_the_current_model_with_or_without_a_container",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "queued_selection_completion_does_not_keep_navigation_alive",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "reentrant_menu_template_changes_rebuild_generated_containers_with_the_new_factory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "retemplating_custom_presenters_clears_null_data_factories_before_content",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewBackButtonVisible": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned Collapsed=0, Visible=1, Auto=2 values; source visibility is projected through native buttons and host-independent mode rules.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewBackRequestedEventArgs": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Native typed payload for an actual back request. Applications decide how to navigate a Frame; WinRT identity/event tokens are not projected.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "replacing_template_disconnects_old_buttons_and_preserves_selected_containers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewDisplayMode": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned Minimal=0, Compact=1, Expanded=2 values; actual width/mode produces the read-only native DisplayMode. Broader layout/host acceptance is separately partial.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewDisplayModeChangedEventArgs": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Read-only native DisplayMode payload raised from actual adaptive mode changes; no WinRT identity claim.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItem": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item_automation_peer.rs",
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_automation_peer.rs"
+      ],
+      "notes": "Native hierarchical content item with Icon/InfoBadge presenters, independent live child collections/sources, selected/child-selected state, lazy expansion, keyboard input and conditional selection/expansion automation. CompactPaneLength is read-only and owner-managed. Native inline/popup templates adapt the source without implementing public NavigationViewItemPresenter/TemplateSettings, original animations, sound, OS localization or full Windows UIA/pixel semantics. Nested ordinary Control values preserve live inherited application DataContext for inline and source collections. Expansion-direction focus skips headings and nonfocusable/hidden/disabled children. Owned expansion providers recheck the parent child predicate, including active-empty-source precedence and retained providers after removal.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "icon_content_and_badge_are_real_live_native_children_and_can_be_replaced",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "explicit_and_data_children_are_live_and_existing_data_containers_survive_edits",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "menu_items_remain_writable_while_source_is_active_and_return_when_source_is_cleared",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "collapsed_children_do_not_consume_layout_and_expanding_restores_them",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "keyboard_expansion_mirrors_rtl_and_does_not_expand_leaf_items",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "automation_has_selection_and_conditional_expansion_without_an_invoke_pattern",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "retained_external_sources_and_old_template_parts_do_not_keep_the_item_alive",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "closed_left_and_minimal_panes_propagate_native_item_context_and_expansion_memory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "nested_automation_selection_invokes_and_finds_its_container_after_popup_reparenting",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "nested_control_items_preserve_live_inherited_application_data_context",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "expansion_direction_skips_nonfocusable_children_in_ltr_and_rtl",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "owned_automation_expansion_obeys_active_empty_source_precedence",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "retained_owned_expansion_provider_rechecks_children_after_removal",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemBase": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "Native ContentControl base with IsSelected; no public zero-argument constructor is projected. Existing ContentControl behavior remains unchanged.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "defaults_and_read_only_properties_preserve_source_inheritance_and_per_instance_collections",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "selection_indicator_uses_own_selection_or_a_hidden_selected_child",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemCollapsedEventArgs": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Original model and native collapsed container from the actual item collapse event.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "compact_context_restores_expansion_and_public_expand_ignores_leaf_items",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemExpandingEventArgs": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Original model and native expanding container from the actual item expansion event; supports application lazy population.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemHeader": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view.rs"
+      ],
+      "notes": "Native nonfocusable heading inheriting NavigationViewItemBase; live content and replaceable native template. Exact WinUI resource/state/visual equivalence is not claimed.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "header_and_separator_are_native_nonfocusable_items_with_replaceable_templates",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "closed_left_and_minimal_panes_propagate_native_item_context_and_expansion_memory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemInvokedEventArgs": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Invoked container content, native container and Settings flag, plus source constructor defaults; native event identity is retained across clones. RecommendedNavigationTransitionInfo is absent.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "invocation_precedes_selected_flags_and_selection_changed_and_repeat_is_not_a_change",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewItemSeparator": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view.rs"
+      ],
+      "notes": "Native nonfocusable separator inheriting NavigationViewItemBase; replaceable native template and owner-directed orientation. Exact WinUI resource/state/visual equivalence is not claimed.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "header_and_separator_are_native_nonfocusable_items_with_replaceable_templates",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_items.rs"
+        },
+        {
+          "name": "closed_left_and_minimal_panes_propagate_native_item_context_and_expansion_memory",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneClosingEventArgs": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Shared native Cancel state used for light dismissal; explicit/adaptive property closure is a forced transition as in the pinned source. Typed disposable handlers replace WinRT event tokens.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "escape_close_is_cancellable_but_explicit_close_keeps_its_source_semantics",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewPaneDisplayMode": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned Auto=0, Left=1, Top=2, LeftCompact=3, LeftMinimal=4 values mapped to real native layout. Top overflow remains absent.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewSelectionChangedEventArgs": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Original selected model, native realized item container and Settings flag; native event identity is retained across clones. RecommendedNavigationTransitionInfo is absent. Queued completion retains the current original model and permits a null container; realization before the callback emits the selected container exactly once.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "invocation_precedes_selected_flags_and_selection_changed_and_repeat_is_not_a_change",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "expansion_events_support_lazy_children_and_footer_settings_selection",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        },
+        {
+          "name": "pending_selection_completes_once_for_the_current_model_with_or_without_a_container",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
+        }
+      ]
+    },
+    "Microsoft.UI.Xaml.Controls.NavigationViewSelectionFollowsFocus": {
+      "execution": {
+        "record": "docs/porting/winui-gallery/data/executions/native-controls-004.json"
+      },
+      "implementation": [
+        "src/FerroUI.Controls/winui/navigation_view_events.rs"
+      ],
+      "notes": "Pinned Disabled=0 and Enabled=1 values with native focus following; raw gamepad/shoulder input remains absent.",
+      "status": "partial",
+      "tests": [
+        {
+          "name": "mode_and_pane_events_expose_exact_values_and_source_enum_numbers",
+          "path": "src/FerroUI.Controls/tests/winui_navigation_view.rs"
         }
       ]
     },

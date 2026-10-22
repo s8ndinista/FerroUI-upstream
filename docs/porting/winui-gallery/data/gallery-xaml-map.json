@@ -2,8 +2,8 @@
   "meaning": "XAML member spellings joined through WinUI and FerroUI inheritance; candidates are not semantic compatibility.",
   "member_statuses": {
     "gallery-owned-contract": 102,
-    "missing-source-candidate": 545,
-    "source-candidate": 539,
+    "missing-source-candidate": 523,
+    "source-candidate": 561,
     "unresolved-upstream-member": 208
   },
   "members": [
@@ -15802,9 +15802,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "auto_suggest_box",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.AutoSuggestBox",
       "uses": [
         {
@@ -15818,8 +15818,8 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.ContentControl",
       "rust_member": "content",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": "FerroUI.Controls.DrawerPage",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.ContentControl",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.Content",
       "uses": [
         {
@@ -15832,9 +15832,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "display_mode_changed",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.DisplayModeChanged",
       "uses": [
         {
@@ -15847,9 +15847,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "expanded_mode_threshold_width",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.ExpandedModeThresholdWidth",
       "uses": [
         {
@@ -15862,9 +15862,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "footer_menu_items",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.FooterMenuItems",
       "uses": [
         {
@@ -15878,8 +15878,8 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "header",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": "FerroUI.Controls.Page",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.Header",
       "uses": [
         {
@@ -15893,7 +15893,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "height",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.Height",
       "uses": [
@@ -15911,9 +15911,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "is_back_button_visible",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.IsBackButtonVisible",
       "uses": [
         {
@@ -15938,9 +15938,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "is_pane_toggle_button_visible",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.IsPaneToggleButtonVisible",
       "uses": [
         {
@@ -15957,9 +15957,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "is_settings_visible",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.IsSettingsVisible",
       "uses": [
         {
@@ -15985,7 +15985,7 @@
       "declared_by": null,
       "rust_member": "is_tab_stop",
       "status": "unresolved-upstream-member",
-      "target": "FerroUI.Controls.DrawerPage",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
       "target_declared_by": "FerroUI.Input.InputElement",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.IsTabStop",
       "uses": [
@@ -16004,7 +16004,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "loaded",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
       "target_declared_by": "FerroUI.Controls.Control",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.Loaded",
       "uses": [
@@ -16023,7 +16023,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "margin",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
       "target_declared_by": "FerroUI.Layout.Layoutable",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.Margin",
       "uses": [
@@ -16038,7 +16038,7 @@
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "menu_item_template_selector",
       "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
       "target_declared_by": null,
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.MenuItemTemplateSelector",
       "uses": [
@@ -16052,9 +16052,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "menu_items",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.MenuItems",
       "uses": [
         {
@@ -16083,9 +16083,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "menu_items_source",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.MenuItemsSource",
       "uses": [
         {
@@ -16102,9 +16102,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "pane_custom_content",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.PaneCustomContent",
       "uses": [
         {
@@ -16117,9 +16117,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "pane_display_mode",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.PaneDisplayMode",
       "uses": [
         {
@@ -16140,9 +16140,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "pane_footer",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.PaneFooter",
       "uses": [
         {
@@ -16155,9 +16155,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "pane_title",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.PaneTitle",
       "uses": [
         {
@@ -16171,7 +16171,7 @@
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "resources",
       "status": "source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
       "target_declared_by": "FerroUI.StyledElement",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.Resources",
       "uses": [
@@ -16185,9 +16185,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "selection_changed",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.SelectionChanged",
       "uses": [
         {
@@ -16212,9 +16212,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationView",
       "rust_member": "selection_follows_focus",
-      "status": "missing-source-candidate",
-      "target": "FerroUI.Controls.DrawerPage",
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationView",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationView",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationView.SelectionFollowsFocus",
       "uses": [
         {
@@ -16227,9 +16227,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.ContentControl",
       "rust_member": "content",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItem",
+      "target_declared_by": "FerroUI.Controls.ContentControl",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationViewItem.Content",
       "uses": [
         {
@@ -16258,9 +16258,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationViewItem",
       "rust_member": "icon",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItem",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationViewItem",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationViewItem.Icon",
       "uses": [
         {
@@ -16289,9 +16289,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationViewItem",
       "rust_member": "info_badge",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItem",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationViewItem",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationViewItem.InfoBadge",
       "uses": [
         {
@@ -16304,9 +16304,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationViewItem",
       "rust_member": "menu_items",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItem",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationViewItem",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationViewItem.MenuItems",
       "uses": [
         {
@@ -16323,9 +16323,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.NavigationViewItem",
       "rust_member": "selects_on_invoked",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItem",
+      "target_declared_by": "FerroUI.Controls.WinUI.NavigationViewItem",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationViewItem.SelectsOnInvoked",
       "uses": [
         {
@@ -16342,9 +16342,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.FrameworkElement",
       "rust_member": "tag",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItem",
+      "target_declared_by": "FerroUI.Controls.Control",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationViewItem.Tag",
       "uses": [
         {
@@ -16365,9 +16365,9 @@
       "behavior": "unverified",
       "declared_by": "Microsoft.UI.Xaml.Controls.ContentControl",
       "rust_member": "content",
-      "status": "missing-source-candidate",
-      "target": null,
-      "target_declared_by": null,
+      "status": "source-candidate",
+      "target": "FerroUI.Controls.WinUI.NavigationViewItemHeader",
+      "target_declared_by": "FerroUI.Controls.ContentControl",
       "upstream": "Microsoft.UI.Xaml.Controls.NavigationViewItemHeader.Content",
       "uses": [
         {

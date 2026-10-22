@@ -466,7 +466,7 @@
           "type": "Microsoft.UI.Xaml.Controls.NavigationView"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.NavigationViewItem"
         },
         {
@@ -3436,9 +3436,11 @@
         "samples/WinUIGallery/examples.rs",
         "samples/WinUIGallery/feedback_samples.rs",
         "samples/WinUIGallery/assets.rs",
-        "src/FerroUI.Themes.WinUI/Controls/WinUIInfoBadge.xaml"
+        "src/FerroUI.Themes.WinUI/Controls/WinUIInfoBadge.xaml",
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
       ],
-      "notes": "Three of four original examples use native InfoBadge: severity ControlThemes retain source resource keys, the Refresh-button composition retains its source glyph, and NumberBox changes retain the source integer-conversion guard. The original NavigationView.InfoBadge example remains pending. Style-to-Theme migration is explicitly audited; all glyph/visual/OS accessibility acceptance remains partial.",
+      "notes": "All four original examples have native compositions: NavigationViewItem.InfoBadge retains Home/Account/Inbox, count 5, automation name, opacity and pane-mode handlers; severity ControlThemes retain source keys; the Refresh-button composition retains its glyph; NumberBox changes retain the integer-conversion guard. ToggleSwitch and page-property bindings are explicit existing-control/Rust adaptations. Style-to-Theme migration is audited; exact visuals, installed fonts, general XAML behavior and OS accessibility acceptance remain partial.",
       "requirements": [
         {
           "status": "source-candidate",
@@ -3469,7 +3471,7 @@
           "type": "Microsoft.UI.Xaml.Controls.NavigationView"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.NavigationViewItem"
         },
         {
@@ -3525,6 +3527,14 @@
         },
         {
           "name": "feedback_pages_and_callbacks_release_their_native_controls",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        },
+        {
+          "name": "info_badge_navigation_composition_keeps_original_badge_and_opacity_handler",
+          "path": "samples/WinUIGallery/feedback_samples_tests.rs"
+        },
+        {
+          "name": "info_badge_navigation_modes_preserve_the_same_notification_and_selection",
           "path": "samples/WinUIGallery/feedback_samples_tests.rs"
         }
       ],
@@ -4476,8 +4486,21 @@
       "examples_total": 8,
       "examples_verified": 0,
       "id": "NavigationView",
-      "implementation": [],
-      "notes": null,
+      "implementation": [
+        "samples/WinUIGallery/Pages/NavigationView.xaml",
+        "samples/WinUIGallery/navigation_view_samples.rs",
+        "samples/WinUIGallery/Pages/NavigationSample1.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample2.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample3.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample4.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample5.xaml",
+        "samples/WinUIGallery/Pages/NavigationSample6.xaml",
+        "samples/WinUIGallery/Pages/NavigationSettings.xaml",
+        "src/FerroUI.Controls/winui/navigation_view.rs",
+        "src/FerroUI.Controls/winui/navigation_view_events.rs",
+        "src/FerroUI.Controls/winui/navigation_view_item.rs"
+      ],
+      "notes": "All eight original compositions now use native NavigationView and the exact source menu data, Frame destinations and option handlers. Category template selection and adaptive triggers are explicitly implemented in Rust; missing general XAML semantics, exact resource/animation/overflow behavior and full platform/visual acceptance remain partial. Actual running source quirks are preserved and separately noted in example entries.",
       "requirements": [
         {
           "status": "missing-source-candidate",
@@ -4508,11 +4531,11 @@
           "type": "Microsoft.UI.Xaml.Controls.NavigationView"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.NavigationViewItem"
         },
         {
-          "status": "missing-source-candidate",
+          "status": "source-candidate",
           "type": "Microsoft.UI.Xaml.Controls.NavigationViewItemHeader"
         },
         {
@@ -4600,8 +4623,49 @@
           "type": "WinUIGallery.Converters.MenuItemTemplateSelector"
         }
       ],
-      "status": "pending",
-      "tests": [],
+      "status": "partial",
+      "tests": [
+        {
+          "name": "navigation_view_page_initializes_all_eight_source_compositions",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        },
+        {
+          "name": "navigation_view_source_selection_loads_distinct_pages_and_settings",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        },
+        {
+          "name": "navigation_view_top_and_tabs_preserve_actual_source_targets_and_history",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        },
+        {
+          "name": "navigation_view_category_template_preserves_models_headers_and_separator",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        },
+        {
+          "name": "navigation_view_footer_uses_the_same_selection_and_original_destinations",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        },
+        {
+          "name": "navigation_view_hierarchy_navigates_children_and_keeps_action_parent_unselected",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        },
+        {
+          "name": "navigation_view_api_options_update_native_state_and_header_bindings",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        },
+        {
+          "name": "navigation_view_api_search_custom_content_and_footer_options_keep_source_behavior",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        },
+        {
+          "name": "navigation_view_adaptive_example_changes_mode_at_its_native_threshold",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        },
+        {
+          "name": "navigation_view_page_releases_controls_frames_and_category_models",
+          "path": "samples/WinUIGallery/navigation_view_samples_tests.rs"
+        }
+      ],
       "title": "NavigationView"
     },
     {

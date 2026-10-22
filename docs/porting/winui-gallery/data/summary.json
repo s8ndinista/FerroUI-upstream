@@ -28,8 +28,8 @@
       "xml:space": 8
     },
     "page_statuses": {
-      "partial": 71,
-      "pending": 55,
+      "partial": 72,
+      "pending": 54,
       "ported": 0,
       "verified": 0
     },
@@ -200,32 +200,32 @@
   "schema_version": 1,
   "upstream": {
     "enum_values_behavior": {
-      "partial": 8,
-      "unverified": 1201,
+      "partial": 21,
+      "unverified": 1188,
       "verified": 197
     },
     "member_candidates": {
-      "missing-source-candidate": 6053,
-      "source-candidate": 1413
+      "missing-source-candidate": 5932,
+      "source-candidate": 1534
     },
     "members_behavior": {
-      "partial": 172,
-      "unverified": 7092,
+      "partial": 264,
+      "unverified": 7000,
       "verified": 202
     },
     "members_public_source": 7466,
     "non_enum_members_behavior": {
-      "partial": 164,
-      "unverified": 5891,
+      "partial": 243,
+      "unverified": 5812,
       "verified": 5
     },
     "type_candidates": {
-      "missing-source-candidate": 1248,
-      "source-candidate": 297
+      "missing-source-candidate": 1231,
+      "source-candidate": 314
     },
     "types_behavior": {
-      "partial": 36,
-      "unverified": 1508,
+      "partial": 54,
+      "unverified": 1490,
       "verified": 1
     },
     "types_private_source": 198,

@@ -231,6 +231,221 @@ scope. The strict XAML migration layer retains diagnostics for unsupported
 syntax. Native templates remain replaceable; replacement templates must supply
 the documented parts or bind their own native properties.
 
+## NavigationView
+
+The implementation follows the pinned
+[NavigationView declarations](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/NavigationView/NavigationView.idl),
+[control behavior](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/NavigationView/NavigationView.cpp),
+[item behavior](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/NavigationView/NavigationViewItem.cpp)
+and [automation declarations](https://github.com/microsoft/microsoft-ui-xaml/blob/a71c42bd3e352060e5f5ecf3b5e1a98f8a745809/controls/dev/NavigationView/NavigationViewItemAutomationPeer.idl).
+Native code is split between
+[navigation_view.rs](../../../src/FerroUI.Controls/winui/navigation_view.rs),
+[navigation_view_item.rs](../../../src/FerroUI.Controls/winui/navigation_view_item.rs)
+and [navigation_view_events.rs](../../../src/FerroUI.Controls/winui/navigation_view_events.rs).
+The [parent peer](../../../src/FerroUI.Controls/winui/navigation_view_automation_peer.rs)
+and [item peer](../../../src/FerroUI.Controls/winui/navigation_view_item_automation_peer.rs)
+use separate modules and the runtime namespace
+`FerroUI.Controls.WinUI.Automation.Peers`.
+These are opt-in native controls; the existing Avalonia-compatible `SplitView`
+and selection APIs retain their defaults and public contracts.
+
+### Collections, containers and selection
+
+| WinUI member or behavior | Native implementation and boundary |
+|---|---|
+| `MenuItems`, `FooterMenuItems` | Instance-owned native `ItemCollection`s; read-only property handles, writable collection contents |
+| `MenuItemsSource`, `FooterMenuItemsSource` | Live native `ItemsSource` adapters; inline collections stay writable while a source is active and return when it is cleared; arbitrary WinRT collection objects need adapters |
+| `MenuItemTemplate` | Native `IDataTemplate`; an item/header/separator returned by the template becomes the container, while another control becomes generated item content |
+| `SelectedItem` | Original model `BoxedValue`, shared across menu, footer, descendants and the owner-specific Settings item |
+| `ContainerFromMenuItem`, `MenuItemFromContainer` | Round trips through the current realized hierarchy; unrelated source edits retain existing containers; removed models and listeners are detached |
+| `SelectionChanged` | Original model, realized container and `IsSettingsSelected`; changes synchronize selected rows and ancestor `IsChildSelected` state |
+| `ItemInvoked` | Container content, invoked container and Settings flag; repeated invocation need not change selection |
+| `SelectsOnInvoked` | Defaults true; a false value permits action/expansion invocation while preserving the prior selection |
+| `SettingsItem` | Stable per-owner native `NavigationViewItem`; visibility is controlled separately by `IsSettingsVisible` |
+| `Expand`, `Collapse` | Change the expansion state of items with realized or unrealized children and raise the corresponding native event |
+
+Invocation precedes the selected-row flag updates and `SelectionChanged`.
+Application code can redirect selection during `ItemInvoked`; the final effective
+selection wins without a stale outer notification. Assigning a nonselecting item
+restores the prior selection and invokes the action, matching the pinned control
+policy. Headers and separators use the common item base but have no interactive
+row invocation. Native source models retain normal `BoxedValue` comparison and
+ownership semantics; the projection does not stringify model identity.
+
+An assignment whose model has no realized container preserves `SelectedItem`
+and schedules one native dispatcher completion. `SelectionChanged` describes
+the still-current model and permits a null `SelectedItemContainer`. If the
+model is realized first, that realization emits the selected container and
+consumes the pending notification. A newer selection or clear suppresses the
+older callback; assigning a nonselecting action preserves the prior unresolved
+selection and its pending notification. Queued work holds the owner weakly.
+
+Generated wrappers for ordinary native `Control` values preserve the live
+inherited application `DataContext`; they do not replace it with the control
+itself. This applies to nested inline items and active item sources. When a
+`MenuItemTemplate` factory changes the template while building containers, the
+new factory forces a rebuild while model identity, container round trips and
+selection remain intact.
+
+### Adaptive layout and pane lifetime
+
+| Member | Initial value or supported behavior |
+|---|---|
+| `PaneDisplayMode` | `Auto`; supports `Auto`, `Left`, `Top`, `LeftCompact`, `LeftMinimal` |
+| `DisplayMode` | Read-only; initially `Minimal`, then derives from the actual native width and mode |
+| `CompactModeThresholdWidth`, `ExpandedModeThresholdWidth` | 641 and 1008; the exact threshold boundaries determine Minimal, Compact and Expanded |
+| `CompactPaneLength`, `OpenPaneLength` | 48 and 320; negative lengths coerce to zero; nonfinite rendering geometry is bounded independently of the public value |
+| `IsPaneOpen` | Initially true; first adaptive layout can close it, while an explicit closure is retained across expanded resizing |
+| `IsPaneVisible`, `IsPaneToggleButtonVisible`, `IsSettingsVisible`, `AlwaysShowHeader` | Initially true; native presenters/buttons respond to effective state |
+| `IsBackEnabled`, `IsBackButtonVisible` | Initially false and Auto; a request is an event, with application Frame navigation supplied separately |
+| `SelectionFollowsFocus` | Initially Disabled; native focus/input behavior is separate from raw gamepad integration |
+| `Header`, `HeaderTemplate`, `PaneTitle` | Native content/template/text; header visibility follows the selected mode and `AlwaysShowHeader` |
+| `PaneHeader`, `PaneCustomContent`, `PaneFooter`, `ContentOverlay`, `AutoSuggestBox` | Actual native visual presenters, with ownership moved on replacement or retemplating |
+| `PaneToggleButtonStyle`, `MenuItemContainerStyle` | Audited native `ControlTheme` values; arbitrary WinUI `Style` objects are not interchangeable |
+
+The fallback template has a native `RootSplitView`, a `TopPanePresenter`, main
+and footer item hosts, header/search/content presenters and actual toggle/back
+buttons. Switching Top/Left moves the same pane controls between the hosts. Top
+items use horizontal layout. Native SplitView geometry handles inline, compact
+and overlay placement; top overflow partitioning is not implemented.
+
+Pane events preserve a distinction in the pinned source: light dismissal asks
+through `PaneClosing.Cancel`, while an explicit or adaptive `IsPaneOpen` change
+is a forced transition. A canceled dismissal retains the open state. Reentrant
+opening/closing handlers cannot produce a stale terminal event. Native subscriptions
+are disposable, old template parts disconnect, and retained controls, providers
+or sources do not imply ownership of a destroyed NavigationView. Clearing an
+attached `Template` also disconnects retained toggle/back buttons and the old
+SplitView. Reapplying the template restores the selected container and native
+content, with one active back-request handler.
+Old header/content presenters clear `ContentTemplate` before `Content` during
+replacement or clearing. A custom data template that accepts null data is not
+invoked during that teardown, so it cannot recreate a visual that the new
+presenter must adopt. This applies to `HeaderTemplate` and the inherited
+`ContentTemplate` contract used by the native NavigationView template.
+
+### Hierarchical items and automation
+
+`NavigationViewItemBase.IsSelected` defaults false. A `NavigationViewItem`
+initially has no icon, badge or source, with `SelectsOnInvoked = true`,
+`IsExpanded = false`, `HasUnrealizedChildren = false` and
+`IsChildSelected = false`. Its `CompactPaneLength` is externally read-only and
+starts at 48. Child `MenuItems` use the same independent collection policy as
+the parent. `HasUnrealizedChildren` supplies a real expansion affordance and
+allows an expanding handler to populate the live collection. An active empty
+`MenuItemsSource` takes precedence over that flag for the parent's public
+`Expand`/`Collapse` operations, matching the pinned source child check.
+
+The replaceable item template contains real content, icon and badge presenters,
+a row button, chevron, selection indicator and child host. Icon/badge replacement
+detaches the prior visual. Expanding reveals native child controls; collapsed
+inline children consume no layout space. Top and closed compact menus use a
+native child Popup, with host interaction acceptance tracked separately.
+Keyboard expansion respects right-to-left flow and ignores bubbled child events
+at ancestors. Moving into children with the expansion-direction key skips
+headings and nonfocusable, hidden or disabled rows; the key remains unhandled
+when no child can take focus. An ancestor can show its selected-descendant
+indicator while the descendant is hidden. Header and separator types are native nonfocusable controls
+with replaceable templates.
+
+Native directional handlers operate on popup items as well as the main tree.
+Popup Up/Down traverses the visible expanded subtree; Home/End stays in that
+popup list, skipping headings and hidden or disabled rows. Top root Left/Right
+navigation follows flow direction, and Down enters an expanded child popup.
+`SelectionFollowsFocus` determines whether that focus invokes/selects an item;
+disabled following leaves selection unchanged. Direct item subscriptions retain
+the owner weakly and detach after source removal or template replacement.
+
+The automatic compact caption tooltip uses nonempty string content on the
+native row button; an explicit item tooltip takes precedence. The pinned source
+places its automatic tooltip on the item for keyboard-focus presentation, so
+that exact location/keyboard behavior remains unverified. Native key events also
+do not expose WinRT's `WasKeyDown` value; source-specific repeat-key suppression
+is not claimed.
+
+The NavigationView automation peer exposes native single-selection semantics.
+The item peer supplies SelectionItem, adds ExpandCollapse for expandable items,
+and has no Invoke pattern. Select/AddToSelection still invoke the native item;
+RemoveFromSelection only changes selection. The selection container resolves
+through inline and popup logical parents. Top root items report TabItem while
+nested items report ListItem. Disabled input and nonselecting actions retain their
+native restrictions. Owned expansion providers use the parent's child predicate
+for every call: an active empty source prevents expansion/collapse even when
+inline items or `HasUnrealizedChildren` still advertise an expansion pattern.
+A retained provider rechecks child removal and replacement before changing
+`IsExpanded`. These provider tests do not establish Windows UIA tree
+level/group position, localization, screen-reader announcements or pixel parity.
+
+### Gallery examples and exact source behavior
+
+The opt-in WinUI markup migration accepts source `NavigationViewItem Icon="Play"`
+and `AutoSuggestBox QueryIcon="Find"` forms by creating native `SymbolIcon`
+property elements. `WXAML2005` records the original literal range and the
+adaptation. The native Symbol parser still validates the literal. This applies
+only to the recognized WinUI owner/member identities; native FerroUI markup,
+resource/binding expressions and explicit application type/member policies keep
+their existing contracts. No global IconElement string conversion is added.
+The [migration implementation](../../../src/Markup/FerroUI.Markup.Xaml.Loader/winui/migration.rs)
+retains source edits and namespace scopes; lexical assertions and the
+[interpreted/compiled fixture tests](../../../src/Markup/FerroUI.Markup.Xaml.Loader/tests/winui_compiled.rs)
+exercise property ownership, separate icon instances and native selection.
+Those tests do not imply an executed result until the corresponding run is recorded.
+
+The port follows the pinned
+[running XAML](https://github.com/microsoft/WinUI-Gallery/blob/14061eeac21c38ae99f302edf3d9136d4f652c4c/WinUIGallery/Samples/NavigationView/NavigationViewPage.xaml)
+and [code behind](https://github.com/microsoft/WinUI-Gallery/blob/14061eeac21c38ae99f302edf3d9136d4f652c4c/WinUIGallery/Samples/NavigationView/NavigationViewPage.xaml.cs).
+Every exported example now has a source-hash/test mapping in
+[port-status.json](../../../samples/WinUIGallery/port-status.json).
+All eight remain **partial**; native composition and source handlers do not
+establish complete XAML, template, host or visual equivalence.
+
+| Source composition | Preserved behavior and explicit adaptation |
+|---|---|
+| `nvSample5` — default pane | Four original labels/icons/tags, initial first selection, header updates, distinct destination pages and Settings navigation |
+| `nvSample6` — Top | Original fourth item deliberately still targets `SamplePage3`; the source header remains unchanged |
+| `nvSample2` — adaptive orientation | Rust observes native host width against `CompactModeThresholdWidth`, falling back to sample bounds without a host; this explicitly adapts the VisualStateManager/AdaptiveTrigger expression |
+| `nvSample7` — focus/tabs | Top, selection follows focus and collapsed back button; preserves the running handler's normal `Frame.Navigate` journal behavior |
+| `nvSample4` — category data | Original category labels/icons/tooltips, separator and heading; live model collection and native template dispatch; all categories target `SamplePage1` as in the running source |
+| `nvSample9` — footer | Original main/footer labels/icons/tags and shared selection; source Left/Top checked handlers |
+| `nvSample8` — hierarchy | Original Home/Account/Document options tree, Mail/Calendar/Create new/Upload file children, destination types and nonselecting action parent |
+| `nvSample` — API options | Original settings/back/header/search/custom-content/footer/focus/selection controls and two-way header/title bindings; no initial selection is invented |
+
+The focus/tabs exported text suggests `NavigateToType` with journal recording
+disabled, while the running pinned C# handler uses `Navigate`. The port keeps
+the running behavior and records the discrepancy. The category example replaces
+its custom C# `DataTemplateSelector` and category `x:Bind` expressions with
+explicit Rust data-template dispatch. Source search and back controls have no
+query-submission or back-navigation handler; the port retains that scope. The
+seven sample destination types are real native Page subclasses with registered
+Frame factories. Callback navigation failures are shown by the page's error
+TextBlock rather than silently discarded.
+
+The new destination pages retain the original resource values, shapes, colors,
+tile layout and text; native wrapping adapts `WrapWholeWords` to `Wrap`. The
+hierarchy explanation uses a multiline native TextBlock in place of the source
+RichTextBlock paragraphs. These explicit presentation adaptations do not certify
+general WinUI rich-text or line-breaking equivalence.
+
+The InfoBadge page now also includes its
+[original embedded NavigationView example](https://github.com/microsoft/WinUI-Gallery/blob/14061eeac21c38ae99f302edf3d9136d4f652c4c/WinUIGallery/Samples/InfoBadge/InfoBadgePage.xaml),
+with Home, Account, Inbox, notification value 5, the Inbox automation name,
+opacity toggling and the original LeftExpanded/LeftCompact/Top handlers.
+Existing ToggleButton/TextBlock controls and explicit Rust wiring adapt the
+ToggleSwitch header/state and page property. Its source Frame has no navigation
+handler, so remains empty. The other three badge examples remain present.
+
+**Boundaries:** There is no top overflow redistribution or `OverflowLabelMode`,
+`NavigationViewTemplateSettings`, public `NavigationViewItemPresenter` or its
+template-settings class, general `MenuItemTemplateSelector` or
+`MenuItemContainerStyleSelector`, `IsTitleBarAutoPaddingEnabled`,
+`ShoulderNavigationEnabled`, or recommended navigation-transition argument.
+Acrylic, composition/selection transitions, sound, OS title-bar integration,
+raw gamepad input, localization and full WinUI VisualStateManager execution
+remain separate obligations. Native popup/provider tests use framework host
+services; full desktop interaction and Windows visual/accessibility comparisons
+remain pending. The API ledger attaches evidence only to exact members asserted
+by focused tests, without promoting untested properties or all type members.
+
 ## InfoBadge
 
 The contract follows the pinned
@@ -282,7 +497,8 @@ separate from matching a resource key. The control observes resource/theme
 changes, and explicit foreground/background values retain native precedence.
 
 **Boundaries:** BitmapIconSource, ImageIconSource and AnimatedIconSource are not
-implemented. This control alone does not add `NavigationViewItem.InfoBadge`.
+implemented. The native `NavigationViewItem.InfoBadge` presenter now hosts this
+control, and the original Gallery Inbox composition has a partial executable port.
 Arbitrary WinUI Style/VisualStateManager templates require a separate projection.
 There is no InfoBadge-specific automation peer or Windows accessibility/pixel
 comparison claim. Private numeric text is excluded from accessibility content;
