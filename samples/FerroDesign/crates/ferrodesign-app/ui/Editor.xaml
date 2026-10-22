@@ -291,6 +291,10 @@
                   <StackPanel Grid.Column="2" Spacing="4"><TextBlock Text="Join" Classes="label"/><ComboBox Name="StrokeJoinChoice" HorizontalAlignment="Stretch"/></StackPanel>
                 </Grid>
                 <TextBox Name="DashField" PlaceholderText="Dash pattern, for example 8, 4"/>
+                <TextBlock Text="Width profile" Classes="label"/>
+                <ComboBox Name="StrokeProfileChoice" HorizontalAlignment="Stretch" ToolTip.Tip="Vary stroke width along the path; selecting a profile removes arrowheads"/>
+                <Button Name="StrokeWidthCustomButton" Content="Edit width points…" HorizontalAlignment="Stretch"/>
+                <Button Name="StrokeWidthHandlesButton" Content="Edit width on canvas" HorizontalAlignment="Stretch"/>
               </StackPanel>
               <Border Classes="rule"/>
               <Grid ColumnDefinitions="*,28"><TextBlock Text="Effects" Classes="heading" VerticalAlignment="Center"/><Button Name="AddEffectButton" Grid.Column="1" Content="+"/></Grid>

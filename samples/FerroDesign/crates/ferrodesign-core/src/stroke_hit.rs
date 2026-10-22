@@ -58,7 +58,7 @@ impl VariableStrokeHits {
 
     pub(crate) fn hit(&self, point: Point, tolerance: f64) -> bool {
         if !self.bounds.inflate(tolerance).contains(point) { return false; }
-        let in_fill = self.fill.contains(point);
+        let in_fill = self.strokes.iter().any(|(align, _)| *align != StrokeAlign::Center) && self.fill.contains(point);
         self.strokes.iter().any(|(align, path)| {
             if (*align == StrokeAlign::Inside && !in_fill) || (*align == StrokeAlign::Outside && in_fill) { return false; }
             path.contains(point) || (tolerance > 0.0 && path.contours.iter().any(|contour|

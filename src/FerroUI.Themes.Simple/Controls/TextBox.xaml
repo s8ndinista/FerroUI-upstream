@@ -163,6 +163,7 @@
                                    SelectionStart="{TemplateBinding SelectionStart}"
                                    Text="{TemplateBinding Text,Mode=TwoWay}"
                                    TextStyleOverrides="{TemplateBinding TextStyleOverrides}"
+                                   TextParagraphStyles="{TemplateBinding TextParagraphStyles}"
                                    TextAlignment="{TemplateBinding TextAlignment}"
                                    TextWrapping="{TemplateBinding TextWrapping}" />
                   </Panel>

@@ -2,7 +2,8 @@
 use super::*;
 use ferrodesign_core::{LayoutGrid, LayoutGridAlignment, LayoutGridAxis, LayoutGridEdit, LayoutGridKind,
     LayoutGridPattern, LayoutGuideEdit, LayoutGuideProperty};
-mod variables;
+#[path = "layout_grids/variables.rs"]
+mod guide_variables;
 
 #[derive(Clone)]
 enum GuideTarget { Frames(Vec<NodeId>), Style(StyleId) }

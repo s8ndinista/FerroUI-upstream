@@ -13,12 +13,12 @@ fn line() -> Node {
 fn variable_width_picking_uses_real_ink_and_retains_geometry_for_placement_and_paint() {
     let mut node = line();
     let hits = VariableStrokeHits::prepare(&node).unwrap();
-    assert!(hits.hit(Point::new(90.0, 15.0), 0.0));
-    assert!(!hits.hit(Point::new(10.0, 15.0), 0.0));
-    assert!(hits.hit(Point::new(10.0, 2.5), 1.0));
-    assert!(!node.hit_test_local(Point::new(10.0, 15.0), 0.0));
+    assert!(hits.hit(Point::new(10.0, 15.0), 0.0));
+    assert!(!hits.hit(Point::new(90.0, 15.0), 0.0));
+    assert!(hits.hit(Point::new(90.0, 2.5), 1.0));
+    assert!(!node.hit_test_local(Point::new(90.0, 15.0), 0.0));
     let retained = hits.strokes[0].1.contours.as_ptr();
-    for _ in 0..100 { assert!(hits.hit(Point::new(90.0, 15.0), 0.0)); }
+    for _ in 0..100 { assert!(hits.hit(Point::new(10.0, 15.0), 0.0)); }
     assert_eq!(retained, hits.strokes[0].1.contours.as_ptr());
     node.x += 50.0; node.rotation = 42.0; node.strokes[0].paint = Paint::Solid(Color::WHITE);
     assert!(hits.matches(&node));
@@ -35,11 +35,11 @@ fn variable_width_scene_bounds_transform_ink_and_respect_frame_clip() {
     node.set_local_transform(transform);
     let id = document.insert_node(page, node).unwrap();
     let mut scene = SceneIndex::default(); scene.rebuild(&document, page);
-    assert_eq!(scene.hit_test(&document, transform.apply(Point::new(90.0, 15.0)), 0.0, false), Some(id));
-    assert_eq!(scene.hit_test(&document, transform.apply(Point::new(10.0, 15.0)), 0.0, false), None);
+    assert_eq!(scene.hit_test(&document, transform.apply(Point::new(10.0, 15.0)), 0.0, false), Some(id));
+    assert_eq!(scene.hit_test(&document, transform.apply(Point::new(90.0, 15.0)), 0.0, false), None);
     document.nodes.get_mut(&id).unwrap().strokes[0].width_profile = StrokeWidthProfile::Uniform;
     scene.update_nodes(&document, page, &[id]);
-    assert_eq!(scene.hit_test(&document, transform.apply(Point::new(10.0, 15.0)), 0.0, false), Some(id));
+    assert_eq!(scene.hit_test(&document, transform.apply(Point::new(90.0, 15.0)), 0.0, false), Some(id));
 
     let mut frame = Node::new(NodeKind::Frame, "Clip", 200.0, 100.0, 100.0, 100.0);
     frame.clip_content = true; frame.corner_radius = 20.0; frame.fills.clear();

@@ -3,21 +3,57 @@
 //! text APIs are used here.
 use super::*;
 use ferrodesign_core::TextDirection;
+use ferroui_base::media::text_formatting::{TextParagraphStyle, TextParagraphStyles};
 use ferroui_base::media::text_formatting::unicode::{BidiClass, Codepoint};
 use ferroui_base::media::{FontFeature, FontFeatureCollection};
 use ferroui_controls::presenters::TextStyleOverrides;
 use ferroui_controls::TextBox;
 
 pub(crate) fn flow_direction(node: &Node) -> FlowDirection {
-    match node.text_direction {
+    resolve_direction(node.text_direction, &node.text)
+}
+
+fn resolve_direction(direction: Option<TextDirection>, text: &str) -> FlowDirection {
+    match direction {
         None | Some(TextDirection::LeftToRight) => FlowDirection::LeftToRight,
         Some(TextDirection::RightToLeft) => FlowDirection::RightToLeft,
-        Some(TextDirection::Auto) => node.text.chars().find_map(|ch| match Codepoint::new(ch as u32).bi_di_class() {
+        Some(TextDirection::Auto) => text.chars().find_map(|ch| match Codepoint::new(ch as u32).bi_di_class() {
             BidiClass::LeftToRight => Some(FlowDirection::LeftToRight),
             BidiClass::RightToLeft | BidiClass::ArabicLetter => Some(FlowDirection::RightToLeft),
             _ => None,
         }).unwrap_or(FlowDirection::LeftToRight),
     }
+}
+
+/// Independent paragraph ranges use the same public formatter as the native
+/// TextBox. Auto resolves the first strong character separately per paragraph,
+/// including paragraphs without explicit overrides and final empty paragraphs.
+pub(crate) fn paragraph_styles(node: &Node) -> Option<TextParagraphStyles> {
+    if node.text_paragraphs.is_empty() && node.text_direction != Some(TextDirection::Auto) { return None; }
+    let mut styles = Vec::new();
+    let mut cursor = 0;
+    let mut utf16 = 0;
+    for range in ferrodesign_core::text_paragraph_ranges(&node.text) {
+        while cursor < node.text_paragraphs.len() && node.text_paragraphs[cursor].start < range.start { cursor += 1; }
+        let style = node.text_paragraphs.get(cursor).filter(|style| style.start == range.start && style.end == range.end);
+        let direction = style.and_then(|style| style.direction).or(node.text_direction);
+        let start = utf16;
+        let length = node.text[range.clone()].encode_utf16().count() as i32;
+        utf16 += length;
+        styles.push(ValueSpan::new(start, length, TextParagraphStyle {
+            text_alignment: style.and_then(|style| style.alignment).map(|value| match value {
+                TextAlign::Left => TextAlignment::Left, TextAlign::Center => TextAlignment::Center,
+                TextAlign::Right => TextAlignment::Right, TextAlign::Justify => TextAlignment::Justify,
+            }),
+            flow_direction: Some(resolve_direction(direction, &node.text[range])),
+            line_height: style.and_then(|style| style.line_height).map(|value| font_size(node.font_size) * value),
+            letter_spacing: style.and_then(|style| style.letter_spacing),
+            space_before: style.and_then(|style| style.space_before).unwrap_or(0.0),
+            space_after: style.and_then(|style| style.space_after).unwrap_or(0.0),
+            indent: style.and_then(|style| style.indent).unwrap_or(0.0),
+        }));
+    }
+    Some(Rc::from(styles))
 }
 
 pub(crate) fn font_features(node: &Node) -> Option<FontFeatureCollection> {
@@ -113,11 +149,13 @@ pub(crate) fn configure_text_box(field: &TextBox, node: &Node) {
     let brush = editor_brush(node);
     field.set_foreground(Some(brush.clone()));
     field.set_text_style_overrides(range_styles(node, brush));
+    field.set_text_paragraph_styles(paragraph_styles(node));
 }
 
 pub(crate) fn refresh_text_box_ranges(field: &TextBox, node: &Node) {
     let brush = field.foreground().unwrap_or_else(|| editor_brush(node));
     field.set_text_style_overrides(range_styles(node, brush));
+    field.set_text_paragraph_styles(paragraph_styles(node));
     field.set_flow_direction(flow_direction(node));
 }
 
@@ -162,8 +200,15 @@ pub(crate) fn text_box_state(field: &TextBox) -> serde_json::Value {
     let length = (field.selection_end() - field.selection_start()).abs();
     let rect = |rect: ferroui_base::Rect| json!({"x":rect.x,"y":rect.y,"width":rect.width,"height":rect.height});
     let selected: Vec<_> = layout.hit_test_text_range(start, length).into_iter().map(rect).collect();
+    let lines: Vec<_> = layout.text_lines().iter().enumerate().take(64).map(|(index, line)| {
+        let origin = layout.line_origin(index);
+        json!({"start":line.first_text_source_index(),"length":line.length(),
+            "x":origin.x,"y":origin.y,"height":line.height(),
+            "direction":format!("{:?}",layout.line_flow_direction(index))})
+    }).collect();
     json!({"direction":format!("{:?}",presenter.flow_direction()),"runs":runs,"runCount":count,
         "styleCount":field.text_style_overrides().as_ref().map_or(0, |styles| styles.len()),
+        "paragraphStyleCount":field.text_paragraph_styles().as_ref().map_or(0, |styles| styles.len()),"lines":lines,
         "layoutWidth":layout.width_including_trailing_whitespace(),"layoutHeight":layout.height(),
         "baseline":layout.baseline(),"lineCount":layout.text_lines().len(),
         "caretIndex":field.caret_index(),"selectionStart":field.selection_start(),"selectionEnd":field.selection_end(),
@@ -215,6 +260,7 @@ mod tests {
         presenter.set_foreground(field.foreground());
         presenter.set_font_features(field.font_features());
         presenter.set_text_style_overrides(field.text_style_overrides());
+        presenter.set_text_paragraph_styles(field.text_paragraph_styles());
         presenter.set_flow_direction(field.flow_direction());
         presenter.set_line_height(field.line_height());
         presenter.set_letter_spacing(field.letter_spacing());
@@ -327,6 +373,74 @@ mod tests {
         assert_eq!(origin.y, (node.height - canvas.layout.height()) / 2.0);
         assert_eq!(width, node.width);
         assert!(height >= canvas.layout.height());
+        scope.dispose();
+    }
+
+    #[test]
+    fn typography_auto_direction_resolves_each_paragraph_and_preserves_utf16_boundaries() {
+        let mut node = text_node("A🦀\r\nשלום\n");
+        node.text_direction = Some(TextDirection::Auto);
+        let styles = paragraph_styles(&node).unwrap();
+        assert_eq!(styles.iter().map(|style| (style.start(), style.length())).collect::<Vec<_>>(), vec![(0,5),(5,5),(10,0)]);
+        assert_eq!(styles.iter().map(|style| style.value().flow_direction.unwrap()).collect::<Vec<_>>(),
+            vec![FlowDirection::LeftToRight, FlowDirection::RightToLeft, FlowDirection::LeftToRight]);
+        node.apply_paragraph_style("A🦀\r\n".len().."A🦀\r\nשלום\n".len(), &ferrodesign_core::ParagraphStylePatch {
+            direction: ferrodesign_core::TextStyleChange::Set(TextDirection::LeftToRight), ..Default::default()
+        }).unwrap();
+        assert_eq!(paragraph_styles(&node).unwrap()[1].value().flow_direction, Some(FlowDirection::LeftToRight));
+    }
+
+    #[test]
+    fn typography_paragraph_native_and_canvas_pixels_geometry_and_cache_identity_agree() {
+        let scope = fonts();
+        let mut node = text_node("A🦀 B\nשלום\nLast");
+        node.font_size = 20.0;
+        node.text_direction = Some(TextDirection::Auto);
+        node.width = 360.0;
+        node.height = 150.0;
+        let fingerprint = visual_fingerprint(&node, 0, false, 0);
+        let ranges = ferrodesign_core::text_paragraph_ranges(&node.text);
+        node.apply_paragraph_style(ranges[0].clone(), &ferrodesign_core::ParagraphStylePatch {
+            indent: ferrodesign_core::TextStyleChange::Set(12.25),
+            space_before: ferrodesign_core::TextStyleChange::Set(3.5),
+            space_after: ferrodesign_core::TextStyleChange::Set(5.75),
+            letter_spacing: ferrodesign_core::TextStyleChange::Set(0.375), ..Default::default()
+        }).unwrap();
+        node.apply_paragraph_style(ranges[1].clone(), &ferrodesign_core::ParagraphStylePatch {
+            alignment: ferrodesign_core::TextStyleChange::Set(TextAlign::Right),
+            indent: ferrodesign_core::TextStyleChange::Set(10.5),
+            line_height: ferrodesign_core::TextStyleChange::Set(1.8),
+            space_before: ferrodesign_core::TextStyleChange::Set(7.25), ..Default::default()
+        }).unwrap();
+        assert_ne!(fingerprint, visual_fingerprint(&node, 0, false, 0), "Paragraph edits invalidate retained text visuals");
+        let canvas = make_text_layout(&node, editor_brush(&node));
+        let presenter = presenter(&node);
+        let native = presenter.text_layout();
+        assert_eq!(canvas.layout.height(), native.height());
+        assert_eq!(native.text_lines().len(), 3);
+        assert_eq!(native.line_origin(0), UiPoint::new(12.25, 3.5));
+        assert_eq!(native.line_flow_direction(1), FlowDirection::RightToLeft);
+        for index in 0..3 {
+            assert_eq!(canvas.layout.line_origin(index), native.line_origin(index));
+            let line = &native.text_lines()[index];
+            let start = line.first_text_source_index();
+            assert_eq!(canvas.layout.hit_test_text_range(start, line.length()), native.hit_test_text_range(start, line.length()));
+            presenter.move_caret_to_text_position(start, false);
+            assert_eq!(presenter.cursor_rectangle().y, native.line_origin(index).y);
+        }
+        presenter.hide_caret();
+        let mut document = Document::new("Native paragraph pixel parity");
+        document.insert_node(1, node).unwrap();
+        let editor = Editor::new(document);
+        let canvas_pixels = pixels(|context| {
+            let stats = ScenePainter::default().render_editor(context, &editor,
+                &editor.document.pages[0].children, Rect::new(0.0, 0.0, 512.0, 160.0));
+            assert_eq!(stats.invalid_nodes, 0);
+        });
+        let native_pixels = pixels(|context| ferroui_base::rendering::ImmediateRenderer::render_clipped(context,
+            &presenter.clone().upcast(), UiRect::new(0.0, 0.0, 512.0, 160.0)));
+        assert!(canvas_pixels.chunks_exact(4).filter(|pixel| pixel[3] > 0).count() > 100);
+        assert_eq!(canvas_pixels, native_pixels);
         scope.dispose();
     }
 }

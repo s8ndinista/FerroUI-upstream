@@ -16,6 +16,7 @@ mod rich_text;
 mod text;
 mod variables;
 mod vector_export;
+mod stroke_profiles;
 use crate::{
     canvas::{CanvasEvent, DesignCanvas, Tool},
     icons, platform,
@@ -216,6 +217,7 @@ impl EditorShell {
         self.wire_inline_text();
         self.wire_panels();
         self.wire_geometry_authoring();
+        self.wire_stroke_profiles();
         self.hook("EditPaintsButton", "paints");
         self.hook("CompositingButton", "compositing");
         self.hook("EditInteractionsButton", "interactions");
@@ -285,6 +287,7 @@ impl EditorShell {
                         core::StrokeCap::Square,
                         core::StrokeCap::Arrow,
                     ][i];
+                    if stroke.cap == core::StrokeCap::Arrow { stroke.width_profile = core::StrokeWidthProfile::Uniform; }
                 }
             },
         );
@@ -602,7 +605,7 @@ impl EditorShell {
                 self.sync_document_draft_dirty();
                 // A no-op stroke still needs to resume a previous edit's
                 // background save if its timer elapsed during pointer capture.
-                if !self.canvas.network_bucket_state().1 && self.pending_save.get() {
+                if !self.canvas.network_bucket_state().1 && !self.canvas.stroke_width_active() && self.pending_save.get() {
                     self.schedule_pending_save();
                 }
             }
@@ -671,7 +674,7 @@ impl EditorShell {
             if let Some(field) = control.downcast_ref::<TextBox>() {
                 state["text"] = json!(field.text());
                 state["composing"] = json!(field.is_composing_text());
-                if matches!(control.name().as_deref(), Some("InlineTextBox" | "RichTextSelection")) {
+                if matches!(control.name().as_deref(), Some("InlineTextBox" | "RichTextSelection" | "ParagraphSelection" | "RichTextPreview")) {
                     state["typography"] = crate::renderer::typography::text_box_state(field);
                 }
             }
@@ -712,6 +715,7 @@ impl EditorShell {
             "PageInspector", "DesignInspector", "PageBackgroundField", "PageBackgroundSwatch",
             "NameField", "WidthField", "HeightField", "FillField", "TextField",
             "RadiusField", "CornerSmoothingField", "IndependentCornersButton",
+            "StrokeProfileChoice", "StrokeWidthCustomButton", "StrokeWidthHandlesButton", "StrokeWidthField", "DashField",
             "SelectMatchingButton",
             "XField", "YField", "RotationField", "AffineButton", "FramePresetsButton", "PageFramePresetsButton",
             "ConstraintLeft", "ConstraintRight", "ConstraintTop", "ConstraintBottom", "ConstraintCenterX", "ConstraintCenterY",
@@ -759,7 +763,7 @@ impl EditorShell {
                 if let Some(control) = visual.cast::<Control>() {
                     if let Some(name) = control
                         .name()
-                        .filter(|name| ["Paint", "Effect", "Interaction", "RichText", "Variable", "Component", "Compositing", "Crop", "Layout", "Action", "SelectLayer", "SelectSame", "Affine", "FramePreset", "Style"]
+                        .filter(|name| ["Paint", "Effect", "Interaction", "RichText", "Paragraph", "StrokeWidth", "StrokeProfile", "Variable", "Component", "Compositing", "Crop", "Layout", "Action", "SelectLayer", "SelectSame", "Affine", "FramePreset", "Style"]
                             .iter().any(|prefix| name.starts_with(prefix)))
                     {
                         chrome.insert(name, native_bounds(&control));
@@ -799,6 +803,7 @@ impl EditorShell {
             "networkPoint":self.canvas.network_point.get(),
             "networkVertices":*self.canvas.network_vertices.borrow(),
             "networkBucket":{"face":bucket_face,"active":bucket_active,"visited":bucket_visited},
+            "strokeWidth":self.canvas.stroke_width_state(),
             "imageCrop":self.canvas.image_crop_state(),
             "pointerPresses":self.canvas.pointer_press_observations(),
             "layoutDrag":self.canvas.layout_drag_state(),
@@ -960,7 +965,7 @@ impl EditorShell {
         // A background timer may belong to the previous committed edit. The
         // held bucket preview must remain cancelable; release/cancel schedules
         // a fresh save, while explicit lifecycle boundaries finish it first.
-        if self.canvas.network_bucket_state().1 { return; }
+        if self.canvas.network_bucket_state().1 || self.canvas.stroke_width_active() { return; }
         if let Some(timer) = self.pending_save_timer.borrow_mut().take() { timer.dispose(); }
         if !self.pending_save.get() { return; }
         let started = Instant::now();
@@ -1442,6 +1447,7 @@ impl EditorShell {
         );
         self.visible("CornerSmoothingOptions", node.is_some_and(|n| matches!(n.kind, NodeKind::Rectangle | NodeKind::Frame | NodeKind::Component | NodeKind::Instance | NodeKind::Section)));
         self.visible("StrokeOptions", node.is_some_and(|n| !n.strokes.is_empty()));
+        self.refresh_stroke_profiles(node);
         self.visible(
             "CornerOptions",
             node.is_some_and(|n| n.corner_radii.is_some()),
@@ -1623,6 +1629,7 @@ impl EditorShell {
     }
     fn modify(self: &Rc<Self>, label: &str, mut operation: impl FnMut(&mut Node)) {
         self.canvas.finish_network_bucket();
+        self.canvas.finish_stroke_width_edit();
         self.canvas.finish_image_crop();
         let ids = self.editor.borrow().selection.clone();
         self.editor.borrow_mut().update_nodes_with_layout(&ids, label, |node| operation(node));
@@ -1634,6 +1641,7 @@ impl EditorShell {
         let text = self.field(name).text().unwrap_or_default();
         let id = self.editor.borrow().selection.first().copied();
         self.canvas.finish_network_bucket();
+        self.canvas.finish_stroke_width_edit();
         self.canvas.finish_image_crop();
         if id.is_none() {
             if name == "NameField" || name == "FillField" || name == "PageBackgroundField" {
@@ -1679,6 +1687,14 @@ impl EditorShell {
                     return self.reject_inspector_field(name, &error.to_string());
                 }
             }
+            "StrokeWidthField" => {
+                let Some(value) = number.filter(|value| *value >= 0.0) else {
+                    return self.reject_inspector_field(name, "Stroke width must be a finite nonnegative number, at most 10,000,000.");
+                };
+                let ids = self.editor.borrow().selection.clone();
+                let outcome = self.editor.borrow_mut().set_stroke_width(&ids, 0, value);
+                if let Err(error) = outcome { return self.reject_inspector_field(name, &error.to_string()); }
+            }
             "DashField" => {
                 let dash = text
                     .split(|c: char| c == ',' || c.is_whitespace())
@@ -1696,6 +1712,12 @@ impl EditorShell {
                     return self.reject_inspector_field(name,
                         "A dash pattern needs a positive length and finite nonnegative values.",
                     );
+                }
+                if !dash.is_empty() && self.editor.borrow().selection.iter().any(|id|
+                    self.editor.borrow().document.nodes.get(id).and_then(|node| node.strokes.first())
+                        .is_some_and(|stroke| !stroke.width_profile.is_uniform()))
+                {
+                    return self.reject_inspector_field(name, "Select a Uniform width profile before adding dashes.");
                 }
                 self.modify("Stroke dash pattern", |n| {
                     if let Some(stroke) = n.strokes.first_mut() {
@@ -1780,13 +1802,6 @@ impl EditorShell {
                                 }
                             }
                         }
-                        "StrokeWidthField" => {
-                            if n.strokes.is_empty() {
-                                n.strokes.push(Stroke::new(Color::BLACK, value.max(0.0)));
-                            } else {
-                                n.strokes[0].width = value.max(0.0);
-                            }
-                        }
                         "GapField" => {
                             if let Some(layout) = &mut n.layout {
                                 layout.gap = value.max(0.0);
@@ -1810,6 +1825,7 @@ impl EditorShell {
     pub fn command(self: &Rc<Self>, command: &str) -> bool {
         if command == "commit-edit" {
             self.canvas.finish_network_bucket();
+            self.canvas.finish_stroke_width_edit();
             self.finish_inline_text(true);
             let fields_committed = self.flush_inspector_drafts();
             self.canvas.finish_image_crop();
@@ -1822,18 +1838,16 @@ impl EditorShell {
         }
         // Undo during a held stroke cancels that preview. Other explicit
         // commands finish the stroke before they can join its transaction.
-        if matches!(command, "undo" | "redo") && self.canvas.cancel_network_bucket_gesture() {
+        if matches!(command, "undo" | "redo") && self.canvas.cancel_active_edit() {
             return true;
         }
         self.canvas.finish_network_bucket();
+        self.canvas.finish_stroke_width_edit();
         self.finish_inline_text(true);
         if matches!(command, "new" | "open" | "import-json" | "save" | "export-json" | "export-svg" | "export-png" | "export-xaml")
             && !self.flush_inspector_drafts() {
             self.toast("Correct the inspector value or press Escape before continuing.");
             return false;
-        }
-        if matches!(command, "undo" | "redo") && self.canvas.cancel_active_edit() {
-            return true;
         }
         if !matches!(command, "crop-image" | "crop-done") { self.canvas.finish_image_crop(); }
         if self.prototype.is_active()
@@ -1897,6 +1911,12 @@ impl EditorShell {
             "paints" => {
                 self.paints_dialog();
                 return true;
+            }
+            "stroke-width-points" => { self.stroke_profile_dialog(0); return true; }
+            "stroke-width-handles" => {
+                let opened = self.canvas.edit_stroke_width();
+                if !opened { self.toast("Select an unlocked layer with an undashed, unbranched stroke. Convert text and Boolean shapes to outlines first."); }
+                return opened;
             }
             "layout-grid-settings" => { self.layout_grid_dialog(); return true; }
             "network-region-paints" => { self.region_paints_dialog(); return true; }
@@ -3139,6 +3159,10 @@ fn xaml_node(doc: &core::Document, id: NodeId, depth: usize, result: &mut String
     let Some(n) = doc.nodes.get(&id) else { return };
     if let Some(network) = n.vector_network.as_ref().filter(|_| n.kind == NodeKind::Vector) {
         vector_export::network_xaml(n, network, depth, result);
+        return;
+    }
+    if n.strokes.iter().any(|stroke| !stroke.width_profile.is_uniform()) {
+        vector_export::profiled_xaml(doc, n, depth, result);
         return;
     }
     let pad = "  ".repeat(depth);

@@ -1,5 +1,7 @@
 use crate::presenters::{TextPresenter, TextStyleOverrides};
 use crate::TextBox;
+use ferroui_base::media::text_formatting::TextParagraphStyles;
+use ferroui_base::utilities::ReadOnlyMemory;
 use ferroui_base::input::text_input::{
     ContextMenuAction, TextInputMethodClient, TextInputMethodClientEvents, TextSelection,
 };
@@ -38,6 +40,7 @@ struct ConfirmedPreedit {
     caret: i32,
     selection: TextSelection,
     styles: Option<TextStyleOverrides>,
+    paragraph_styles: Option<TextParagraphStyles>,
 }
 
 impl ConfirmedPreedit {
@@ -51,7 +54,8 @@ impl ConfirmedPreedit {
             units.drain(start..end);
             Some(String::from_utf16_lossy(&units))
         } else { text.clone() };
-        Self { text, provisional_text, caret: parent.caret_index(), selection, styles: parent.text_style_overrides() }
+        Self { text, provisional_text, caret: parent.caret_index(), selection, styles: parent.text_style_overrides(),
+            paragraph_styles: parent.text_paragraph_styles() }
     }
 }
 
@@ -226,6 +230,16 @@ impl TextBoxTextInputMethodClient {
         Some((start, end - start))
     }
 
+    pub(crate) fn preedit_paragraph_source(&self, styles: Option<&TextParagraphStyles>) -> Option<ReadOnlyMemory<u16>> {
+        if !self.pending_preedit.get() { return None; }
+        let parent = self.parent()?;
+        let confirmed = self.confirmed_preedit.borrow();
+        let confirmed = confirmed.as_ref()?;
+        if confirmed.paragraph_styles.as_ref() != styles || confirmed.text == confirmed.provisional_text
+            || parent.text() != confirmed.provisional_text { return None; }
+        Some(ReadOnlyMemory::<u16>::from_str(confirmed.text.as_deref().unwrap_or_default()))
+    }
+
     pub(crate) fn set_presenter(&self, presenter: Option<&Ref<TextPresenter>>, parent: Option<&Ref<TextBox>>) {
         let confirmed = self.confirmed_preedit.borrow_mut().take();
         if self.pending_preedit.get() {
@@ -236,6 +250,7 @@ impl TextBoxTextInputMethodClient {
                     let _change = self.begin_change();
                     old_parent.set_text_from_internal_synchronization(confirmed.text);
                     old_parent.set_current_value(TextBox::text_style_overrides_property(), confirmed.styles);
+                    old_parent.set_current_value(TextBox::text_paragraph_styles_property(), confirmed.paragraph_styles);
                     old_parent.set_current_value(TextBox::caret_index_property(), confirmed.caret);
                     old_parent.set_current_value(TextBox::selection_start_property(), confirmed.selection.start);
                     old_parent.set_current_value(TextBox::selection_end_property(), confirmed.selection.end);

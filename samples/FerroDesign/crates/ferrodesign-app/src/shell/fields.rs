@@ -204,6 +204,7 @@ impl EditorShell {
     pub(super) fn sync_document_draft_dirty(&self) {
         let dirty = self.inline_draft_dirty.get()
             || self.canvas.network_bucket_state().1
+            || self.canvas.stroke_width_active()
             || self
                 .live_inspector_drafts()
                 .iter()

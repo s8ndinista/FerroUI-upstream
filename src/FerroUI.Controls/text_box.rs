@@ -1,4 +1,5 @@
 use crate::presenters::{TextPresenter, TextStyleOverrides};
+use ferroui_base::media::text_formatting::TextParagraphStyles;
 use crate::primitives::{
     ScrollBarVisibility, TemplateAppliedEventArgs, TemplatedControl, TemplatedControlImpl,
 };
@@ -1313,6 +1314,14 @@ ferroui_base::ferro_properties! { impl TextBox, also [
     );
 
     ferro_property!(
+        /// Defines immutable UTF-16 paragraph formatting. Templates bind this
+        /// to TextPresenter, keeping rendering, IME and caret geometry shared.
+        pub fn text_paragraph_styles_property() -> StyledProperty<Option<TextParagraphStyles>> {
+            FerroProperty::register::<TextBox, _>("TextParagraphStyles", None)
+        }
+    );
+
+    ferro_property!(
         /// Defines the `TextAlignment` property.
         pub fn text_alignment_property() -> AttachedProperty<TextAlignment> {
             TextBlock::text_alignment_property().add_owner::<TextBox>()
@@ -1820,6 +1829,17 @@ impl TextBox {
 
     pub fn set_text_style_overrides(&self, value: Option<TextStyleOverrides>) {
         self.set_value(Self::text_style_overrides_property(), value)
+    }
+
+    /// Whole-paragraph styles at UTF-16 positions. Rebase committed ranges in
+    /// TextChanging as with TextStyleOverrides; provisional IME text is remapped
+    /// automatically without mutating this collection.
+    pub fn text_paragraph_styles(&self) -> Option<TextParagraphStyles> {
+        self.get_value(Self::text_paragraph_styles_property())
+    }
+
+    pub fn set_text_paragraph_styles(&self, value: Option<TextParagraphStyles>) {
+        self.set_value(Self::text_paragraph_styles_property(), value)
     }
 
     /// The text alignment of the text box.

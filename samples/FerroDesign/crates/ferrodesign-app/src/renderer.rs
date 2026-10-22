@@ -107,6 +107,7 @@ struct CachedStroke {
     pen: Rc<dyn IPen>,
     brush: Rc<dyn IBrush>,
     outline: Option<Ref<Geometry>>,
+    clip: Option<Ref<Geometry>>,
     arrow: Option<Ref<Geometry>>,
 }
 
@@ -848,6 +849,7 @@ fn paint_fills(context: &mut DrawingContext<'_>, visual: &CachedNode) {
 
 fn paint_strokes(context: &mut DrawingContext<'_>, visual: &CachedNode) {
     for stroke in visual.strokes.iter().rev() {
+        let clip = stroke.clip.as_ref().map(|clip| context.push_geometry_clip(clip));
         if let Some(outline) = &stroke.outline {
             context.draw_geometry(Some(&stroke.brush), None, outline);
         } else {
@@ -856,6 +858,7 @@ fn paint_strokes(context: &mut DrawingContext<'_>, visual: &CachedNode) {
         if let Some(arrow) = &stroke.arrow {
             context.draw_geometry(Some(&stroke.brush), None, arrow);
         }
+        if let Some(clip) = clip { context.pop(clip); }
     }
     if let Some(pen) = &visual.missing_image_pen {
         let bounds = visual.geometry.bounds();
@@ -1025,6 +1028,7 @@ fn build_visual(
     }
 
     let mut strokes = Vec::new();
+    let mut unsupported_effects = 0;
     let mut vector_mask = if let Some(network) = &network_fills {
         network.vector_mask(node, &geometry)
     } else if node
@@ -1047,7 +1051,21 @@ fn build_visual(
         let brush: Rc<dyn IBrush> = immutable_brush.clone();
         let aligned = stroke.align != StrokeAlign::Center && is_closed(node);
         let pen = make_pen(stroke, immutable_brush, if aligned { 2.0 } else { 1.0 });
-        let outline = if aligned {
+        let mut stroke_clip = None;
+        let outline = if !stroke.width_profile.is_uniform() {
+            match ferrodesign_core::variable_width_outline(node, stroke) {
+                Ok(path) => {
+                    let band = path_geometry(&path);
+                    if aligned {
+                        stroke_clip = Some(if stroke.align == StrokeAlign::Inside { geometry.clone() }
+                            else { combined(GeometryCombineMode::Exclude,
+                                RectangleGeometry::with_rect(band.bounds().inflate(1.0)).upcast(), geometry.clone()) });
+                    }
+                    Some(band)
+                }
+                Err(_) => { unsupported_effects += 1; continue; }
+            }
+        } else if aligned {
             let widened = stroke_geometry.get_widened_geometry(pen.as_ref());
             Some(combined(
                 if stroke.align == StrokeAlign::Inside {
@@ -1066,7 +1084,8 @@ fn build_visual(
         } else {
             None
         };
-        let stroke_bounds = core_rect(stroke_geometry.get_render_bounds(pen.as_ref()));
+        let stroke_bounds = outline.as_ref().map(|outline| core_rect(outline.bounds()))
+            .unwrap_or_else(|| core_rect(stroke_geometry.get_render_bounds(pen.as_ref())));
         if stroke_bounds.is_finite() {
             local_bounds = local_bounds.union(stroke_bounds);
         }
@@ -1077,6 +1096,9 @@ fn build_visual(
             let stroke_region = outline
                 .clone()
                 .unwrap_or_else(|| stroke_geometry.get_widened_geometry(pen.as_ref()));
+            let stroke_region = if let Some(clip) = &stroke_clip {
+                combined(GeometryCombineMode::Intersect, stroke_region, clip.clone())
+            } else { stroke_region };
             vector_mask = combined(GeometryCombineMode::Union, vector_mask, stroke_region);
             if let Some(arrow) = &arrow {
                 vector_mask = combined(GeometryCombineMode::Union, vector_mask, arrow.clone());
@@ -1086,6 +1108,7 @@ fn build_visual(
             pen,
             brush,
             outline,
+            clip: stroke_clip,
             arrow,
         });
     }
@@ -1107,7 +1130,6 @@ fn build_visual(
     let mut path_shadows = Vec::new();
     let mut blurs: Vec<Rc<dyn IEffect>> = Vec::new();
     let mut background_blurs = Vec::new();
-    let unsupported_effects = 0;
     for effect in node.effects.iter().filter(|effect| effect.visible) {
         match effect.kind {
             EffectKind::LayerBlur => {
@@ -1506,7 +1528,7 @@ fn make_text_layout(node: &Node, brush: Rc<dyn IBrush>) -> CachedText {
     let default_typeface = typeface(&node.font_family, node.font_weight, node.italic);
     let overrides = typography::range_styles(node, brush.clone());
     let unbounded = node.text_auto_resize == TextAutoResize::WidthAndHeight;
-    let layout = TextLayout::new(
+    let layout = TextLayout::new_with_paragraph_styles(
         &node.text,
         default_typeface,
         TextLayoutOptions {
@@ -1539,6 +1561,7 @@ fn make_text_layout(node: &Node, brush: Rc<dyn IBrush>) -> CachedText {
             text_run_cache: Some(Rc::new(TextRunCache::new())),
             ..TextLayoutOptions::default()
         },
+        typography::paragraph_styles(node),
     );
     let origin = text_origin(
         node,
@@ -2081,6 +2104,17 @@ fn visual_fingerprint(node: &Node, children: u64, needs_outline: bool, assets: u
             .map(|decoration| std::mem::discriminant(&decoration))
             .hash(&mut hash);
     }
+    node.text_paragraphs.len().hash(&mut hash);
+    for paragraph in &node.text_paragraphs {
+        paragraph.start.hash(&mut hash);
+        paragraph.end.hash(&mut hash);
+        paragraph.alignment.map(|value| std::mem::discriminant(&value)).hash(&mut hash);
+        paragraph.direction.hash(&mut hash);
+        for value in [paragraph.line_height, paragraph.letter_spacing, paragraph.space_before,
+            paragraph.space_after, paragraph.indent] {
+            value.map(f64::to_bits).hash(&mut hash);
+        }
+    }
     for fill in &node.fills {
         fill.visible.hash(&mut hash);
         hash_number(fill.opacity, &mut hash);
@@ -2095,6 +2129,14 @@ fn visual_fingerprint(node: &Node, children: u64, needs_outline: bool, assets: u
         std::mem::discriminant(&stroke.join).hash(&mut hash);
         for dash in &stroke.dash {
             hash_number(*dash, &mut hash);
+        }
+        std::mem::discriminant(&stroke.width_profile).hash(&mut hash);
+        if let ferrodesign_core::StrokeWidthProfile::Custom { points } = &stroke.width_profile {
+            points.len().hash(&mut hash);
+            for point in points {
+                hash_number(point.position, &mut hash);
+                hash_number(point.width, &mut hash);
+            }
         }
         hash_paint(&stroke.paint, &mut hash);
     }
@@ -2250,6 +2292,9 @@ fn hash_paint(paint: &Paint, hash: &mut DefaultHasher) {
         }
     }
 }
+
+#[cfg(all(test, not(target_os = "emscripten")))]
+mod stroke_profile_tests;
 
 #[cfg(test)]
 mod tests {

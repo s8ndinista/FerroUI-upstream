@@ -24,11 +24,14 @@ mod scroll_content_presenter_tests_i_logical_scrollable;
 
 mod text_presenter;
 mod text_presenter_styles;
+mod text_presenter_paragraphs;
 pub use text_presenter::{TextPresenter, TextPresenterImpl, TextPresenterImplExt, TextPresenterVTable, TextStyleOverrides};
 #[cfg(test)]
 mod content_presenter_text_tests;
 #[cfg(test)]
 mod text_presenter_tests;
+#[cfg(test)]
+mod text_presenter_paragraph_tests;
 
 mod items_presenter;
 pub(crate) mod panel_container_generator;

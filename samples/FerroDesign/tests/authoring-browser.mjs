@@ -63,7 +63,7 @@ export async function nativeAuthoringRegressions(page, reference, check, helpers
     assert.deepEqual((await documentState(page)).nodes[2].text_runs, [], "The prior undo removes the single Apply transaction, including its repeated no-op");
     await page.keyboard.press("Control+Shift+z");
     assert.deepEqual((await documentState(page)).nodes[2], styled);
-    check("Native character selection styles one non-BMP emoji at exact UTF-8 boundaries, retains selection across field focus, previews real inlines, clears overrides and restores one-step history");
+    check("Native character selection styles one non-BMP emoji at exact UTF-8 boundaries, retains selection across field focus, previews the shared native text layout, clears overrides and restores one-step history");
 
     const rectangle = fixtureNode(reference, 2, { x: 40, y: 40, width: 240, height: 160, name: "Variable-bound layer" });
     const variables = isolatedDocument(reference, [rectangle], "Native typed variables");

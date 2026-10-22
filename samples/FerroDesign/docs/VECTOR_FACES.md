@@ -116,14 +116,22 @@ Corner when the new junction requires it.
 
 Root finding and shared-vertex coordinates use `f64`, not arbitrary precision.
 Independent curve evaluations must agree within 256 machine epsilons in
-normalized coordinate space. Root parameters within 128 machine epsilons merge
-only when both their parameter and recorded point are identical. Distinct nearby
-roots reject atomically instead of collapsing a narrow face into one junction.
-These conservative checks allow bounded evaluation round-off without using it
-as permission to merge distinct topology. The limits are unrelated to screen pixels or zoom. Near contacts
-that cannot satisfy these bounds and the final embedding certificate return an
-error. This is a checked subset of curve arrangements, not a claim that every
-cubic degeneracy can be prepared.
+normalized coordinate space. Root parameters within 128 machine epsilons are
+candidates for duplicate-event checking, not automatic welding. Repeated solves
+of the same curve pair merge only when the common parameter rectangle has a
+unique-crossing derivative-cone certificate. Events involving three different
+lines require an exact concurrence predicate on the original authored
+coordinates. That fixed-degree predicate uses floating-point expansions with
+power-of-two scaling and checked exponent bounds; it does not replace the other
+curve calculations with arbitrary-precision geometry. Unproved nearby roots
+reject atomically instead of collapsing a narrow face into one junction.
+
+These checks allow bounded evaluation round-off without treating proximity as
+permission to merge topology. The limits are unrelated to screen pixels or
+zoom. Near contacts that cannot satisfy these bounds and the final embedding
+certificate return an error. Higher-order curve junctions without a supported
+duplicate-event certificate can also be declined. This is a checked subset of
+curve arrangements, not a claim that every cubic degeneracy can be prepared.
 
 `VectorNetwork::planarize_intersections` exposes the topology operation directly.
 `fill_prepared_faces` and `paint_prepared_face_at` combine it atomically with the

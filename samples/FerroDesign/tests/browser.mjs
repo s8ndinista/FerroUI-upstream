@@ -1,3 +1,6 @@
+import { paragraphRegressions } from "./paragraphs-browser.mjs";
+import { widthProfileRegressions } from "./width-profiles-browser.mjs";
+import { widthHandleRegressions } from "./width-handles-browser.mjs";
 import { cornerRegressions } from "./corners-browser.mjs";
 import { prototypeMotionRegressions } from "./prototype-browser.mjs";
 import { nativeAuthoringRegressions } from "./authoring-browser.mjs";
@@ -1010,6 +1013,9 @@ try {
                 nativeHelpers, output, mode));
             await scenario("corners", () => cornerRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));
+            await scenario("width-profiles", () => widthProfileRegressions(page, svgDocument, check, nativeHelpers, output, mode));
+            await scenario("width-handles", () => widthHandleRegressions(page, svgDocument, check, nativeHelpers, output, mode));
+            await scenario("paragraphs", () => paragraphRegressions(page, svgDocument, check, nativeHelpers, output, mode));
             await scenario("typography", () => typographyRegressions(page, svgDocument, check,
                 nativeHelpers, output, mode));
             await scenario("components", () => componentAuthoringRegressions(page, svgDocument, check,

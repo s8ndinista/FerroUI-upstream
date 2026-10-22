@@ -1,6 +1,13 @@
 //! Atomic variable-width stroke authoring. Geometry stays editable; the
 //! renderer prepares the outline only after a document revision changes.
-use crate::{DocumentError, Editor, NodeId, StrokeCap, StrokeWidthProfile};
+use crate::{Color, DocumentError, Editor, NodeId, Stroke, StrokeCap, StrokeWidthProfile};
+
+fn geometry_stroke(stroke: &Stroke) -> Stroke {
+    Stroke { paint: crate::Paint::Solid(Color::BLACK), width: stroke.width,
+        opacity: stroke.opacity, visible: stroke.visible, align: stroke.align,
+        cap: stroke.cap, join: stroke.join, dash: stroke.dash.clone(),
+        width_profile: stroke.width_profile.clone() }
+}
 
 impl Editor {
     /// Apply a profile to the same stroke-stack entry on each editable target.
@@ -16,10 +23,11 @@ impl Editor {
             if self.document.effective_locked(id) { continue; }
             let stroke = node.strokes.get(index).ok_or_else(|| DocumentError::Invalid(
                 format!("Layer {} has no stroke {}.", node.name, index + 1)))?;
-            let mut candidate = stroke.clone();
+            let cap = if !profile.is_uniform() && stroke.cap == StrokeCap::Arrow { StrokeCap::Butt } else { stroke.cap };
+            if stroke.width_profile == profile && stroke.cap == cap { continue; }
+            let mut candidate = geometry_stroke(stroke);
             candidate.width_profile = profile.clone();
-            if !profile.is_uniform() && candidate.cap == StrokeCap::Arrow { candidate.cap = StrokeCap::Butt; }
-            if candidate == *stroke { continue; }
+            candidate.cap = cap;
             if !profile.is_uniform() { crate::variable_width_outline(node, &candidate)?; }
             changed.insert(id);
         }
@@ -33,12 +41,68 @@ impl Editor {
         });
         Ok(ids.len())
     }
+
+    /// Change a stroke's base width without allowing an otherwise finite input
+    /// to overflow its custom multipliers or prepared outline. Validate every
+    /// target before creating one history entry; paint data is never copied.
+    pub fn set_stroke_width(&mut self, ids: &[NodeId], index: usize, width: f64) -> Result<usize, DocumentError> {
+        if !width.is_finite() || width < 0.0 {
+            return Err(DocumentError::Invalid("Stroke width must be finite and nonnegative.".into()));
+        }
+        let mut changed = std::collections::BTreeSet::new();
+        for &id in ids {
+            let node = self.document.nodes.get(&id).ok_or(DocumentError::MissingNode(id))?;
+            if self.document.effective_locked(id) { continue; }
+            let mut candidate = if let Some(stroke) = node.strokes.get(index) {
+                if stroke.width == width { continue; }
+                geometry_stroke(stroke)
+            } else if index == 0 && node.strokes.is_empty() {
+                Stroke::new(Color::BLACK, width)
+            } else {
+                return Err(DocumentError::Invalid(format!("Layer {} has no stroke {}.", node.name, index + 1)));
+            };
+            candidate.width = width;
+            crate::validate_variable_width_support(node, &candidate)?;
+            if !candidate.width_profile.is_uniform() { crate::variable_width_outline(node, &candidate)?; }
+            changed.insert(id);
+        }
+        if changed.is_empty() { return Ok(0); }
+        let ids: Vec<_> = changed.into_iter().collect();
+        self.update_nodes(&ids, "Stroke width", |node| {
+            if node.strokes.is_empty() { node.strokes.push(Stroke::new(Color::BLACK, width)); }
+            else { node.strokes[index].width = width; }
+            node.overridden_properties.insert("strokes".into());
+        });
+        Ok(ids.len())
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::{Color, Document, Node, NodeKind, Stroke, StrokeWidthPoint};
+
+    #[test]
+    fn base_width_preflights_every_profile_and_preserves_undo_redo_on_error() {
+        let mut document = Document::new("Base stroke width");
+        let page = document.pages[0].id;
+        let a = document.insert_node(page, Node::new(NodeKind::Line, "Uniform", 0.0, 0.0, 100.0, 0.0)).unwrap();
+        let mut wide = Node::new(NodeKind::Line, "Custom", 0.0, 40.0, 100.0, 0.0);
+        wide.strokes[0].width_profile = StrokeWidthProfile::Custom { points: vec![StrokeWidthPoint::new(0.5, 2.0)] };
+        let b = document.insert_node(page, wide).unwrap();
+        let mut editor = Editor::new(document);
+        let before = editor.document.to_json().unwrap();
+        assert_eq!(editor.set_stroke_width(&[a, b], 0, 20.0).unwrap(), 2);
+        let after = editor.document.to_json().unwrap();
+        assert_eq!(editor.history_len(), 1);
+        assert!(editor.undo()); assert_eq!(editor.document.to_json().unwrap(), before);
+        for value in [-1.0, f64::INFINITY, f64::MAX] {
+            assert!(editor.set_stroke_width(&[a, b], 0, value).is_err());
+            assert_eq!(editor.document.to_json().unwrap(), before);
+            assert!(editor.can_redo());
+        }
+        assert!(editor.redo()); assert_eq!(editor.document.to_json().unwrap(), after);
+    }
 
     #[test]
     fn stroke_profiles_are_atomic_round_trip_and_undoable_with_arrow_conversion() {

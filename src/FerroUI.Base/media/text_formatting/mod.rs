@@ -59,6 +59,7 @@ mod text_line_impl;
 mod text_line_metrics;
 mod text_metrics;
 mod text_paragraph_properties;
+mod text_paragraph_style;
 mod text_run;
 mod text_run_bounds;
 mod text_run_cache;
@@ -84,6 +85,8 @@ mod text_formatter_tests;
 mod text_formatter_wrap_characterization_tests;
 #[cfg(test)]
 mod text_layout_tests;
+#[cfg(test)]
+mod text_paragraph_tests;
 #[cfg(test)]
 mod text_line_tests;
 #[cfg(test)]
@@ -126,6 +129,7 @@ pub use text_line_break::TextLineBreak;
 pub use text_line_metrics::TextLineMetrics;
 pub use text_metrics::TextMetrics;
 pub use text_paragraph_properties::TextParagraphProperties;
+pub use text_paragraph_style::{TextParagraphStyle, TextParagraphStyles};
 pub use text_run::{TextRun, DEFAULT_TEXT_SOURCE_LENGTH};
 pub use text_run_bounds::TextRunBounds;
 pub use text_run_cache::TextRunCache;

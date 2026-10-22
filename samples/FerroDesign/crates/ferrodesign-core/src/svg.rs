@@ -432,20 +432,61 @@ fn stroke_shape(node: &Node, attributes: &str) -> String {
     }
 }
 
+fn variable_stroke_shape(node: &Node, index: usize, stroke: &Stroke, defs: &mut String,
+    body: &mut String, warnings: &mut Vec<String>)
+{
+    let path = match crate::variable_width_outline(node, stroke) {
+        Ok(path) => path,
+        Err(error) => {
+            warnings.push(format!("Layer {}: variable-width stroke {} could not be outlined: {error}", node.name, index + 1));
+            return;
+        }
+    };
+    let Some(bounds) = path.tight_bounds() else { return; };
+    let id = node.id;
+    let paint_id = format!("stroke-{id}-{index}");
+    // The native renderer clips the band after assigning its brush, so all
+    // exported paint coordinates use the same uncut band bounds.
+    paint_definition_in_bounds(&stroke.paint, &paint_id, node, Some(stroke), Some(bounds), defs);
+    let painted = format!(r#"<path d="{}" fill-rule="nonzero" fill="{}" fill-opacity="{}" stroke="none"/>"#,
+        path_data(&path, Transform::IDENTITY), paint_color(&stroke.paint, &paint_id),
+        number(paint_opacity(&stroke.paint, stroke.opacity)));
+    let alignment = if node.has_closed_stroke_contours() { stroke.align } else { StrokeAlign::Center };
+    match alignment {
+        StrokeAlign::Center => body.push_str(&painted),
+        StrokeAlign::Inside => {
+            let _ = write!(defs, r#"<clipPath id="width-clip-{id}-{index}">{}</clipPath>"#,
+                node_shape(node, r#"fill="black" stroke="none""#));
+            let _ = write!(body, r#"<g clip-path="url(#width-clip-{id}-{index})">{painted}</g>"#);
+        }
+        StrokeAlign::Outside => {
+            let b = bounds.inflate(1.0);
+            let _ = write!(defs,
+                r#"<mask id="width-mask-{id}-{index}" maskUnits="userSpaceOnUse" x="{}" y="{}" width="{}" height="{}"><rect x="{}" y="{}" width="{}" height="{}" fill="white"/>{}</mask>"#,
+                number(b.x), number(b.y), number(b.width), number(b.height),
+                number(b.x), number(b.y), number(b.width), number(b.height),
+                node_shape(node, r#"fill="black" stroke="none""#));
+            let _ = write!(body, r#"<g mask="url(#width-mask-{id}-{index})">{painted}</g>"#);
+        }
+    }
+}
+
 fn text_shape(node: &Node, attributes: &str) -> String {
-    let anchor = match node.text_align {
-        TextAlign::Center => "middle",
-        TextAlign::Right => "end",
-        _ => "start",
+    // This renderer-independent export retains editable hard paragraphs. Native
+    // wrapping, glyph baselines and Auto's logical indentation require the real
+    // TextLayout; export_svg_report advertises that fidelity boundary.
+    let paragraphs = crate::text_paragraph_ranges(&node.text);
+    let styles: std::collections::BTreeMap<_, _> = node.text_paragraphs.iter().map(|style| (style.start, style)).collect();
+    let metrics = |start| {
+        let style = styles.get(&start).copied();
+        let line_height = node.font_size * style.and_then(|style| style.line_height).unwrap_or(node.line_height);
+        let before = style.and_then(|style| style.space_before).unwrap_or(0.0);
+        let after = style.and_then(|style| style.space_after).unwrap_or(0.0);
+        (style, line_height, before, after)
     };
-    let x = match node.text_align {
-        TextAlign::Center => node.width / 2.0,
-        TextAlign::Right => node.width,
-        _ => 0.0,
-    };
-    let lines: Vec<_> = node.text.split('\n').collect();
-    let line_height = node.font_size * node.line_height;
-    let text_height = node.font_size + line_height * lines.len().saturating_sub(1) as f64;
+    let text_height: f64 = paragraphs.iter().map(|range| {
+        let (_, line, before, after) = metrics(range.start); line + before + after
+    }).sum();
     let top = match node.text_vertical_align {
         TextVerticalAlign::Top => 0.0,
         TextVerticalAlign::Center => (node.height - text_height).max(0.0) / 2.0,
@@ -457,22 +498,40 @@ fn text_shape(node: &Node, attributes: &str) -> String {
         TextDecoration::Strikethrough => "line-through",
     };
     let mut out = format!(
-        r#"<text font-family="{}" font-size="{}" font-weight="{}" font-style="{}" text-anchor="{anchor}" letter-spacing="{}" text-decoration="{decoration}" xml:space="preserve" {attributes}>"#,
-        escape_xml(&node.font_family),
-        number(node.font_size),
-        node.font_weight,
-        if node.italic { "italic" } else { "normal" },
-        number(node.letter_spacing)
+        r#"<text font-family="{}" font-size="{}" font-weight="{}" font-style="{}" letter-spacing="{}" text-decoration="{decoration}" xml:space="preserve" {attributes}>"#,
+        escape_xml(&node.font_family), number(node.font_size), node.font_weight,
+        if node.italic { "italic" } else { "normal" }, number(node.letter_spacing)
     );
-    let mut start = 0;
-    for (i, line) in lines.iter().enumerate() {
-        let _ = write!(
-            out,
-            r#"<tspan x="{}" y="{}">"#,
-            number(x),
-            number(top + node.font_size + i as f64 * line_height)
-        );
-        let end = start + line.len();
+    let mut y = top;
+    for paragraph in paragraphs {
+        let start = paragraph.start;
+        let (style, line_height, before, after) = metrics(start);
+        let alignment = style.and_then(|style| style.alignment).unwrap_or(node.text_align);
+        let direction = style.and_then(|style| style.direction).or(node.text_direction).unwrap_or(TextDirection::LeftToRight);
+        let rtl = direction == TextDirection::RightToLeft;
+        let indent = style.and_then(|style| style.indent).unwrap_or(0.0).min(node.width.max(0.0));
+        let (left, right) = if rtl { (0.0, node.width - indent) } else { (indent, node.width) };
+        let (x, anchor) = match alignment {
+            TextAlign::Center => ((left + right) / 2.0, "middle"),
+            TextAlign::Right => (right, if rtl { "start" } else { "end" }),
+            TextAlign::Justify if rtl => (right, "start"),
+            _ => (left, if rtl { "end" } else { "start" }),
+        };
+        let content = node.text[paragraph.clone()].trim_end_matches(['\r','\n','\u{0085}','\u{2028}','\u{2029}']);
+        let end = start + content.len();
+        y += before;
+        let _ = write!(out,
+            r#"<tspan x="{}" y="{}" text-anchor="{anchor}" direction="{}" unicode-bidi="{}" letter-spacing="{}" data-paragraph-start="{start}" data-paragraph-end="{}" data-paragraph-direction="{}" data-line-height="{}" data-space-before="{}" data-space-after="{}" data-first-line-indent="{}""#,
+            number(x), number(y + node.font_size), if rtl { "rtl" } else { "ltr" },
+            if direction == TextDirection::Auto { "plaintext" } else { "embed" },
+            number(style.and_then(|style| style.letter_spacing).unwrap_or(node.letter_spacing)), paragraph.end,
+            match direction { TextDirection::Auto => "auto", TextDirection::LeftToRight => "ltr", TextDirection::RightToLeft => "rtl" },
+            number(line_height), number(before), number(after), number(indent));
+        if let Some(style) = style {
+            let _ = write!(out, r#" data-ferrodesign-paragraph="{}""#,
+                escape_xml(&serde_json::to_string(style).expect("validated paragraph style")));
+        }
+        out.push('>');
         let mut boundaries = vec![start, end];
         for run in &node.text_runs {
             if run.start < end && run.end > start {
@@ -542,11 +601,15 @@ fn text_shape(node: &Node, attributes: &str) -> String {
             }
         }
         out.push_str("</tspan>");
-        start = end + 1;
+        y += line_height + after;
     }
     out.push_str("</text>");
     out
 }
+
+#[cfg(test)]
+#[path = "svg_paragraph_tests.rs"]
+mod paragraph_tests;
 
 /// Retain selected paint subtrees, their ancestor transforms/clips, and every
 /// preceding mask needed by those subtrees. This also keeps document paint order
@@ -903,6 +966,10 @@ impl Document {
         {
             warnings.push(format!("Layer {}: SVG has no portable angular-gradient primitive; the gradient is approximated by at most 1024 vector sectors per paint. JSON and PNG retain the native angular paint. Complex aligned strokes, arrows, and text may differ in paint bounds.", node.name));
         }
+        if node.kind == NodeKind::Text && (!node.text_paragraphs.is_empty()
+            || node.text_direction.is_some() || node.text_auto_resize != TextAutoResize::WidthAndHeight) {
+            warnings.push(format!("Layer {}: editable SVG preserves hard paragraph breaks, direction and authored spacing, but does not reproduce native wrapping, font baselines, justification or Auto-direction logical indentation exactly. Use the native PNG or glyph outlines for pixel-faithful output; JSON retains every paragraph field.", node.name));
+        }
         let transform = if root {
             self.world_transform(id).unwrap_or_default()
         } else {
@@ -1027,6 +1094,10 @@ impl Document {
                 .filter(|(_, s)| s.visible && s.width > 0.0)
             {
                 let paint_id = format!("stroke-{id}-{i}");
+                if !stroke.width_profile.is_uniform() {
+                    variable_stroke_shape(node, i, stroke, defs, body, warnings);
+                    continue;
+                }
                 paint_definition(&stroke.paint, &paint_id, node, Some(stroke), defs);
                 let cap = match stroke.cap {
                     StrokeCap::Round => "round",

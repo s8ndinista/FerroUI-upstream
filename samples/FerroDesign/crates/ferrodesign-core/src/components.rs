@@ -355,7 +355,16 @@ fn preserve_overrides(node: &mut Node, old: &Node) {
     for property in &old.overridden_properties {
         match property.as_str() {
             "text" => { node.text = old.text.clone(); node.text_runs = old.text_runs.clone(); node.text_paragraphs = old.text_paragraphs.clone(); }
-            "text_paragraphs" => node.text_paragraphs = old.text_paragraphs.clone(),
+            "text_paragraphs" => {
+                // A paragraph-only override follows edits to the master's text.
+                // Rebase its byte ranges through the same split/merge rules as
+                // a direct text edit; copying the old ranges can invalidate the
+                // refreshed instance. A simultaneous text override is already
+                // preserved above, making this replacement a no-op in that case.
+                let mut rebased = old.clone();
+                rebased.replace_text_preserving_runs(node.text.clone());
+                node.text_paragraphs = rebased.text_paragraphs;
+            }
             "fills" => {
                 node.fills = old.fills.clone();
                 node.fill_style = old.fill_style;

@@ -4,8 +4,8 @@ use super::*;
 use ferrodesign_core::{TextDirection, TextStyleChange, TextStylePatch, TextTypographyPatch};
 use crate::renderer::typography;
 use ferroui_base::interactivity::RoutingStrategies;
-use ferroui_base::media::{FontFamily, FontStyle, TextDecorations};
-use ferroui_controls::documents::{InlineCollection, Run};
+#[path = "rich_text/paragraphs.rs"]
+mod paragraphs;
 
 struct UpdatingRichText<'a>(&'a Cell<bool>, bool);
 impl Drop for UpdatingRichText<'_> {
@@ -84,14 +84,29 @@ impl EditorShell {
         });
         host.children().add(select_all);
 
-        let preview = TextBlock::new();
+        let preview = TextBox::new();
         preview.set_name(Some("RichTextPreview".into()));
+        preview.set_is_read_only(true);
+        preview.set_accepts_return(true);
+        preview.set_focusable(false);
         preview.set_text_wrapping(TextWrapping::Wrap);
         preview.set_max_height(160.0);
         update_rich_preview(&preview, &node);
         host.children().add(rich_label("Style preview", true));
         host.children().add(preview.clone());
         self.rich_typography_controls(&host, &node, &selection, &preview);
+        let paragraph_button = Button::new();
+        paragraph_button.set_name(Some("RichTextParagraphs".into()));
+        paragraph_button.set_content(Some(Rc::new("Style selected paragraphs…".to_string())));
+        let weak_shell = Rc::downgrade(self);
+        let weak_selection = selection.downgrade();
+        let paragraph_target = node.id;
+        paragraph_button.click(move |_, _| {
+            if let (Some(shell), Some(selection)) = (weak_shell.upgrade(), weak_selection.upgrade()) {
+                shell.paragraph_dialog(paragraph_target, selection.selection_start(), selection.selection_end());
+            }
+        });
+        host.children().add(paragraph_button);
 
         let (family_row, family) = override_field("Font family", "RichTextFamily", &node.font_family);
         let (size_row, size) = override_field("Font size", "RichTextSize", &node.font_size.to_string());
@@ -189,7 +204,7 @@ impl EditorShell {
 
     fn apply_rich_range(
         self: &Rc<Self>, id: NodeId, original_text: &str, selection: &Ref<TextBox>,
-        preview: &Ref<TextBlock>, patch: &TextStylePatch,
+        preview: &Ref<TextBox>, patch: &TextStylePatch,
     ) -> Result<(), String> {
         if selection.text().as_deref() != Some(original_text) {
             return Err("The selection surface changed. Reopen Rich text to refresh it.".into());
@@ -213,8 +228,8 @@ impl EditorShell {
     }
 
     fn rich_typography_controls(self: &Rc<Self>, host: &StackPanel, node: &Node,
-        selection: &Ref<TextBox>, preview: &Ref<TextBlock>) {
-        host.children().add(rich_label("Paragraph direction", true));
+        selection: &Ref<TextBox>, preview: &Ref<TextBox>) {
+        host.children().add(rich_label("Default paragraph direction", true));
         let direction = rich_choice("RichTextDirection", &["Left to right", "Right to left", "Auto · first strong character"], match node.text_direction {
             Some(TextDirection::RightToLeft) => 1, Some(TextDirection::Auto) => 2, _ => 0,
         });
@@ -296,7 +311,7 @@ impl EditorShell {
     }
 
     fn apply_rich_typography(self: &Rc<Self>, id: NodeId, selection: &TextBox,
-        preview: &TextBlock, patch: &TextTypographyPatch) -> Result<(), String> {
+        preview: &TextBox, patch: &TextTypographyPatch) -> Result<(), String> {
         let mut editor = self.editor.borrow_mut();
         if editor.selection.as_slice() != [id] {
             return Err("The text layer changed. Reopen Rich text to refresh the controls.".into());
@@ -392,43 +407,9 @@ fn update_range_status(field: &TextBox, status: &TextBlock) {
     status.set_text(Some(&value));
 }
 
-fn update_rich_preview(preview: &TextBlock, node: &Node) {
-    preview.set_flow_direction(typography::flow_direction(node));
-    preview.set_font_features(typography::font_features(node));
-    preview.set_letter_spacing(node.letter_spacing);
-    let inlines = InlineCollection::new();
-    let mut spans: Vec<_> = node.text_runs.iter().filter(|run| run.start < run.end
-        && run.end <= node.text.len() && node.text.is_char_boundary(run.start)
-        && node.text.is_char_boundary(run.end)).collect();
-    spans.sort_by_key(|run| run.start);
-    let mut cursor = 0;
-    for span in spans {
-        if span.end <= cursor { continue; }
-        if span.start > cursor { add_preview_run(&inlines, node, cursor..span.start, None); }
-        add_preview_run(&inlines, node, span.start.max(cursor)..span.end, Some(span));
-        cursor = span.end;
-    }
-    if cursor < node.text.len() { add_preview_run(&inlines, node, cursor..node.text.len(), None); }
-    preview.set_inlines(Some(inlines));
-}
-
-fn add_preview_run(inlines: &InlineCollection, node: &Node, range: std::ops::Range<usize>, style: Option<&core::TextRun>) {
-    let run = Run::with_text(Some(&node.text[range]));
-    run.set_font_family(FontFamily::new(style.and_then(|style| style.font_family.as_deref()).unwrap_or(&node.font_family)));
-    run.set_font_size(style.and_then(|style| style.font_size).unwrap_or(node.font_size));
-    run.set_font_weight(FontWeight(style.and_then(|style| style.font_weight).unwrap_or(node.font_weight) as i32));
-    run.set_font_style(if style.and_then(|style| style.italic).unwrap_or(node.italic) { FontStyle::Italic } else { FontStyle::Normal });
-    run.set_font_features(typography::font_features(node));
-    let color = style.and_then(|style| style.color).or_else(|| node.fills.iter().rev().find_map(|fill| match fill.paint {
-        Paint::Solid(color) if fill.visible => Some(color), _ => None,
-    })).unwrap_or(Color::BLACK);
-    run.set_foreground(Some(icons::brush(&format!("#{:02X}{:02X}{:02X}{:02X}", color.a, color.r, color.g, color.b))));
-    run.set_text_decorations(match style.and_then(|style| style.decoration).unwrap_or(node.text_decoration) {
-        core::TextDecoration::None => None,
-        core::TextDecoration::Underline => Some(TextDecorations::underline()),
-        core::TextDecoration::Strikethrough => Some(TextDecorations::strikethrough()),
-    });
-    inlines.add(run);
+fn update_rich_preview(preview: &TextBox, node: &Node) {
+    preview.set_text(Some(&node.text));
+    typography::configure_text_box(preview, node);
 }
 
 #[cfg(test)]

@@ -109,7 +109,10 @@ fn paragraph_unicode_replacement_splits_inherits_merges_and_remaps_following_sty
         node.text_paragraphs[2].direction,
         Some(TextDirection::RightToLeft)
     );
-    assert_eq!((node.text_runs[0].start, node.text_runs[0].end), (1, 5));
+    // Inserting at a character run's end inherits that run, including the
+    // inserted paragraph separator; the original non-BMP character is intact.
+    assert_eq!((node.text_runs[0].start, node.text_runs[0].end), (1, 6));
+    assert_eq!(&node.text[node.text_runs[0].start..node.text_runs[0].end], "🦀\n");
     validate_text_paragraphs(&node).unwrap();
     assert!(node.replace_text_preserving_runs("A🦀Bשלום\nlast".into()));
     assert_eq!(node.text_paragraphs.len(), 1);
@@ -188,4 +191,115 @@ fn paragraph_commands_are_one_history_edit_locked_aware_and_serialize_exactly() 
     );
     assert_eq!(editor.document.to_json().unwrap(), locked);
     assert_eq!(editor.history_len(), 1);
+}
+
+#[test]
+fn component_paragraph_overrides_rebase_master_splits_and_merges_with_exact_history() {
+    let mut document = Document::new("Paragraph component overrides");
+    let page = document.pages[0].id;
+    let master = document
+        .insert_node(
+            page,
+            Node::new(NodeKind::Component, "Master", 0.0, 0.0, 260.0, 200.0),
+        )
+        .unwrap();
+    let source = document
+        .insert_node(master, text("A🦀B\r\nשלום\nlast"))
+        .unwrap();
+    let mut editor = Editor::new(document);
+    let instance = editor.create_instance(master, 300.0, 20.0).unwrap();
+    let target = editor.document.nodes[&instance].children[0];
+    let fixed_instance = editor.create_instance(master, 600.0, 20.0).unwrap();
+    let fixed_target = editor.document.nodes[&fixed_instance].children[0];
+    editor.set_text(fixed_target, "Own🦀\nLabel");
+    editor
+        .style_text_paragraphs(fixed_target, 0..0, &center())
+        .unwrap();
+    let fixed_text = editor.document.nodes[&fixed_target].text.clone();
+    let fixed_paragraphs = editor.document.nodes[&fixed_target].text_paragraphs.clone();
+    editor
+        .style_text_paragraphs(target, 0..0, &center())
+        .unwrap();
+    editor
+        .style_text_paragraphs(
+            target,
+            8..8,
+            &ParagraphStylePatch {
+                direction: TextStyleChange::Set(TextDirection::RightToLeft),
+                space_before: TextStyleChange::Set(4.0),
+                ..Default::default()
+            },
+        )
+        .unwrap();
+    assert!(!editor.document.nodes[&target]
+        .overridden_properties
+        .contains("text"));
+    assert!(editor.document.nodes[&target]
+        .overridden_properties
+        .contains("text_paragraphs"));
+
+    for (value, expected) in [
+        (
+            "A🦀\nB\r\nשלום\nlast",
+            vec![
+                (0, 6, Some(TextAlign::Center), None, None),
+                (6, 9, Some(TextAlign::Center), None, None),
+                (9, 18, None, Some(TextDirection::RightToLeft), Some(4.0)),
+            ],
+        ),
+        (
+            "A🦀Bשלום\nlast",
+            vec![(0, 15, Some(TextAlign::Center), None, None)],
+        ),
+    ] {
+        editor.transact("Edit master paragraphs", |document| {
+            let source = document.nodes.get_mut(&source).unwrap();
+            source.replace_text_preserving_runs(value.into());
+            // Non-overridden character formatting must still come from the
+            // master, not from the temporary node used to rebase paragraphs.
+            source.text_runs = vec![TextRun {
+                start: 1,
+                end: 5,
+                font_family: None,
+                font_size: Some(28.0),
+                font_weight: None,
+                color: None,
+                italic: None,
+                decoration: None,
+            }];
+        });
+        let before = editor.document.to_json().unwrap();
+        let history = editor.history_len();
+        assert_eq!(editor.sync_instances(master), 2);
+        let current = &editor.document.nodes[&target];
+        assert_eq!(current.text, value);
+        assert_eq!(
+            current
+                .text_paragraphs
+                .iter()
+                .map(|style| (
+                    style.start,
+                    style.end,
+                    style.alignment,
+                    style.direction,
+                    style.space_before,
+                ))
+                .collect::<Vec<_>>(),
+            expected
+        );
+        assert_eq!(current.text_runs, editor.document.nodes[&source].text_runs);
+        assert_eq!(editor.document.nodes[&fixed_target].text, fixed_text);
+        assert_eq!(
+            editor.document.nodes[&fixed_target].text_paragraphs,
+            fixed_paragraphs
+        );
+        editor.document.validate().unwrap();
+        assert_eq!(editor.history_len(), history + 1);
+        let after = editor.document.to_json().unwrap();
+        assert_eq!(Document::from_json(&after).unwrap().to_json().unwrap(), after);
+        assert!(editor.undo());
+        assert_eq!(editor.document.to_json().unwrap(), before);
+        assert!(editor.redo());
+        assert_eq!(editor.document.to_json().unwrap(), after);
+    }
 }

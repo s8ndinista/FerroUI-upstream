@@ -147,6 +147,160 @@ fn network_xaml_all_native_gradients_keep_their_original_bounds_and_affine_trans
     scope.dispose();
 }
 
+fn width_profile() -> core::StrokeWidthProfile {
+    core::StrokeWidthProfile::Custom { points: vec![
+        core::StrokeWidthPoint::new(0.0, 1.0),
+        core::StrokeWidthPoint::new(0.31, 1.7),
+        core::StrokeWidthPoint::new(0.72, 0.55),
+        core::StrokeWidthPoint::new(1.0, 1.0),
+    ] }
+}
+
+fn gradient_paints() -> Vec<Paint> {
+    let stops = vec![
+        GradientStop { offset: 0.0, color: Color::rgba(240, 40, 20, 180) },
+        GradientStop { offset: 0.45, color: Color::rgb(20, 180, 80) },
+        GradientStop { offset: 0.45, color: Color::rgb(30, 70, 230) },
+        GradientStop { offset: 1.0, color: Color::BLACK },
+    ];
+    vec![
+        Paint::LinearGradient { start: Point::new(0.1, 0.0), end: Point::new(0.8, 1.0), stops: stops.clone() },
+        Paint::RadialGradient { center: Point::new(0.25, 0.65), radius: 0.8, stops: stops.clone() },
+        Paint::AngularGradient { center: Point::new(0.65, 0.25), angle: 37.0, stops },
+    ]
+}
+
+#[test]
+fn variable_width_xaml_presets_custom_points_caps_and_mixed_stack_preserve_native_pixels() {
+    let _dispatcher = ferroui_base::threading::Dispatcher::unit_test_scope();
+    let scope = FerroLocator::enter_scope();
+    ferroui_vello::VelloPlatform::initialize();
+    for (index, profile) in [core::StrokeWidthProfile::Wedge, core::StrokeWidthProfile::Taper,
+        core::StrokeWidthProfile::QuarterTaper, core::StrokeWidthProfile::Eye,
+        core::StrokeWidthProfile::MirroredTaper, width_profile()].into_iter().enumerate() {
+        let mut node = Node::new(NodeKind::Line, "Profiled line", 0.0, 0.0, 120.0,
+            if index % 2 == 0 { 0.0 } else { 30.0 });
+        node.fills.clear();
+        node.opacity = 0.7;
+        node.set_local_transform(core::Transform { a: -0.9, b: 0.15, c: 0.1, d: 1.0, e: 150.0, f: 35.0 });
+        node.strokes = vec![
+            Stroke { width_profile: profile, opacity: 0.8,
+                cap: [core::StrokeCap::Butt, core::StrokeCap::Round, core::StrokeCap::Square][index % 3],
+                ..Stroke::new(Color::rgba(230, 30, 60, 190), 18.0) },
+            Stroke { cap: core::StrokeCap::Round, ..Stroke::new(Color::rgb(20, 80, 220), 3.0) },
+        ];
+        let mut document = Document::new("Profiled XAML line");
+        let page = document.pages[0].id;
+        let id = document.insert_node(page, node).unwrap();
+        let xaml = export_xaml(&document, &[id]);
+        assert!(xaml.contains("<Canvas.OpacityMask>"));
+        assert!(xaml.contains(&format!("x:Key=\"Profile{id}Width0\"")));
+        assert!(xaml.contains("StrokeThickness=\"3\""), "uniform stack entry stays native");
+        let (native, exported) = render(&document, id);
+        assert!(native.chunks_exact(4).filter(|pixel| pixel[3] != 0).count() > 300);
+        equivalent(&native, &exported);
+    }
+    scope.dispose();
+}
+
+#[test]
+fn aligned_variable_width_xaml_keeps_raw_band_gradient_bounds_and_clips_only_once() {
+    let _dispatcher = ferroui_base::threading::Dispatcher::unit_test_scope();
+    let scope = FerroLocator::enter_scope();
+    ferroui_vello::VelloPlatform::initialize();
+    for align in [core::StrokeAlign::Center, core::StrokeAlign::Inside, core::StrokeAlign::Outside] {
+        for paint in gradient_paints() {
+            let mut node = Node::new(NodeKind::Rectangle, "Gradient border", 35.0, 35.0, 110.0, 70.0);
+            node.fills.clear();
+            node.corner_radii = Some([22.0, 12.0, 18.0, 9.0]);
+            node.corner_smoothing = 0.7;
+            node.opacity = 0.65;
+            node.strokes = vec![Stroke { paint, align, opacity: 0.8, width_profile: width_profile(),
+                ..Stroke::new(Color::BLACK, 9.0) }];
+            let mut document = Document::new("Aligned XAML gradient");
+            let page = document.pages[0].id;
+            let id = document.insert_node(page, node).unwrap();
+            let xaml = export_xaml(&document, &[id]);
+            let raw_path = format!("Data=\"{{StaticResource Profile{id}Width0}}\"");
+            assert!(xaml.contains(&raw_path), "alignment must not replace the raw band used by relative brushes");
+            if align == core::StrokeAlign::Center {
+                assert!(!xaml.contains(" Clip="));
+            } else {
+                assert!(xaml.contains(" Clip="));
+                if align == core::StrokeAlign::Outside { assert!(xaml.contains("GeometryCombineMode=\"Exclude\"")); }
+            }
+            let (native, exported) = render(&document, id);
+            assert!(native.chunks_exact(4).filter(|pixel| pixel[3] != 0).count() > 350);
+            equivalent(&native, &exported);
+        }
+    }
+    scope.dispose();
+}
+
+#[test]
+fn network_xaml_variable_width_and_uniform_stacks_keep_region_replacement_and_transform() {
+    let _dispatcher = ferroui_base::threading::Dispatcher::unit_test_scope();
+    let scope = FerroLocator::enter_scope();
+    ferroui_vello::VelloPlatform::initialize();
+    for rule in [FillRule::NonZero, FillRule::EvenOdd] {
+        let (mut document, id, _) = fixture(rule);
+        let node = document.nodes.get_mut(&id).unwrap();
+        node.opacity = 0.7;
+        node.set_local_transform(core::Transform { a: 0.9, b: 0.08, c: -0.05, d: 0.85, e: 20.0, f: 10.0 });
+        node.strokes = vec![
+            Stroke { paint: gradient_paints().remove(2), align: core::StrokeAlign::Outside,
+                opacity: 0.8, width_profile: width_profile(), ..Stroke::new(Color::BLACK, 5.0) },
+            Stroke::new(Color::rgba(20, 20, 20, 160), 1.5),
+            Stroke { width_profile: core::StrokeWidthProfile::Eye, opacity: 0.6,
+                ..Stroke::new(Color::rgb(20, 210, 90), 9.0) },
+        ];
+        let xaml = export_xaml(&document, &[id]);
+        assert!(xaml.contains(&format!("x:Key=\"Network{id}Width0\"")));
+        assert!(xaml.contains(&format!("x:Key=\"Network{id}Width2\"")));
+        assert!(!xaml.contains(&format!("x:Key=\"Network{id}Width1\"")));
+        let (native, exported) = render(&document, id);
+        assert!(native.chunks_exact(4).filter(|pixel| pixel[3] != 0).count() > 2_000);
+        equivalent(&native, &exported);
+    }
+    scope.dispose();
+}
+
+#[test]
+fn profiled_frame_xaml_clips_children_without_clipping_its_outside_border() {
+    let _dispatcher = ferroui_base::threading::Dispatcher::unit_test_scope();
+    let scope = FerroLocator::enter_scope();
+    ferroui_vello::VelloPlatform::initialize();
+    let mut document = Document::new("Profiled frame child clipping");
+    let page = document.pages[0].id;
+    let mut frame = Node::new(NodeKind::Frame, "Smooth frame", 30.0, 30.0, 110.0, 80.0);
+    frame.corner_radii = Some([25.0, 12.0, 20.0, 8.0]);
+    frame.corner_smoothing = 0.7;
+    frame.opacity = 0.6;
+    frame.fills = vec![Fill::solid(Color::rgb(20, 80, 210))];
+    frame.strokes = vec![Stroke { align: core::StrokeAlign::Outside,
+        width_profile: core::StrokeWidthProfile::Custom { points: vec![core::StrokeWidthPoint::new(0.0, 1.0)] },
+        ..Stroke::new(Color::BLACK, 7.0) }];
+    let id = document.insert_node(page, frame).unwrap();
+    let child = Node::new(NodeKind::Rectangle, "Clipped red content", -20.0, -20.0, 150.0, 120.0)
+        .with_fill(Color::rgb(230, 30, 20));
+    document.insert_node(id, child).unwrap();
+    let xaml = export_xaml(&document, &[id]);
+    assert!(xaml.contains(&format!("<Canvas Width=\"110\" Height=\"80\" Clip=\"{{StaticResource Profile{id}Fill}}\">")));
+    let (native, exported) = render(&document, id);
+    equivalent(&native, &exported);
+    let pixel = |bytes: &[u8], x: usize, y: usize| <[u8; 4]>::try_from(&bytes[(y * WIDTH as usize + x) * 4..][..4]).unwrap();
+    for bytes in [&native, &exported] {
+        let outside = pixel(bytes, 80, 25);
+        assert_eq!(&outside[..3], &[0, 0, 0], "the exterior border keeps its own paint");
+        assert!((i32::from(outside[3]) - 153).abs() <= 1, "layer opacity covers the exterior border");
+        let content = pixel(bytes, 80, 40);
+        assert!(content[0] > content[2], "child content paints above the frame fill");
+        assert!((i32::from(content[3]) - 153).abs() <= 1, "layer opacity composites parent and child once");
+        assert_eq!(pixel(bytes, 30, 30)[3], 0, "smoothed child clip excludes the corner");
+    }
+    scope.dispose();
+}
+
 #[test]
 fn network_xaml_strokes_the_edge_graph_once_and_css_identifies_regional_artwork() {
     let _dispatcher = ferroui_base::threading::Dispatcher::unit_test_scope();
