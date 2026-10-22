@@ -1,5 +1,5 @@
 //! The benchmarks of the declarative API (`ferroui-view`): an addition, with
-//! no upstream counterpart (`docs/declarative-ui.md`, section 13, phase 5).
+//! no upstream counterpart (`docs/declarative-ui.md`, section 12, phase 5).
 
 pub mod view_benchmark;
 

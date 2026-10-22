@@ -21,6 +21,10 @@
 //!   with their state in [hooks](hooks) ([`use_signal`], [`use_effect`], ...);
 //!   the reconciler compares what they return with what they returned before
 //!   and patches the controls.
+//! - Patterns of larger applications: futures run by a component
+//!   ([`use_future`], [`suspense`], [`sleep`]), error boundaries
+//!   ([`error_boundary()`]), and navigation between views ([`router()`],
+//!   [`route`], [`use_router`]).
 //! - With the feature `desktop`: [`launch`] runs an application whose main
 //!   window is an element.
 //!
@@ -41,12 +45,14 @@
 extern crate self as ferroui_view;
 
 mod animation;
+pub mod async_data;
 pub mod builder;
 mod component_host;
 mod control_flow;
 pub mod diagnostics;
 mod conversions;
 pub mod element;
+pub mod error_boundary;
 mod extras;
 pub mod hooks;
 pub mod hot;
@@ -54,6 +60,7 @@ pub mod inspect;
 mod mount;
 pub mod reactive;
 mod register_types;
+pub mod router;
 mod rust_paths;
 mod style;
 mod template;
@@ -98,6 +105,9 @@ pub use register_types::{register_types, ASSEMBLY};
 #[cfg(feature = "xaml")]
 pub use xaml::{load_xaml, load_xaml_uri, use_xaml};
 pub use extras::GridDefinitions;
+pub use async_data::{sleep, suspense, use_future, AsyncState};
+pub use error_boundary::{error_boundary, ErrorInfo};
+pub use router::{route, router, try_use_router, use_router, RouteDef, RouteMatch, Router};
 pub use reactive::{
     batch, effect, memo, on_cleanup, provide_context, signal, untrack, use_context, Memo, Owner, Signal, TwoWay,
 };
@@ -123,6 +133,10 @@ pub mod prelude {
         show_else, style, transition, transitions, use_animation, use_resource, use_resource_as, use_theme_variant,
         signal, template, untrack, use_context, use_data_context, use_effect, use_effect_with, use_hook, use_memo,
         use_signal, Bind, ComponentHost, El, Element, ElementBuilder, GridDefinitions, IntoChild, IntoChildren, IntoElement, Key, Memo, NodeRef, Owner, Signal, TwoWay,
+    };
+    pub use crate::{
+        error_boundary, route, router, sleep, suspense, try_use_router, use_future, use_router, AsyncState, ErrorInfo, RouteDef,
+        RouteMatch, Router,
     };
     #[cfg(feature = "desktop")]
     pub use crate::{launch, launch_themed, launch_with, mount_window, open_window};

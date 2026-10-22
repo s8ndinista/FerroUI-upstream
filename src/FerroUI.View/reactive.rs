@@ -549,6 +549,39 @@ pub(crate) fn propagation() -> u64 {
     with_runtime(|runtime| runtime.propagation.get())
 }
 
+/// The state of the runtime around a run that may panic: the observer, the
+/// owner, the depth of batches and whether changes are propagating. A panic
+/// that unwinds through `Owner::with`, `untrack`, `batch` or a nested run
+/// leaves them as they were inside; an error boundary puts them back.
+pub(crate) struct Scope {
+    observer: Option<NodeId>,
+    owner: Option<NodeId>,
+    batch_depth: u32,
+    flushing: bool,
+}
+
+impl Scope {
+    /// The state of the runtime now.
+    pub(crate) fn save() -> Self {
+        with_runtime(|runtime| Scope {
+            observer: runtime.observer.get(),
+            owner: runtime.owner.get(),
+            batch_depth: runtime.batch_depth.get(),
+            flushing: runtime.flushing.get(),
+        })
+    }
+
+    /// Puts the runtime back into the saved state.
+    pub(crate) fn restore(self) {
+        with_runtime(|runtime| {
+            runtime.observer.set(self.observer);
+            runtime.owner.set(self.owner);
+            runtime.batch_depth.set(self.batch_depth);
+            runtime.flushing.set(self.flushing);
+        });
+    }
+}
+
 /// Runs `f` without recording what it reads.
 pub fn untrack<R>(f: impl FnOnce() -> R) -> R {
     let previous = with_runtime(|runtime| runtime.observer.replace(None));

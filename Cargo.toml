@@ -93,6 +93,8 @@ members = [
     "samples/SevenGuis/Tests",
     "samples/ViewInterop",
     "samples/ViewGallery",
+    "samples/TodoMvc",
+    "samples/ReactiveDemoComponents",
     "samples/MiniMvvm",
     "samples/ControlCatalog",
     "samples/ControlCatalog.Desktop",
