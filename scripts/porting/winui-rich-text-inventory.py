@@ -317,7 +317,17 @@ def api_type_plan(owner: str) -> dict:
             "remaining_review": "Review range value semantics, defaults, mutable brush invalidation and layering. The projection-only base can map to FerroObject; TextRange needs a Rust name distinct from the live document range.",
         }
     if name == "Typography":
-        return {"batch": "R6", "candidate_paths": [DOCUMENT_ROOT + "text_element.rs", FORMAT_ROOT + "text_shaper.rs"], "remaining_review": "Audit every attached OpenType feature and its inheritance/shaping behavior; a FontFeatures collection alone does not verify all named feature APIs."}
+        return {
+            "batch": "R6",
+            "candidate_paths": [DOCUMENT_ROOT + "typography.rs", DOCUMENT_ROOT + "typography_format.rs", "src/FerroUI.Base/media/font_typography.rs", FORMAT_ROOT + "text_shaper.rs"],
+            "remaining_review": "All 43 named attached properties, 86 accessors, seven enum types and 38 values now map to inherited FerroUI properties and ordered OpenType features. Fresh tests cover inheritance, snapshots, mutable raw overrides, every text consumer, real HarfBuzz shaping and XAML. Keep native font/script raster conformance, exact native feature collection order and unsupported RTF typography outside completed claims; see TYPOGRAPHY.md and RT-I25.",
+        }
+    if name in {"FontCapitals", "FontEastAsianLanguage", "FontEastAsianWidths", "FontFraction", "FontNumeralAlignment", "FontNumeralStyle", "FontVariants"}:
+        return {
+            "batch": "R6",
+            "candidate_paths": ["src/FerroUI.Base/media/font_typography.rs", DOCUMENT_ROOT + "typography_format.rs"],
+            "remaining_review": "The seven Rust enums and all 38 pinned numeric constants have exact value and feature-tag tests. Constant/type identity is complete; engine behavior remains part of the partial Typography contract, not an implication of enum coverage.",
+        }
     if name == "Glyphs":
         return {"batch": "R8", "candidate_paths": ["src/FerroUI.Base/media/glyph_run.rs"], "remaining_review": "The existing glyph run is a rendering contract; the document Glyphs control's parsing, indices, font URI, properties and layout need their own review."}
     if name in {"TextPointer", "LogicalDirection"}:
@@ -334,7 +344,7 @@ def api_type_plan(owner: str) -> dict:
         return {
             "batch": "R5/R8",
             "candidate_paths": ["src/FerroUI.Base/input/input_scope.rs", "src/FerroUI.Base/input/input_scope_name_value.rs", "src/FerroUI.Base/input/text_input/text_input_options.rs", "src/FerroUI.Controls/rich_edit_box.rs"],
-            "remaining_review": "The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts.",
+            "remaining_review": "The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot. IMM32 forwards the complete equal-weight array; single-purpose backends choose the first name or an explicit fallback. Browser exact edits, IBus ContentType and optional AppKit semantic hints have separate mappings. Real OS keyboard/prediction sessions, platform-specific unsupported hints and WinRT ABI remain separate contracts.",
         }
     if ".Controls." in owner:
         return {"batch": "R5/R7", "candidate_paths": ["src/FerroUI.Controls/rich_edit_box.rs", "src/FerroUI.Controls/rich_edit_box_text_input_method_client.rs"], "remaining_review": "Review editable control members, native event timing, IME/clipboard capabilities, templates, accelerators and automation. Missing members are omitted, not stubbed."}
@@ -345,7 +355,7 @@ def api_type_plan(owner: str) -> dict:
     if name in {"TextGetOptions", "TextSetOptions"}:
         return {"batch": "R4/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/rich_edit_text_document.rs", "src/FerroUI.Controls/rich_text/rtf.rs", "src/FerroUI.Controls/rich_text/rich_text_transfer.rs"], "remaining_review": "Review every import/export option and supported content feature against its mapped implementation. Typed get/set flags reject unsupported modes explicitly; these errors do not implement omitted content semantics or native stream APIs."}
     if name == "FontWeights":
-        return {"batch": "R6", "candidate_paths": ["src/FerroUI.Base/media/font_weight.rs"], "remaining_review": "Audit named font weight values, conversion and font selection; each retained XML property has its own state."}
+        return {"batch": "R6", "candidate_paths": ["src/FerroUI.Base/media/font_weight.rs", "src/FerroUI.Base/markup_types/values.rs"], "remaining_review": "The eleven pinned predefined weights reuse existing FontWeight associated constants, typed markup fields and named parsing. The independent pinned-source audit compares every value; existing runtime tests cover representative conversion and metadata behavior. FontWeights static-class/namespace ABI, arbitrary integer validation and native font selection are not implied by completed named-value mappings; see TYPOGRAPHY.md."}
     if owner.startswith("Microsoft.UI.Text."):
         return {"batch": "R3/R8", "candidate_paths": ["src/FerroUI.Controls/rich_text/", DOCUMENT_ROOT], "remaining_review": "The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior."}
     return {"batch": "R2/R6", "candidate_paths": ["src/FerroUI.Base/media/", "src/FerroUI.Controls/rich_text_layout.rs"], "remaining_review": "Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults."}

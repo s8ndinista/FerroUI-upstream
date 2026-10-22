@@ -956,3 +956,53 @@ retained as pending until implementation and verification are mapped. The
 regenerated inventory and check pass with 640 files, 1,362 public API entries,
 938 framework dependencies and 827 include boundaries. Counts describe
 mapped source and member coverage; they do not establish functional parity.
+
+## 2026-10-22 — Typography, backend delivery and restoration integration
+
+The continuation publishes all 43 Typography property families and ordered
+OpenType projection (`a73a7246`), IBus ContentType delivery (`7796984b`), the exact
+Browser DOM edit bridge (`58939d8d`, `0259ab9d`, `b563a5d0`), optional AppKit
+semantic hints (`ac92b201`), and complete IMM32 scope arrays (`9d08fc66`). These
+consume existing FerroUI properties, formatting, input connections, platform
+adapters and native interface generation. `TYPOGRAPHY.md` records every property,
+enum feature arm and eleven pre-existing FontWeight values reused by this port.
+
+The independent typography audit compares pinned defaults, declarations and
+feature-add order. The FontWeights audit compares every named value, typed
+metadata field and parser entry. Runtime evidence remains separate: the fresh
+Typography gate passed 27 cases, including two actual Inter-font shaping tests;
+full Base passed 4,425 and full XAML passed 617 with 17 ignored. The original
+XAML failures and the corrected 130-input corpus count remain in the record.
+
+Main was merged again at `74fa8217`. The complete generated WinUI reference was
+regenerated, then stored in five deterministic parts to fit the publication
+transport. Its byte concatenation matches the original output. Production
+emission remains one file. Six reference/storage tests passed with one ignored.
+Commit `e15ce7e8` publishes the regenerated XAML references and all 43 generated
+Typography View builder methods after CI identified their stale output.
+
+Full Controls testing revealed that semantic constructor formatting was being
+promoted into local snapshot assignments during restore. The first constructor
+correction `c43a907c` did not solve that defect. The subsequent fix `17298a56`
+restores assigned fields exactly and reinstates missing Bold/Italic/Underline/
+Hyperlink defaults through current values. It preserves style precedence and
+explicit reset values. The case-conversion fixture now asserts exact input
+snapshot identity and effective formatting independently. The final full
+Controls gate passed 5,068 tests with no failures or ignored tests.
+
+The Windows checkpoint at `c43a907c` passed native adapter compilation, 52 WinUI,
+two exact UTF-16, 23 IMM32 input-scope and six MSFTEDIT tests. The immutable
+`native-msftedit-links-gravity.json`, published in `20dddd04`, adds 137 link and
+1,577 gravity commands with measured checkout/probe identity and a verified
+artifact archive digest. Earlier movement and typing rows remain equal despite
+the observed DLL build changing from .33648 to .33438. Link and Gravity require
+separate semantic implementations; those observations are not counted as ports.
+
+The same CI checkpoint exposed an IBus generated-signal type inference error
+which blocked multiple backend builds, plus stale XAML/View reference output.
+These are integration failures to repair, not missing-runtime excuses. The
+IBus repair adds explicit generated signal types without changing callback
+lifecycle policy. Its actual private-bus and backend gates follow independently.
+The complete port remains a draft: candidate/proofing services, unimplemented
+API members, external engine contracts and native rendering/OS sessions remain
+visible in the source inventory and deviations.

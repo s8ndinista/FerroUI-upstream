@@ -10,13 +10,13 @@ The type plan locates all retained public types, including entirely pending type
 |---|---:|---:|---|---|
 | `Microsoft.UI.Text.CaretType` | 3 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.FindOptions` | 4 | 4 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
-| `Microsoft.UI.Text.FontWeights` | 12 | 0 / 0 | R6 | `src/FerroUI.Base/media/font_weight.rs` |
+| `Microsoft.UI.Text.FontWeights` | 12 | 1 / 11 | R6 | `src/FerroUI.Base/media/font_weight.rs`, `src/FerroUI.Base/markup_types/values.rs` |
 | `Microsoft.UI.Text.FormatEffect` | 5 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.HorizontalCharacterAlignment` | 4 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.ITextCharacterFormat` | 28 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
 | `Microsoft.UI.Text.ITextParagraphFormat` | 32 | 18 / 0 | R3/R8 | `src/FerroUI.Controls/documents/character_format.rs` |
 | `Microsoft.UI.Text.ITextRange` | 44 | 38 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
-| `Microsoft.UI.Text.ITextSelection` | 10 | 8 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
+| `Microsoft.UI.Text.ITextSelection` | 10 | 10 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.LetterCase` | 3 | 0 / 3 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.LineSpacingRule` | 9 | 0 / 9 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.LinkType` | 10 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
@@ -30,8 +30,8 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Text.RichEditMathMode` | 3 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.RichEditTextDocument` | 28 | 23 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
 | `Microsoft.UI.Text.RichEditTextRange` | 44 | 38 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/rich_edit_text_document.rs` |
-| `Microsoft.UI.Text.SelectionOptions` | 6 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
-| `Microsoft.UI.Text.SelectionType` | 6 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
+| `Microsoft.UI.Text.SelectionOptions` | 6 | 0 / 6 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
+| `Microsoft.UI.Text.SelectionType` | 6 | 0 / 6 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TabAlignment` | 6 | 0 / 6 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TabLeader` | 7 | 0 / 7 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
 | `Microsoft.UI.Text.TextConstants` | 9 | 0 / 0 | R3/R8 | `src/FerroUI.Controls/rich_text/`, `src/FerroUI.Controls/documents/` |
@@ -106,16 +106,16 @@ The type plan locates all retained public types, including entirely pending type
 | `Microsoft.UI.Xaml.Documents.TextHighlighterBase` | 1 | 1 / 0 | R6 | `src/FerroUI.Controls/documents/text_highlighter.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_merge.rs` |
 | `Microsoft.UI.Xaml.Documents.TextPointer` | 7 | 7 / 0 | R1/R2 | `src/FerroUI.Controls/documents/text_position.rs` |
 | `Microsoft.UI.Xaml.Documents.TextRange` | 3 | 3 / 0 | R6 | `src/FerroUI.Controls/documents/text_highlighter.rs`, `src/FerroUI.Controls/documents/text_highlight_range.rs`, `src/FerroUI.Controls/documents/text_highlight_merge.rs` |
-| `Microsoft.UI.Xaml.Documents.Typography` | 173 | 0 / 0 | R6 | `src/FerroUI.Controls/documents/text_element.rs`, `src/FerroUI.Base/media/text_formatting/text_shaper.rs` |
+| `Microsoft.UI.Xaml.Documents.Typography` | 173 | 173 / 0 | R6 | `src/FerroUI.Controls/documents/typography.rs`, `src/FerroUI.Controls/documents/typography_format.rs`, `src/FerroUI.Base/media/font_typography.rs`, `src/FerroUI.Base/media/text_formatting/text_shaper.rs` |
 | `Microsoft.UI.Xaml.Documents.Underline` | 2 | 2 / 0 | R1/R2 | `src/FerroUI.Controls/documents/underline.rs` |
 | `Microsoft.UI.Xaml.Documents.UnderlineStyle` | 3 | 3 / 0 | R1/R5 | `src/FerroUI.Controls/documents/hyperlink.rs` |
-| `Microsoft.UI.Xaml.FontCapitals` | 8 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
-| `Microsoft.UI.Xaml.FontEastAsianLanguage` | 11 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
-| `Microsoft.UI.Xaml.FontEastAsianWidths` | 7 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
-| `Microsoft.UI.Xaml.FontFraction` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
-| `Microsoft.UI.Xaml.FontNumeralAlignment` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
-| `Microsoft.UI.Xaml.FontNumeralStyle` | 4 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
-| `Microsoft.UI.Xaml.FontVariants` | 7 | 0 / 0 | R2/R6 | `src/FerroUI.Base/media/`, `src/FerroUI.Controls/rich_text_layout.rs` |
+| `Microsoft.UI.Xaml.FontCapitals` | 8 | 0 / 8 | R6 | `src/FerroUI.Base/media/font_typography.rs`, `src/FerroUI.Controls/documents/typography_format.rs` |
+| `Microsoft.UI.Xaml.FontEastAsianLanguage` | 11 | 0 / 11 | R6 | `src/FerroUI.Base/media/font_typography.rs`, `src/FerroUI.Controls/documents/typography_format.rs` |
+| `Microsoft.UI.Xaml.FontEastAsianWidths` | 7 | 0 / 7 | R6 | `src/FerroUI.Base/media/font_typography.rs`, `src/FerroUI.Controls/documents/typography_format.rs` |
+| `Microsoft.UI.Xaml.FontFraction` | 4 | 0 / 4 | R6 | `src/FerroUI.Base/media/font_typography.rs`, `src/FerroUI.Controls/documents/typography_format.rs` |
+| `Microsoft.UI.Xaml.FontNumeralAlignment` | 4 | 0 / 4 | R6 | `src/FerroUI.Base/media/font_typography.rs`, `src/FerroUI.Controls/documents/typography_format.rs` |
+| `Microsoft.UI.Xaml.FontNumeralStyle` | 4 | 0 / 4 | R6 | `src/FerroUI.Base/media/font_typography.rs`, `src/FerroUI.Controls/documents/typography_format.rs` |
+| `Microsoft.UI.Xaml.FontVariants` | 7 | 0 / 7 | R6 | `src/FerroUI.Base/media/font_typography.rs`, `src/FerroUI.Controls/documents/typography_format.rs` |
 | `Microsoft.UI.Xaml.Input.InputScope` | 3 | 3 / 0 | R5/R8 | `src/FerroUI.Base/input/input_scope.rs`, `src/FerroUI.Base/input/input_scope_name_value.rs`, `src/FerroUI.Base/input/text_input/text_input_options.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
 | `Microsoft.UI.Xaml.Input.InputScopeName` | 4 | 4 / 0 | R5/R8 | `src/FerroUI.Base/input/input_scope.rs`, `src/FerroUI.Base/input/input_scope_name_value.rs`, `src/FerroUI.Base/input/text_input/text_input_options.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
 | `Microsoft.UI.Xaml.Input.InputScopeNameValue` | 44 | 0 / 44 | R5/R8 | `src/FerroUI.Base/input/input_scope.rs`, `src/FerroUI.Base/input/input_scope_name_value.rs`, `src/FerroUI.Base/input/text_input/text_input_options.rs`, `src/FerroUI.Controls/rich_edit_box.rs` |
@@ -181,9 +181,137 @@ State: **partial**. Native numeric flags and FerroUI markup metadata are declare
 
 ### `Microsoft.UI.Text.FontWeights`
 
-Audit named font weight values, conversion and font selection; each retained XML property has its own state.
+The eleven pinned predefined weights reuse existing FontWeight associated constants, typed markup fields and named parsing. The independent pinned-source audit compares every value; existing runtime tests cover representative conversion and metadata behavior. FontWeights static-class/namespace ABI, arbitrary integer validation and native font selection are not implied by completed named-value mappings; see TYPOGRAPHY.md.
 
-All retained members remain pending.
+#### `P:Microsoft.UI.Text.FontWeights.Black`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const Black:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `Black: FontWeight => || FontWeight::Black,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.Bold`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const Bold:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `Bold: FontWeight => || FontWeight::Bold,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.ExtraBlack`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const ExtraBlack:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `ExtraBlack: FontWeight => || FontWeight::ExtraBlack,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.ExtraBold`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const ExtraBold:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `ExtraBold: FontWeight => || FontWeight::ExtraBold,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.ExtraLight`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const ExtraLight:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `ExtraLight: FontWeight => || FontWeight::ExtraLight,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.Light`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const Light:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `Light: FontWeight => || FontWeight::Light,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.Medium`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const Medium:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `Medium: FontWeight => || FontWeight::Medium,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.Normal`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const Normal:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `Normal: FontWeight => || FontWeight::Normal,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.SemiBold`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const SemiBold:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `SemiBold: FontWeight => || FontWeight::SemiBold,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.SemiLight`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const SemiLight:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `SemiLight: FontWeight => || FontWeight::SemiLight,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.FontWeights.Thin`
+
+State: **complete**. The exact pinned predefined numeric weight is supplied by the existing FerroUI media::FontWeight associated constant, typed markup field and named conversion. The independent source audit compares all eleven names and values; existing runtime tests cover representative conversions and registry behavior. This reuses the framework value type and does not claim a native FontWeights namespace alias or WinRT ABI.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub const Thin:`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `Thin: FontWeight => || FontWeight::Thin,`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Test: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `fn aliases_and_parsing(`.
+- Test: [src/FerroUI.Base/markup_types/markup_types_tests.rs](../../../src/FerroUI.Base/markup_types/markup_types_tests.rs) — `fn parse_converts_a_sample_of_each_text_convertible_type(`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Text.FontWeights`
+
+State: **partial**. Idiomatic Rust replacement of the static provider by existing FontWeight associated constants. All eleven predefined values are audited. Native namespace/activation ABI is not asserted. The open i32 wrapper and numeric parser retain existing FerroUI behavior; native weight validation and font selection remain separate.
+
+- Target: [src/FerroUI.Base/media/font_weight.rs](../../../src/FerroUI.Base/media/font_weight.rs) — `pub struct FontWeight(`.
+- Target: [src/FerroUI.Base/markup_types/values.rs](../../../src/FerroUI.Base/markup_types/values.rs) — `ferro_markup_type!(struct FontWeight {`.
+- Test: [scripts/porting/check-rich-text-font-weights.py](../../../scripts/porting/check-rich-text-font-weights.py) — `def main() -> None:`.
+- Differences: [RT-I25](DEVIATIONS.md).
 
 ### `Microsoft.UI.Text.FormatEffect`
 
@@ -1562,11 +1690,40 @@ State: **partial**. Rust MoveUp/MoveDown accept Line and Paragraph. Line uses co
 
 #### `M:Microsoft.UI.Text.ITextSelection.TypeText(System.String)`
 
-State: **partial**. Typing delegates to the shared editor, preserving typing format, rich history and input policy.
+State: **partial**. Typing uses the shared editor and its actual Overtype mode. Each accepted input scalar consumes one target grapheme; a selected range is consumed by the first scalar. Typed CR and LF insert separate paragraph breaks without consuming target text, so typed CRLF differs from bulk newline normalization. MaxLength plans accepted input and target consumption together, preserving targets for rejected suffixes. Empty TypeText is a no-op even during preedit/read-only state. Rich structure, formatting and one undo unit are preserved. Existing CR/LF soft breaks are protected as a documented FerroUI model policy; unmeasured native soft-break encodings, terminal EOP and external WinUI engine parity remain separate.
 
 - Target: [src/FerroUI.Controls/rich_text/rich_edit_text_document.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_document.rs) — `pub fn type_text(`.
-- Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_text_services_share_selection_history_and_visual_geometry`.
-- Differences: [RT-I08](DEVIATIONS.md).
+- Target: [src/FerroUI.Controls/rich_text/rich_text_editor.rs](../../../src/FerroUI.Controls/rich_text/rich_text_editor.rs) — `EditKind::Typing`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_matches_316_system_msftedit_observations`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_cancelled_direction_keeps_existing_modes`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_nested_same_value_intent_owns_modes`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_overtype_length_limit_consumes_only_accepted_targets`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_type_text_distinguishes_typed_and_bulk_crlf`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_overtype_preserves_rich_content_and_one_undo_unit`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_preserves_structured_soft_breaks_as_model_policy`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I07](DEVIATIONS.md), [RT-I26](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.ITextSelection.Options`
+
+State: **partial**. All selection facades share editor modes. StartActive is derived from accepted endpoints (true for a caret); Replace stays set, matching the native observations. Overtype drives actual typed replacement. Direction changes use the cancellable selection projection, and mutation generations reject stale modes after cancellation, redirection or newer nested intent. Unknown bits are rejected before effects. Active and AtEndOfLine retain explicit TOM state; automatic OS focus and full visual affinity are not supplied by these flags.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub fn options(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub fn set_options(`.
+- Target: [src/FerroUI.Controls/rich_text/rich_text_editor_selection.rs](../../../src/FerroUI.Controls/rich_text/rich_text_editor_selection.rs) — `set_selection_options`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_matches_316_system_msftedit_observations`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_cancelled_direction_keeps_existing_modes`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_nested_same_value_intent_owns_modes`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_overtype_length_limit_consumes_only_accepted_targets`.
+- Differences: [RT-I07](DEVIATIONS.md), [RT-I26](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Text.ITextSelection.Type`
+
+State: **partial**. The current editor owns one text selection and reports InsertionPoint for a caret and Normal for a nonempty range. Native None, InlineShape and Shape constants are preserved, but shape/object-selection detection is not inferred from the presence of an embedded control.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub fn selection_type(`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_are_shared_and_drive_control_typing`.
+- Differences: [RT-I26](DEVIATIONS.md).
 
 #### `T:Microsoft.UI.Text.ITextSelection`
 
@@ -2844,13 +3001,105 @@ State: **partial**. Live gravity-based Rust ranges cover the mapped operations o
 
 The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Text.SelectionOptions.Active`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub struct SelectionOptions`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Text.SelectionOptions.AtEndOfLine`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub struct SelectionOptions`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Text.SelectionOptions.Overtype`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub struct SelectionOptions`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Text.SelectionOptions.Replace`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub struct SelectionOptions`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Text.SelectionOptions.StartActive`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub struct SelectionOptions`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Text.SelectionOptions`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub struct SelectionOptions`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
 
 ### `Microsoft.UI.Text.SelectionType`
 
 The native implementation is external to the pinned repository. Review this exact enum/format/service contract and its consumers before claiming equivalent behavior.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Text.SelectionType.InlineShape`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub enum SelectionType`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Text.SelectionType.InsertionPoint`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub enum SelectionType`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Text.SelectionType.None`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub enum SelectionType`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Text.SelectionType.Normal`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub enum SelectionType`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Text.SelectionType.Shape`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub enum SelectionType`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Text.SelectionType`
+
+State: **complete**. The public selection flag bits and selection classification discriminants retain the exact native values and use normal FerroUI markup metadata. This complete state covers constants only: shape classification, focus activity and visual affinity are separate behavior contracts under RT-I26.
+
+- Target: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options.rs) — `pub enum SelectionType`.
+- Test: [src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs](../../../src/FerroUI.Controls/rich_text/rich_edit_text_selection_options_tests.rs) — `rich_selection_options_and_type_retain_native_public_values`.
+- Differences: [RT-I26](DEVIATIONS.md).
 
 ### `Microsoft.UI.Text.TabAlignment`
 
@@ -4802,7 +5051,7 @@ State: **partial**. RichEditBox is a FerroUI TemplatedControl with one persisten
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.InputScope`
 
-State: **partial**. RichEditBox.InputScope is a nullable styled Option<Ref<InputScope>> property. It observes scope replacement, ordered Names mutations and shared NameValue changes through weak disposable subscriptions, publishing immutable complete enum snapshots to inherited TextInputOptions.InputScopeNames. Clearing or emptying the scope restores the independently configured legacy content hint without overwriting it. The semantic owner retains live policy delivery during owned flyout focus; policy changes preserve the client, connection, composition and history. Effective changes to all ten attached options, including inherited/cleared values, are generation-fenced and reentrant same-transport setters reapply the latest policy. Platform APIs currently use the first name; the snapshot retains every name for future richer consumers. CoreText maps all 43 exact names, preserving its lazy creation, nested-setter serialization and retry behavior; other hosts use their supported purpose/keyboard hints. Native multi-name negotiation, candidate-window services, proofing/prediction execution and native WinUI/WinRT equivalence remain partial. Actual runtime gates are recorded separately from these source mappings. Android installs the current EditorInfo closure before restarting active input; iOS reloads current responder input views after a policy change. These host calls and deterministic policy fixtures still require device/OS execution. Native and IBus set_options remain no-op boundaries, while Browser consumes supported inputmode/enterkeyhint/capitalization/language attributes on the existing text element, keeping input type and composition state. Reentrant browser setters retain the newest options. Browser correction, spellcheck and writing suggestions remain disabled until non-composition DOM replacement events are delivered through the framework connection. Browser Rust/JavaScript and device/OS runtime gates remain separate.
+State: **partial**. RichEditBox.InputScope is a nullable styled Option<Ref<InputScope>> with weak subscriptions to replacement, ordered Names mutations and shared NameValue changes. It publishes immutable complete snapshots through inherited TextInputOptions without overwriting legacy hints, client identity, composition or history; clear/empty restores the independent fallback. Semantic ownership persists through owned flyouts, and generation fences make newer policy win during callbacks. CoreText preserves exact names and lazy/reentrant/retry delivery; Android, iOS, Wayland, Fcitx and IBus project supported purpose/keyboard hints. Single-purpose consumers select the first name; IMM32 forwards every name with native equal weighting and independent IS_PRIVATE, associates the same-thread HWND, retries failures and clears retired identities. Optional AppKit delivery preserves the existing native ABI and provides four supported macOS 14 content meanings, clearing unsupported/private/disabled hints. Browser uses one persistent LF-projected textarea with exact UTF-16 transactions; CR/CRLF model text remains exact and unrepresentable boundaries reject safely. Suggestions are enabled only for exact-edit nonprivate clients. Actual OS/device keyboard, prediction, candidate-window, proofing and WinRT collection/activation behavior remain separate. IMM32 does not provide a TSF Document Manager or guarantee touch-keyboard notifications; AppKit exact replacement/proofing remains pending. Source mappings and completed execution records are independent.
 
 - Target: [src/FerroUI.Controls/rich_edit_box.rs](../../../src/FerroUI.Controls/rich_edit_box.rs) — `pub fn input_scope(`.
 - Target: [src/FerroUI.Base/input/text_input/input_method_manager.rs](../../../src/FerroUI.Base/input/text_input/input_method_manager.rs) — `fn update_input_options(`.
@@ -4829,6 +5078,25 @@ State: **partial**. RichEditBox.InputScope is a nullable styled Option<Ref<Input
 - Target: [src/Browser/FerroUI.Browser/browser_text_input_options.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_options.rs) — `pub(crate) fn from_options(`.
 - Target: [src/Browser/FerroUI.Browser/browser_text_input_method.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_method.rs) — `fn set_options(`.
 - Target: [src/Browser/FerroUI.Browser/webapp/modules/ferroui/inputOptions.ts](../../../src/Browser/FerroUI.Browser/webapp/modules/ferroui/inputOptions.ts) — `export function applyTextInputOptions(`.
+- Target: [src/Browser/FerroUI.Browser/browser_text_input_dom.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_dom.rs) — `pub(crate) fn on_dom_input(`.
+- Target: [src/Browser/FerroUI.Browser/browser_text_input_edit.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_edit.rs) — `pub(crate) fn edit_from_dom(`.
+- Target: [src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_input_options.rs](../../../src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_input_options.rs) — `fn purpose_for_scope(`.
+- Target: [src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_x11_text_input_method.rs](../../../src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_x11_text_input_method.rs) — `fn enqueue_options(`.
+- Target: [src/FerroUI.Native/native_text_input_options.rs](../../../src/FerroUI.Native/native_text_input_options.rs) — `fn from_options(`.
+- Target: [src/FerroUI.Native/native_text_input_options.rs](../../../src/FerroUI.Native/native_text_input_options.rs) — `pub(crate) fn set_options(`.
+- Target: [src/FerroUI.Native/native_text_input_options.rs](../../../src/FerroUI.Native/native_text_input_options.rs) — `pub(crate) fn apply(`.
+- Target: [src/FerroUI.Native/ferro_native_text_input_method.rs](../../../src/FerroUI.Native/ferro_native_text_input_method.rs) — `pub(crate) fn new(`.
+- Target: [src/FerroUI.Native/ferro_native_text_input_method.rs](../../../src/FerroUI.Native/ferro_native_text_input_method.rs) — `fn apply_options(`.
+- Target: [src/FerroUI.Native/ferro_native_text_input_method.rs](../../../src/FerroUI.Native/ferro_native_text_input_method.rs) — `pub fn dispose(`.
+- Target: [src/FerroUI.Native/frn.idl](../../../src/FerroUI.Native/frn.idl) — `interface IFrnTextInputMethodOptions`.
+- Target: [native/FerroUI.Native/src/OSX/FrnTextInputMethod.mm](../../../native/FerroUI.Native/src/OSX/FrnTextInputMethod.mm) — `FrnTextInputMethod::SetContentType`.
+- Target: [native/FerroUI.Native/src/OSX/FrnView.mm](../../../native/FerroUI.Native/src/OSX/FrnView.mm) — `setInputContentType:`.
+- Target: [src/Windows/FerroUI.Win32/input/imm32_input_options.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options.rs) — `fn native_scopes(`.
+- Target: [src/Windows/FerroUI.Win32/input/imm32_input_options.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options.rs) — `pub(super) fn apply(`.
+- Target: [src/Windows/FerroUI.Win32/input/imm32_input_options.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options.rs) — `pub(super) fn retire_window(`.
+- Target: [src/Windows/FerroUI.Win32/input/imm32_input_method.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_method.rs) — `impl ITextInputMethodImpl for Imm32InputMethodSite`.
+- Target: [src/Windows/FerroUI.Win32/interop/unmanaged_methods.rs](../../../src/Windows/FerroUI.Win32/interop/unmanaged_methods.rs) — `pub fn set_input_scopes(`.
+- Target: [src/Browser/FerroUI.Browser/browser_text_input_projection.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_projection.rs) — `pub(crate) struct DomTextProjection`.
 - Test: [src/FerroUI.Controls/rich_edit_box_tests.rs](../../../src/FerroUI.Controls/rich_edit_box_tests.rs) — `rich_edit_control_input_policy_maps_to_platform_options_and_enforces_casing`.
 - Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_change_without_replacing_the_client_or_connection`.
 - Test: [src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs](../../../src/FerroUI.Base/input/text_input/text_input_method_options_tests.rs) — `focused_input_options_follow_inheritance_and_clearing_local_values`.
@@ -4883,7 +5151,35 @@ State: **partial**. RichEditBox.InputScope is a nullable styled Option<Ref<Input
 - Test: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `input_scope_restart_preserves_the_same_clients_composing_region`.
 - Test: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `input_scope_restart_does_not_carry_composition_across_a_client_assignment`.
 - Test: [src/Android/FerroUI.Android/platform/input/android_input_method.rs](../../../src/Android/FerroUI.Android/platform/input/android_input_method.rs) — `input_scope_override_preserves_independently_configured_privacy`.
-- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-I20](DEVIATIONS.md).
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_dom_tests.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_dom_tests.rs) — `browser_dom_input_correction_uses_real_exact_transaction_and_preserves_formatting`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_dom_tests.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_dom_tests.rs) — `browser_dom_input_captured_before_focus_change_cannot_edit_an_identical_new_owner`.
+- Test: [src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_input_options.rs](../../../src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_input_options.rs) — `ibus_input_scope_maps_all_43_names_without_confusing_digits_phones_or_alphanumeric_text`.
+- Test: [src/FerroUI.FreeDesktop/dbus_ime/tests.rs](../../../src/FerroUI.FreeDesktop/dbus_ime/tests.rs) — `ibus_input_scope_property_roundtrip_preserves_preedit_and_clears_to_legacy_hints`.
+- Test: [src/FerroUI.FreeDesktop/dbus_ime/tests.rs](../../../src/FerroUI.FreeDesktop/dbus_ime/tests.rs) — `ibus_input_scope_failed_reply_from_retired_context_cannot_disconnect_its_replacement`.
+- Test: [src/FerroUI.Native/native_text_input_options.rs](../../../src/FerroUI.Native/native_text_input_options.rs) — `native_input_scope_all_names_have_a_semantic_mapping_or_explicit_fallback`.
+- Test: [src/FerroUI.Native/native_text_input_options.rs](../../../src/FerroUI.Native/native_text_input_options.rs) — `native_input_scope_empty_names_fall_back_and_explicit_default_clears_legacy_hint`.
+- Test: [src/FerroUI.Native/native_text_input_options.rs](../../../src/FerroUI.Native/native_text_input_options.rs) — `native_input_scope_sensitive_and_suggestion_policy_override_semantic_hints`.
+- Test: [src/FerroUI.Native/native_text_input_options.rs](../../../src/FerroUI.Native/native_text_input_options.rs) — `native_input_options_follow_active_client_and_do_not_repeat_unchanged_delivery`.
+- Test: [src/FerroUI.Native/native_text_input_options.rs](../../../src/FerroUI.Native/native_text_input_options.rs) — `native_input_options_reentrant_policy_and_client_changes_keep_latest_owner`.
+- Test: [src/FerroUI.Native/lib.rs](../../../src/FerroUI.Native/lib.rs) — `fn vtable_sizes(`.
+- Test: [src/FerroUI.Native/tests/text_input_options.rs](../../../src/FerroUI.Native/tests/text_input_options.rs) — `fn check_view(`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_preserves_all_43_native_values_and_secret_hints`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_preserves_order_duplicates_and_the_immutable_snapshot`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_site_retains_options_sent_before_client_assignment`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_reentrant_update_applies_the_latest_names_without_borrows`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_failed_native_set_is_uncached_and_retries_on_the_next_update`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_reused_handle_is_cleared_only_by_its_current_parent_identity`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_reentrant_window_release_cannot_restore_retired_hints`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_failed_clear_remains_pending_until_a_later_retry`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_native_sdk_values_match_every_public_name`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs) — `imm32_input_scope_native_api_accepts_multiple_scopes_and_clears_before_destroy`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs) — `imm32_input_scope_live_rich_names_preserve_composition_history_and_plain_text`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs) — `imm32_input_scope_recipient_release_retains_the_semantic_owners_options`.
+- Test: [src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs](../../../src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs) — `imm32_input_scope_source_release_clears_its_distinct_physical_recipient`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_projection.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_projection.rs) — `browser_dom_projection_maps_mixed_newlines_and_directed_utf16_boundaries`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_projection.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_projection.rs) — `browser_dom_projection_keeps_unchanged_normalization_out_of_document_edits`.
+- Test: [src/Browser/FerroUI.Browser/browser_text_input_projection.rs](../../../src/Browser/FerroUI.Browser/browser_text_input_projection.rs) — `browser_dom_projection_rejects_crlf_interiors_and_new_collapsed_pairs`.
+- Differences: [RT-I01](DEVIATIONS.md), [RT-I06](DEVIATIONS.md), [RT-I16](DEVIATIONS.md), [RT-I20](DEVIATIONS.md), [RT-I27](DEVIATIONS.md), [RT-I28](DEVIATIONS.md), [RT-I29](DEVIATIONS.md), [RT-I30](DEVIATIONS.md).
 
 #### `P:Microsoft.UI.Xaml.Controls.RichEditBox.InputScopeProperty`
 
@@ -7190,9 +7486,1737 @@ State: **partial**. Signed StartIndex/Length retain native value semantics with 
 
 ### `Microsoft.UI.Xaml.Documents.Typography`
 
-Audit every attached OpenType feature and its inheritance/shaping behavior; a FontFeatures collection alone does not verify all named feature APIs.
+All 43 named attached properties, 86 accessors, seven enum types and 38 values now map to inherited FerroUI properties and ordered OpenType features. Fresh tests cover inheritance, snapshots, mutable raw overrides, every text consumer, real HarfBuzz shaping and XAML. Keep native font/script raster conformance, exact native feature collection order and unsupported RTF typography outside completed claims; see TYPOGRAPHY.md and RT-I25.
 
-All retained members remain pending.
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetAnnotationAlternates(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. AnnotationAlternates maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_annotation_alternates(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub annotation_alternates: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetCapitalSpacing(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. CapitalSpacing maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_capital_spacing(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub capital_spacing: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetCapitals(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. Capitals maps to an inherited attached FontCapitals property with the pinned default FontCapitals::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_capitals(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub capitals: Option<FontCapitals>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetCaseSensitiveForms(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. CaseSensitiveForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_case_sensitive_forms(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub case_sensitive_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetContextualAlternates(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. ContextualAlternates maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_contextual_alternates(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_alternates: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetContextualLigatures(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. ContextualLigatures maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_contextual_ligatures(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetContextualSwashes(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. ContextualSwashes maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_contextual_swashes(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_swashes: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetDiscretionaryLigatures(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. DiscretionaryLigatures maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_discretionary_ligatures(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub discretionary_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetEastAsianExpertForms(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. EastAsianExpertForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_east_asian_expert_forms(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_expert_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetEastAsianLanguage(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. EastAsianLanguage maps to an inherited attached FontEastAsianLanguage property with the pinned default FontEastAsianLanguage::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_east_asian_language(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_language: Option<FontEastAsianLanguage>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetEastAsianWidths(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. EastAsianWidths maps to an inherited attached FontEastAsianWidths property with the pinned default FontEastAsianWidths::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_east_asian_widths(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_widths: Option<FontEastAsianWidths>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetFraction(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. Fraction maps to an inherited attached FontFraction property with the pinned default FontFraction::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_fraction(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub fraction: Option<FontFraction>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetHistoricalForms(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. HistoricalForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_historical_forms(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub historical_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetHistoricalLigatures(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. HistoricalLigatures maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_historical_ligatures(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub historical_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetKerning(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. Kerning maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_kerning(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub kerning: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetMathematicalGreek(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. MathematicalGreek maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_mathematical_greek(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub mathematical_greek: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetNumeralAlignment(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. NumeralAlignment maps to an inherited attached FontNumeralAlignment property with the pinned default FontNumeralAlignment::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_numeral_alignment(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub numeral_alignment: Option<FontNumeralAlignment>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetNumeralStyle(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. NumeralStyle maps to an inherited attached FontNumeralStyle property with the pinned default FontNumeralStyle::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_numeral_style(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub numeral_style: Option<FontNumeralStyle>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetSlashedZero(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. SlashedZero maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_slashed_zero(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub slashed_zero: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStandardLigatures(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StandardLigatures maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_standard_ligatures(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub standard_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStandardSwashes(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StandardSwashes maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_standard_swashes(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub standard_swashes: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticAlternates(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticAlternates maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_alternates(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_alternates: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet1(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet1 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set1(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set1: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet10(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet10 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set10(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set10: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet11(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet11 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set11(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set11: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet12(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet12 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set12(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set12: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet13(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet13 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set13(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set13: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet14(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet14 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set14(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set14: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet15(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet15 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set15(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set15: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet16(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet16 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set16(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set16: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet17(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet17 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set17(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set17: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet18(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet18 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set18(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set18: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet19(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet19 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set19(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set19: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet2(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet2 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set2(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set2: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet20(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet20 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set20(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set20: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet3(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet3 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set3(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set3: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet4(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet4 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set4(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set4: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet5(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet5 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set5(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set5: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet6(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet6 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set6(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set6: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet7(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet7 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set7(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set7: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet8(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet8 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set8(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set8: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetStylisticSet9(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. StylisticSet9 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_stylistic_set9(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set9: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.GetVariants(Microsoft.UI.Xaml.DependencyObject)`
+
+State: **partial**. Variants maps to an inherited attached FontVariants property with the pinned default FontVariants::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn get_variants(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub variants: Option<FontVariants>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetAnnotationAlternates(Microsoft.UI.Xaml.DependencyObject,System.Int32)`
+
+State: **partial**. AnnotationAlternates maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_annotation_alternates(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub annotation_alternates: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetCapitalSpacing(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. CapitalSpacing maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_capital_spacing(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub capital_spacing: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetCapitals(Microsoft.UI.Xaml.DependencyObject,Microsoft.UI.Xaml.FontCapitals)`
+
+State: **partial**. Capitals maps to an inherited attached FontCapitals property with the pinned default FontCapitals::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_capitals(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub capitals: Option<FontCapitals>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetCaseSensitiveForms(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. CaseSensitiveForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_case_sensitive_forms(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub case_sensitive_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetContextualAlternates(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. ContextualAlternates maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_contextual_alternates(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_alternates: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetContextualLigatures(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. ContextualLigatures maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_contextual_ligatures(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetContextualSwashes(Microsoft.UI.Xaml.DependencyObject,System.Int32)`
+
+State: **partial**. ContextualSwashes maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_contextual_swashes(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_swashes: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetDiscretionaryLigatures(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. DiscretionaryLigatures maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_discretionary_ligatures(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub discretionary_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetEastAsianExpertForms(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. EastAsianExpertForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_east_asian_expert_forms(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_expert_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetEastAsianLanguage(Microsoft.UI.Xaml.DependencyObject,Microsoft.UI.Xaml.FontEastAsianLanguage)`
+
+State: **partial**. EastAsianLanguage maps to an inherited attached FontEastAsianLanguage property with the pinned default FontEastAsianLanguage::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_east_asian_language(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_language: Option<FontEastAsianLanguage>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetEastAsianWidths(Microsoft.UI.Xaml.DependencyObject,Microsoft.UI.Xaml.FontEastAsianWidths)`
+
+State: **partial**. EastAsianWidths maps to an inherited attached FontEastAsianWidths property with the pinned default FontEastAsianWidths::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_east_asian_widths(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_widths: Option<FontEastAsianWidths>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetFraction(Microsoft.UI.Xaml.DependencyObject,Microsoft.UI.Xaml.FontFraction)`
+
+State: **partial**. Fraction maps to an inherited attached FontFraction property with the pinned default FontFraction::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_fraction(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub fraction: Option<FontFraction>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetHistoricalForms(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. HistoricalForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_historical_forms(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub historical_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetHistoricalLigatures(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. HistoricalLigatures maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_historical_ligatures(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub historical_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetKerning(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. Kerning maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_kerning(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub kerning: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetMathematicalGreek(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. MathematicalGreek maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_mathematical_greek(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub mathematical_greek: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetNumeralAlignment(Microsoft.UI.Xaml.DependencyObject,Microsoft.UI.Xaml.FontNumeralAlignment)`
+
+State: **partial**. NumeralAlignment maps to an inherited attached FontNumeralAlignment property with the pinned default FontNumeralAlignment::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_numeral_alignment(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub numeral_alignment: Option<FontNumeralAlignment>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetNumeralStyle(Microsoft.UI.Xaml.DependencyObject,Microsoft.UI.Xaml.FontNumeralStyle)`
+
+State: **partial**. NumeralStyle maps to an inherited attached FontNumeralStyle property with the pinned default FontNumeralStyle::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_numeral_style(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub numeral_style: Option<FontNumeralStyle>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetSlashedZero(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. SlashedZero maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_slashed_zero(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub slashed_zero: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStandardLigatures(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StandardLigatures maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_standard_ligatures(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub standard_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStandardSwashes(Microsoft.UI.Xaml.DependencyObject,System.Int32)`
+
+State: **partial**. StandardSwashes maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_standard_swashes(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub standard_swashes: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticAlternates(Microsoft.UI.Xaml.DependencyObject,System.Int32)`
+
+State: **partial**. StylisticAlternates maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_alternates(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_alternates: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet1(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet1 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set1(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set1: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet10(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet10 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set10(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set10: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet11(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet11 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set11(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set11: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet12(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet12 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set12(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set12: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet13(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet13 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set13(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set13: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet14(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet14 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set14(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set14: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet15(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet15 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set15(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set15: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet16(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet16 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set16(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set16: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet17(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet17 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set17(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set17: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet18(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet18 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set18(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set18: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet19(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet19 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set19(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set19: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet2(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet2 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set2(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set2: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet20(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet20 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set20(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set20: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet3(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet3 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set3(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set3: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet4(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet4 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set4(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set4: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet5(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet5 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set5(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set5: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet6(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet6 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set6(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set6: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet7(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet7 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set7(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set7: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet8(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet8 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set8(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set8: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetStylisticSet9(Microsoft.UI.Xaml.DependencyObject,System.Boolean)`
+
+State: **partial**. StylisticSet9 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_stylistic_set9(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set9: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `M:Microsoft.UI.Xaml.Documents.Typography.SetVariants(Microsoft.UI.Xaml.DependencyObject,Microsoft.UI.Xaml.FontVariants)`
+
+State: **partial**. Variants maps to an inherited attached FontVariants property with the pinned default FontVariants::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn set_variants(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub variants: Option<FontVariants>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.AnnotationAlternates`
+
+State: **partial**. AnnotationAlternates maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn annotation_alternates_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub annotation_alternates: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.AnnotationAlternatesProperty`
+
+State: **partial**. AnnotationAlternates maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn annotation_alternates_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub annotation_alternates: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.CapitalSpacing`
+
+State: **partial**. CapitalSpacing maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn capital_spacing_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub capital_spacing: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.CapitalSpacingProperty`
+
+State: **partial**. CapitalSpacing maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn capital_spacing_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub capital_spacing: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.Capitals`
+
+State: **partial**. Capitals maps to an inherited attached FontCapitals property with the pinned default FontCapitals::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn capitals_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub capitals: Option<FontCapitals>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.CapitalsProperty`
+
+State: **partial**. Capitals maps to an inherited attached FontCapitals property with the pinned default FontCapitals::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn capitals_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub capitals: Option<FontCapitals>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.CaseSensitiveForms`
+
+State: **partial**. CaseSensitiveForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn case_sensitive_forms_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub case_sensitive_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.CaseSensitiveFormsProperty`
+
+State: **partial**. CaseSensitiveForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn case_sensitive_forms_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub case_sensitive_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.ContextualAlternates`
+
+State: **partial**. ContextualAlternates maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn contextual_alternates_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_alternates: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.ContextualAlternatesProperty`
+
+State: **partial**. ContextualAlternates maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn contextual_alternates_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_alternates: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.ContextualLigatures`
+
+State: **partial**. ContextualLigatures maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn contextual_ligatures_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.ContextualLigaturesProperty`
+
+State: **partial**. ContextualLigatures maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn contextual_ligatures_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.ContextualSwashes`
+
+State: **partial**. ContextualSwashes maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn contextual_swashes_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_swashes: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.ContextualSwashesProperty`
+
+State: **partial**. ContextualSwashes maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn contextual_swashes_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub contextual_swashes: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.DiscretionaryLigatures`
+
+State: **partial**. DiscretionaryLigatures maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn discretionary_ligatures_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub discretionary_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.DiscretionaryLigaturesProperty`
+
+State: **partial**. DiscretionaryLigatures maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn discretionary_ligatures_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub discretionary_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.EastAsianExpertForms`
+
+State: **partial**. EastAsianExpertForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn east_asian_expert_forms_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_expert_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.EastAsianExpertFormsProperty`
+
+State: **partial**. EastAsianExpertForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn east_asian_expert_forms_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_expert_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.EastAsianLanguage`
+
+State: **partial**. EastAsianLanguage maps to an inherited attached FontEastAsianLanguage property with the pinned default FontEastAsianLanguage::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn east_asian_language_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_language: Option<FontEastAsianLanguage>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.EastAsianLanguageProperty`
+
+State: **partial**. EastAsianLanguage maps to an inherited attached FontEastAsianLanguage property with the pinned default FontEastAsianLanguage::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn east_asian_language_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_language: Option<FontEastAsianLanguage>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.EastAsianWidths`
+
+State: **partial**. EastAsianWidths maps to an inherited attached FontEastAsianWidths property with the pinned default FontEastAsianWidths::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn east_asian_widths_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_widths: Option<FontEastAsianWidths>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.EastAsianWidthsProperty`
+
+State: **partial**. EastAsianWidths maps to an inherited attached FontEastAsianWidths property with the pinned default FontEastAsianWidths::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn east_asian_widths_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub east_asian_widths: Option<FontEastAsianWidths>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.Fraction`
+
+State: **partial**. Fraction maps to an inherited attached FontFraction property with the pinned default FontFraction::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn fraction_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub fraction: Option<FontFraction>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.FractionProperty`
+
+State: **partial**. Fraction maps to an inherited attached FontFraction property with the pinned default FontFraction::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn fraction_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub fraction: Option<FontFraction>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.HistoricalForms`
+
+State: **partial**. HistoricalForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn historical_forms_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub historical_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.HistoricalFormsProperty`
+
+State: **partial**. HistoricalForms maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn historical_forms_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub historical_forms: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.HistoricalLigatures`
+
+State: **partial**. HistoricalLigatures maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn historical_ligatures_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub historical_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.HistoricalLigaturesProperty`
+
+State: **partial**. HistoricalLigatures maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn historical_ligatures_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub historical_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.Kerning`
+
+State: **partial**. Kerning maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn kerning_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub kerning: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.KerningProperty`
+
+State: **partial**. Kerning maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn kerning_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub kerning: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.MathematicalGreek`
+
+State: **partial**. MathematicalGreek maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn mathematical_greek_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub mathematical_greek: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.MathematicalGreekProperty`
+
+State: **partial**. MathematicalGreek maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn mathematical_greek_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub mathematical_greek: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.NumeralAlignment`
+
+State: **partial**. NumeralAlignment maps to an inherited attached FontNumeralAlignment property with the pinned default FontNumeralAlignment::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn numeral_alignment_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub numeral_alignment: Option<FontNumeralAlignment>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.NumeralAlignmentProperty`
+
+State: **partial**. NumeralAlignment maps to an inherited attached FontNumeralAlignment property with the pinned default FontNumeralAlignment::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn numeral_alignment_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub numeral_alignment: Option<FontNumeralAlignment>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.NumeralStyle`
+
+State: **partial**. NumeralStyle maps to an inherited attached FontNumeralStyle property with the pinned default FontNumeralStyle::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn numeral_style_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub numeral_style: Option<FontNumeralStyle>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.NumeralStyleProperty`
+
+State: **partial**. NumeralStyle maps to an inherited attached FontNumeralStyle property with the pinned default FontNumeralStyle::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn numeral_style_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub numeral_style: Option<FontNumeralStyle>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.SlashedZero`
+
+State: **partial**. SlashedZero maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn slashed_zero_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub slashed_zero: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.SlashedZeroProperty`
+
+State: **partial**. SlashedZero maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn slashed_zero_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub slashed_zero: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StandardLigatures`
+
+State: **partial**. StandardLigatures maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn standard_ligatures_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub standard_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StandardLigaturesProperty`
+
+State: **partial**. StandardLigatures maps to an inherited attached bool property with the pinned default true. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn standard_ligatures_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub standard_ligatures: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StandardSwashes`
+
+State: **partial**. StandardSwashes maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn standard_swashes_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub standard_swashes: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StandardSwashesProperty`
+
+State: **partial**. StandardSwashes maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn standard_swashes_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub standard_swashes: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticAlternates`
+
+State: **partial**. StylisticAlternates maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_alternates_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_alternates: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticAlternatesProperty`
+
+State: **partial**. StylisticAlternates maps to an inherited attached i32 property with the pinned default 0. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_alternates_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_alternates: Option<i32>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet1`
+
+State: **partial**. StylisticSet1 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set1_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set1: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet10`
+
+State: **partial**. StylisticSet10 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set10_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set10: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet10Property`
+
+State: **partial**. StylisticSet10 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set10_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set10: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet11`
+
+State: **partial**. StylisticSet11 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set11_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set11: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet11Property`
+
+State: **partial**. StylisticSet11 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set11_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set11: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet12`
+
+State: **partial**. StylisticSet12 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set12_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set12: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet12Property`
+
+State: **partial**. StylisticSet12 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set12_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set12: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet13`
+
+State: **partial**. StylisticSet13 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set13_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set13: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet13Property`
+
+State: **partial**. StylisticSet13 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set13_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set13: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet14`
+
+State: **partial**. StylisticSet14 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set14_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set14: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet14Property`
+
+State: **partial**. StylisticSet14 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set14_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set14: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet15`
+
+State: **partial**. StylisticSet15 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set15_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set15: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet15Property`
+
+State: **partial**. StylisticSet15 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set15_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set15: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet16`
+
+State: **partial**. StylisticSet16 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set16_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set16: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet16Property`
+
+State: **partial**. StylisticSet16 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set16_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set16: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet17`
+
+State: **partial**. StylisticSet17 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set17_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set17: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet17Property`
+
+State: **partial**. StylisticSet17 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set17_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set17: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet18`
+
+State: **partial**. StylisticSet18 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set18_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set18: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet18Property`
+
+State: **partial**. StylisticSet18 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set18_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set18: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet19`
+
+State: **partial**. StylisticSet19 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set19_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set19: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet19Property`
+
+State: **partial**. StylisticSet19 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set19_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set19: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet1Property`
+
+State: **partial**. StylisticSet1 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set1_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set1: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet2`
+
+State: **partial**. StylisticSet2 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set2_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set2: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet20`
+
+State: **partial**. StylisticSet20 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set20_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set20: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet20Property`
+
+State: **partial**. StylisticSet20 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set20_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set20: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet2Property`
+
+State: **partial**. StylisticSet2 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set2_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set2: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet3`
+
+State: **partial**. StylisticSet3 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set3_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set3: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet3Property`
+
+State: **partial**. StylisticSet3 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set3_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set3: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet4`
+
+State: **partial**. StylisticSet4 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set4_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set4: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet4Property`
+
+State: **partial**. StylisticSet4 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set4_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set4: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet5`
+
+State: **partial**. StylisticSet5 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set5_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set5: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet5Property`
+
+State: **partial**. StylisticSet5 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set5_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set5: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet6`
+
+State: **partial**. StylisticSet6 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set6_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set6: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet6Property`
+
+State: **partial**. StylisticSet6 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set6_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set6: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet7`
+
+State: **partial**. StylisticSet7 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set7_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set7: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet7Property`
+
+State: **partial**. StylisticSet7 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set7_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set7: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet8`
+
+State: **partial**. StylisticSet8 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set8_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set8: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet8Property`
+
+State: **partial**. StylisticSet8 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set8_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set8: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet9`
+
+State: **partial**. StylisticSet9 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set9_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set9: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.StylisticSet9Property`
+
+State: **partial**. StylisticSet9 maps to an inherited attached bool property with the pinned default false. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn stylistic_set9_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub stylistic_set9: Option<bool>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.Variants`
+
+State: **partial**. Variants maps to an inherited attached FontVariants property with the pinned default FontVariants::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn variants_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub variants: Option<FontVariants>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `P:Microsoft.UI.Xaml.Documents.Typography.VariantsProperty`
+
+State: **partial**. Variants maps to an inherited attached FontVariants property with the pinned default FontVariants::Normal. Its registered metadata and getter/setter use FerroObject property precedence. The corresponding optional format field retains local intent separately from inherited presentation and projects the resolved value into the existing font-feature pipeline. Unsupported font features are not synthesized; font-dependent native shaping and pixels remain under review.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub fn variants_property(`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub variants: Option<FontVariants>`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.Documents.Typography`
+
+State: **partial**. All 43 inherited attached-property families have typed Rust property/get/set and markup accessors. TypographyFormat preserves local assignments, including explicit defaults, through effective lookup, fieldwise patches, document snapshots and the existing ordered font-feature/shaping pipeline. This maps the public type role; native font/rasterizer and every font-specific feature outcome remain separate conformance work.
+
+- Target: [src/FerroUI.Controls/documents/typography.rs](../../../src/FerroUI.Controls/documents/typography.rs) — `pub struct Typography;`.
+- Target: [src/FerroUI.Controls/documents/typography_format.rs](../../../src/FerroUI.Controls/documents/typography_format.rs) — `pub struct TypographyFormat`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors`.
+- Test: [tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs](../../../tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs) — `typography_markup_loads_all_43_properties_and_nested_explicit_defaults`.
+- Differences: [RT-A01](DEVIATIONS.md), [RT-A02](DEVIATIONS.md), [RT-I25](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Documents.Underline`
 
@@ -7249,49 +9273,478 @@ State: **partial**. The None/Single hyperlink decoration choice is represented b
 
 ### `Microsoft.UI.Xaml.FontCapitals`
 
-Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+The seven Rust enums and all 38 pinned numeric constants have exact value and feature-tag tests. Constant/type identity is complete; engine behavior remains part of the partial Typography contract, not an implication of enum coverage.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Xaml.FontCapitals.AllPetiteCaps`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontCapitals`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `AllPetiteCaps = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontCapitals.AllSmallCaps`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontCapitals`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `AllSmallCaps = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontCapitals.Normal`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontCapitals`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Normal = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontCapitals.PetiteCaps`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontCapitals`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `PetiteCaps = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontCapitals.SmallCaps`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontCapitals`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `SmallCaps = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontCapitals.Titling`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontCapitals`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Titling = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontCapitals.Unicase`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontCapitals`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Unicase = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.FontCapitals`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontCapitals`.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.FontEastAsianLanguage`
 
-Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+The seven Rust enums and all 38 pinned numeric constants have exact value and feature-tag tests. Constant/type identity is complete; engine behavior remains part of the partial Typography contract, not an implication of enum coverage.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.HojoKanji`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `HojoKanji = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.Jis04`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Jis04 = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.Jis78`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Jis78 = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.Jis83`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Jis83 = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.Jis90`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Jis90 = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.NlcKanji`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `NlcKanji = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.Normal`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Normal = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.Simplified`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Simplified = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.Traditional`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Traditional = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianLanguage.TraditionalNames`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `TraditionalNames = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.FontEastAsianLanguage`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianLanguage`.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.FontEastAsianWidths`
 
-Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+The seven Rust enums and all 38 pinned numeric constants have exact value and feature-tag tests. Constant/type identity is complete; engine behavior remains part of the partial Typography contract, not an implication of enum coverage.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Xaml.FontEastAsianWidths.Full`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianWidths`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Full = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianWidths.Half`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianWidths`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Half = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianWidths.Normal`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianWidths`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Normal = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianWidths.Proportional`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianWidths`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Proportional = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianWidths.Quarter`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianWidths`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Quarter = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontEastAsianWidths.Third`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianWidths`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Third = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.FontEastAsianWidths`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontEastAsianWidths`.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.FontFraction`
 
-Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+The seven Rust enums and all 38 pinned numeric constants have exact value and feature-tag tests. Constant/type identity is complete; engine behavior remains part of the partial Typography contract, not an implication of enum coverage.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Xaml.FontFraction.Normal`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontFraction`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Normal = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontFraction.Slashed`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontFraction`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Slashed = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontFraction.Stacked`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontFraction`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Stacked = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.FontFraction`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontFraction`.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.FontNumeralAlignment`
 
-Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+The seven Rust enums and all 38 pinned numeric constants have exact value and feature-tag tests. Constant/type identity is complete; engine behavior remains part of the partial Typography contract, not an implication of enum coverage.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Xaml.FontNumeralAlignment.Normal`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontNumeralAlignment`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Normal = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontNumeralAlignment.Proportional`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontNumeralAlignment`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Proportional = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontNumeralAlignment.Tabular`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontNumeralAlignment`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Tabular = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.FontNumeralAlignment`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontNumeralAlignment`.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.FontNumeralStyle`
 
-Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+The seven Rust enums and all 38 pinned numeric constants have exact value and feature-tag tests. Constant/type identity is complete; engine behavior remains part of the partial Typography contract, not an implication of enum coverage.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Xaml.FontNumeralStyle.Lining`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontNumeralStyle`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Lining = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontNumeralStyle.Normal`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontNumeralStyle`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Normal = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontNumeralStyle.OldStyle`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontNumeralStyle`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `OldStyle = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.FontNumeralStyle`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontNumeralStyle`.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.FontVariants`
 
-Audit shared layout/rendering enum values and all consumers, including unsupported values and native defaults.
+The seven Rust enums and all 38 pinned numeric constants have exact value and feature-tag tests. Constant/type identity is complete; engine behavior remains part of the partial Typography contract, not an implication of enum coverage.
 
-All retained members remain pending.
+#### `F:Microsoft.UI.Xaml.FontVariants.Inferior`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontVariants`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Inferior = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontVariants.Normal`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontVariants`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Normal = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontVariants.Ordinal`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontVariants`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Ordinal = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontVariants.Ruby`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontVariants`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Ruby = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontVariants.Subscript`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontVariants`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Subscript = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `F:Microsoft.UI.Xaml.FontVariants.Superscript`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontVariants`.
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `Superscript = `.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
+
+#### `T:Microsoft.UI.Xaml.FontVariants`
+
+State: **complete**. The enum type and all named repr(i32) discriminants retain the pinned XamlOM declaration. The seven types expose all 38 values through the normal FerroUI.Media markup metadata. Complete here covers enum identity and constants only; attached-property behavior and font shaping have independent partial mappings.
+
+- Target: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `pub enum FontVariants`.
+- Test: [src/FerroUI.Base/media/font_typography.rs](../../../src/FerroUI.Base/media/font_typography.rs) — `typography_enum_values_match_all_38_pinned_constants`.
+- Test: [src/FerroUI.Controls/documents/typography_tests.rs](../../../src/FerroUI.Controls/documents/typography_tests.rs) — `typography_maps_all_38_enum_choices_to_exact_feature_tags`.
+- Differences: [RT-I25](DEVIATIONS.md).
 
 ### `Microsoft.UI.Xaml.Input.InputScope`
 
-The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts.
+The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot. IMM32 forwards the complete equal-weight array; single-purpose backends choose the first name or an explicit fallback. Browser exact edits, IBus ContentType and optional AppKit semantic hints have separate mappings. Real OS keyboard/prediction sessions, platform-specific unsupported hints and WinRT ABI remain separate contracts.
 
 #### `M:Microsoft.UI.Xaml.Input.InputScope.#ctor`
 
@@ -7342,7 +9795,7 @@ State: **partial**. InputScope is a real shared FerroObject with a live ordered 
 
 ### `Microsoft.UI.Xaml.Input.InputScopeName`
 
-The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts.
+The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot. IMM32 forwards the complete equal-weight array; single-purpose backends choose the first name or an explicit fallback. Browser exact edits, IBus ContentType and optional AppKit semantic hints have separate mappings. Real OS keyboard/prediction sessions, platform-specific unsupported hints and WinRT ABI remain separate contracts.
 
 #### `M:Microsoft.UI.Xaml.Input.InputScopeName.#ctor`
 
@@ -7389,7 +9842,7 @@ State: **partial**. InputScopeName is a shared FerroObject with a styled NameVal
 
 ### `Microsoft.UI.Xaml.Input.InputScopeNameValue`
 
-The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot, while current native backends choose the first name or a narrower supported content hint. Native multi-name negotiation, real OS keyboard/prediction sessions and WinRT ABI remain separate contracts.
+The 43 exact enum constants have individual mappings. Review object defaults and constructors, ordered shared Names, live mutation and weak subscription lifetime, runtime/compiled markup and immutable scope transport separately from host behavior. RichEditBox projects the full ordered snapshot. IMM32 forwards the complete equal-weight array; single-purpose backends choose the first name or an explicit fallback. Browser exact edits, IBus ContentType and optional AppKit semantic hints have separate mappings. Real OS keyboard/prediction sessions, platform-specific unsupported hints and WinRT ABI remain separate contracts.
 
 #### `F:Microsoft.UI.Xaml.Input.InputScopeNameValue.AlphanumericFullWidth`
 

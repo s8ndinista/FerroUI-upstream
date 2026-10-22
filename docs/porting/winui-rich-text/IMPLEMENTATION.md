@@ -467,6 +467,48 @@ inserts two paragraphs. Paragraph boundaries are protected from overtype.
 This recorded behavior guides the next Selection.Options/TypeText implementation;
 the observation artifact alone does not implement those contracts.
 
+### Selection options, classification and typed overtype
+
+`SelectionOptions` retains the native StartActive, AtEndOfLine, Overtype, Active
+and Replace bits. Every `RichEditTextSelection` over an editor reads and changes
+the same modes. StartActive follows the accepted directed endpoints and is true
+for a caret; Replace remains set, as observed in system MSFTEDIT. Setting
+StartActive on a nonempty selection changes its direction through the ordinary
+cancellable control projection. Cancellation, redirection, a model change or a
+newer nested selection/navigation/mode request prevents the older call from
+installing stale flags. Unknown bits fail before changing composition or history.
+
+Overtype affects actual `EditKind::Typing` transactions, including control
+typing. One accepted input Unicode scalar consumes one target grapheme. The
+first scalar consumes an existing selected range. A typed CR or LF inserts a
+paragraph without consuming target text, and existing CR/LF delimiters are
+protected. Consequently, `TypeText("\r\n")` inserts two paragraph breaks, while
+bulk text loading and paste retain their existing CRLF-to-one-break normalization.
+The native typing record establishes this distinction; it is not inferred from
+the bulk-load implementation.
+
+MaxLength planning considers accepted input and consumed target text together.
+A rejected suffix cannot erase additional target graphemes. Rich formats,
+structured inlines and embedded identity survive the accepted replacement, which
+forms one undo unit when history is enabled. Empty TypeText returns without
+ending preedit or rejecting a read-only editor; nonempty typing retains normal
+read-only and composition transaction checks.
+
+Mode-only changes do not create an undo entry or clear redo. Undoing a text edit
+retains the current modes. A failed explicit transaction restores its mode and
+direction checkpoint, whereas undoing a successful group retains current modes.
+Those history choices are explicit FerroUI policy. Active records TOM state and
+does not acquire OS focus. AtEndOfLine retains explicit caller intent and is
+cleared by an accepted changed typing operation; automatic visual-affinity
+calculation remains separate. The editor reports InsertionPoint or Normal;
+native None/InlineShape/Shape constants do not imply implemented shape selection.
+
+`rich_edit_text_selection_options_tests.rs` contains 20 focused cases, including
+the literal 316-command system MSFTEDIT replay. The source artifact and test
+definitions are separate from completed execution evidence in TESTS.md. Native
+terminal EOP, other native soft-break encodings, automatic activity/affinity and
+external WinUI engine behavior remain under RT-I26.
+
 ### Editor template, viewport and focus
 
 A RichEditBox template supplies ContentElement, HeaderContentPresenter,
@@ -840,11 +882,14 @@ content-hint behavior remains separately covered.
 | iOS | Converts the first name to supported keyboard and suggestion traits. Scope selection does not change document masking; secure entry retains the established content-type/sensitivity policy. Changed options reload the current responder's input views; actual UIKit execution remains a native gate. |
 | Wayland | Converts the first name to the supported text-input purpose and hint flags, including telephone, date/time and password/PIN purposes. The protocol has fewer purposes than WinUI. |
 | Fcitx | Converts the first name to its supported capability flags, retaining existing independent sensitivity and suggestion options. Unsupported distinctions use narrower flags. |
-| Native and IBus | Their current `set_options` paths are no-op boundaries; transporting the snapshot does not imply host consumption. |
-| Browser | Maps the first name to supported `inputmode` hints, with framework return-key, capitalization, suggestion, sensitivity and language options. The DOM bridge changes attributes on the existing text input, retaining its type, value, selection and composition; reentrant updates keep the latest options. Correction, spellcheck and writing suggestions remain disabled until non-composition DOM replacement events are applied through the framework connection. Browser/device execution remains a separate gate. |
+| Native/macOS | An optional native interface delivers the first scope's supported semantic meaning to the existing AppKit view. URL, email address, full name and whole telephone number use public macOS 14 content constants; unsupported scopes and private/suggestion-disabled entry clear the hint. Existing native interface slots remain unchanged. |
+| IMM32 | Sends the complete ordered scope array, including duplicates and independent privacy, through Windows `SetInputScopes`. Per-site staging handles options before client attachment; window identity and generation fences protect handoff, release and reentrant completion. This does not provide a TSF Document Manager or guarantee touch-keyboard notification. |
+| IBus | Maps the first name to the pinned protocol purpose and hint flags, then writes the actual `ContentType` D-Bus property. Serialized latest-snapshot delivery, unique-owner/context generations and queued-signal guards protect reconnect/disposal and preserve preedit. Unsupported script/width distinctions use explicit protocol fallbacks. |
+| Browser | Maps the first name to supported `inputmode` hints with framework return-key, capitalization, sensitivity and language options. A persistent textarea carries LF and directed UTF-16 selection. Exact replacement/composition delivery enables supported suggestions only for exact-edit clients; legacy clients and private input keep them disabled. Reentrant option updates retain the owner and current composition. Actual browser/device execution remains a separate gate. |
 
-The full ordered snapshot is retained even though these current consumers use
-one name. Native multi-name negotiation remains pending. Input scopes are
+The full ordered snapshot is retained. Single-purpose APIs select the first
+name; IMM32 transports all names with the equal weighting specified by Windows.
+Further platform-specific negotiation remains pending. Input scopes are
 keyboard/input-method hints: they do not filter rich-document text, mask its
 rendering or enforce PIN length. Shared prediction-option delivery tests do not
 establish OS prediction, proofing, handwriting or candidate-window behavior.
@@ -855,6 +900,111 @@ retains its pending mapping. Real platform composition, cancellation and focus
 flows remain separate tests from the deterministic control suite. Synchronous TextChanging, deferred TextChanged and cancellable/reentrant
 SelectionChanging now follow the mapped native host contracts. Real platform
 input ordering still requires separate backend verification.
+
+### Browser DOM replacements and composition
+
+The browser bridge uses the existing text-input connection's exact edit
+contract. It captures beforeinput intent together with owner/connection identity,
+document revision, exact text and directed selection. The subsequent DOM value
+and selection produce one checked UTF-16 replacement. Selection-anchored
+comparison retains the correct formatted run when repeated characters make a
+plain common-prefix diff ambiguous. A mobile event without beforeinput uses the
+known selection and resulting caret where that information is sufficient.
+
+The model may retain raw CR and CRLF in Run text, while the HTML textarea API
+normalizes line endings to LF. `DomTextProjection` publishes that LF view and
+translates replacement and directed-selection boundaries back to exact model
+UTF-16 offsets. The resulting selection is translated against the new
+projection. Unchanged normalization is not a document edit, and untouched model
+newlines, formatting and history survive neighboring edits. A caret inside a
+CRLF pair has no textarea boundary; it is rejected and resynchronized. An edit
+that would create a new CRLF across the replacement boundary is likewise
+rejected before committing a composition preview. The
+[HTML value contract](https://html.spec.whatwg.org/multipage/form-elements.html#the-textarea-element)
+is distinct from the rich document's coordinate model.
+
+Focus/client replacement, document or selection round trips, policy changes and
+reentrant callbacks invalidate stale edits. Rejection mirrors the current
+canonical state back into the same textarea. Synchronizing between beforeinput
+and input leaves a rejected pending marker, preventing the later input event
+from being treated as a fresh edit for another owner.
+
+Composition uses a captured ownership token for its preview and final commit.
+Cancellation and an accepted empty replacement are distinct. Committed text
+creates at most one rich undo unit. A handled keyboard commit cannot also arrive
+through the DOM path as a second edit, and the raw key handler does not commit
+composition-owned text. The legacy composition end also rechecks generation
+after clearing preedit, since that callback can move focus synchronously.
+
+The TypeScript event-dispatch suite, pure UTF-16 conversion tests and actual
+RichEditBox connection tests are separate from browser/device IME execution.
+RT-I27 and TESTS.md retain the exact completed evidence and remaining boundary.
+
+### Native/macOS semantic hints
+
+Rust maps the complete options snapshot to supported AppKit content meanings
+and manages active-client lifetime, deduplicated delivery and reentrant updates.
+The Objective-C++ bridge sets the existing view's `NSTextContent.contentType`.
+The optional `IFrnTextInputMethodOptions` interface preserves the original input
+method IID and vtable, and an older native library can omit the extension.
+Public URL, email, name and telephone constants are guarded by macOS 14
+availability; earlier systems receive no semantic hint.
+
+Sensitive/password/PIN policy and explicitly disabled suggestions suppress this
+hint channel. They do not supply masking, secure event input or general IME
+candidate suppression. Updates preserve the view, input context and marked text.
+The [native implementation record](../../../native/FerroUI.Native/INPUT_OPTIONS.md)
+contains all 43 scope mappings, API evidence, ABI details and the real AppKit
+integration procedure. Exact replacement callbacks and `NSTextCheckingClient`
+services remain separate work under RT-I29.
+
+### IMM32 scope associations
+
+IMM32 forwards every scope's exact Windows value, preserving array order and
+duplicates. The platform gives entries equal weight; order does not rank them.
+Empty or absent names retain legacy hints, and independent sensitive policy
+adds `IS_PRIVATE`. Options delivered before the native client are staged on its
+site. Scope associations are tracked separately from composition contexts using
+the original HWND and weak parent identity.
+
+Native calls can reenter the framework. Serialized delivery rechecks the latest
+site, options and recipient after each callback. Release clears the association
+before destruction; if an in-flight setter completes after its release callback,
+the original live window is cleared again before handing off newer intent.
+Failed calls are retryable and do not enter the successful-value cache.
+
+The contracts are Microsoft's
+[SetInputScopes](https://learn.microsoft.com/en-us/windows/win32/api/inputscope/nf-inputscope-setinputscopes)
+and [SetInputScope](https://learn.microsoft.com/en-us/windows/win32/api/inputscope/nf-inputscope-setinputscope).
+An HWND without a TSF Document Manager does not notify interested text services
+through these calls. Transporting hints therefore does not establish live
+touch-keyboard behavior. Phrase lists, regular expressions, SRGS, return-key
+labels and proofing are outside this consumer; see RT-I30.
+
+### IBus content purpose, hints and lifecycle
+
+IBus `ContentType` is a writable `(uu)` property, delivered with
+`org.freedesktop.DBus.Properties.Set`; it is not a similarly named method. Purpose
+and hint values are pinned to
+[`ibus@0fd4e408`](https://github.com/ibus/ibus/tree/0fd4e408a52d3d15179c643fd54d310aafd8875f)
+(1.5.32). The Rust mapper handles every scope and retains independent sensitivity,
+suggestion, casing and emoji policy. A keyboard-purpose override cannot erase
+password/PIN or explicitly sensitive privacy hints.
+
+Options arriving before context creation remain queued. One serialized worker
+coalesces later changes and replays the latest snapshot into a new context.
+Generation checks keep a failed reply for a retired context from disconnecting
+its replacement. Proxies address the unique bus owner, and ownership checks
+surround each asynchronous connection stage. Disposal or owner loss retires a
+late-created context instead of publishing it.
+
+Signal guards are installed before asynchronous registration awaits. Queued
+commit, forwarded-key and preedit signals recheck the active owner/context before
+dispatch, including the interval before registration cleanup completes. The
+shared D-Bus input base rejects retired callbacks and disposables as well. The
+private-session-bus suite exercises this protocol and lifecycle using actual
+D-Bus messages; it does not establish behavior of a particular installed engine,
+candidate UI or real keyboard session. See RT-I28.
 
 ### Context-menu opening and placement
 
@@ -1168,6 +1318,13 @@ one undoable operation. RTF document loading restores document defaults; inserti
 RTF into an existing range uses that destination document's default interval.
 Explicit stops survive both paths. Clipboard export resolves effective external
 context while the in-process transfer retains the exact snapshot.
+
+## Inherited typography
+
+All 43 named Typography property families use registered inherited attached
+properties, typed snapshots and the existing font-feature pipeline. The complete
+property/default/tag table, enum mapping, raw override rules, formatter consumers,
+RTF limits and source-audit command are in [TYPOGRAPHY.md](TYPOGRAPHY.md).
 
 ## Extending the port
 

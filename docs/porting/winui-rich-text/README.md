@@ -30,6 +30,8 @@ parity at this reference.
   and the acceptance requirements for each subsystem.
 - [IMPLEMENTATION.md](IMPLEMENTATION.md): document, overflow, editor, RTF/clipboard,
   input-method and accessibility architecture with Rust and XAML examples.
+- [TYPOGRAPHY.md](TYPOGRAPHY.md): all named typography properties, enum/feature
+  projection, inherited snapshots, formatter integration and verification limits.
 - [API-MAP.md](API-MAP.md): a destination/review plan for every public API owner,
   with exact member, Rust target, test and deviation evidence for reviewed entries.
 - [JOURNAL.md](JOURNAL.md): implementation/checkpoint history and the distinction

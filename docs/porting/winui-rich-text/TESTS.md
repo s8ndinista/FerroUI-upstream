@@ -68,9 +68,81 @@ Authoritative command/result records are stored in `mapping.json` under
 shows those records. A later test definition or source change is not implicitly
 covered by an earlier successful run.
 
-### Current integration checkpoints
+### Latest continuation: typography, input backends and snapshot restoration
 
-The latest completed [rich-text workflow at d148193d](https://github.com/wieslawsoltes/FerroUI/actions/runs/39618880985)
+The fresh core build after Typography and the registration repair passed **27
+Typography tests**: one Base, 21 Controls, two HarfBuzz and three XAML cases.
+The separate full Base executable passed **4,425 tests**, with no failures or
+ignored tests. That gate covers the earlier InputScope list registration and
+Capacity failures.
+
+After regenerating the two XAML references and correcting the corpus count to
+130, the focused emitter suite passed **36 tests** with six ignored. The full
+XAML suite passed **617 tests** with 17 ignored. The initial emitter run had
+35 passes and one stale-count failure; all 130 object trees already matched.
+Both explicit XAML generators passed. View builder regeneration additionally
+adds all 43 Typography attached-property builder methods; its `--check` passes.
+
+The main merge `74fa8217` retains the complete 17,290,127-byte WinUI generated
+reference in five deterministic source parts. Concatenating them yields the
+original generator blob `97c8d50ce2f15b71dc23d37083f78b143897610a`. The actual
+theme gate passed **six tests** with one ignored: both emitter comparisons and
+four reference-storage checks. Production still generates one source file.
+
+Full Controls testing exposed two related hyperlink snapshot failures in
+`c43a907c`: constructor current values were subsequently restored as local
+assignments. The correction restores assigned format exactly, then reinstates
+missing intrinsic values at current-value priority. A regression checks all
+four semantic containers, fresh/reused nodes, inherited parent formatting,
+application styles and explicit overrides. An older case-conversion fixture
+now checks exact input-snapshot preservation and effective formatting separately.
+The final fresh executable at the correction published as `17298a56` passed
+**5,068 tests, zero failures or ignored tests**, with loopback access. Earlier
+failed gates and the separate socket-only rerun remain in `mapping.json`.
+
+The [Windows job at c43a907c](https://github.com/wieslawsoltes/FerroUI/actions/runs/39807011198/job/119922819095)
+passed native adapter compilation, **52 WinUI tests**, **two exact UTF-16 tests**,
+**23 IMM32 input-scope tests** and **six MSFTEDIT probes**. The IMM32 suite includes
+21 portable policy/lifecycle/editor cases and two Windows-only SDK/real-HWND
+cases. It does not inspect an onscreen keyboard or installed IME. The separate
+full Controls and broad repository workflows at this checkpoint were not green.
+The Linux bridge step passed 329 Win32 and 42 WinUI-host tests; later theme and
+multiple Linux/macOS builds failed to compile an IBus callback whose generated
+signal parameter needed an explicit type. The annotation repair has its own
+subsequent backend gate; a passing WinUI reference subset does not hide that
+broader build failure.
+
+The immutable [link/gravity record](native-msftedit-links-gravity.json) contains
+**137 Link commands / 59 fixtures** and **1,577 Gravity commands / 199 fixtures**,
+plus the unchanged 316 typing, 300 horizontal, 290 vertical, 60 Home/End and
+60 repeat observations. The measured checkout is `dc99ba00`, workflow head
+`c43a907c`, probe blob `4accd7fd`, artifact ID 12439885287. Its downloaded archive
+SHA-256 matches GitHub's digest. This run measured **MSFTEDIT 6.2.26100.33438** on
+Windows 10.0.26100; the earlier typing record measured a different DLL build,
+6.2.26100.33648. Every earlier fixture declaration and movement/typing row still
+matches. The strict extractor and all **23 Python regression tests** pass,
+including round-trip of the new record. Observing Link/Gravity does not itself
+implement those APIs or establish external WinUI engine conformance.
+
+The Browser bridge at `b563a5d0` passed 13 TypeScript text-input tests and four
+input-option tests, plus typecheck, lint and production build. An isolated
+harness compiling the actual projection/edit Rust source passed 15 cases.
+Those gates precede the full Browser crate gate and do not exercise a real
+browser virtual keyboard. Native/macOS optional-interface generation, old-vtable
+identity, imported patch reproduction and public API/availability checks passed
+as static checks; portable tests and the actual AppKit executable need their own
+runtime results. IBus private-bus, Native, Browser and other backend results are
+recorded separately as they complete.
+
+Two independent source audits pass: all 43 Typography defaults and declarations,
+86 accessors, 38 enum choices and 69 feature-add sites; all 11 FontWeights
+values, typed fields and named parser entries. They compare pinned upstream
+objects with Rust source. They do not execute native font selection or shaping;
+the two actual Inter-font HarfBuzz cases above provide the limited shaping gate.
+
+### Earlier integration checkpoints
+
+The earlier completed [rich-text workflow at d148193d](https://github.com/wieslawsoltes/FerroUI/actions/runs/39618880985)
 passed both jobs. The [Linux job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39618880985/job/119286684017)
 passed Base **4,413**, Controls **5,002**, Win32 **308**, WinUI host **39**,
 Fluent **210** (2 ignored), Simple **213** (3 ignored), WinUI theme **296**
@@ -367,28 +439,30 @@ now replays 216 horizontal rows; four synthetic terminal-EOP cases remain
 explicitly outside the normalized model. These observations establish only the
 recorded system MSFTEDIT behavior, not external WinUI engine conformance.
 
-The current source expands the probe to **300 horizontal**, **290 vertical** and
-**140 SetFlags/TypeText scenarios**, in addition to the unchanged Home/End and
-repeat families. The 80 new horizontal commands cover aligned/reversed Word
-selections and grapheme-interior endpoints; eight new vertical commands mix
-collapsed and extended navigation across short lines. The options matrix covers
-all 32 combinations of the five declared selection bits across collapsed,
-forward and reverse ASCII selections, plus Unicode, paragraph and empty-typing
-fixtures. It records requested flags, accepted post-SetFlags flags/type,
-post-TypeText flags/type, HRESULTs, exact changed story text and UTF-16 length.
-These additional commands remain unexecuted at this checkpoint. A hidden
-MSFTEDIT HWND is not a focused WinUI control; its options observations will not
-by themselves implement or close Selection.Options/Type.
+The later versioned records expand the probe to **300 horizontal**, **290
+vertical** and **316 SetFlags/TypeText scenarios**, all executed on Windows. The
+options matrix preserves requested flags, accepted post-SetFlags flags/type,
+post-TypeText flags/type, HRESULTs and exact changed story text. It includes all
+32 combinations of the five declared bits across collapsed, forward and reverse
+selections, plus Unicode, paragraph and empty-typing fixtures. The Rust selection
+implementation replays all 316 literal observations; synthetic terminal EOP and
+a focused WinUI control remain separate contracts.
+
+The latest `native-msftedit-links-gravity.json` additionally preserves 137 Link
+and 1,577 Gravity commands. Link records distinguish null arguments/results,
+counted UTF-16 text, original and mutated range/selection positions, hidden field
+story text and repeated getter/setter calls. Gravity records capture exact
+mode/flags/character and paragraph formats, duplicates, range setters, collapsed
+and nonempty ranges, external edits, extreme positions and invalid native
+integers. These are observations of system MSFTEDIT, not a claim that all source
+APIs have matching Rust implementations.
 
 The extractor decodes Rust Debug Unicode scalar escapes exactly, including ZWJ,
-while preserving literal escaped backslashes. Native BSTR text uses its counted
-UTF-16 length and rejects malformed scalar sequences instead of decoding
-lossily. Every declared family must finish, and every declared fixture must have
-observations; a completed early family cannot hide a later failing probe. The
-**seven completed Python regression tests** cover historical byte-for-byte
-round trips, Unicode escapes, changed-story phase/length handling and malformed
-flags, types, fixtures and declared counts. This is parser execution evidence;
-the native matrices have separate versioned results.
+while preserving literal escaped backslashes. Counted BSTR text rejects malformed
+scalar sequences. Every declared family and fixture must finish; an early
+successful family cannot hide a later failing probe. All **23 Python tests** pass,
+covering historical round trips, phase/length consistency, Link and Gravity
+state transitions, malformed records and incomplete declared counts.
 
 ### Rust families
 
@@ -414,7 +488,7 @@ the native matrices have separate versioned results.
 | [Cursor publication tests](../../../src/FerroUI.Controls/rich_edit_input_geometry_tests.rs) | Three public input-manager cases deliberately return an old rectangle after getter callbacks change owner/client, reset, leave/return, or publish newer geometry for the same client. The accepted backend rectangle, connection and history are asserted without exposing private manager APIs. |
 | [CoreText geometry tests](../../../src/Windows/FerroUI.WinUI/core_text_layout.rs) and [native adapter tests](../../../src/Windows/FerroUI.WinUI/win_ui_text_input_method_reentrancy_tests.rs) | Seven portable geometry cases cover complete rectangle transforms, reflection/rotation, scaling/origin, caret-only minimum, unavailable geometry, cancellation/reentry and native setter failure. Six Windows-only cases cover semantic ownership, accessor/revision replacement, deferred mutation, nested/focus/reset invalidation and a real attached owner resized by the final revision callback. Arbitrary requested-range and candidate-window geometry remain pending; native execution is recorded separately. |
 | [Shared formatter marker regression](../../../src/FerroUI.Base/media/text_formatting/text_line_tests.rs) | The direct structural-terminator case covers LTR/RTL caret-distance/hit inverses, selected fragment bounds, nonzero source starts, one/two-unit line/paragraph markers and trailing marker positions. It failed against the preceding Base library and passed after the shared correction. |
-| [System MSFTEDIT probe](../../../src/Windows/FerroUI.Win32/rich_text_tom_oracle_tests.rs) | The latest completed record contains 60 Home/End commands, 60 repeats, 282 vertical and 220 horizontal commands. Current source defines 290 vertical, 300 horizontal and 140 SetFlags/TypeText scenarios; the additions await Windows execution. Captures exact counted UTF-16 text, Windows/DLL versions, window style, directed endpoints, selection flags/type, HRESULT and signed deltas. Options scenarios preserve before/after-set/after-type phases and changed native story lengths. This is system MSFTEDIT characterization, not a focused WinUI or external-engine conformance fixture. |
+| [System MSFTEDIT probe](../../../src/Windows/FerroUI.Win32/rich_text_tom_oracle_tests.rs) | The latest measured record contains 60 Home/End commands, 60 repeats, 290 vertical, 300 horizontal, 316 options/typing, 137 Link commands across 59 fixtures, and 1,577 Gravity commands across 199 fixtures. Captures counted UTF-16, OS/DLL versions, range/selection states, formats, HRESULTs, signed deltas and complete fixture counts. Strict extraction and 23 Python regressions pass. System MSFTEDIT characterization is distinct from the external WinUI engine and from Rust API implementation. |
 | [Native observation extractor tests](../../../scripts/porting/test_rich_text_tom_observations.py) | Seven Python tests passed at 4c0bae3. Exact historical replay, Unicode escaping and strict family/fixture/phase/type/flag/count validation protect immutable native evidence; this pass does not execute the new native commands. |
 | [Text stream tests](../../../src/FerroUI.Controls/rich_text/rich_edit_text_stream_tests.rs) | UTF-8/UTF-16 and BOM handling, raw RTF, validation before I/O/mutation, exact byte bounds, interrupted and partial I/O, prefix failure, caller position/ownership, transactional range replacement and reentrant output snapshots. |
 | [Language tests](../../../src/FerroUI.Controls/documents/rich_language_tests.rs) | Source validation grammar, inheritance into shaping, local overrides, snapshots/history, RTF default/scope/plain reset, representability errors and owner/presenter identity. |

@@ -24279,6 +24279,82 @@
         {
           "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
           "symbol": "fn try_find_and_apply_client("
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_dom.rs",
+          "symbol": "pub(crate) fn on_dom_input("
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_edit.rs",
+          "symbol": "pub(crate) fn edit_from_dom("
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_input_options.rs",
+          "symbol": "fn purpose_for_scope("
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_x11_text_input_method.rs",
+          "symbol": "fn enqueue_options("
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "fn from_options("
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "pub(crate) fn set_options("
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "pub(crate) fn apply("
+        },
+        {
+          "path": "src/FerroUI.Native/ferro_native_text_input_method.rs",
+          "symbol": "pub(crate) fn new("
+        },
+        {
+          "path": "src/FerroUI.Native/ferro_native_text_input_method.rs",
+          "symbol": "fn apply_options("
+        },
+        {
+          "path": "src/FerroUI.Native/ferro_native_text_input_method.rs",
+          "symbol": "pub fn dispose("
+        },
+        {
+          "path": "src/FerroUI.Native/frn.idl",
+          "symbol": "interface IFrnTextInputMethodOptions"
+        },
+        {
+          "path": "native/FerroUI.Native/src/OSX/FrnTextInputMethod.mm",
+          "symbol": "FrnTextInputMethod::SetContentType"
+        },
+        {
+          "path": "native/FerroUI.Native/src/OSX/FrnView.mm",
+          "symbol": "setInputContentType:"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options.rs",
+          "symbol": "fn native_scopes("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options.rs",
+          "symbol": "pub(super) fn apply("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options.rs",
+          "symbol": "pub(super) fn retire_window("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_method.rs",
+          "symbol": "impl ITextInputMethodImpl for Imm32InputMethodSite"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/interop/unmanaged_methods.rs",
+          "symbol": "pub fn set_input_scopes("
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_projection.rs",
+          "symbol": "pub(crate) struct DomTextProjection"
         }
       ],
       "tests": [
@@ -24489,6 +24565,118 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
           "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_dom_tests.rs",
+          "symbol": "browser_dom_input_correction_uses_real_exact_transaction_and_preserves_formatting"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_dom_tests.rs",
+          "symbol": "browser_dom_input_captured_before_focus_change_cannot_edit_an_identical_new_owner"
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_input_options.rs",
+          "symbol": "ibus_input_scope_maps_all_43_names_without_confusing_digits_phones_or_alphanumeric_text"
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/tests.rs",
+          "symbol": "ibus_input_scope_property_roundtrip_preserves_preedit_and_clears_to_legacy_hints"
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/tests.rs",
+          "symbol": "ibus_input_scope_failed_reply_from_retired_context_cannot_disconnect_its_replacement"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_scope_all_names_have_a_semantic_mapping_or_explicit_fallback"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_scope_empty_names_fall_back_and_explicit_default_clears_legacy_hint"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_scope_sensitive_and_suggestion_policy_override_semantic_hints"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_options_follow_active_client_and_do_not_repeat_unchanged_delivery"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_options_reentrant_policy_and_client_changes_keep_latest_owner"
+        },
+        {
+          "path": "src/FerroUI.Native/lib.rs",
+          "symbol": "fn vtable_sizes("
+        },
+        {
+          "path": "src/FerroUI.Native/tests/text_input_options.rs",
+          "symbol": "fn check_view("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_preserves_all_43_native_values_and_secret_hints"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_preserves_order_duplicates_and_the_immutable_snapshot"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_site_retains_options_sent_before_client_assignment"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_reentrant_update_applies_the_latest_names_without_borrows"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_failed_native_set_is_uncached_and_retries_on_the_next_update"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_reused_handle_is_cleared_only_by_its_current_parent_identity"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_reentrant_window_release_cannot_restore_retired_hints"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_failed_clear_remains_pending_until_a_later_retry"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_native_sdk_values_match_every_public_name"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_native_api_accepts_multiple_scopes_and_clears_before_destroy"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs",
+          "symbol": "imm32_input_scope_live_rich_names_preserve_composition_history_and_plain_text"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs",
+          "symbol": "imm32_input_scope_recipient_release_retains_the_semantic_owners_options"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs",
+          "symbol": "imm32_input_scope_source_release_clears_its_distinct_physical_recipient"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_projection.rs",
+          "symbol": "browser_dom_projection_maps_mixed_newlines_and_directed_utf16_boundaries"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_projection.rs",
+          "symbol": "browser_dom_projection_keeps_unchanged_normalization_out_of_document_edits"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_projection.rs",
+          "symbol": "browser_dom_projection_rejects_crlf_interiors_and_new_collapsed_pairs"
         }
       ],
       "includes": [
@@ -25020,12 +25208,16 @@
           "state": "unreviewed"
         }
       ],
-      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
+      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order. The browser exact DOM edit bridge and IBus ContentType consumer now use these shared input contracts with owner/revision/context guards. Their test definitions and completed runtime gates are recorded separately; real browser/device and IBus-engine execution are not inferred. IMM32 now associates complete equal-weight scope arrays through SetInputScopes with weak HWND identity, retry and release compensation; optional AppKit semantic content hints retain the old interface ABI. Browser coordinates translate through an LF-only DOM projection while unchanged CR/CRLF model content remains exact. These backend-specific limits are recorded in RT-I29/RT-I30 and do not supply TSF Document Manager, native proofing or keyboard UI.",
       "deviations": [
         "RT-A04",
         "RT-I06",
         "RT-I07",
-        "RT-I16"
+        "RT-I16",
+        "RT-I27",
+        "RT-I28",
+        "RT-I29",
+        "RT-I30"
       ]
     },
     {
@@ -25125,6 +25317,82 @@
         {
           "path": "src/FerroUI.Base/input/text_input/input_method_manager.rs",
           "symbol": "fn try_find_and_apply_client("
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_dom.rs",
+          "symbol": "pub(crate) fn on_dom_input("
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_edit.rs",
+          "symbol": "pub(crate) fn edit_from_dom("
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_input_options.rs",
+          "symbol": "fn purpose_for_scope("
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_x11_text_input_method.rs",
+          "symbol": "fn enqueue_options("
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "fn from_options("
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "pub(crate) fn set_options("
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "pub(crate) fn apply("
+        },
+        {
+          "path": "src/FerroUI.Native/ferro_native_text_input_method.rs",
+          "symbol": "pub(crate) fn new("
+        },
+        {
+          "path": "src/FerroUI.Native/ferro_native_text_input_method.rs",
+          "symbol": "fn apply_options("
+        },
+        {
+          "path": "src/FerroUI.Native/ferro_native_text_input_method.rs",
+          "symbol": "pub fn dispose("
+        },
+        {
+          "path": "src/FerroUI.Native/frn.idl",
+          "symbol": "interface IFrnTextInputMethodOptions"
+        },
+        {
+          "path": "native/FerroUI.Native/src/OSX/FrnTextInputMethod.mm",
+          "symbol": "FrnTextInputMethod::SetContentType"
+        },
+        {
+          "path": "native/FerroUI.Native/src/OSX/FrnView.mm",
+          "symbol": "setInputContentType:"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options.rs",
+          "symbol": "fn native_scopes("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options.rs",
+          "symbol": "pub(super) fn apply("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options.rs",
+          "symbol": "pub(super) fn retire_window("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_method.rs",
+          "symbol": "impl ITextInputMethodImpl for Imm32InputMethodSite"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/interop/unmanaged_methods.rs",
+          "symbol": "pub fn set_input_scopes("
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_projection.rs",
+          "symbol": "pub(crate) struct DomTextProjection"
         }
       ],
       "tests": [
@@ -25335,6 +25603,118 @@
         {
           "path": "src/FerroUI.Controls/rich_edit_input_focus_tests.rs",
           "symbol": "rich_input_canceled_nested_focus_keeps_post_event_client_installation"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_dom_tests.rs",
+          "symbol": "browser_dom_input_correction_uses_real_exact_transaction_and_preserves_formatting"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_dom_tests.rs",
+          "symbol": "browser_dom_input_captured_before_focus_change_cannot_edit_an_identical_new_owner"
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/ibus/ibus_input_options.rs",
+          "symbol": "ibus_input_scope_maps_all_43_names_without_confusing_digits_phones_or_alphanumeric_text"
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/tests.rs",
+          "symbol": "ibus_input_scope_property_roundtrip_preserves_preedit_and_clears_to_legacy_hints"
+        },
+        {
+          "path": "src/FerroUI.FreeDesktop/dbus_ime/tests.rs",
+          "symbol": "ibus_input_scope_failed_reply_from_retired_context_cannot_disconnect_its_replacement"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_scope_all_names_have_a_semantic_mapping_or_explicit_fallback"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_scope_empty_names_fall_back_and_explicit_default_clears_legacy_hint"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_scope_sensitive_and_suggestion_policy_override_semantic_hints"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_options_follow_active_client_and_do_not_repeat_unchanged_delivery"
+        },
+        {
+          "path": "src/FerroUI.Native/native_text_input_options.rs",
+          "symbol": "native_input_options_reentrant_policy_and_client_changes_keep_latest_owner"
+        },
+        {
+          "path": "src/FerroUI.Native/lib.rs",
+          "symbol": "fn vtable_sizes("
+        },
+        {
+          "path": "src/FerroUI.Native/tests/text_input_options.rs",
+          "symbol": "fn check_view("
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_preserves_all_43_native_values_and_secret_hints"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_preserves_order_duplicates_and_the_immutable_snapshot"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_site_retains_options_sent_before_client_assignment"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_reentrant_update_applies_the_latest_names_without_borrows"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_failed_native_set_is_uncached_and_retries_on_the_next_update"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_reused_handle_is_cleared_only_by_its_current_parent_identity"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_reentrant_window_release_cannot_restore_retired_hints"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_failed_clear_remains_pending_until_a_later_retry"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_native_sdk_values_match_every_public_name"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_input_options_tests.rs",
+          "symbol": "imm32_input_scope_native_api_accepts_multiple_scopes_and_clears_before_destroy"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs",
+          "symbol": "imm32_input_scope_live_rich_names_preserve_composition_history_and_plain_text"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs",
+          "symbol": "imm32_input_scope_recipient_release_retains_the_semantic_owners_options"
+        },
+        {
+          "path": "src/Windows/FerroUI.Win32/input/imm32_rich_text_tests.rs",
+          "symbol": "imm32_input_scope_source_release_clears_its_distinct_physical_recipient"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_projection.rs",
+          "symbol": "browser_dom_projection_maps_mixed_newlines_and_directed_utf16_boundaries"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_projection.rs",
+          "symbol": "browser_dom_projection_keeps_unchanged_normalization_out_of_document_edits"
+        },
+        {
+          "path": "src/Browser/FerroUI.Browser/browser_text_input_projection.rs",
+          "symbol": "browser_dom_projection_rejects_crlf_interiors_and_new_collapsed_pairs"
         }
       ],
       "includes": [
@@ -25354,12 +25734,16 @@
         }
       ],
       "callable_candidates": [],
-      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order.",
+      "reason": "Input-method surrounding text, selection, cursor geometry and preedit use the existing framework client. Native windowless hosting, TSF/UI-manager callbacks and unavailable system services are not mechanically ported. The persistent presenter is the text-view visual while cursor rectangles are converted to semantic-owner coordinates; surrounding text and selection remain on the owner/editor. Native TSF/windowless/UI-manager and other host members remain pending. Exact native input requests retain the UTF-16 replacement range, replacement text and resulting directed selection through the shared connection and rich editor. Empty replacements delete their requested range. Composition retains its whole active span independently of the caret, commits once and keeps the original cancellation snapshot. Invalid or filtered/limited/cancelled/reentrant requests reject success. CoreText keeps last-acknowledged state separate from current state so failed notifications retry from the old native length and late/reentrant acknowledgements cannot hide newer state. Unsupported CoreText clause formatting reports Failed; legacy TextBox transport and actual OS conformance remain separate. Native HSTRING query slices retain exact counted UTF-16 units and NULs; edit payloads use strict scalar decoding. Native adapter disposal, accessor, subscription and state callbacks are fenced against client replacement. Windows-only adapter fixture definitions do not assert an executed OS/CoreText gate. CoreText now captures the semantic whole-control bounds separately from the current-caret TextBounds fallback, transforms both complete rectangles through the native panel, and applies validated rasterization scale plus HWND client-to-screen origin. Unavailable native geometry leaves the request unpopulated. Client/connection/composition/revision/focus/root/owner/bounds/transform and nested-request checks fence callbacks and native setters, including a final callback-bearing revision query before pure geometry comparisons. The Base cursor manager separately fences binding and query generations around custom caret getters so replacement owners/clients, resets, focus round trips or nested same-client geometry cannot be overwritten by an old result. The arbitrary CoreText LayoutRequest.Range is still not consumed; actual candidate-window bounds/alignment, native input services and OS host conformance remain pending. Portable and Windows-only test definitions have separate execution records. The keyboard records its accepted destination in the shared input manager before LostFocus/GotFocus, while ordinary client installation remains after those events. Legitimate synchronous template/view requery now resolves the accepted owner and preserves an owned-popup composition. Accepted focus generations fence nested Losing/Getting/Lost/Got transitions, including round trips; canceled nested requests do not supersede an outer accepted transition. Input-client and view-accessor callbacks recheck both binding and focus identity. This covers synchronous framework focus/requery ownership, not arbitrary native asynchronous focus order. The browser exact DOM edit bridge and IBus ContentType consumer now use these shared input contracts with owner/revision/context guards. Their test definitions and completed runtime gates are recorded separately; real browser/device and IBus-engine execution are not inferred. IMM32 now associates complete equal-weight scope arrays through SetInputScopes with weak HWND identity, retry and release compensation; optional AppKit semantic content hints retain the old interface ABI. Browser coordinates translate through an LF-only DOM projection while unchanged CR/CRLF model content remains exact. These backend-specific limits are recorded in RT-I29/RT-I30 and do not supply TSF Document Manager, native proofing or keyboard UI.",
       "deviations": [
         "RT-A04",
         "RT-I06",
         "RT-I07",
-        "RT-I16"
+        "RT-I16",
+        "RT-I27",
+        "RT-I28",
+        "RT-I29",
+        "RT-I30"
       ]
     },
     {
@@ -50269,12 +50653,50 @@
       "lines": 892,
       "scope_reason": "dxaml/xcp/core/text/",
       "component": "document inlines and formatting",
-      "state": "reuse_candidate",
+      "state": "partial",
       "reuse_or_destination_candidates": [
         "src/FerroUI.Controls/documents/"
       ],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/documents/typography.rs",
+          "symbol": "pub struct Typography;"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/typography_format.rs",
+          "symbol": "pub fn to_font_features("
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_formatter_impl.rs",
+          "symbol": "can_shape_together"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/documents/typography_tests.rs",
+          "symbol": "typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs",
+          "symbol": "typography_markup_loads_all_43_properties_and_nested_explicit_defaults"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/typography_tests.rs",
+          "symbol": "typography_raw_features_are_last_and_keep_ranges_duplicates_and_collection_identity"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/typography_tests.rs",
+          "symbol": "typography_rich_splits_undo_redo_and_snapshot_restore_retain_full_format_patches"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/typography_layout_tests.rs",
+          "symbol": "typography_formatter_respects_feature_boundaries_and_coalesces_equivalent_values"
+        },
+        {
+          "path": "src/HarfBuzz/FerroUI.HarfBuzz/typography_tests.rs",
+          "symbol": "typography_harfbuzz_kerning_changes_real_font_positions_and_raw_override_restores_them"
+        }
+      ],
       "includes": [
         {
           "header": "precomp.h",
@@ -50361,6 +50783,12 @@
           "kind": "scoped_callable_definition_candidate",
           "state": "unreviewed"
         }
+      ],
+      "reason": "The constructor defaults, all 43 public property families and ordered OpenType feature projection map to Typography/ TypographyFormat and the existing formatter. Static source comparison verifies 69 feature-add sites, the four signed selectors, default-on explicit-false values and all enum arms. Rust snapshots, weak invalidation and HarfBuzz integration replace the native property/rendering plumbing. Full native font and view conformance remains open.",
+      "deviations": [
+        "RT-A01",
+        "RT-A02",
+        "RT-I25"
       ]
     },
     {
@@ -73845,10 +74273,37 @@
       "component": "public API metadata",
       "state": "reference",
       "reuse_or_destination_candidates": [],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Controls/documents/typography.rs",
+          "symbol": "pub struct Typography;"
+        },
+        {
+          "path": "src/FerroUI.Controls/documents/typography_format.rs",
+          "symbol": "pub fn to_font_features("
+        },
+        {
+          "path": "src/FerroUI.Base/media/text_formatting/text_formatter_impl.rs",
+          "symbol": "can_shape_together"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Controls/documents/typography_tests.rs",
+          "symbol": "typography_registers_all_43_inherited_properties_with_exact_defaults_and_accessors"
+        },
+        {
+          "path": "tests/FerroUI.Markup.Xaml.UnitTests/xaml/typography_tests.rs",
+          "symbol": "typography_markup_loads_all_43_properties_and_nested_explicit_defaults"
+        }
+      ],
       "includes": [],
-      "callable_candidates": []
+      "callable_candidates": [],
+      "reason": " Pinned Typography/Font* declarations are reference inputs for the 43 property families and seven enums; their Rust behavior is mapped separately. This model file is not counted as completed executable code.",
+      "deviations": [
+        "RT-A05",
+        "RT-I25"
+      ]
     },
     {
       "path": "dxaml/xcp/tools/XCPTypesAutoGen/XamlOM/Model/Microsoft.UI.Xaml.Input.cs",
@@ -73890,10 +74345,25 @@
       "component": "public API metadata",
       "state": "reference",
       "reuse_or_destination_candidates": [],
-      "targets": [],
-      "tests": [],
+      "targets": [
+        {
+          "path": "src/FerroUI.Base/media/font_typography.rs",
+          "symbol": "pub enum FontCapitals"
+        }
+      ],
+      "tests": [
+        {
+          "path": "src/FerroUI.Base/media/font_typography.rs",
+          "symbol": "typography_enum_values_match_all_38_pinned_constants"
+        }
+      ],
       "includes": [],
-      "callable_candidates": []
+      "callable_candidates": [],
+      "reason": " Pinned Typography/Font* declarations are reference inputs for the 43 property families and seven enums; their Rust behavior is mapped separately. This model file is not counted as completed executable code.",
+      "deviations": [
+        "RT-A05",
+        "RT-I25"
+      ]
     },
     {
       "path": "dxaml/xcp/win/inc/UIAPatternProviderWrapper.h",
