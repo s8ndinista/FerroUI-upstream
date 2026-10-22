@@ -1,5 +1,32 @@
 # Rich text verification
 
+## Published checkpoint 8508220d
+
+Both jobs in the [rich-text workflow](https://github.com/wieslawsoltes/FerroUI/actions/runs/39825948407)
+passed. The [Linux job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39825948407/job/119989156361)
+passed Base 4,433, Controls 5,073, Win32 329, WinUI host 42, Fluent 210
+(two ignored), Simple 213 (three ignored), WinUI theme 301 (two ignored), and
+XAML 617 (17 ignored). All five explicit generated-reference comparisons
+passed, including the corrected Typography Rust-path row. The
+[Windows job](https://github.com/wieslawsoltes/FerroUI/actions/runs/39825948407/job/119989156686)
+passed WinUI 52, exact UTF-16 two, IMM32 scopes 23, native MSFTEDIT seven,
+and the selected rich-control family 609. This evidence applies to the published
+checkpoint before the next layout, geometry, namescope and range Gravity changes.
+
+The immutable [actual-selection Gravity record](native-msftedit-selection-gravity.json)
+adds **250 commands across 18 fixtures** and 18 canonical interface-identity
+records. The measured checkout is `038c29ce3cc8491b5b4a6fe8ef22eb8624ecdfec`,
+workflow head `8508220d7f2323acfb32293d7d0afeb7abf75bfd`, probe blob
+`7d80afb5ee5b62e301a09f574d508a603efb411c`, artifact ID 12448130293.
+Its ZIP SHA-256 is
+`0b71f796c5c86db34fe23d9f37819f469992c45a8e3adbba365ebc02e83e5793`,
+matching GitHub's artifact digest. The engine is MSFTEDIT 6.2.26100.33648 on
+Windows 10.0.26100. All previous fixture declarations, counts and six observation
+families match the .33438 link/gravity record exactly. The strict extractor and
+all **34 Python tests** pass, including reconstruction of the new record.
+Native characterization and Rust selection implementation remain separate gates;
+system MSFTEDIT is not the external WinUI text engine.
+
 ## Source and tracking integrity
 
 The inventory command reads the pinned Git tree. `--check` recomputes source

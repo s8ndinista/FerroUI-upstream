@@ -1047,3 +1047,27 @@ and failed the generated Rust-path freshness check because its reference lacked
 Typography. The authoritative generator supplies that missing row; it is included
 with this checkpoint. These CI results precede the new layout, geometry,
 namescope and independent-range Gravity implementations.
+
+## 2026-10-22 — Record native selection Gravity and a passing shared checkpoint
+
+Both rich-text CI jobs at `8508220d` passed. Linux passed Base 4,433,
+Controls 5,073, Win32 329, WinUI host 42, Fluent 210 (two ignored), Simple
+213 (three ignored), WinUI theme 301 (two ignored), and XAML 617 (17 ignored).
+All five explicit generated-reference comparisons passed. Windows passed
+52 WinUI tests, two exact UTF-16 tests, 23 IMM32 scope tests, seven native
+MSFTEDIT probes and 609 selected rich-control tests. These results belong to
+that published checkpoint and precede the next implementation changes.
+
+The immutable `native-msftedit-selection-gravity.json` captures the actual
+selection through `GetSelection`: 250 commands, 18 fixtures and 18 successful
+canonical interface-identity checks. The measured checkout is `038c29ce`,
+workflow head `8508220d`, probe blob `7d80afb5`, artifact 12448130293. Its
+archive SHA-256 matches GitHub's digest. This run used MSFTEDIT
+6.2.26100.33648 on Windows 10.0.26100. All preceding fixture declarations,
+counts and six observation families match the earlier link/gravity record
+exactly, although that record used DLL build .33438. All 34 extractor tests
+pass with the new record included in historical round-trip validation.
+
+This is native behavioral evidence for the next selection implementation;
+recording it does not make the pending selection Gravity or external WinUI
+engine contracts complete. Older records remain immutable.
