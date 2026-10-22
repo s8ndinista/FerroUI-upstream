@@ -607,11 +607,11 @@ Every target type of a style of the merged WinUI theme, the FerroUI control its 
 | `MenuFlyoutPresenter` | `MenuFlyoutPresenter` | B3 |  |
 | `MenuFlyoutSeparator` | `Separator` | B1 |  |
 | `MenuFlyoutSubItem` | `MenuItem` | B3 |  |
-| `NavigationView` | no FerroUI control | B5 | no FerroUI control; DrawerPage is built from its pane |
-| `NavigationViewItem` | no FerroUI control | B5 | keyed styles only; NavigationView has no FerroUI control |
-| `NavigationViewItemHeader` | no FerroUI control | B5 |  |
-| `NavigationViewItemPresenter` | no FerroUI control | B5 | NavigationView has no FerroUI control |
-| `NavigationViewItemSeparator` | no FerroUI control | B5 |  |
+| `NavigationView` | `NavigationView` | B5 | Additive FerroUI.Controls.WinUI.NavigationView; replaceable native metadata template and resource lookup. The original implicit style remains pending; DrawerPage keeps its separate existing page contract. |
+| `NavigationViewItem` | `NavigationViewItem` | B5 | Additive FerroUI.Controls.WinUI.NavigationViewItem; native content/icon/badge/hierarchy parts. The original implicit and top settings-item styles remain pending. |
+| `NavigationViewItemHeader` | `NavigationViewItemHeader` | B5 | Additive FerroUI.Controls.WinUI.NavigationViewItemHeader; native nonfocusable heading. The original implicit style remains pending. |
+| `NavigationViewItemPresenter` | no FerroUI control | B5 | No public native NavigationViewItemPresenter or its TemplateSettings. The native NavigationViewItem row parts do not implement that source class; its presenter styles remain waived. |
+| `NavigationViewItemSeparator` | `NavigationViewItemSeparator` | B5 | Additive FerroUI.Controls.WinUI.NavigationViewItemSeparator; native nonfocusable line and orientation. The original implicit style remains pending. |
 | `NumberBox` | `NumericUpDown` | B2 |  |
 | `PasswordBox` | `TextBox` | B3 | FerroUI's TextBox with a PasswordChar; ported as the keyed DefaultPasswordBoxStyle |
 | `PipsPager` | `PipsPager` | B2 |  |

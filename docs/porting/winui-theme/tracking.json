@@ -26185,7 +26185,7 @@
    "kind": "Style",
    "target_type": "NavigationViewItemPresenter",
    "status": "waived",
-   "reason": "Reveal focus variants of the NavigationView item presenter: deprecated (Reveal focus), and FerroUI has no NavigationView.",
+   "reason": "Reveal-focus variants of NavigationViewItemPresenter are deprecated in WinUI 3. FerroUI implements neither Reveal focus lighting nor the public source presenter/TemplateSettings; native NavigationView controls do not make these legacy styles available.",
    "batch": null
   },
   {
@@ -26195,7 +26195,7 @@
    "kind": "Style",
    "target_type": "NavigationViewItemPresenter",
    "status": "waived",
-   "reason": "Reveal focus variants of the NavigationView item presenter: deprecated (Reveal focus), and FerroUI has no NavigationView.",
+   "reason": "Reveal-focus variants of NavigationViewItemPresenter are deprecated in WinUI 3. FerroUI implements neither Reveal focus lighting nor the public source presenter/TemplateSettings; native NavigationView controls do not make these legacy styles available.",
    "batch": null
   },
   {
@@ -64044,9 +64044,9 @@
    "key": "{NavigationViewItemHeader}",
    "kind": "Style",
    "target_type": "NavigationViewItemHeader",
-   "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). DrawerPage, TabbedPage and the tabs of TabControl at the left and the right are built from its panes and items (Controls/DrawerPage.xaml, Controls/TabbedPage.xaml, Controls/TabItem.xaml); the styles of NavigationView itself, its items, item headers and separators have no control to style.",
-   "batch": null
+   "status": "pending",
+   "reason": null,
+   "batch": "B5"
   },
   {
    "document": "controls/dev/NavigationView/NavigationView.xaml",
@@ -64054,9 +64054,9 @@
    "key": "{NavigationViewItemSeparator}",
    "kind": "Style",
    "target_type": "NavigationViewItemSeparator",
-   "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). DrawerPage, TabbedPage and the tabs of TabControl at the left and the right are built from its panes and items (Controls/DrawerPage.xaml, Controls/TabbedPage.xaml, Controls/TabItem.xaml); the styles of NavigationView itself, its items, item headers and separators have no control to style.",
-   "batch": null
+   "status": "pending",
+   "reason": null,
+   "batch": "B5"
   },
   {
    "document": "controls/dev/NavigationView/NavigationView.xaml",
@@ -64064,9 +64064,9 @@
    "key": "{NavigationViewItem}",
    "kind": "Style",
    "target_type": "NavigationViewItem",
-   "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). DrawerPage, TabbedPage and the tabs of TabControl at the left and the right are built from its panes and items (Controls/DrawerPage.xaml, Controls/TabbedPage.xaml, Controls/TabItem.xaml); the styles of NavigationView itself, its items, item headers and separators have no control to style.",
-   "batch": null
+   "status": "pending",
+   "reason": null,
+   "batch": "B5"
   },
   {
    "document": "controls/dev/NavigationView/NavigationView.xaml",
@@ -64074,9 +64074,9 @@
    "key": "{NavigationView}",
    "kind": "Style",
    "target_type": "NavigationView",
-   "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). DrawerPage, TabbedPage and the tabs of TabControl at the left and the right are built from its panes and items (Controls/DrawerPage.xaml, Controls/TabbedPage.xaml, Controls/TabItem.xaml); the styles of NavigationView itself, its items, item headers and separators have no control to style.",
-   "batch": null
+   "status": "pending",
+   "reason": null,
+   "batch": "B5"
   },
   {
    "document": "controls/dev/NavigationView/NavigationView_themeresources.xaml",
@@ -64085,7 +64085,7 @@
    "kind": "Style",
    "target_type": "NavigationViewItemPresenter",
    "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). The item presenter styles of the left and the top pane are written into the tab themes built from them (Controls/TabItem.xaml for the tabs at the left and the right, TabbedPageTabItemTheme of Controls/TabbedPage.xaml for the top pane); the settings item, the overflow button of the top pane and the search button of the pane have no counterpart in FerroUI's pages.",
+   "reason": "The public NavigationViewItemPresenter and its TemplateSettings are not implemented. Native NavigationViewItem uses its own replaceable metadata template; existing DrawerPage/TabItem/TabbedPage adaptations do not supply these three source presenter styles.",
    "batch": null
   },
   {
@@ -64095,7 +64095,7 @@
    "kind": "Style",
    "target_type": "NavigationViewItemPresenter",
    "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). The item presenter styles of the left and the top pane are written into the tab themes built from them (Controls/TabItem.xaml for the tabs at the left and the right, TabbedPageTabItemTheme of Controls/TabbedPage.xaml for the top pane); the settings item, the overflow button of the top pane and the search button of the pane have no counterpart in FerroUI's pages.",
+   "reason": "The public NavigationViewItemPresenter and its TemplateSettings are not implemented. Native NavigationViewItem uses its own replaceable metadata template; existing DrawerPage/TabItem/TabbedPage adaptations do not supply these three source presenter styles.",
    "batch": null
   },
   {
@@ -64105,7 +64105,7 @@
    "kind": "Style",
    "target_type": "NavigationViewItemPresenter",
    "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). The item presenter styles of the left and the top pane are written into the tab themes built from them (Controls/TabItem.xaml for the tabs at the left and the right, TabbedPageTabItemTheme of Controls/TabbedPage.xaml for the top pane); the settings item, the overflow button of the top pane and the search button of the pane have no counterpart in FerroUI's pages.",
+   "reason": "The public NavigationViewItemPresenter and its TemplateSettings are not implemented. Native NavigationViewItem uses its own replaceable metadata template; existing DrawerPage/TabItem/TabbedPage adaptations do not supply these three source presenter styles.",
    "batch": null
   },
   {
@@ -64114,9 +64114,9 @@
    "key": "MUX_NavigationViewSettingsItemStyleWhenOnTopPane",
    "kind": "Style",
    "target_type": "NavigationViewItem",
-   "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). The item presenter styles of the left and the top pane are written into the tab themes built from them (Controls/TabItem.xaml for the tabs at the left and the right, TabbedPageTabItemTheme of Controls/TabbedPage.xaml for the top pane); the settings item, the overflow button of the top pane and the search button of the pane have no counterpart in FerroUI's pages.",
-   "batch": null
+   "status": "pending",
+   "reason": null,
+   "batch": "B5"
   },
   {
    "document": "controls/dev/NavigationView/NavigationView_themeresources.xaml",
@@ -64445,7 +64445,7 @@
    "kind": "Style",
    "target_type": "Button",
    "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). The item presenter styles of the left and the top pane are written into the tab themes built from them (Controls/TabItem.xaml for the tabs at the left and the right, TabbedPageTabItemTheme of Controls/TabbedPage.xaml for the top pane); the settings item, the overflow button of the top pane and the search button of the pane have no counterpart in FerroUI's pages.",
+   "reason": "The native NavigationView top pane uses horizontal layout without source overflow redistribution, an overflow button/flyout, or OverflowLabelMode. These two source overflow-button styles have no implemented feature to style.",
    "batch": null
   },
   {
@@ -64455,7 +64455,7 @@
    "kind": "Style",
    "target_type": "Button",
    "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). The item presenter styles of the left and the top pane are written into the tab themes built from them (Controls/TabItem.xaml for the tabs at the left and the right, TabbedPageTabItemTheme of Controls/TabbedPage.xaml for the top pane); the settings item, the overflow button of the top pane and the search button of the pane have no counterpart in FerroUI's pages.",
+   "reason": "The native NavigationView top pane uses horizontal layout without source overflow redistribution, an overflow button/flyout, or OverflowLabelMode. These two source overflow-button styles have no implemented feature to style.",
    "batch": null
   },
   {
@@ -64485,7 +64485,7 @@
    "kind": "Style",
    "target_type": "Button",
    "status": "waived",
-   "reason": "NavigationView: no FerroUI control (batch B5). The item presenter styles of the left and the top pane are written into the tab themes built from them (Controls/TabItem.xaml for the tabs at the left and the right, TabbedPageTabItemTheme of Controls/TabbedPage.xaml for the top pane); the settings item, the overflow button of the top pane and the search button of the pane have no counterpart in FerroUI's pages.",
+   "reason": "The native NavigationView hosts AutoSuggestBox directly; the source compact PaneAutoSuggestButton affordance and its transition back to the search box are not implemented. The separate source pane-search button style therefore remains waived.",
    "batch": null
   },
   {
@@ -90242,7 +90242,7 @@
    "winui": "Button: DefaultButtonStyle, AccentButtonStyle, SubtleButtonStyle (Button_themeresources.xaml).",
    "status": "ported",
    "deviations": 8,
-   "date": "2026-10-16"
+   "date": "2026-10-22"
   },
   {
    "document": "ButtonSpinner.xaml",
@@ -90286,7 +90286,7 @@
    "winui": "CalendarDatePicker: DefaultCalendarDatePicker (CalendarDatePicker_themeresources.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "CalendarDayButton.xaml",
@@ -90308,7 +90308,7 @@
    "winui": "The header, navigation buttons and views of the CalendarView template (DefaultCalendarViewStyle).",
    "status": "ported",
    "deviations": 16,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "Carousel.xaml",
@@ -90352,7 +90352,7 @@
    "winui": "ComboBox: DefaultComboBoxStyle (ComboBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 16,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "ComboBoxItem.xaml",
@@ -90363,7 +90363,7 @@
    "winui": "ComboBoxItem: DefaultComboBoxItemStyle, ComboBoxItemPill (ComboBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 7,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "CommandBar.xaml",
@@ -90377,7 +90377,7 @@
    "winui": "CommandBar: DefaultCommandBarStyle, DefaultCommandBarOverflowPresenterStyle (CommandBar_themeresources.xaml); AppBarButton: DefaultAppBarButtonStyle, AppBarButtonOverflowStyle; AppBarToggleButton: DefaultAppBarToggleButtonStyle, AppBarToggleButtonOverflowStyle; AppBarSeparator: DefaultAppBarSeparatorStyle.",
    "status": "ported",
    "deviations": 20,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "ContentPage.xaml",
@@ -90422,7 +90422,7 @@
    "winui": "DatePicker: DefaultDatePickerStyle; DatePickerFlyoutPresenter: DefaultDatePickerFlyoutPresenterStyle (DatePicker_themeresources.xaml).",
    "status": "ported",
    "deviations": 15,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "DateTimePickerShared.xaml",
@@ -90431,7 +90431,7 @@
    "winui": "LoopingSelector: DefaultLoopingSelectorStyle, LoopingSelectorItem; DateTimePickerFlyoutButtonStyle, DateTimePickerFlyoutLoopingSelectorNavigationButtonStyle (DateTimePickerFlyout_themeresources.xaml).",
    "status": "ported",
    "deviations": 10,
-   "date": "2026-10-16"
+   "date": "2026-10-22"
   },
   {
    "document": "DrawerPage.xaml",
@@ -90453,7 +90453,7 @@
    "winui": "DropDownButton: DefaultDropDownButtonStyle (DropDownButton.xaml, DropDownButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 4,
-   "date": "2026-10-16"
+   "date": "2026-10-22"
   },
   {
    "document": "EmbeddableControlRoot.xaml",
@@ -90475,7 +90475,7 @@
    "winui": "Expander: DefaultExpanderStyle (Expander.xaml), ExpanderHeaderDownStyle, ExpanderHeaderUpStyle (Expander_themeresources.xaml).",
    "status": "ported",
    "deviations": 8,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "FlyoutPresenter.xaml",
@@ -90530,7 +90530,7 @@
    "winui": "HyperlinkButton: DefaultHyperlinkButtonStyle (HyperlinkButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "2026-10-16"
+   "date": "2026-10-22"
   },
   {
    "document": "ItemsControl.xaml",
@@ -90574,7 +90574,7 @@
    "winui": "ListBoxItem: DefaultListBoxItemStyle (ListBox_themeresources.xaml).",
    "status": "ported",
    "deviations": 11,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "ManagedFileChooser.xaml",
@@ -90760,7 +90760,7 @@
    "winui": "RepeatButton: DefaultRepeatButtonStyle (RepeatButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 1,
-   "date": "2026-10-16"
+   "date": "2026-10-22"
   },
   {
    "document": "ScrollBar.xaml",
@@ -90826,7 +90826,7 @@
    "winui": "SplitButton: SplitButtonStyle (SplitButton.xaml), SplitButtonCommandBarStyle (SplitButton_themeresources.xaml); ToggleSplitButton.",
    "status": "ported",
    "deviations": 15,
-   "date": "2026-10-16"
+   "date": "2026-10-22"
   },
   {
    "document": "SplitView.xaml",
@@ -90881,7 +90881,7 @@
    "winui": "SelectorBarItem: DefaultSelectorBarItemStyle, SelectorBarItemPill (SelectorBar.xaml, SelectorBar_themeresources.xaml).",
    "status": "ported",
    "deviations": 8,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "TabbedPage.xaml",
@@ -90947,7 +90947,7 @@
    "winui": "TextBox: DefaultTextBoxStyle and its DeleteButtonStyle (TextBox_themeresources.xaml); PasswordBox: DefaultPasswordBoxStyle (PasswordBox_themeresources.xaml), a keyed theme with the reveal button; the context flyout of TextCommandBarFlyout as a menu flyout (B3).",
    "status": "ported",
    "deviations": 21,
-   "date": "2026-10-17"
+   "date": "2026-10-22"
   },
   {
    "document": "TextSelectionHandle.xaml",
@@ -90992,7 +90992,7 @@
    "winui": "ToggleButton: DefaultToggleButtonStyle (ToggleButton_themeresources.xaml).",
    "status": "ported",
    "deviations": 3,
-   "date": "2026-10-16"
+   "date": "2026-10-22"
   },
   {
    "document": "ToggleSwitch.xaml",
@@ -91119,7 +91119,7 @@
    "document": "controls/dev/CommonStyles/Deprecated_themeresources.xaml",
    "key": "re:MUX_NavigationViewItemPresenterStyle.*WithRevealFocus",
    "variant": null,
-   "reason": "Reveal focus variants of the NavigationView item presenter: deprecated (Reveal focus), and FerroUI has no NavigationView.",
+   "reason": "Reveal-focus variants of NavigationViewItemPresenter are deprecated in WinUI 3. FerroUI implements neither Reveal focus lighting nor the public source presenter/TemplateSettings; native NavigationView controls do not make these legacy styles available.",
    "items": 2
   },
   {
@@ -91445,18 +91445,25 @@
    "items": 1
   },
   {
-   "document": "controls/dev/NavigationView/NavigationView.xaml",
-   "key": "re:\\{NavigationView(Item|ItemHeader|ItemSeparator)?\\}",
+   "document": "controls/dev/NavigationView/NavigationView_themeresources.xaml",
+   "key": "re:MUX_NavigationViewItemPresenterStyleWhenOn(LeftPane|TopPane|TopPaneOverflow)",
    "variant": null,
-   "reason": "NavigationView: no FerroUI control (batch B5). DrawerPage, TabbedPage and the tabs of TabControl at the left and the right are built from its panes and items (Controls/DrawerPage.xaml, Controls/TabbedPage.xaml, Controls/TabItem.xaml); the styles of NavigationView itself, its items, item headers and separators have no control to style.",
-   "items": 4
+   "reason": "The public NavigationViewItemPresenter and its TemplateSettings are not implemented. Native NavigationViewItem uses its own replaceable metadata template; existing DrawerPage/TabItem/TabbedPage adaptations do not supply these three source presenter styles.",
+   "items": 3
   },
   {
    "document": "controls/dev/NavigationView/NavigationView_themeresources.xaml",
-   "key": "re:MUX_NavigationViewItemPresenterStyleWhenOn(LeftPane|TopPane|TopPaneOverflow)|MUX_NavigationViewSettingsItemStyleWhenOnTopPane|NavigationViewOverflowButton(No)?(Label)?StyleWhenPaneOnTop|NavigationViewPaneSearchButtonStyle",
+   "key": "re:NavigationViewOverflowButton(NoLabel)?StyleWhenPaneOnTop",
    "variant": null,
-   "reason": "NavigationView: no FerroUI control (batch B5). The item presenter styles of the left and the top pane are written into the tab themes built from them (Controls/TabItem.xaml for the tabs at the left and the right, TabbedPageTabItemTheme of Controls/TabbedPage.xaml for the top pane); the settings item, the overflow button of the top pane and the search button of the pane have no counterpart in FerroUI's pages.",
-   "items": 7
+   "reason": "The native NavigationView top pane uses horizontal layout without source overflow redistribution, an overflow button/flyout, or OverflowLabelMode. These two source overflow-button styles have no implemented feature to style.",
+   "items": 2
+  },
+  {
+   "document": "controls/dev/NavigationView/NavigationView_themeresources.xaml",
+   "key": "NavigationViewPaneSearchButtonStyle",
+   "variant": null,
+   "reason": "The native NavigationView hosts AutoSuggestBox directly; the source compact PaneAutoSuggestButton affordance and its transition back to the search box are not implemented. The separate source pane-search button style therefore remains waived.",
+   "items": 1
   },
   {
    "document": "controls/dev/CommonStyles/MenuFlyout_themeresources.xaml",
@@ -91565,6 +91572,7 @@
   "SplitButton": 15,
   "ToggleSwitch": 11,
   "WinUIInfoBadge": 2,
+  "WinUINavigationView": 5,
   "WinUIProgressRing": 3,
   "WinUIRatingControl": 2
  },
@@ -91732,27 +91740,29 @@
    "batch": "B3"
   },
   "NavigationViewItem": {
-   "ferroui": null,
+   "ferroui": "NavigationViewItem",
    "batch": "B5",
-   "note": "keyed styles only; NavigationView has no FerroUI control"
+   "note": "Additive FerroUI.Controls.WinUI.NavigationViewItem; native content/icon/badge/hierarchy parts. The original implicit and top settings-item styles remain pending."
   },
   "NavigationViewItemPresenter": {
    "ferroui": null,
    "batch": "B5",
-   "note": "NavigationView has no FerroUI control"
+   "note": "No public native NavigationViewItemPresenter or its TemplateSettings. The native NavigationViewItem row parts do not implement that source class; its presenter styles remain waived."
   },
   "NavigationView": {
-   "ferroui": null,
+   "ferroui": "NavigationView",
    "batch": "B5",
-   "note": "no FerroUI control; DrawerPage is built from its pane"
+   "note": "Additive FerroUI.Controls.WinUI.NavigationView; replaceable native metadata template and resource lookup. The original implicit style remains pending; DrawerPage keeps its separate existing page contract."
   },
   "NavigationViewItemHeader": {
-   "ferroui": null,
-   "batch": "B5"
+   "ferroui": "NavigationViewItemHeader",
+   "batch": "B5",
+   "note": "Additive FerroUI.Controls.WinUI.NavigationViewItemHeader; native nonfocusable heading. The original implicit style remains pending."
   },
   "NavigationViewItemSeparator": {
-   "ferroui": null,
-   "batch": "B5"
+   "ferroui": "NavigationViewItemSeparator",
+   "batch": "B5",
+   "note": "Additive FerroUI.Controls.WinUI.NavigationViewItemSeparator; native nonfocusable line and orientation. The original implicit style remains pending."
   },
   "NumberBox": {
    "ferroui": "NumericUpDown",
@@ -91921,8 +91931,8 @@
    "theme_documents": [
     "Controls/WinUIInfoBadge.xaml"
    ],
-   "coverage": "The additive WinUI namespace selects the native InfoBadge. WinUIControls.xaml merges its dictionary, which supplies the implicit theme, DefaultInfoBadgeStyle, and all five severity families with dot/value/icon themes. Migration changes Style to Theme. The native replaceable template handles value, icon and dot presentation; colors use Default, Light and HighContrast dictionaries.",
-   "remaining": "The scanner counts resource declarations in their original theme scope. Shared dimensions and margins are supplied at dictionary root, so their upstream variant-scoped entries remain pending in this strict inventory. Matching resource keys does not establish complete upstream VisualState, icon-source, NavigationView integration, platform accessibility or pixel parity. The native implementation is pinned separately from this theme reference.",
+   "coverage": "The additive WinUI namespace selects the native InfoBadge. WinUIControls.xaml merges its dictionary, which supplies the implicit theme, DefaultInfoBadgeStyle, and all five severity families with dot/value/icon themes. Migration changes Style to Theme. The native replaceable template handles value, icon and dot presentation; colors use Default, Light and HighContrast dictionaries. The native NavigationViewItem can host this badge and the Gallery includes the original navigation-badge composition; exact source navigation visuals remain separate.",
+   "remaining": "The scanner counts resource declarations in their original theme scope. Shared dimensions and margins are supplied at dictionary root, so their upstream variant-scoped entries remain pending in this strict inventory. Matching resource keys does not establish complete upstream VisualState, icon-source, source-specific NavigationView badge visuals, platform accessibility or pixel parity. The native implementation is pinned separately from this theme reference.",
    "theme_document_sha256": {
     "Controls/WinUIInfoBadge.xaml": "13f3fa0ec601bbf094b623d3e36dc2902d7a0b34696c0719081f9e607209c54e"
    }
@@ -91943,6 +91953,42 @@
    "theme_documents": [],
    "coverage": "The additive WinUI namespace selects a native RatingControl with replaceable foreground/background item panels and a caption. Independent glyph/image visuals, fractional clips and native transforms render the rating, placeholder and pointer preview. The control resolves RatingControl state-brush keys, RatingControlFontSizeForRendering and RatingControlItemSpacing, including zero spacing, with native fallbacks.",
    "remaining": "The original implicit style and 34 source resource entries remain pending. Resource lookup does not supply the scoped source dictionaries, four WinUI item DataTemplates or MUX_RatingControlDefaultFontInfo. RatingControlCaptionTopMargin and text-scale-dependent glyph sizing are not projected. Composition-expression animation timing, installed glyph fonts, HighContrast appearance, custom WinUI templates, platform accessibility and pixel parity require separate implementation or acceptance.",
+   "theme_document_sha256": {}
+  },
+  {
+   "control": "FerroUI.Controls.WinUI.NavigationView",
+   "source_commit": "a71c42bd3e352060e5f5ecf3b5e1a98f8a745809",
+   "implementation": "src/FerroUI.Controls/winui/navigation_view.rs",
+   "theme_documents": [],
+   "coverage": "The additive WinUI namespace selects a native ContentControl with a replaceable metadata template built from SplitView, panels, presenters and buttons. It supplies menu/footer sources, selection and settings, hierarchy, native focus/input and adaptive pane modes. Existing NavigationView resource declarations remain available to the theme; resource lookup and a Rust metadata template do not supply the source implicit style.",
+   "remaining": "The source {NavigationView} style is pending. NavigationViewTemplateSettings, the original VisualState/animation/acrylic/title-bar contracts, top overflow redistribution and the compact PaneAutoSuggestButton contract remain absent or unverified. The corresponding overflow and pane-search styles retain explicit feature waivers. Source template-part compatibility, HighContrast appearance, platform accessibility and pixel parity require separate implementation or acceptance.",
+   "theme_document_sha256": {}
+  },
+  {
+   "control": "FerroUI.Controls.WinUI.NavigationViewItem",
+   "source_commit": "a71c42bd3e352060e5f5ecf3b5e1a98f8a745809",
+   "implementation": "src/FerroUI.Controls/winui/navigation_view_item.rs",
+   "theme_documents": [],
+   "coverage": "The additive native item supplies replaceable content/icon/badge presenters, a row button, expansion affordance, child host, selection indicator and native child popup. It resolves selected source brush keys with native fallbacks. These native parts preserve the item behavior without declaring a source ControlTheme or a NavigationViewItemPresenter implementation.",
+   "remaining": "The source {NavigationViewItem} and MUX_NavigationViewSettingsItemStyleWhenOnTopPane styles are pending. Public NavigationViewItemPresenter and its TemplateSettings remain absent, so the three MUX presenter styles retain explicit waivers; deprecated Reveal-focus variants remain waived separately. Original WinUI visual states, resource-driven metrics and motion, HighContrast, platform accessibility and pixel parity remain separate.",
+   "theme_document_sha256": {}
+  },
+  {
+   "control": "FerroUI.Controls.WinUI.NavigationViewItemHeader",
+   "source_commit": "a71c42bd3e352060e5f5ecf3b5e1a98f8a745809",
+   "implementation": "src/FerroUI.Controls/winui/navigation_view_item.rs",
+   "theme_documents": [],
+   "coverage": "The additive native nonfocusable header has a replaceable ContentPresenter template and follows the parent hierarchy and closed-compact context. The existing NavigationViewItemHeaderTextStyle key remains part of the theme inventory; the native metadata template is a separate implementation.",
+   "remaining": "The source {NavigationViewItemHeader} implicit style is pending. Declaring an available header control or reusing the text-style resource does not establish the original header template, all source metrics, visual states, HighContrast or pixel parity.",
+   "theme_document_sha256": {}
+  },
+  {
+   "control": "FerroUI.Controls.WinUI.NavigationViewItemSeparator",
+   "source_commit": "a71c42bd3e352060e5f5ecf3b5e1a98f8a745809",
+   "implementation": "src/FerroUI.Controls/winui/navigation_view_item.rs",
+   "theme_documents": [],
+   "coverage": "The additive native nonfocusable separator uses a replaceable Border template, changes orientation for top navigation, and resolves the NavigationViewItemSeparatorForeground or TopNavigationViewItemSeparatorForeground brush. Existing source resource definitions and the native brush consumer are tracked separately.",
+   "remaining": "The source {NavigationViewItemSeparator} implicit style is pending. The native line and metadata template do not supply the original style declarations, resource-driven metrics, state transitions, HighContrast acceptance or pixel parity.",
    "theme_document_sha256": {}
   }
  ]
